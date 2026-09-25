@@ -1,0 +1,246 @@
+const USERNAME = "loveyong07";
+const X_API = "https://api.x.com/2";
+const CACHE_TTL_MS = 15 * 60 * 1000;
+const USER_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const ERROR_RETRY_MS = 60 * 1000;
+const POST_LIMIT = 6;
+const PAGE_SIZE = 10;
+const MAX_PAGES = 2;
+
+const unavailable = () => ({ status: "unavailable", posts: [] });
+const isId = (value) => /^\d+$/.test(String(value ?? ""));
+
+function safeAvatar(value) {
+  if (typeof value !== "string") return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
+function safePhotoUrl(value) {
+  if (typeof value !== "string") return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && url.hostname === "pbs.twimg.com" && url.pathname.startsWith("/media/")
+      ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
+function isPhotoLinkForPost(entity, postId, photoCount) {
+  if (!/^https:\/\/t\.co\/[A-Za-z0-9]+$/.test(entity?.url ?? "")) return false;
+  try {
+    const expanded = new URL(entity.expanded_url);
+    if (expanded.protocol !== "https:" || !["x.com", "www.x.com", "twitter.com", "www.twitter.com"].includes(expanded.hostname)) return false;
+    const parts = expanded.pathname.split("/").filter(Boolean);
+    return parts.length === 5 && parts[0].toLowerCase() === USERNAME && parts[1] === "status"
+      && parts[2] === postId && parts[3] === "photo"
+      && /^\d+$/.test(parts[4]) && Number(parts[4]) <= photoCount;
+  } catch {
+    return false;
+  }
+}
+
+function withoutPhotoLinks(text, post, photoCount) {
+  if (!photoCount) return text;
+  const entities = [
+    ...(Array.isArray(post.entities?.urls) ? post.entities.urls : []),
+    ...(Array.isArray(post.note_tweet?.entities?.urls) ? post.note_tweet.entities.urls : []),
+    ...(Array.isArray(post.note_post?.entities?.urls) ? post.note_post.entities.urls : []),
+  ];
+  const mediaLinks = new Set(entities.filter((entity) => isPhotoLinkForPost(entity, post.id, photoCount)).map((entity) => entity.url));
+  for (const link of mediaLinks) text = text.replaceAll(link, "");
+  return text.trimEnd();
+}
+
+async function getXJson(url, token, fetchImpl) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    const response = await fetchImpl(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+      redirect: "error",
+      signal: controller.signal,
+    });
+    if (!response.ok) throw new Error(`X API returned ${response.status}`);
+    const json = await response.json();
+    if (!json || typeof json !== "object" || json.errors?.length) {
+      throw new Error("Invalid X API response");
+    }
+    return json;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function originalPost(post, user, mediaByKey) {
+  if (!isId(post?.id) || typeof post.text !== "string") return null;
+  if (post.author_id && post.author_id !== user.id) return null;
+  if (post.in_reply_to_user_id || post.referenced_tweets?.length || post.referenced_posts?.length) return null;
+  const photos = [];
+  const usedKeys = new Set();
+  for (const key of Array.isArray(post.attachments?.media_keys) ? post.attachments.media_keys : []) {
+    if (usedKeys.has(key)) continue;
+    usedKeys.add(key);
+    const media = mediaByKey.get(key);
+    const url = media?.type === "photo" ? safePhotoUrl(media.url) : null;
+    if (url) photos.push({ url, alt: typeof media.alt_text === "string" ? media.alt_text.trim() : "" });
+  }
+  const text = withoutPhotoLinks(post.note_tweet?.text || post.note_post?.text || post.text, post, photos.length);
+  if (!text.trim() && photos.length === 0) return null;
+  return {
+    id: post.id,
+    text,
+    created_at: post.created_at ?? null,
+    author: user.name || USERNAME,
+    avatar: safeAvatar(user.profile_image_url),
+    permalink: `https://x.com/${USERNAME}/status/${post.id}`,
+    ...(photos.length ? { media: photos } : {}),
+  };
+}
+
+export function createXFeedService({
+  token = globalThis.process?.env?.X_BEARER_TOKEN ?? "",
+  fetchImpl = globalThis.fetch,
+  now = Date.now,
+} = {}) {
+  let user = null;
+  let userAt = 0;
+  let cached = null;
+  let cachedAt = 0;
+  let newestSeenId = null;
+  let retryAt = 0;
+  let inFlight = null;
+
+  async function getUser() {
+    if (user && now() - userAt < USER_CACHE_TTL_MS) return user;
+    const url = new URL(`${X_API}/users/by/username/${USERNAME}`);
+    url.searchParams.set("user.fields", "name,username,profile_image_url");
+    const json = await getXJson(url, token, fetchImpl);
+    const nextUser = json.data;
+    if (!isId(nextUser?.id) || nextUser?.username?.toLowerCase() !== USERNAME) {
+      throw new Error("X user unavailable");
+    }
+    user = nextUser;
+    userAt = now();
+    return user;
+  }
+
+  async function fetchOriginalPosts() {
+    const author = await getUser();
+    const found = [];
+    const seen = new Set();
+    let nextToken = null;
+    let latestId = newestSeenId;
+
+    for (let page = 0; page < MAX_PAGES && found.length < POST_LIMIT; page += 1) {
+      const url = new URL(`${X_API}/users/${author.id}/tweets`);
+      url.searchParams.set("exclude", "replies,retweets");
+      // The live X API accepted tweet.fields for this endpoint on 2026-09-26.
+      url.searchParams.set("tweet.fields", "created_at,referenced_tweets,author_id,in_reply_to_user_id,note_tweet,attachments,entities");
+      url.searchParams.set("expansions", "attachments.media_keys");
+      url.searchParams.set("media.fields", "media_key,type,url,alt_text,width,height");
+      url.searchParams.set("max_results", String(PAGE_SIZE));
+      if (cached && newestSeenId) url.searchParams.set("since_id", newestSeenId);
+      if (nextToken) url.searchParams.set("pagination_token", nextToken);
+
+      const json = await getXJson(url, token, fetchImpl);
+      if (json.data !== undefined && !Array.isArray(json.data)) {
+        throw new Error("Invalid X posts response");
+      }
+      const pagePosts = json.data ?? [];
+      const mediaByKey = new Map(
+        (Array.isArray(json.includes?.media) ? json.includes.media : [])
+          .filter((media) => typeof media?.media_key === "string")
+          .map((media) => [media.media_key, media]),
+      );
+      // A missing requested field can mean X ignored an older/newer field name.
+      // Do not label posts as original when quote metadata may also be missing.
+      if (pagePosts.some((post) => typeof post.created_at !== "string" || !isId(post.author_id))) {
+        throw new Error("X posts are missing requested fields");
+      }
+      if (page === 0 && isId(json.meta?.newest_id ?? pagePosts[0]?.id)) {
+        latestId = json.meta?.newest_id ?? pagePosts[0].id;
+      }
+      for (const post of pagePosts) {
+        const original = originalPost(post, author, mediaByKey);
+        if (original && !seen.has(original.id)) {
+          seen.add(original.id);
+          found.push(original);
+        }
+      }
+      const tokenForNextPage = json.meta?.next_token;
+      if (!tokenForNextPage || tokenForNextPage === nextToken) break;
+      nextToken = tokenForNextPage;
+    }
+
+    const unique = [];
+    const ids = new Set();
+    for (const post of [...found, ...(cached?.posts ?? [])]) {
+      if (!ids.has(post.id)) {
+        ids.add(post.id);
+        unique.push(post);
+      }
+      if (unique.length === POST_LIMIT) break;
+    }
+    return { result: { status: "ok", posts: unique }, latestId };
+  }
+
+  return async function getFeed() {
+    if (!token?.trim()) return unavailable();
+    if (cached && now() - cachedAt < CACHE_TTL_MS) return cached;
+    if (now() < retryAt) return cached ? { status: "stale", posts: cached.posts } : unavailable();
+    if (inFlight) return inFlight;
+
+    inFlight = fetchOriginalPosts()
+      .then(({ result, latestId }) => {
+        cached = result;
+        cachedAt = now();
+        newestSeenId = latestId;
+        retryAt = 0;
+        return result;
+      })
+      .catch(() => {
+        retryAt = now() + ERROR_RETRY_MS;
+        return cached ? { status: "stale", posts: cached.posts } : unavailable();
+      })
+      .finally(() => {
+        inFlight = null;
+      });
+    return inFlight;
+  };
+}
+
+export function xFeedPlugin(options = {}) {
+  const getFeed = createXFeedService(options);
+  function installMiddleware(server) {
+    server.middlewares.use("/api/x-posts", async (request, response) => {
+        response.setHeader("Content-Type", "application/json; charset=utf-8");
+        response.setHeader("Cache-Control", "no-store");
+        if (request.method !== "GET") {
+          response.statusCode = 405;
+          response.setHeader("Allow", "GET");
+          response.end(JSON.stringify({ status: "method_not_allowed", posts: [] }));
+          return;
+        }
+        if (request.url?.split("?")[0] !== "/") {
+          response.statusCode = 404;
+          response.end(JSON.stringify(unavailable()));
+          return;
+        }
+        response.end(JSON.stringify(await getFeed()));
+    });
+  }
+  return {
+    name: "local-x-original-posts",
+    configureServer: installMiddleware,
+    configurePreviewServer: installMiddleware,
+  };
+}
