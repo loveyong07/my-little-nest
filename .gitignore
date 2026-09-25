@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.env.local
+.env.*.local
+
+# Local browser profiles and temporary visual QA artifacts.
+.qa-*-profile*/
+.qa-*.html
+.qa-*.mjs
+.motion-*
+backup-*/
+/qa-compare.html
+/public/qa-source.png
