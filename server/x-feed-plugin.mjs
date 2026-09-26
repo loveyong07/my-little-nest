@@ -1,11 +1,11 @@
 const USERNAME = "loveyong07";
 const X_API = "https://api.x.com/2";
 const CACHE_TTL_MS = 15 * 60 * 1000;
-const USER_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const USER_CACHE_TTL_MS = CACHE_TTL_MS;
 const ERROR_RETRY_MS = 60 * 1000;
 const POST_LIMIT = 6;
 const PAGE_SIZE = 10;
-const MAX_PAGES = 2;
+const MAX_PAGES = 4;
 
 const unavailable = () => ({ status: "unavailable", posts: [] });
 const isId = (value) => /^\d+$/.test(String(value ?? ""));
@@ -57,7 +57,7 @@ function withoutPhotoLinks(text, post, photoCount) {
   return text.trimEnd();
 }
 
-async function getXJson(url, token, fetchImpl) {
+async function getXJson(url, token, fetchImpl, { allowPartialErrors = false } = {}) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
   try {
@@ -69,9 +69,13 @@ async function getXJson(url, token, fetchImpl) {
       redirect: "error",
       signal: controller.signal,
     });
-    if (!response.ok) throw new Error(`X API returned ${response.status}`);
+    if (!response.ok) {
+      const error = new Error(`X API returned ${response.status}`);
+      error.status = response.status;
+      throw error;
+    }
     const json = await response.json();
-    if (!json || typeof json !== "object" || json.errors?.length) {
+    if (!json || typeof json !== "object" || (!allowPartialErrors && json.errors?.length)) {
       throw new Error("Invalid X API response");
     }
     return json;
@@ -80,10 +84,11 @@ async function getXJson(url, token, fetchImpl) {
   }
 }
 
-function originalPost(post, user, mediaByKey) {
+function normalizedPost(post, user, mediaByKey, { allowReferences = false } = {}) {
   if (!isId(post?.id) || typeof post.text !== "string") return null;
   if (post.author_id && post.author_id !== user.id) return null;
-  if (post.in_reply_to_user_id || post.referenced_tweets?.length || post.referenced_posts?.length) return null;
+  if (allowReferences && post.author_id !== user.id) return null;
+  if (!allowReferences && (post.in_reply_to_user_id || post.referenced_tweets?.length || post.referenced_posts?.length)) return null;
   const photos = [];
   const usedKeys = new Set();
   for (const key of Array.isArray(post.attachments?.media_keys) ? post.attachments.media_keys : []) {
@@ -118,23 +123,84 @@ export function createXFeedService({
   let newestSeenId = null;
   let retryAt = 0;
   let inFlight = null;
+  let userFieldMode = "tweet";
+  let postFieldMode = "tweet";
+  let cachedPinnedId = null;
 
   async function getUser() {
     if (user && now() - userAt < USER_CACHE_TTL_MS) return user;
-    const url = new URL(`${X_API}/users/by/username/${USERNAME}`);
-    url.searchParams.set("user.fields", "name,username,profile_image_url");
-    const json = await getXJson(url, token, fetchImpl);
+    async function lookup(mode) {
+      const url = new URL(`${X_API}/users/by/username/${USERNAME}`);
+      url.searchParams.set("user.fields", mode === "tweet"
+        ? "name,username,profile_image_url,pinned_tweet_id"
+        : "name,username,profile_image_url");
+      if (mode === "post") url.searchParams.set("expansions", "pinned_post_id");
+      return getXJson(url, token, fetchImpl, { allowPartialErrors: true });
+    }
+    let json;
+    try {
+      json = await lookup(userFieldMode);
+    } catch (error) {
+      if (userFieldMode !== "tweet" || error?.status !== 400) throw error;
+      json = await lookup("post");
+      userFieldMode = "post";
+    }
     const nextUser = json.data;
     if (!isId(nextUser?.id) || nextUser?.username?.toLowerCase() !== USERNAME) {
       throw new Error("X user unavailable");
+    }
+    if (!nextUser.pinned_tweet_id && !nextUser.pinned_post_id) {
+      const expanded = json.includes?.tweets ?? json.includes?.posts;
+      if (Array.isArray(expanded) && expanded.length === 1 && isId(expanded[0]?.id)) {
+        nextUser.pinned_tweet_id = expanded[0].id;
+      }
     }
     user = nextUser;
     userAt = now();
     return user;
   }
 
-  async function fetchOriginalPosts() {
-    const author = await getUser();
+  async function fetchPinnedPost(author, pinnedId) {
+    if (!isId(pinnedId)) return { post: null, status: "none" };
+    function lookup(mode) {
+      const url = new URL(`${X_API}/tweets/${pinnedId}`);
+      if (mode === "tweet") {
+        url.searchParams.set("tweet.fields", "created_at,referenced_tweets,author_id,in_reply_to_user_id,note_tweet,attachments,entities");
+        url.searchParams.set("expansions", "attachments.media_keys");
+      } else {
+        url.searchParams.set("post.fields", "created_at,note_post,attachments,entities");
+        url.searchParams.set("expansions", "attachments.media_keys,author_id");
+      }
+      url.searchParams.set("media.fields", "media_key,type,url,alt_text,width,height");
+      return getXJson(url, token, fetchImpl);
+    }
+    try {
+      let json;
+      try {
+        json = await lookup(postFieldMode);
+      } catch (error) {
+        if (postFieldMode !== "tweet" || error?.status !== 400) throw error;
+        json = await lookup("post");
+        postFieldMode = "post";
+      }
+      const mediaByKey = new Map(
+        (Array.isArray(json.includes?.media) ? json.includes.media : [])
+          .filter((media) => typeof media?.media_key === "string")
+          .map((media) => [media.media_key, media]),
+      );
+      const post = normalizedPost(json.data, author, mediaByKey, { allowReferences: true });
+      if (!post || post.id !== pinnedId || typeof json.data.created_at !== "string") {
+        return { post: null, status: "unavailable" };
+      }
+      return { post, status: "ok" };
+    } catch (error) {
+      const old = cached?.pinnedPost;
+      if (old?.id === pinnedId && error?.status !== 404) return { post: old, status: "stale" };
+      return { post: null, status: "unavailable" };
+    }
+  }
+
+  async function fetchOriginalPosts(author, pinnedId) {
     const found = [];
     const seen = new Set();
     let nextToken = null;
@@ -148,7 +214,10 @@ export function createXFeedService({
       url.searchParams.set("expansions", "attachments.media_keys");
       url.searchParams.set("media.fields", "media_key,type,url,alt_text,width,height");
       url.searchParams.set("max_results", String(PAGE_SIZE));
-      if (cached && newestSeenId) url.searchParams.set("since_id", newestSeenId);
+      const retained = (cached?.posts ?? []).filter((post) => post.id !== pinnedId);
+      if (cachedPinnedId === pinnedId && retained.length >= POST_LIMIT && newestSeenId) {
+        url.searchParams.set("since_id", newestSeenId);
+      }
       if (nextToken) url.searchParams.set("pagination_token", nextToken);
 
       const json = await getXJson(url, token, fetchImpl);
@@ -170,7 +239,7 @@ export function createXFeedService({
         latestId = json.meta?.newest_id ?? pagePosts[0].id;
       }
       for (const post of pagePosts) {
-        const original = originalPost(post, author, mediaByKey);
+        const original = post.id === pinnedId ? null : normalizedPost(post, author, mediaByKey);
         if (original && !seen.has(original.id)) {
           seen.add(original.id);
           found.push(original);
@@ -184,32 +253,48 @@ export function createXFeedService({
     const unique = [];
     const ids = new Set();
     for (const post of [...found, ...(cached?.posts ?? [])]) {
+      if (post.id === pinnedId) continue;
       if (!ids.has(post.id)) {
         ids.add(post.id);
         unique.push(post);
       }
       if (unique.length === POST_LIMIT) break;
     }
-    return { result: { status: "ok", posts: unique }, latestId };
+    return { posts: unique, latestId };
+  }
+
+  async function fetchFeed() {
+    const author = await getUser();
+    const pinnedId = author.pinned_tweet_id ?? author.pinned_post_id ?? null;
+    const [{ posts, latestId }, pinned] = await Promise.all([
+      fetchOriginalPosts(author, pinnedId),
+      fetchPinnedPost(author, pinnedId),
+    ]);
+    return {
+      result: { status: "ok", posts, pinnedPost: pinned.post, pinnedStatus: pinned.status },
+      latestId,
+      pinnedId,
+    };
   }
 
   return async function getFeed() {
     if (!token?.trim()) return unavailable();
     if (cached && now() - cachedAt < CACHE_TTL_MS) return cached;
-    if (now() < retryAt) return cached ? { status: "stale", posts: cached.posts } : unavailable();
+    if (now() < retryAt) return cached ? { ...cached, status: "stale", pinnedStatus: cached.pinnedPost ? "stale" : cached.pinnedStatus } : unavailable();
     if (inFlight) return inFlight;
 
-    inFlight = fetchOriginalPosts()
-      .then(({ result, latestId }) => {
+    inFlight = fetchFeed()
+      .then(({ result, latestId, pinnedId }) => {
         cached = result;
         cachedAt = now();
         newestSeenId = latestId;
+        cachedPinnedId = pinnedId;
         retryAt = 0;
         return result;
       })
       .catch(() => {
         retryAt = now() + ERROR_RETRY_MS;
-        return cached ? { status: "stale", posts: cached.posts } : unavailable();
+        return cached ? { ...cached, status: "stale", pinnedStatus: cached.pinnedPost ? "stale" : cached.pinnedStatus } : unavailable();
       })
       .finally(() => {
         inFlight = null;

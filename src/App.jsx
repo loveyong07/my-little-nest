@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { FaArrowRight, FaEnvelope, FaLine, FaQq, FaTelegram, FaWeixin, FaXTwitter } from "react-icons/fa6";
 import { FiChevronLeft, FiChevronRight, FiMenu, FiX } from "react-icons/fi";
 import { HiOutlineSparkles } from "react-icons/hi2";
-import { PiFlowerLight } from "react-icons/pi";
+import { PiFlowerLight, PiPushPinFill } from "react-icons/pi";
 
 const ASSETS = "/assets";
 const HANDLE = "loveyong07";
@@ -26,8 +26,10 @@ const copy = {
     bio: "来世请让我做东京的帅哥吧.",
     motto: "Same Sky, More Good Friends.",
     postsCta: "看看我的动态", contactCta: "联系我", note: "初次相遇，\n就很喜欢你了 ♡",
-    postsHeading: "设计示意 · 原创动态同步区", contactsHeading: "找到我，一起聊聊天吧",
+    pinnedHeading: "置顶帖子", postsHeading: "日常动态 · X 原创帖", contactsHeading: "找到我，一起聊聊天吧",
     feedLive: "X 原创帖 · 自动同步", feedStale: "暂时无法更新 · 显示上次同步", feedSnapshot: "公开帖快照 · 2026-09-25",
+    pinnedLive: "X 置顶帖 · 自动同步", pinnedStale: "暂时无法更新 · 显示上次置顶",
+    pinnedLoading: "正在同步 X 置顶帖…", pinnedNone: "X 当前没有置顶帖子", pinnedUnavailable: "置顶帖暂时无法同步",
     openPost: "在 X 查看原帖", artLabel: "网站装饰插画 · 非帖子图片", postPhotoAlt: (number) => `帖子图片 ${number}`,
     imageAlt: "蓝天、海面与白色建筑的二次元风格装饰插画",
     prevPost: "上一条动态", nextPost: "下一条动态",
@@ -47,8 +49,10 @@ const copy = {
     bio: "来世では東京のイケメンになりたい。",
     motto: "Same Sky, More Good Friends.",
     postsCta: "投稿を見る", contactCta: "連絡する", note: "はじめまして、\nもうあなたが好きです ♡",
-    postsHeading: "デザインプレビュー · オリジナル投稿", contactsHeading: "見つけてね、話しましょう",
+    pinnedHeading: "固定した投稿", postsHeading: "日々の投稿 · X のオリジナル投稿", contactsHeading: "見つけてね、話しましょう",
     feedLive: "X オリジナル投稿 · 自動更新", feedStale: "一時的に更新できません · 前回の投稿を表示", feedSnapshot: "公開投稿の記録 · 2026-09-25",
+    pinnedLive: "X の固定した投稿 · 自動更新", pinnedStale: "一時的に更新できません · 前回の固定投稿を表示",
+    pinnedLoading: "X の固定した投稿を読み込み中…", pinnedNone: "現在、固定した投稿はありません", pinnedUnavailable: "固定した投稿を読み込めません",
     openPost: "X で原文を見る", artLabel: "サイト用イラスト · 投稿画像ではありません", postPhotoAlt: (number) => `投稿画像 ${number}`,
     imageAlt: "青空と海、白い建物のアニメ風イラスト",
     prevPost: "前の投稿", nextPost: "次の投稿",
@@ -68,8 +72,10 @@ const copy = {
     bio: "In my next life, let me be a handsome guy in Tokyo.",
     motto: "Same Sky, More Good Friends.",
     postsCta: "See my posts", contactCta: "Get in touch", note: "We just met,\nand I already like you ♡",
-    postsHeading: "Design preview · original posts", contactsHeading: "Find me and say hello",
+    pinnedHeading: "Pinned post", postsHeading: "Everyday posts · originals from X", contactsHeading: "Find me and say hello",
     feedLive: "Original X posts · auto updated", feedStale: "Update unavailable · showing last sync", feedSnapshot: "Public post snapshot · 2026-09-25",
+    pinnedLive: "Pinned on X · auto updated", pinnedStale: "Update unavailable · showing last pinned post",
+    pinnedLoading: "Syncing pinned post from X…", pinnedNone: "No post is currently pinned on X", pinnedUnavailable: "Pinned post is temporarily unavailable",
     openPost: "View original post on X", artLabel: "Site illustration · not an image from this post", postPhotoAlt: (number) => `Post photo ${number}`,
     imageAlt: "Anime style decorative illustration of a blue sky, sea, and white buildings",
     prevPost: "Previous post", nextPost: "Next post",
@@ -118,13 +124,17 @@ const mailboxes = [
   { label: "QQ Mail", address: "3437702786@qq.com" },
 ];
 
-function isOriginalPost(post) {
+function isOwnPost(post) {
   if (!post || !/^\d+$/.test(String(post.id ?? "")) || typeof post.text !== "string") return false;
-  if ((!post.text.trim() && !post.media?.length) || post.referenced_tweets?.length || post.in_reply_to_user_id) return false;
+  if (!post.text.trim() && !post.media?.length) return false;
   try {
     const url = new URL(post.permalink);
     return url.protocol === "https:" && url.hostname === "x.com" && url.pathname === `/${HANDLE}/status/${post.id}`;
   } catch { return false; }
+}
+
+function isOriginalPost(post) {
+  return isOwnPost(post) && !post.referenced_tweets?.length && !post.in_reply_to_user_id;
 }
 
 function formatPostDate(value, language) {
@@ -151,7 +161,7 @@ function ContactTile({ icon: Icon, className, title, detail, sub, href, onClick,
   </Tag>;
 }
 
-function PostCard({ post, feedSource, language, t }) {
+function PostCard({ post, feedSource, language, t, label }) {
   const isSnapshot = feedSource === "snapshot";
   const photos = Array.isArray(post.media) ? post.media.filter((media) => typeof media?.url === "string").slice(0, 4) : [];
   return <article className="post-card">
@@ -172,7 +182,7 @@ function PostCard({ post, feedSource, language, t }) {
       <figcaption>{t.artLabel}</figcaption>
     </figure>}
     <div className="post-bottomline">
-      <span>{isSnapshot ? t.feedSnapshot : feedSource === "stale" ? t.feedStale : t.feedLive}</span>
+      <span>{label || (isSnapshot ? t.feedSnapshot : feedSource === "stale" ? t.feedStale : t.feedLive)}</span>
       <a href={post.permalink} target="_blank" rel="noopener noreferrer">{t.openPost}<FaArrowRight aria-hidden="true" /></a>
     </div>
   </article>;
@@ -183,6 +193,8 @@ export function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [posts, setPosts] = useState([SNAPSHOT]);
   const [feedSource, setFeedSource] = useState("snapshot");
+  const [pinnedPost, setPinnedPost] = useState(null);
+  const [pinState, setPinState] = useState("loading");
   const [postIndex, setPostIndex] = useState(0);
   const [copiedId, setCopiedId] = useState("");
   const [clickSparkle, setClickSparkle] = useState(null);
@@ -213,7 +225,18 @@ export function App() {
         if (!response.ok) throw new Error("Feed unavailable");
         const feed = await response.json();
         if (!mounted) return;
-        const originals = Array.isArray(feed.posts) ? feed.posts.filter(isOriginalPost).slice(0, 6) : [];
+        const hasPinStatus = ["ok", "stale", "none", "unavailable"].includes(feed.pinnedStatus);
+        const nextPinned = isOwnPost(feed.pinnedPost) && (!hasPinStatus || ["ok", "stale"].includes(feed.pinnedStatus)) ? feed.pinnedPost : null;
+        if (hasPinStatus) {
+          setPinnedPost(nextPinned);
+          setPinState(nextPinned ? (feed.pinnedStatus === "stale" ? "stale" : "live") : (feed.pinnedStatus === "none" ? "none" : "unavailable"));
+        } else if (feed.status === "ok" || feed.status === "stale") {
+          setPinnedPost(nextPinned);
+          setPinState(nextPinned ? (feed.status === "stale" ? "stale" : "live") : (feed.status === "stale" ? "unavailable" : "none"));
+        } else {
+          setPinState((current) => current === "live" ? "stale" : current === "loading" ? "unavailable" : current);
+        }
+        const originals = Array.isArray(feed.posts) ? feed.posts.filter((post) => isOriginalPost(post) && post.id !== nextPinned?.id).slice(0, 6) : [];
         if ((feed.status === "ok" || feed.status === "stale") && originals.length > 0) {
           setPosts(originals); setFeedSource(feed.status === "stale" ? "stale" : "live");
           setPostIndex((index) => Math.min(index, originals.length - 1));
@@ -221,7 +244,10 @@ export function App() {
           setPosts([SNAPSHOT]); setFeedSource("snapshot"); setPostIndex(0);
         }
       } catch {
-        if (mounted) setFeedSource((current) => current === "live" ? "stale" : current);
+        if (mounted) {
+          setFeedSource((current) => current === "live" ? "stale" : current);
+          setPinState((current) => current === "live" ? "stale" : current === "loading" ? "unavailable" : current);
+        }
       }
     }
     refreshFeed();
@@ -271,13 +297,20 @@ export function App() {
   </header>;
 
   const postsSection = <div className="posts-section" id="posts">
-    <div className="section-heading"><HiOutlineSparkles aria-hidden="true" /><h2>{t.postsHeading}</h2></div>
-    <PostCard post={posts[postIndex]} feedSource={feedSource} language={language} t={t} />
-    {posts.length > 1 && <div className="post-controls">
-      <button onClick={() => setPostIndex((postIndex - 1 + posts.length) % posts.length)} aria-label={t.prevPost}><FiChevronLeft /></button>
-      <span>{t.postNumber(postIndex + 1, posts.length)}</span>
-      <button onClick={() => setPostIndex((postIndex + 1) % posts.length)} aria-label={t.nextPost}><FiChevronRight /></button>
-    </div>}
+    <section className="posts-group" aria-label={t.pinnedHeading}>
+      <div className="section-heading"><PiPushPinFill aria-hidden="true" /><h2>{t.pinnedHeading}</h2></div>
+      {pinnedPost ? <PostCard post={pinnedPost} feedSource={pinState} language={language} t={t} label={pinState === "stale" ? t.pinnedStale : t.pinnedLive} />
+        : <div className="pinned-placeholder" role="status">{pinState === "loading" ? t.pinnedLoading : pinState === "none" ? t.pinnedNone : t.pinnedUnavailable}</div>}
+    </section>
+    <section className="posts-group" aria-label={t.postsHeading}>
+      <div className="section-heading"><HiOutlineSparkles aria-hidden="true" /><h2>{t.postsHeading}</h2></div>
+      <PostCard post={posts[postIndex]} feedSource={feedSource} language={language} t={t} />
+      {posts.length > 1 && <div className="post-controls">
+        <button onClick={() => setPostIndex((postIndex - 1 + posts.length) % posts.length)} aria-label={t.prevPost}><FiChevronLeft /></button>
+        <span>{t.postNumber(postIndex + 1, posts.length)}</span>
+        <button onClick={() => setPostIndex((postIndex + 1) % posts.length)} aria-label={t.nextPost}><FiChevronRight /></button>
+      </div>}
+    </section>
   </div>;
 
   const contactsSection = <div className="contacts-section" id="contact">
