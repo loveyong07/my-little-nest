@@ -1,10 +1,10 @@
 # Hosting and custom-domain handoff — 2026-09-26
 
-The project is pushed to the private [GitHub repository](https://github.com/fyh2026/my-little-nest), and its Vercel Production deployment is Ready at [the deployment URL](https://my-little-nest-82txmckrm-fyh2026s-projects.vercel.app). The live `/api/x-posts` endpoint returned `status: ok` with 6 posts. `.env.local` is excluded from GitHub; `X_BEARER_TOKEN` is configured as a Vercel server-side Production variable.
+The project is pushed to the private [GitHub repository](https://github.com/fyh2026/my-little-nest), and its Vercel Production deployment is Ready at [the deployment URL](https://my-little-nest-82txmckrm-fyh2026s-projects.vercel.app). The live `/api/x-posts` endpoint previously returned `status: ok` with 6 posts. `.env.local` is excluded from GitHub; `X_BEARER_TOKEN` is configured as a Vercel server-side Production variable.
 
 - GitHub automatic deployments are not connected yet. Authorize the Vercel GitHub App for this private repository in [Project Settings → Git](https://vercel.com/fyh2026s-projects/my-little-nest/settings/git).
-- `loveyong07.top` is attached to the Vercel project, but DNS verification reports an invalid configuration. `vercel domains inspect` currently recommends `A @ → 76.76.21.21`; the detected nameservers remain `conrad.ns.cloudflare.com` and `rosalie.ns.cloudflare.com`.
-- The user selected Vercel and said not to use Cloudflare. To remove Cloudflare DNS as well, the registrar nameservers can be changed to `ns1.vercel-dns.com` and `ns2.vercel-dns.com`; migrate any existing mail or other DNS records first. No nameservers or DNS records have been changed.
+- The user reports that DNS changes for `loveyong07.top` are complete. In the 2026-09-26 recheck, Vercel still returned `invalid_configuration`; it detected Cloudflare nameservers (`conrad.ns.cloudflare.com`, `rosalie.ns.cloudflare.com`) and no A/CNAME values. Public resolvers 1.1.1.1 and 8.8.8.8 returned no apex A record, `www.loveyong07.top` did not resolve, and the HTTPS request failed.
+- Vercel `domains inspect` recommended `A @ → 76.76.21.21`; project-level `domains verify` recommended `CNAME @ → c9e7548748e901a2.vercel-dns-017.com.` with proxy disabled. Recheck the Vercel Domains panel and confirm which record the user changed and in which DNS console. Records must be changed at the authoritative DNS provider. This assistant did not change DNS.
 - The previous Codex Sites deployment is separate from this Vercel deployment.
 
 ---
