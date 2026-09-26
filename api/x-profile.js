@@ -10,6 +10,11 @@ export default {
         status: 405, headers: { ...headers, Allow: "GET" },
       });
     }
-    return new Response(JSON.stringify(await getProfile()), { headers });
+    return new Response(JSON.stringify(await getProfile()), {
+      headers: {
+        ...headers,
+        "Vercel-CDN-Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+      },
+    });
   },
 };
