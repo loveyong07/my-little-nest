@@ -6,6 +6,7 @@ import { PiFlowerLight, PiPushPinFill } from "react-icons/pi";
 
 const ASSETS = "/assets";
 const HANDLE = "loveyong07";
+const FALLBACK_AVATAR = `${ASSETS}/x-avatar.jpg`;
 const SNAPSHOT = {
   id: "2103361629748682978",
   text: "但愿人长久，千里共婵娟\n\n🥮中秋节快乐🥮\n\n我最喜欢吃豆沙月饼了😋",
@@ -31,6 +32,7 @@ const copy = {
     pinnedLive: "X 置顶帖 · 自动同步", pinnedStale: "暂时无法更新 · 显示上次置顶",
     pinnedLoading: "正在同步 X 置顶帖…", pinnedNone: "X 当前没有置顶帖子", pinnedUnavailable: "置顶帖暂时无法同步", noPosts: "X 当前还没有原创帖子",
     openPost: "在 X 查看原帖", artLabel: "网站装饰插画 · 非帖子图片", postPhotoAlt: (number) => `帖子图片 ${number}`,
+    photoUnavailable: "图片暂时无法加载",
     imageAlt: "蓝天、海面与白色建筑的二次元风格装饰插画",
     prevPost: "上一条动态", nextPost: "下一条动态", prevPhoto: "上一张图片", nextPhoto: "下一张图片",
     postNumber: (current, total) => `${current} / ${total}`,
@@ -54,6 +56,7 @@ const copy = {
     pinnedLive: "X の固定した投稿 · 自動更新", pinnedStale: "一時的に更新できません · 前回の固定投稿を表示",
     pinnedLoading: "X の固定した投稿を読み込み中…", pinnedNone: "現在、固定した投稿はありません", pinnedUnavailable: "固定した投稿を読み込めません", noPosts: "オリジナルの投稿はまだありません",
     openPost: "X で原文を見る", artLabel: "サイト用イラスト · 投稿画像ではありません", postPhotoAlt: (number) => `投稿画像 ${number}`,
+    photoUnavailable: "画像を読み込めませんでした",
     imageAlt: "青空と海、白い建物のアニメ風イラスト",
     prevPost: "前の投稿", nextPost: "次の投稿", prevPhoto: "前の画像", nextPhoto: "次の画像",
     postNumber: (current, total) => `${current} / ${total}`,
@@ -77,6 +80,7 @@ const copy = {
     pinnedLive: "Pinned on X · auto updated", pinnedStale: "Update unavailable · showing last pinned post",
     pinnedLoading: "Syncing pinned post from X…", pinnedNone: "No post is currently pinned on X", pinnedUnavailable: "Pinned post is temporarily unavailable", noPosts: "No original X posts yet",
     openPost: "View original post on X", artLabel: "Site illustration · not an image from this post", postPhotoAlt: (number) => `Post photo ${number}`,
+    photoUnavailable: "Image is temporarily unavailable",
     imageAlt: "Anime style decorative illustration of a blue sky, sea, and white buildings",
     prevPost: "Previous post", nextPost: "Next post", prevPhoto: "Previous photo", nextPhoto: "Next photo",
     postNumber: (current, total) => `${current} / ${total}`,
@@ -90,6 +94,29 @@ const copy = {
 const navIds = ["home", "posts", "contact"];
 const pagePaths = { home: "/", posts: "/posts", contact: "/contact" };
 const LANGUAGE_STORAGE_KEY = "hello-nice-site-language";
+
+function xMediaSrc(value) {
+  if (typeof value !== "string") return null;
+  try {
+    const url = new URL(value);
+    const allowedPath = url.pathname.startsWith("/media/") || url.pathname.startsWith("/profile_images/");
+    if (url.protocol !== "https:" || url.hostname !== "pbs.twimg.com" || !allowedPath) return null;
+    return `/api/x-media?url=${encodeURIComponent(url.href)}`;
+  } catch {
+    return null;
+  }
+}
+
+function handleAvatarError(event) {
+  const image = event.currentTarget;
+  if (image.dataset.fallbackApplied === "true" || image.getAttribute("src") === FALLBACK_AVATAR) return;
+  image.dataset.fallbackApplied = "true";
+  image.src = FALLBACK_AVATAR;
+}
+
+function handleAvatarLoad(event) {
+  delete event.currentTarget.dataset.fallbackApplied;
+}
 
 function resolvePage() {
   const path = window.location.pathname.replace(/\/+$/, "") || "/";
@@ -163,22 +190,28 @@ function ContactTile({ icon: Icon, className, title, sub, href, onClick, copyLab
 
 function PostCard({ post, feedSource, language, t, label, profile }) {
   const isSnapshot = feedSource === "snapshot";
-  const photos = Array.isArray(post.media) ? post.media.filter((media) => typeof media?.url === "string").slice(0, 4) : [];
+  const photos = Array.isArray(post.media)
+    ? post.media.filter((media) => xMediaSrc(media?.url)).map((media) => ({ ...media, src: xMediaSrc(media.url) })).slice(0, 4)
+    : [];
   const [photoIndex, setPhotoIndex] = useState(0);
+  const [imageUnavailable, setImageUnavailable] = useState(false);
   const currentPhotoIndex = Math.min(photoIndex, photos.length - 1);
   const currentPhoto = photos[currentPhotoIndex];
+  useEffect(() => setImageUnavailable(false), [currentPhoto?.url]);
   return <article className="post-card">
     <div className="post-topline">
-      <img className="post-avatar" src={post.avatar || `${ASSETS}/x-avatar.jpg`} alt="" />
+      <img className="post-avatar" src={xMediaSrc(post.avatar) || FALLBACK_AVATAR} alt="" onError={handleAvatarError} onLoad={handleAvatarLoad} />
       <div className="post-author"><strong>{post.author || profile.name}</strong><span>@{profile.username}</span></div>
       <span className="post-date">{formatPostDate(post.created_at, language)}</span>
       <FaXTwitter className="post-x-mark" aria-hidden="true" />
     </div>
     {post.text.trim() && <div className="post-text">{post.text.split(/(?:\r?\n){2,}/).map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div>}
     {photos.length > 0 && <div className={`post-media${photos.length === 1 ? " post-media-single" : ""}`}>
-      <a href={post.permalink} target="_blank" rel="noopener noreferrer" aria-label={`${t.openPost} · ${t.postPhotoAlt(currentPhotoIndex + 1)}`}>
-        <img src={currentPhoto.url} alt={currentPhoto.alt || t.postPhotoAlt(currentPhotoIndex + 1)} loading="lazy" decoding="async" referrerPolicy="no-referrer" />
-      </a>
+      {imageUnavailable
+        ? <div className="post-media-unavailable" role="status">{t.photoUnavailable}</div>
+        : <a href={post.permalink} target="_blank" rel="noopener noreferrer" aria-label={`${t.openPost} · ${t.postPhotoAlt(currentPhotoIndex + 1)}`}>
+          <img key={currentPhoto.src} src={currentPhoto.src} alt={currentPhoto.alt || t.postPhotoAlt(currentPhotoIndex + 1)} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={() => setImageUnavailable(true)} />
+        </a>}
       <button className="post-media-nav post-media-prev" type="button" aria-label={t.prevPhoto}
         onClick={() => setPhotoIndex((index) => (Math.min(index, photos.length - 1) - 1 + photos.length) % photos.length)}><FiChevronLeft aria-hidden="true" /></button>
       <button className="post-media-nav post-media-next" type="button" aria-label={t.nextPhoto}
@@ -377,7 +410,7 @@ export function App() {
         <h1><span>Welcome</span><span>to my little nest<em>！</em></span></h1>
         <div className="ornament" aria-hidden="true"><span /><PiFlowerLight /><span /></div>
         <div className="profile">
-          <img src={profile.avatar} alt={t.profileAlt} />
+          <img src={xMediaSrc(profile.avatar) || FALLBACK_AVATAR} alt={t.profileAlt} onError={handleAvatarError} onLoad={handleAvatarLoad} />
           <div><strong>{profile.name}</strong><a href={`https://x.com/${profile.username}`} target="_blank" rel="noopener noreferrer">@{profile.username}</a></div>
         </div>
         <p className="bio">{t.bio}</p>
