@@ -1,5 +1,6 @@
 import { createXFeedService } from "../server/x-feed-plugin.mjs";
 import { proxyXMedia } from "../server/x-media.mjs";
+import { proxyXVideo } from "../server/x-video.mjs";
 
 let feedToken = null;
 let getFeed = null;
@@ -8,6 +9,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === "/api/x-media") return proxyXMedia(request);
+    if (url.pathname === "/api/x-video") return proxyXVideo(request);
     if (url.pathname === "/api/x-posts" || url.pathname === "/api/x-profile") {
       const headers = { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" };
       if (request.method !== "GET") {

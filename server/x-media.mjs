@@ -1,5 +1,5 @@
 const MEDIA_HOST = "pbs.twimg.com";
-const MEDIA_PATHS = ["/media/", "/profile_images/"];
+const MEDIA_PATHS = ["/media/", "/profile_images/", "/ext_tw_video_thumb/"];
 const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"]);
 const MAX_IMAGE_BYTES = 12 * 1024 * 1024;
 const CACHE_CONTROL = "public, max-age=1800, s-maxage=43200";
