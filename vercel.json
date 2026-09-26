@@ -5,11 +5,11 @@
   "outputDirectory": "dist/client",
   "rewrites": [
     {
-      "source": "/",
+      "source": "/posts",
       "destination": "/index.html"
     },
     {
-      "source": "/:path((?!api/).*)",
+      "source": "/contact",
       "destination": "/index.html"
     }
   ]
