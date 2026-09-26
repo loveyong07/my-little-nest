@@ -29,10 +29,10 @@ const copy = {
     pinnedHeading: "置顶帖子", postsHeading: "日常动态 · X 原创帖", contactsHeading: "找到我，一起聊聊天吧",
     feedLive: "X 原创帖 · 自动同步", feedStale: "暂时无法更新 · 显示上次同步", feedSnapshot: "公开帖快照 · 2026-09-25",
     pinnedLive: "X 置顶帖 · 自动同步", pinnedStale: "暂时无法更新 · 显示上次置顶",
-    pinnedLoading: "正在同步 X 置顶帖…", pinnedNone: "X 当前没有置顶帖子", pinnedUnavailable: "置顶帖暂时无法同步",
+    pinnedLoading: "正在同步 X 置顶帖…", pinnedNone: "X 当前没有置顶帖子", pinnedUnavailable: "置顶帖暂时无法同步", noPosts: "X 当前还没有原创帖子",
     openPost: "在 X 查看原帖", artLabel: "网站装饰插画 · 非帖子图片", postPhotoAlt: (number) => `帖子图片 ${number}`,
     imageAlt: "蓝天、海面与白色建筑的二次元风格装饰插画",
-    prevPost: "上一条动态", nextPost: "下一条动态",
+    prevPost: "上一条动态", nextPost: "下一条动态", prevPhoto: "上一张图片", nextPhoto: "下一张图片",
     postNumber: (current, total) => `${current} / ${total}`,
     xSub: "随时分享", lineSub: "日常聊天", telegramSub: "欢迎私信", wechatSub: "好友交流", qqSub: "一起玩耍", emailSub: "商务/合作/来信",
     copied: "已复制", copy: "点击复制账号", emailHeading: "也可以给我写信",
@@ -52,10 +52,10 @@ const copy = {
     pinnedHeading: "固定した投稿", postsHeading: "日々の投稿 · X のオリジナル投稿", contactsHeading: "見つけてね、話しましょう",
     feedLive: "X オリジナル投稿 · 自動更新", feedStale: "一時的に更新できません · 前回の投稿を表示", feedSnapshot: "公開投稿の記録 · 2026-09-25",
     pinnedLive: "X の固定した投稿 · 自動更新", pinnedStale: "一時的に更新できません · 前回の固定投稿を表示",
-    pinnedLoading: "X の固定した投稿を読み込み中…", pinnedNone: "現在、固定した投稿はありません", pinnedUnavailable: "固定した投稿を読み込めません",
+    pinnedLoading: "X の固定した投稿を読み込み中…", pinnedNone: "現在、固定した投稿はありません", pinnedUnavailable: "固定した投稿を読み込めません", noPosts: "オリジナルの投稿はまだありません",
     openPost: "X で原文を見る", artLabel: "サイト用イラスト · 投稿画像ではありません", postPhotoAlt: (number) => `投稿画像 ${number}`,
     imageAlt: "青空と海、白い建物のアニメ風イラスト",
-    prevPost: "前の投稿", nextPost: "次の投稿",
+    prevPost: "前の投稿", nextPost: "次の投稿", prevPhoto: "前の画像", nextPhoto: "次の画像",
     postNumber: (current, total) => `${current} / ${total}`,
     xSub: "日々のこと", lineSub: "気軽にお話", telegramSub: "メッセージ歓迎", wechatSub: "友達になろう", qqSub: "一緒に遊ぼう", emailSub: "お仕事・お便り",
     copied: "コピーしました", copy: "ID をコピー", emailHeading: "メールはこちら",
@@ -75,10 +75,10 @@ const copy = {
     pinnedHeading: "Pinned post", postsHeading: "Everyday posts · originals from X", contactsHeading: "Find me and say hello",
     feedLive: "Original X posts · auto updated", feedStale: "Update unavailable · showing last sync", feedSnapshot: "Public post snapshot · 2026-09-25",
     pinnedLive: "Pinned on X · auto updated", pinnedStale: "Update unavailable · showing last pinned post",
-    pinnedLoading: "Syncing pinned post from X…", pinnedNone: "No post is currently pinned on X", pinnedUnavailable: "Pinned post is temporarily unavailable",
+    pinnedLoading: "Syncing pinned post from X…", pinnedNone: "No post is currently pinned on X", pinnedUnavailable: "Pinned post is temporarily unavailable", noPosts: "No original X posts yet",
     openPost: "View original post on X", artLabel: "Site illustration · not an image from this post", postPhotoAlt: (number) => `Post photo ${number}`,
     imageAlt: "Anime style decorative illustration of a blue sky, sea, and white buildings",
-    prevPost: "Previous post", nextPost: "Next post",
+    prevPost: "Previous post", nextPost: "Next post", prevPhoto: "Previous photo", nextPhoto: "Next photo",
     postNumber: (current, total) => `${current} / ${total}`,
     xSub: "Little updates", lineSub: "Everyday chat", telegramSub: "Say hello", wechatSub: "Let's be friends", qqSub: "Let's hang out", emailSub: "Work · hello",
     copied: "Copied", copy: "Copy ID", emailHeading: "Or send me a note",
@@ -164,6 +164,9 @@ function ContactTile({ icon: Icon, className, title, detail, sub, href, onClick,
 function PostCard({ post, feedSource, language, t, label }) {
   const isSnapshot = feedSource === "snapshot";
   const photos = Array.isArray(post.media) ? post.media.filter((media) => typeof media?.url === "string").slice(0, 4) : [];
+  const [photoIndex, setPhotoIndex] = useState(0);
+  const currentPhotoIndex = Math.min(photoIndex, photos.length - 1);
+  const currentPhoto = photos[currentPhotoIndex];
   return <article className="post-card">
     <div className="post-topline">
       <img className="post-avatar" src={post.avatar || `${ASSETS}/x-avatar.jpg`} alt="" />
@@ -173,9 +176,14 @@ function PostCard({ post, feedSource, language, t, label }) {
     </div>
     {post.text.trim() && <div className="post-text">{post.text.split(/(?:\r?\n){2,}/).map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div>}
     {photos.length > 0 && <div className={`post-media${photos.length === 1 ? " post-media-single" : ""}`}>
-      {photos.map((photo, index) => <a href={post.permalink} target="_blank" rel="noopener noreferrer" key={photo.url} aria-label={`${t.openPost} · ${t.postPhotoAlt(index + 1)}`}>
-        <img src={photo.url} alt={photo.alt || t.postPhotoAlt(index + 1)} loading="lazy" decoding="async" referrerPolicy="no-referrer" />
-      </a>)}
+      <a href={post.permalink} target="_blank" rel="noopener noreferrer" aria-label={`${t.openPost} · ${t.postPhotoAlt(currentPhotoIndex + 1)}`}>
+        <img src={currentPhoto.url} alt={currentPhoto.alt || t.postPhotoAlt(currentPhotoIndex + 1)} loading="lazy" decoding="async" referrerPolicy="no-referrer" />
+      </a>
+      <button className="post-media-nav post-media-prev" type="button" aria-label={t.prevPhoto}
+        onClick={() => setPhotoIndex((index) => (Math.min(index, photos.length - 1) - 1 + photos.length) % photos.length)}><FiChevronLeft aria-hidden="true" /></button>
+      <button className="post-media-nav post-media-next" type="button" aria-label={t.nextPhoto}
+        onClick={() => setPhotoIndex((index) => (Math.min(index, photos.length - 1) + 1) % photos.length)}><FiChevronRight aria-hidden="true" /></button>
+      <span className="post-media-count" aria-live="polite">{t.postNumber(currentPhotoIndex + 1, photos.length)}</span>
     </div>}
     {isSnapshot && <figure className="post-illustration">
       <img src={`${ASSETS}/post-seaside.png`} alt={t.imageAlt} />
@@ -236,10 +244,10 @@ export function App() {
         } else {
           setPinState((current) => current === "live" ? "stale" : current === "loading" ? "unavailable" : current);
         }
-        const originals = Array.isArray(feed.posts) ? feed.posts.filter((post) => isOriginalPost(post) && post.id !== nextPinned?.id).slice(0, 6) : [];
-        if ((feed.status === "ok" || feed.status === "stale") && originals.length > 0) {
+        const originals = Array.isArray(feed.posts) ? feed.posts.filter((post) => isOriginalPost(post) && post.id !== nextPinned?.id) : [];
+        if (feed.status === "ok" || feed.status === "stale") {
           setPosts(originals); setFeedSource(feed.status === "stale" ? "stale" : "live");
-          setPostIndex((index) => Math.min(index, originals.length - 1));
+          setPostIndex((index) => Math.min(index, Math.max(0, originals.length - 1)));
         } else {
           setPosts([SNAPSHOT]); setFeedSource("snapshot"); setPostIndex(0);
         }
@@ -299,12 +307,13 @@ export function App() {
   const postsSection = <div className="posts-section" id="posts">
     <section className="posts-group" aria-label={t.pinnedHeading}>
       <div className="section-heading"><PiPushPinFill aria-hidden="true" /><h2>{t.pinnedHeading}</h2></div>
-      {pinnedPost ? <PostCard post={pinnedPost} feedSource={pinState} language={language} t={t} label={pinState === "stale" ? t.pinnedStale : t.pinnedLive} />
+      {pinnedPost ? <PostCard key={pinnedPost.id} post={pinnedPost} feedSource={pinState} language={language} t={t} label={pinState === "stale" ? t.pinnedStale : t.pinnedLive} />
         : <div className="pinned-placeholder" role="status">{pinState === "loading" ? t.pinnedLoading : pinState === "none" ? t.pinnedNone : t.pinnedUnavailable}</div>}
     </section>
     <section className="posts-group" aria-label={t.postsHeading}>
       <div className="section-heading"><HiOutlineSparkles aria-hidden="true" /><h2>{t.postsHeading}</h2></div>
-      <PostCard post={posts[postIndex]} feedSource={feedSource} language={language} t={t} />
+      {posts.length > 0 ? <PostCard key={posts[postIndex].id} post={posts[postIndex]} feedSource={feedSource} language={language} t={t} />
+        : <div className="pinned-placeholder" role="status">{t.noPosts}</div>}
       {posts.length > 1 && <div className="post-controls">
         <button onClick={() => setPostIndex((postIndex - 1 + posts.length) % posts.length)} aria-label={t.prevPost}><FiChevronLeft /></button>
         <span>{t.postNumber(postIndex + 1, posts.length)}</span>

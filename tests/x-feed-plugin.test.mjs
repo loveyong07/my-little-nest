@@ -50,13 +50,13 @@ test("returns only original posts and caches successful X responses", async () =
     permalink: "https://x.com/loveyong07/status/1",
   }] });
   assert.equal(new URL(urls[1]).searchParams.get("exclude"), "replies,retweets");
-  assert.equal(new URL(urls[1]).searchParams.get("max_results"), "10");
+  assert.equal(new URL(urls[1]).searchParams.get("max_results"), "100");
   assert.equal((await feed()).posts.length, 1);
   assert.equal(urls.length, 2);
   time += 15 * 60 * 1000;
   assert.deepEqual((await feed()).posts, first.posts);
   assert.equal(urls.length, 4);
-  assert.equal(new URL(urls[3]).searchParams.get("since_id"), null);
+  assert.equal(new URL(urls[3]).searchParams.get("since_id"), "1");
 });
 
 test("loads photos from the post's media keys in attachment order", async () => {
@@ -119,7 +119,7 @@ test("keeps an image-only original post after removing its photo link", async ()
   assert.equal(result.posts[0].media.length, 1);
 });
 
-test("paginates only as needed and merges newer originals without re-reading the user", async () => {
+test("paginates the original feed and merges newer posts without a six-post cap", async () => {
   const urls = [];
   let time = 0;
   const feed = createXFeedService({
@@ -158,9 +158,141 @@ test("paginates only as needed and merges newer originals without re-reading the
   assert.equal(urls[2].searchParams.get("pagination_token"), "older");
   time += 15 * 60 * 1000;
   const updated = await feed();
-  assert.deepEqual(updated.posts.map((post) => post.id), ["31", "20", "19", "18", "17", "16"]);
+  assert.deepEqual(updated.posts.map((post) => post.id), ["31", "20", "19", "18", "17", "16", "15"]);
   assert.equal(urls[4].searchParams.get("since_id"), "30");
   assert.equal(urls.filter((url) => url.pathname.includes("/by/username/")).length, 2);
+});
+
+test("loads more than six originals across a 100-post page boundary", async () => {
+  const timelineUrls = [];
+  const feed = createXFeedService({
+    token: "private-test-token",
+    fetchImpl: async (url) => {
+      const parsed = new URL(url);
+      if (parsed.pathname.includes("/by/username/")) {
+        return new Response(JSON.stringify({ data: { id: "123", username: "loveyong07" } }), { status: 200 });
+      }
+      timelineUrls.push(parsed);
+      const older = parsed.searchParams.get("pagination_token") === "older";
+      const ids = older
+        ? [105, 104, 103, 102, 101]
+        : Array.from({ length: 100 }, (_, index) => 205 - index);
+      return new Response(JSON.stringify({
+        data: ids.map((id) => post(String(id), `Original ${id}`)),
+        meta: older ? {} : { newest_id: "205", next_token: "older" },
+      }), { status: 200 });
+    },
+  });
+
+  const result = await feed();
+  assert.equal(result.status, "ok");
+  assert.equal(result.posts.length, 105);
+  assert.equal(result.posts[0].id, "205");
+  assert.equal(result.posts.at(-1).id, "101");
+  assert.equal(timelineUrls.length, 2);
+  assert.ok(timelineUrls.every((url) => url.searchParams.get("max_results") === "100"));
+  assert.equal(timelineUrls[1].searchParams.get("pagination_token"), "older");
+});
+
+test("paginates every new-post page before merging with the full cache", async () => {
+  let time = 0;
+  const timelineUrls = [];
+  const feed = createXFeedService({
+    token: "private-test-token",
+    now: () => time,
+    fetchImpl: async (url) => {
+      const parsed = new URL(url);
+      if (parsed.pathname.includes("/by/username/")) {
+        return new Response(JSON.stringify({ data: { id: "123", username: "loveyong07" } }), { status: 200 });
+      }
+      timelineUrls.push(parsed);
+      if (parsed.searchParams.get("pagination_token") === "more-new") {
+        return new Response(JSON.stringify({ data: [post("102", "New 102"), post("101", "New 101")] }), { status: 200 });
+      }
+      if (parsed.searchParams.has("since_id")) {
+        return new Response(JSON.stringify({
+          data: [post("104", "New 104"), post("103", "New 103")],
+          meta: { newest_id: "104", next_token: "more-new" },
+        }), { status: 200 });
+      }
+      return new Response(JSON.stringify({
+        data: [post("100", "Saved 100"), post("99", "Saved 99"), post("98", "Saved 98")],
+        meta: { newest_id: "100" },
+      }), { status: 200 });
+    },
+  });
+
+  assert.deepEqual((await feed()).posts.map((item) => item.id), ["100", "99", "98"]);
+  time += 15 * 60 * 1000;
+  assert.deepEqual((await feed()).posts.map((item) => item.id), ["104", "103", "102", "101", "100", "99", "98"]);
+  assert.equal(timelineUrls.length, 3);
+  assert.ok(timelineUrls.slice(1).every((url) => url.searchParams.get("since_id") === "100"));
+  assert.equal(timelineUrls[2].searchParams.get("pagination_token"), "more-new");
+});
+
+test("reconciles deleted posts in a daily full refresh", async () => {
+  let time = 0;
+  const timelineUrls = [];
+  const feed = createXFeedService({
+    token: "private-test-token",
+    now: () => time,
+    fetchImpl: async (url) => {
+      const parsed = new URL(url);
+      if (parsed.pathname.includes("/by/username/")) {
+        return new Response(JSON.stringify({ data: { id: "123", username: "loveyong07" } }), { status: 200 });
+      }
+      timelineUrls.push(parsed);
+      const ids = time >= 24 * 60 * 60 * 1000 ? ["4", "3", "1"] :
+        parsed.searchParams.has("since_id") ? [] : ["3", "2", "1"];
+      return new Response(JSON.stringify({ data: ids.map((id) => post(id, `Original ${id}`)), meta: ids.length ? { newest_id: ids[0] } : {} }), { status: 200 });
+    },
+  });
+
+  assert.deepEqual((await feed()).posts.map((item) => item.id), ["3", "2", "1"]);
+  time += 15 * 60 * 1000;
+  assert.deepEqual((await feed()).posts.map((item) => item.id), ["3", "2", "1"]);
+  assert.equal(timelineUrls[1].searchParams.get("since_id"), "3");
+  time = 24 * 60 * 60 * 1000;
+  assert.deepEqual((await feed()).posts.map((item) => item.id), ["4", "3", "1"]);
+  assert.equal(timelineUrls[2].searchParams.has("since_id"), false);
+});
+
+test("keeps the complete previous feed when a daily reconciliation page fails", async () => {
+  let time = 0;
+  let failOlderPage = true;
+  const feed = createXFeedService({
+    token: "private-test-token",
+    now: () => time,
+    fetchImpl: async (url) => {
+      const parsed = new URL(url);
+      if (parsed.pathname.includes("/by/username/")) {
+        return new Response(JSON.stringify({ data: { id: "123", username: "loveyong07" } }), { status: 200 });
+      }
+      if (time === 0) {
+        return new Response(JSON.stringify({ data: [post("3", "Saved 3"), post("2", "Saved 2"), post("1", "Saved 1")], meta: { newest_id: "3" } }), { status: 200 });
+      }
+      if (parsed.searchParams.get("pagination_token") === "older") {
+        return failOlderPage
+          ? new Response("rate limited", { status: 429 })
+          : new Response(JSON.stringify({ data: [post("1", "Saved 1")] }), { status: 200 });
+      }
+      return new Response(JSON.stringify({
+        data: [post("4", "New 4"), post("3", "Saved 3")],
+        meta: { newest_id: "4", next_token: "older" },
+      }), { status: 200 });
+    },
+  });
+
+  assert.deepEqual((await feed()).posts.map((item) => item.id), ["3", "2", "1"]);
+  time = 24 * 60 * 60 * 1000;
+  const stale = await feed();
+  assert.equal(stale.status, "stale");
+  assert.deepEqual(stale.posts.map((item) => item.id), ["3", "2", "1"]);
+  failOlderPage = false;
+  time += 60 * 1000;
+  const recovered = await feed();
+  assert.equal(recovered.status, "ok");
+  assert.deepEqual(recovered.posts.map((item) => item.id), ["4", "3", "1"]);
 });
 
 test("keeps the last successful posts on a temporary X error and backs off", async () => {
@@ -211,7 +343,7 @@ test("does not call a feed live when requested post metadata is missing", async 
   assert.deepEqual(await feed(), { status: "unavailable", posts: [] });
 });
 
-test("loads the account's pinned reply with its photo and excludes it from six daily posts", async () => {
+test("loads the account's pinned reply with its photo and excludes it from daily posts", async () => {
   const urls = [];
   const feed = createXFeedService({
     token: "private-test-token",
@@ -284,7 +416,7 @@ test("refreshes switched and removed pins, and restores a former pin to the dail
   const removed = await feed();
   assert.equal(removed.pinnedPost, null);
   assert.equal(removed.pinnedStatus, "none");
-  assert.deepEqual(removed.posts.map((item) => item.id), ["10", "9", "8", "7", "6", "5"]);
+  assert.deepEqual(removed.posts.map((item) => item.id), ["10", "9", "8", "7", "6", "5", "4"]);
   assert.ok(timelineUrls.every((url) => !url.searchParams.has("since_id")));
 });
 

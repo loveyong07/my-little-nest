@@ -13,6 +13,8 @@ npm run dev:proxy -- --host 127.0.0.1 --port 4173 --strictPort
 
 **当前交接状态（2026-09-26）：** Vercel 根域名首页、`/posts`、`/contact` 当前均可通过 HTTPS 访问；线上 X 接口本轮实测 HTTP 200、`status: ok`、6 条。Vercel 已连接 GitHub 私有仓库 `fyh2026/my-little-nest` 的 `master` 分支；2026-09-26 自动部署实测通过：提交 `3e9bd1d` 推送后，GitHub 上 Vercel 状态变为 success，并生成生产部署 `CRNHUn4kSuk1RKrkykebDoB2oLtX`。`www.loveyong07.top` 已绑定到项目并设置 308 永久跳转到根域名；HTTPS/TLS 与 `/posts` 路径跳转复核通过。没有修改 DNS。详情见仓库内的 [网站设计进度交接.md](网站设计进度交接.md)。
 
+**当前代码：** 动态卡片增加帖内图片切换，日常帖取消六条限制；下文说明当前代码的行为。上方线上 6 条是改动前的验证记录。
+
 ## 域名与上线状态
 
 - **GitHub 仓库：** [fyh2026/my-little-nest](https://github.com/fyh2026/my-little-nest)，私有仓库，生产分支 `master`。`.env.local` 不在仓库中。
@@ -38,15 +40,15 @@ npm run dev:proxy -- --host 127.0.0.1 --port 4173 --strictPort
 
 若端口 4173 已有开发服务器，先在原终端停止并重启，让它读入新令牌。本机访问 X API 需要使用现有代理，所以上述命令使用 Node 24 的 `--use-env-proxy`；没有代理需求的环境仍可用 `npm run dev`。`status: ok` 且日常帖子条数大于 0 说明已取得原创帖；`pinnedStatus: ok` 且 `hasPinnedPost: True` 说明已取得当前置顶帖。`unavailable` 表示还需检查令牌、接口权限、余额或网络。不要把接口返回的完整帖子或令牌发到聊天中。
 
-接口 `/api/x-posts` 从 [X 官方用户查询](https://docs.x.com/x-api/users/get-user-by-username)读取 @loveyong07 的当前置顶帖 ID，再读取该帖的图文。动态页将它固定在上方的独立卡片；下方保留原来的六帖轮播，且不会重复展示置顶帖。置顶被更换或取消后，下一次成功同步会更新上方卡片；取不到置顶时显示明确的状态，不会把日期快照冒充置顶。日常帖从[用户时间线](https://docs.x.com/x-api/users/get-posts)读取，排除回复、转发和引用帖；最多按需读取四页、每页 10 条，显示最多 6 条原创帖。服务端缓存与用户资料缓存均为 15 分钟，后续请求在不需补位时使用 `since_id`；前端每 15 分钟请求一次，页面重新变为可见时也会检查。因此这是自动同步，不是秒级更新。暂时断线时显示上次成功同步的内容；日常帖首次失败仍回退到标明日期的公开快照。2026-09-26 本机真实 X 接口与浏览器复核：`status: ok`、`pinnedStatus: ok`、6 条日常帖，置顶与日常卡的图片均加载成功，置顶帖未在日常轮播中重复出现。
+接口 `/api/x-posts` 从 [X 官方用户查询](https://docs.x.com/x-api/users/get-user-by-username)读取 @loveyong07 的当前置顶帖 ID，再读取该帖的图文。动态页将它固定在上方的独立卡片；下方按同步到的原创帖数量轮播，且不会重复展示置顶帖。置顶被更换或取消后，下一次成功同步会更新上方卡片；取不到置顶时显示明确的状态，不会把日期快照冒充置顶。日常帖从[用户时间线](https://docs.x.com/x-api/users/get-posts)读取，排除回复、转发和引用帖；每页最多 100 条，逐页读取至结束，X 官方时间线最多提供最近 3,200 条帖子。服务端缓存与用户资料缓存均为 15 分钟，后续请求使用 `since_id` 增量读取新帖，每 24 小时完整核对一次以移除已删除的帖子；前端每 15 分钟请求一次，页面重新变为可见时也会检查。因此这是自动同步，不是秒级更新。暂时断线时显示上次成功同步的内容；日常帖首次失败仍回退到标明日期的公开快照。2026-09-26 本地新代码实测：`status: ok`、`pinnedStatus: ok`、22 条日常帖，置顶未重复出现。一次完整读取若涉及大量历史帖，会增加 X API 读取量和首次加载时间。
 
-同一帖子 API 请求还读取 `attachments.media_keys` 和媒体扩展，将照片与对应帖子关联。页面直接加载 X 图片 CDN 的 HTTPS 地址，不将图片文件永久保存到项目；无照片的帖子只显示文字，视频与 GIF 暂不展示封面。2026-09-26 实测六条帖子各带一张照片，浏览器已确认图片加载。日期快照继续使用明确标记的**网站装饰插画**，不冒充帖子配图。[X 媒体字段说明](https://docs.x.com/x-api/fundamentals/data-dictionary)。
+同一帖子 API 请求还读取 `attachments.media_keys` 和媒体扩展，将照片与对应帖子关联。置顶和日常卡片的图片区域都有左右切换按钮：多图帖子按附件顺序切换，单图帖子也显示按钮但按下后仍是同一张。页面直接加载 X 图片 CDN 的 HTTPS 地址，不将图片文件永久保存到项目；无照片的帖子只显示文字，视频与 GIF 暂不展示封面。2026-09-26 本地浏览器已验证单图按钮不切换、多图按钮可切换，切换日常帖后从第一张图片开始。日期快照继续使用明确标记的**网站装饰插画**，不冒充帖子配图。[X 媒体字段说明](https://docs.x.com/x-api/fundamentals/data-dictionary)。
 
 当帖子配图已经展示时，接口根据 X 返回的 `entities.urls` 只隐藏指向**本帖照片**的 `t.co` 短链；普通网页链接保留。2026-09-26 实测六条帖子中原有四条图片短链已从卡片正文消失，照片仍显示。
 
 **浏览网页本身不直接向 X 计费。** 访问 `/posts` 会请求网站自己的 `/api/x-posts`；只有服务端实际向 X API 取回资源时，才可能计入 X API 用量。X 当前实行按读取资源计费，普通帖子和用户资料有不同单价，同一资源在 UTC 日内通常去重但不是绝对保证。启用前请在[官方计费说明](https://docs.x.com/x-api/getting-started/pricing)和 Developer Console 核对现价、余额与消费上限；余额为零时，令牌生成后也可能无法取回帖子。不要开启自动充值，除非你明确希望这样做。
 
-本地 Vite 开发服务器、Vite 构建预览和 Sites Worker 都提供 `/api/x-posts`；Vercel 使用 `api/x-posts.js` 提供同一路径。Vercel Production 的 `X_BEARER_TOKEN` 已作为仅服务端可见的环境变量配置，线上接口已验证返回 `status: ok` 和 6 条帖子；令牌不会进入 GitHub 或前端构建文件。自定义域名 DNS 生效后仍需从公开域名复核页面及照片加载。函数内存缓存只在各运行实例有效，不是全站统一缓存；公开访问量增加时需重新评估 API 用量。
+本地 Vite 开发服务器、Vite 构建预览和 Sites Worker 都提供 `/api/x-posts`；Vercel 使用 `api/x-posts.js` 提供同一路径。Vercel Production 的 `X_BEARER_TOKEN` 已作为仅服务端可见的环境变量配置；上方 6 条帖子是旧版线上验证记录，令牌不会进入 GitHub 或前端构建文件。函数内存缓存只在各运行实例有效，不是全站统一缓存；公开访问量增加时需重新评估 API 用量。
 
 ## 后续修改
 

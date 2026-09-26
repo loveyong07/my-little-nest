@@ -1,11 +1,11 @@
 const USERNAME = "loveyong07";
 const X_API = "https://api.x.com/2";
 const CACHE_TTL_MS = 15 * 60 * 1000;
+const FULL_REFRESH_TTL_MS = 24 * 60 * 60 * 1000;
 const USER_CACHE_TTL_MS = CACHE_TTL_MS;
 const ERROR_RETRY_MS = 60 * 1000;
-const POST_LIMIT = 6;
-const PAGE_SIZE = 10;
-const MAX_PAGES = 4;
+const PAGE_SIZE = 100;
+const MAX_PAGES = 32;
 
 const unavailable = () => ({ status: "unavailable", posts: [] });
 const isId = (value) => /^\d+$/.test(String(value ?? ""));
@@ -126,6 +126,7 @@ export function createXFeedService({
   let userFieldMode = "tweet";
   let postFieldMode = "tweet";
   let cachedPinnedId = null;
+  let fullRefreshAt = null;
 
   async function getUser() {
     if (user && now() - userAt < USER_CACHE_TTL_MS) return user;
@@ -204,9 +205,11 @@ export function createXFeedService({
     const found = [];
     const seen = new Set();
     let nextToken = null;
-    let latestId = newestSeenId;
+    const fullRefresh = !cached || cachedPinnedId !== pinnedId || fullRefreshAt === null
+      || now() - fullRefreshAt >= FULL_REFRESH_TTL_MS || !newestSeenId;
+    let latestId = fullRefresh ? null : newestSeenId;
 
-    for (let page = 0; page < MAX_PAGES && found.length < POST_LIMIT; page += 1) {
+    for (let page = 0; page < MAX_PAGES; page += 1) {
       const url = new URL(`${X_API}/users/${author.id}/tweets`);
       url.searchParams.set("exclude", "replies,retweets");
       // The live X API accepted tweet.fields for this endpoint on 2026-09-26.
@@ -214,8 +217,7 @@ export function createXFeedService({
       url.searchParams.set("expansions", "attachments.media_keys");
       url.searchParams.set("media.fields", "media_key,type,url,alt_text,width,height");
       url.searchParams.set("max_results", String(PAGE_SIZE));
-      const retained = (cached?.posts ?? []).filter((post) => post.id !== pinnedId);
-      if (cachedPinnedId === pinnedId && retained.length >= POST_LIMIT && newestSeenId) {
+      if (!fullRefresh) {
         url.searchParams.set("since_id", newestSeenId);
       }
       if (nextToken) url.searchParams.set("pagination_token", nextToken);
@@ -246,27 +248,28 @@ export function createXFeedService({
         }
       }
       const tokenForNextPage = json.meta?.next_token;
-      if (!tokenForNextPage || tokenForNextPage === nextToken) break;
+      if (!tokenForNextPage) break;
+      if (tokenForNextPage === nextToken) throw new Error("X posts pagination did not advance");
+      if (page === MAX_PAGES - 1) throw new Error("X posts exceed the supported timeline window");
       nextToken = tokenForNextPage;
     }
 
     const unique = [];
     const ids = new Set();
-    for (const post of [...found, ...(cached?.posts ?? [])]) {
+    for (const post of [...found, ...(fullRefresh ? [] : cached?.posts ?? [])]) {
       if (post.id === pinnedId) continue;
       if (!ids.has(post.id)) {
         ids.add(post.id);
         unique.push(post);
       }
-      if (unique.length === POST_LIMIT) break;
     }
-    return { posts: unique, latestId };
+    return { posts: unique, latestId, fullRefresh };
   }
 
   async function fetchFeed() {
     const author = await getUser();
     const pinnedId = author.pinned_tweet_id ?? author.pinned_post_id ?? null;
-    const [{ posts, latestId }, pinned] = await Promise.all([
+    const [{ posts, latestId, fullRefresh }, pinned] = await Promise.all([
       fetchOriginalPosts(author, pinnedId),
       fetchPinnedPost(author, pinnedId),
     ]);
@@ -274,6 +277,7 @@ export function createXFeedService({
       result: { status: "ok", posts, pinnedPost: pinned.post, pinnedStatus: pinned.status },
       latestId,
       pinnedId,
+      fullRefresh,
     };
   }
 
@@ -284,11 +288,12 @@ export function createXFeedService({
     if (inFlight) return inFlight;
 
     inFlight = fetchFeed()
-      .then(({ result, latestId, pinnedId }) => {
+      .then(({ result, latestId, pinnedId, fullRefresh }) => {
         cached = result;
         cachedAt = now();
         newestSeenId = latestId;
         cachedPinnedId = pinnedId;
+        if (fullRefresh) fullRefreshAt = cachedAt;
         retryAt = 0;
         return result;
       })
