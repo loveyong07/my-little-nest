@@ -50,6 +50,8 @@ npm run dev:proxy -- --host 127.0.0.1 --port 4173 --strictPort
 
 本地 Vite 开发服务器、Vite 构建预览和 Sites Worker 都提供 `/api/x-posts`；Vercel 使用 `api/x-posts.js` 提供同一路径。Vercel Production 的 `X_BEARER_TOKEN` 已作为仅服务端可见的环境变量配置；上方 6 条帖子是旧版线上验证记录，令牌不会进入 GitHub 或前端构建文件。函数内存缓存只在各运行实例有效，不是全站统一缓存；公开访问量增加时需重新评估 API 用量。
 
+主页头像、X 显示名和用户名从 `/api/x-profile` 获取。服务端以账号的稳定用户 ID 查询，因此修改 X 用户名后仍能找到同一账号；资料缓存 15 分钟，网页每 15 分钟及重新可见时检查更新。X 接口不可用时，主页保留当前页面上次成功读取的资料；首次读取失败时使用项目内的头像和“初咏 / @loveyong07”作为后备。Vite、Sites Worker 和 Vercel 均提供这个接口。
+
 ## 后续修改
 
 - 个人简介和三语文案：`src/App.jsx` 中的 `copy`。

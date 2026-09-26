@@ -3,7 +3,7 @@ import test from "node:test";
 import { createXFeedService } from "../server/x-feed-plugin.mjs";
 
 const post = (id, text, extra = {}) => ({
-  id, text, author_id: "123", created_at: "2026-09-25T00:00:00Z", ...extra,
+  id, text, author_id: "2061726102180311040", created_at: "2026-09-25T00:00:00Z", ...extra,
 });
 
 test("returns unavailable without requesting X when no token is configured", async () => {
@@ -12,6 +12,33 @@ test("returns unavailable without requesting X when no token is configured", asy
     fetchImpl: () => { throw new Error("Should not request X"); },
   });
   assert.deepEqual(await feed(), { status: "unavailable", posts: [] });
+});
+
+test("syncs profile changes by stable user ID without fetching the timeline", async () => {
+  let calls = 0;
+  let time = 0;
+  const feed = createXFeedService({
+    token: "private-test-token",
+    now: () => time,
+    fetchImpl: async (url) => {
+      calls += 1;
+      assert.equal(new URL(url).pathname, "/2/users/2061726102180311040");
+      return new Response(JSON.stringify({ data: {
+        id: "2061726102180311040", username: calls === 1 ? "loveyong07" : "new_yong",
+        name: calls === 1 ? "初咏" : "新名字",
+        profile_image_url: "https://pbs.twimg.com/avatar.jpg",
+      } }), { status: 200 });
+    },
+  });
+  assert.deepEqual(await feed.getProfile(), { status: "ok", profile: {
+    name: "初咏", username: "loveyong07", avatar: "https://pbs.twimg.com/avatar.jpg",
+  } });
+  assert.equal(calls, 1);
+  time += 15 * 60 * 1000;
+  assert.deepEqual(await feed.getProfile(), { status: "ok", profile: {
+    name: "新名字", username: "new_yong", avatar: "https://pbs.twimg.com/avatar.jpg",
+  } });
+  assert.equal(calls, 2);
 });
 
 test("returns only original posts and caches successful X responses", async () => {
@@ -24,9 +51,9 @@ test("returns only original posts and caches successful X responses", async () =
       urls.push(String(url));
       assert.equal(options.headers.Authorization, "Bearer private-test-token");
       assert.equal(options.redirect, "error");
-      if (new URL(url).pathname.includes("/by/username/")) {
+      if (new URL(url).pathname.endsWith("/users/2061726102180311040")) {
         return new Response(JSON.stringify({ data: {
-          id: "123", username: "loveyong07", name: "初咏",
+          id: "2061726102180311040", username: "loveyong07", name: "初咏",
           profile_image_url: "https://pbs.twimg.com/avatar.jpg",
         } }), { status: 200 });
       }
@@ -64,8 +91,8 @@ test("loads photos from the post's media keys in attachment order", async () => 
   const feed = createXFeedService({
     token: "private-test-token",
     fetchImpl: async (url) => {
-      if (new URL(url).pathname.includes("/by/username/")) {
-        return new Response(JSON.stringify({ data: { id: "123", username: "loveyong07" } }), { status: 200 });
+      if (new URL(url).pathname.endsWith("/users/2061726102180311040")) {
+        return new Response(JSON.stringify({ data: { id: "2061726102180311040", username: "loveyong07" } }), { status: 200 });
       }
       postsUrl = new URL(url);
       return new Response(JSON.stringify({
@@ -102,8 +129,8 @@ test("loads photos from the post's media keys in attachment order", async () => 
 test("keeps an image-only original post after removing its photo link", async () => {
   const feed = createXFeedService({
     token: "private-test-token",
-    fetchImpl: async (url) => new URL(url).pathname.includes("/by/username/")
-      ? new Response(JSON.stringify({ data: { id: "123", username: "loveyong07" } }), { status: 200 })
+    fetchImpl: async (url) => new URL(url).pathname.endsWith("/users/2061726102180311040")
+      ? new Response(JSON.stringify({ data: { id: "2061726102180311040", username: "loveyong07" } }), { status: 200 })
       : new Response(JSON.stringify({
         data: [post("11", "https://t.co/photo", {
           attachments: { media_keys: ["photo"] },
@@ -128,8 +155,8 @@ test("paginates the original feed and merges newer posts without a six-post cap"
     fetchImpl: async (url) => {
       const parsed = new URL(url);
       urls.push(parsed);
-      if (parsed.pathname.includes("/by/username/")) {
-        return new Response(JSON.stringify({ data: { id: "123", username: "loveyong07", name: "初咏" } }), { status: 200 });
+      if (parsed.pathname.endsWith("/users/2061726102180311040")) {
+        return new Response(JSON.stringify({ data: { id: "2061726102180311040", username: "loveyong07", name: "初咏" } }), { status: 200 });
       }
       if (parsed.searchParams.get("since_id") === "30") {
         return new Response(JSON.stringify({ data: [
@@ -160,7 +187,7 @@ test("paginates the original feed and merges newer posts without a six-post cap"
   const updated = await feed();
   assert.deepEqual(updated.posts.map((post) => post.id), ["31", "20", "19", "18", "17", "16", "15"]);
   assert.equal(urls[4].searchParams.get("since_id"), "30");
-  assert.equal(urls.filter((url) => url.pathname.includes("/by/username/")).length, 2);
+  assert.equal(urls.filter((url) => url.pathname.endsWith("/users/2061726102180311040")).length, 2);
 });
 
 test("loads more than six originals across a 100-post page boundary", async () => {
@@ -169,8 +196,8 @@ test("loads more than six originals across a 100-post page boundary", async () =
     token: "private-test-token",
     fetchImpl: async (url) => {
       const parsed = new URL(url);
-      if (parsed.pathname.includes("/by/username/")) {
-        return new Response(JSON.stringify({ data: { id: "123", username: "loveyong07" } }), { status: 200 });
+      if (parsed.pathname.endsWith("/users/2061726102180311040")) {
+        return new Response(JSON.stringify({ data: { id: "2061726102180311040", username: "loveyong07" } }), { status: 200 });
       }
       timelineUrls.push(parsed);
       const older = parsed.searchParams.get("pagination_token") === "older";
@@ -202,8 +229,8 @@ test("paginates every new-post page before merging with the full cache", async (
     now: () => time,
     fetchImpl: async (url) => {
       const parsed = new URL(url);
-      if (parsed.pathname.includes("/by/username/")) {
-        return new Response(JSON.stringify({ data: { id: "123", username: "loveyong07" } }), { status: 200 });
+      if (parsed.pathname.endsWith("/users/2061726102180311040")) {
+        return new Response(JSON.stringify({ data: { id: "2061726102180311040", username: "loveyong07" } }), { status: 200 });
       }
       timelineUrls.push(parsed);
       if (parsed.searchParams.get("pagination_token") === "more-new") {
@@ -238,8 +265,8 @@ test("reconciles deleted posts in a daily full refresh", async () => {
     now: () => time,
     fetchImpl: async (url) => {
       const parsed = new URL(url);
-      if (parsed.pathname.includes("/by/username/")) {
-        return new Response(JSON.stringify({ data: { id: "123", username: "loveyong07" } }), { status: 200 });
+      if (parsed.pathname.endsWith("/users/2061726102180311040")) {
+        return new Response(JSON.stringify({ data: { id: "2061726102180311040", username: "loveyong07" } }), { status: 200 });
       }
       timelineUrls.push(parsed);
       const ids = time >= 24 * 60 * 60 * 1000 ? ["4", "3", "1"] :
@@ -265,8 +292,8 @@ test("keeps the complete previous feed when a daily reconciliation page fails", 
     now: () => time,
     fetchImpl: async (url) => {
       const parsed = new URL(url);
-      if (parsed.pathname.includes("/by/username/")) {
-        return new Response(JSON.stringify({ data: { id: "123", username: "loveyong07" } }), { status: 200 });
+      if (parsed.pathname.endsWith("/users/2061726102180311040")) {
+        return new Response(JSON.stringify({ data: { id: "2061726102180311040", username: "loveyong07" } }), { status: 200 });
       }
       if (time === 0) {
         return new Response(JSON.stringify({ data: [post("3", "Saved 3"), post("2", "Saved 2"), post("1", "Saved 1")], meta: { newest_id: "3" } }), { status: 200 });
@@ -303,8 +330,8 @@ test("keeps the last successful posts on a temporary X error and backs off", asy
     now: () => time,
     fetchImpl: async (url) => {
       calls += 1;
-      if (new URL(url).pathname.includes("/by/username/")) {
-        return new Response(JSON.stringify({ data: { id: "123", username: "loveyong07" } }), { status: 200 });
+      if (new URL(url).pathname.endsWith("/users/2061726102180311040")) {
+        return new Response(JSON.stringify({ data: { id: "2061726102180311040", username: "loveyong07" } }), { status: 200 });
       }
       if (calls === 2) {
         return new Response(JSON.stringify({ data: [post("1", "Saved")] }), { status: 200 });
@@ -336,8 +363,8 @@ test("hides X errors and credentials from the response", async () => {
 test("does not call a feed live when requested post metadata is missing", async () => {
   const feed = createXFeedService({
     token: "private-test-token",
-    fetchImpl: async (url) => new URL(url).pathname.includes("/by/username/")
-      ? new Response(JSON.stringify({ data: { id: "123", username: "loveyong07" } }), { status: 200 })
+    fetchImpl: async (url) => new URL(url).pathname.endsWith("/users/2061726102180311040")
+      ? new Response(JSON.stringify({ data: { id: "2061726102180311040", username: "loveyong07" } }), { status: 200 })
       : new Response(JSON.stringify({ data: [{ id: "1", text: "Maybe a quote" }] }), { status: 200 }),
   });
   assert.deepEqual(await feed(), { status: "unavailable", posts: [] });
@@ -350,9 +377,9 @@ test("loads the account's pinned reply with its photo and excludes it from daily
     fetchImpl: async (url) => {
       const parsed = new URL(url);
       urls.push(parsed);
-      if (parsed.pathname.includes("/by/username/")) {
+      if (parsed.pathname.endsWith("/users/2061726102180311040")) {
         return new Response(JSON.stringify({ data: {
-          id: "123", username: "loveyong07", name: "初咏", pinned_tweet_id: "8",
+          id: "2061726102180311040", username: "loveyong07", name: "初咏", pinned_tweet_id: "8",
         } }), { status: 200 });
       }
       if (parsed.pathname === "/2/tweets/8") {
@@ -391,9 +418,9 @@ test("refreshes switched and removed pins, and restores a former pin to the dail
     now: () => time,
     fetchImpl: async (url) => {
       const parsed = new URL(url);
-      if (parsed.pathname.includes("/by/username/")) {
+      if (parsed.pathname.endsWith("/users/2061726102180311040")) {
         return new Response(JSON.stringify({ data: {
-          id: "123", username: "loveyong07", ...(pinnedId ? { pinned_tweet_id: pinnedId } : {}),
+          id: "2061726102180311040", username: "loveyong07", ...(pinnedId ? { pinned_tweet_id: pinnedId } : {}),
         } }), { status: 200 });
       }
       if (parsed.pathname.startsWith("/2/tweets/")) {
@@ -429,8 +456,8 @@ test("uses a stale pin only for the same pinned ID when its detail lookup fails"
     now: () => time,
     fetchImpl: async (url) => {
       const parsed = new URL(url);
-      if (parsed.pathname.includes("/by/username/")) {
-        return new Response(JSON.stringify({ data: { id: "123", username: "loveyong07", pinned_tweet_id: pinnedId } }), { status: 200 });
+      if (parsed.pathname.endsWith("/users/2061726102180311040")) {
+        return new Response(JSON.stringify({ data: { id: "2061726102180311040", username: "loveyong07", pinned_tweet_id: pinnedId } }), { status: 200 });
       }
       if (parsed.pathname.startsWith("/2/tweets/")) {
         return failPinned
@@ -461,12 +488,12 @@ test("falls back to the renamed pin expansion when the older field is rejected",
     token: "private-test-token",
     fetchImpl: async (url) => {
       const parsed = new URL(url);
-      if (parsed.pathname.includes("/by/username/")) {
+      if (parsed.pathname.endsWith("/users/2061726102180311040")) {
         userUrls.push(parsed);
         return parsed.searchParams.get("user.fields").includes("pinned_tweet_id")
           ? new Response("unsupported field", { status: 400 })
           : new Response(JSON.stringify({
-            data: { id: "123", username: "loveyong07", pinned_post_id: "8" },
+            data: { id: "2061726102180311040", username: "loveyong07", pinned_post_id: "8" },
             errors: [{ title: "Not Found Error", parameter: "pinned_post_id" }],
           }), { status: 200 });
       }
@@ -491,12 +518,12 @@ test("accepts a pin that is returned only through the user lookup expansion", as
     token: "private-test-token",
     fetchImpl: async (url) => {
       const parsed = new URL(url);
-      if (parsed.pathname.includes("/by/username/")) {
+      if (parsed.pathname.endsWith("/users/2061726102180311040")) {
         if (parsed.searchParams.get("user.fields").includes("pinned_tweet_id")) {
           return new Response("unsupported field", { status: 400 });
         }
         return new Response(JSON.stringify({
-          data: { id: "123", username: "loveyong07" },
+          data: { id: "2061726102180311040", username: "loveyong07" },
           includes: { posts: [{ id: "8", text: "Expanded pin" }] },
         }), { status: 200 });
       }
@@ -516,15 +543,15 @@ test("retries pinned post detail with current post.fields after a rejected tweet
     token: "private-test-token",
     fetchImpl: async (url) => {
       const parsed = new URL(url);
-      if (parsed.pathname.includes("/by/username/")) {
-        return new Response(JSON.stringify({ data: { id: "123", username: "loveyong07", pinned_tweet_id: "8" } }), { status: 200 });
+      if (parsed.pathname.endsWith("/users/2061726102180311040")) {
+        return new Response(JSON.stringify({ data: { id: "2061726102180311040", username: "loveyong07", pinned_tweet_id: "8" } }), { status: 200 });
       }
       if (parsed.pathname === "/2/tweets/8") {
         detailUrls.push(parsed);
         return parsed.searchParams.has("tweet.fields")
           ? new Response("unsupported field", { status: 400 })
           : new Response(JSON.stringify({ data: post("8", "Current fields", {
-            author_id: parsed.searchParams.get("expansions")?.split(",").includes("author_id") ? "123" : undefined,
+            author_id: parsed.searchParams.get("expansions")?.split(",").includes("author_id") ? "2061726102180311040" : undefined,
           }) }), { status: 200 });
       }
       return new Response(JSON.stringify({ data: [post("9", "Daily")] }), { status: 200 });
@@ -545,8 +572,8 @@ test("does not display a pin whose detail response belongs to another author", a
     token: "private-test-token",
     fetchImpl: async (url) => {
       const parsed = new URL(url);
-      if (parsed.pathname.includes("/by/username/")) {
-        return new Response(JSON.stringify({ data: { id: "123", username: "loveyong07", pinned_tweet_id: "8" } }), { status: 200 });
+      if (parsed.pathname.endsWith("/users/2061726102180311040")) {
+        return new Response(JSON.stringify({ data: { id: "2061726102180311040", username: "loveyong07", pinned_tweet_id: "8" } }), { status: 200 });
       }
       if (parsed.pathname === "/2/tweets/8") {
         return new Response(JSON.stringify({ data: post("8", "Someone else's post", { author_id: "456" }) }), { status: 200 });
@@ -568,9 +595,9 @@ test("keeps the daily feed live when user lookup has a partial pin expansion err
     fetchImpl: async (url) => {
       const parsed = new URL(url);
       urls.push(parsed);
-      if (parsed.pathname.includes("/by/username/")) {
+      if (parsed.pathname.endsWith("/users/2061726102180311040")) {
         return new Response(JSON.stringify({
-          data: { id: "123", username: "loveyong07", pinned_tweet_id: "8" },
+          data: { id: "2061726102180311040", username: "loveyong07", pinned_tweet_id: "8" },
           errors: [{ title: "Not Found Error", parameter: "pinned_tweet_id" }],
         }), { status: 200 });
       }
