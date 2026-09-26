@@ -1,5 +1,12 @@
 # Pinned X post QA — 2026-09-26
 
+## What QA screenshots are for
+
+- Screenshots preserve a rendered page at a named route, viewport, and UI state. They help a person review layout, responsive behavior, and visual regressions, and give the user a concrete image to mark up.
+- A screenshot is visual evidence only. It does not test API results, HTTP security headers, authorization, or whether the live site deployed successfully; those need separate checks.
+- Vercel publishes `dist/client`, not the project `qa/` folder. A screenshot reaches GitHub only if it is explicitly added and committed; it is not part of the running site by default.
+- The five 2026-09-26 untracked captures (`pinned-post` desktop/mobile, daily-scroll, photo-carousel, and production-daily) are only for human review of the Posts page. No app code, test, or build consumes them. The pinned captures may show personal post media, so they remain local and were not committed or deployed; keep them only while they are useful for visual feedback.
+
 result for the **local** site with the existing X token: passed
 
 - `/api/x-posts` returned `status: ok`, `pinnedStatus: ok`, one pinned post, and six daily posts. The pinned post ID did not appear in the daily list. No token or full post body was recorded in this QA note.
