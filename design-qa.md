@@ -16,7 +16,7 @@ result for observed **local** sync path: passed
 - Earlier on 2026-09-26, the local `/api/x-posts` endpoint returned `status: ok` with 6 original posts from `@loveyong07`; each had one photo. The Codex in-app browser displayed the first real photo in the `/posts` card.
 - After removing photo short links, the live local response still returned 6 posts with photos and had no `t.co` links in their displayed text. Four posts had contained a trailing photo link before that change. The browser screenshot showed the photo and clean text together. Ordinary links are preserved by the matching rule and its unit test.
 - During the handoff update, `npm test` passed 14/14 and `npm run build` passed. No additional paid X API request was made during that documentation pass.
-- This is not a public deployment or a full visual regression pass for the new photo layout. The motion screenshots below predate the media changes; no new desktop/tablet/phone QA image set has been saved for the photo cards. Online secret binding, online image loading, and real traffic costs remain unverified.
+- This earlier local sync pass was not a public deployment or a full visual regression pass. The motion screenshots below predate the media changes; the later mock-data desktop and phone photo-layout captures are recorded above, while tablet and real online photo captures are still missing. Sites has since published version 1 and stored the server-side X secret. The last live access check hit Cloudflare 403 before the Worker, so the online feed, online image loading, and real traffic costs remain unverified.
 
 ---
 
