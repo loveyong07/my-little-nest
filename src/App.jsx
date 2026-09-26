@@ -19,7 +19,7 @@ const copy = {
   zh: {
     homeLabel: "首页区域", homeLinkLabel: "Welcome to my little nest！· 返回首页",
     navLabel: "主导航", languageLabel: "语言", openMenu: "打开菜单", closeMenu: "关闭菜单",
-    profileAlt: "初咏的 X 头像", emailDetail: "3 个邮箱",
+    profileAlt: "初咏的 X 头像",
     nav: ["首页", "动态", "联系"], pageTitle: { posts: "动态", contact: "联系" },
     heroScript: "愿好的相遇\n让平凡的日子\n也闪闪发光",
     name: "初咏",
@@ -35,14 +35,14 @@ const copy = {
     prevPost: "上一条动态", nextPost: "下一条动态", prevPhoto: "上一张图片", nextPhoto: "下一张图片",
     postNumber: (current, total) => `${current} / ${total}`,
     xSub: "随时分享", lineSub: "日常聊天", telegramSub: "欢迎私信", wechatSub: "好友交流", qqSub: "一起玩耍", emailSub: "商务/合作/来信",
-    copied: "已复制", copy: "点击复制账号", emailHeading: "也可以给我写信",
+    copied: "已复制", copy: "点击复制账号", emailHeading: "期待你的来信",
     footerScript: "Thank you\nfor being here ♡", footerNote: "相遇是故事的开始，\n愿我们都被温柔以待。",
     footerSmall: "Different People　/　Same Beautiful Sky　/　Always Here for You",
   },
   ja: {
     homeLabel: "ホーム", homeLinkLabel: "Welcome to my little nest！· ホーム",
     navLabel: "メインナビゲーション", languageLabel: "言語", openMenu: "メニューを開く", closeMenu: "メニューを閉じる",
-    profileAlt: "初咏の X プロフィール画像", emailDetail: "3つのメール",
+    profileAlt: "初咏の X プロフィール画像",
     nav: ["ホーム", "投稿", "連絡先"], pageTitle: { posts: "投稿", contact: "連絡先" },
     heroScript: "素敵な出会いが\n何気ない日々を\n輝かせますように",
     name: "初咏",
@@ -58,14 +58,14 @@ const copy = {
     prevPost: "前の投稿", nextPost: "次の投稿", prevPhoto: "前の画像", nextPhoto: "次の画像",
     postNumber: (current, total) => `${current} / ${total}`,
     xSub: "日々のこと", lineSub: "気軽にお話", telegramSub: "メッセージ歓迎", wechatSub: "友達になろう", qqSub: "一緒に遊ぼう", emailSub: "お仕事・お便り",
-    copied: "コピーしました", copy: "ID をコピー", emailHeading: "メールはこちら",
+    copied: "コピーしました", copy: "ID をコピー", emailHeading: "お便りをお待ちしています",
     footerScript: "Thank you\nfor being here ♡", footerNote: "出会いは物語の始まり。\n優しい日々になりますように。",
     footerSmall: "Different People　/　Same Beautiful Sky　/　Always Here for You",
   },
   en: {
     homeLabel: "Home", homeLinkLabel: "Welcome to my little nest！ · Home",
     navLabel: "Main navigation", languageLabel: "Language", openMenu: "Open menu", closeMenu: "Close menu",
-    profileAlt: "初咏's X profile photo", emailDetail: "3 inboxes",
+    profileAlt: "初咏's X profile photo",
     nav: ["Home", "Posts", "Contact"], pageTitle: { posts: "Posts", contact: "Contact" },
     heroScript: "May lovely meetings\nmake ordinary days\nshine a little brighter",
     name: "初咏",
@@ -81,7 +81,7 @@ const copy = {
     prevPost: "Previous post", nextPost: "Next post", prevPhoto: "Previous photo", nextPhoto: "Next photo",
     postNumber: (current, total) => `${current} / ${total}`,
     xSub: "Little updates", lineSub: "Everyday chat", telegramSub: "Say hello", wechatSub: "Let's be friends", qqSub: "Let's hang out", emailSub: "Work · hello",
-    copied: "Copied", copy: "Copy ID", emailHeading: "Or send me a note",
+    copied: "Copied", copy: "Copy ID", emailHeading: "Looking forward to your letter",
     footerScript: "Thank you\nfor being here ♡", footerNote: "Every meeting begins a story.\nMay life be gentle to us all.",
     footerSmall: "Different People　/　Same Beautiful Sky　/　Always Here for You",
   },
@@ -148,15 +148,15 @@ function formatPostDate(value, language) {
   return `${dateText} ${timeText}`;
 }
 
-function ContactTile({ icon: Icon, className, title, detail, sub, href, onClick, copyLabel, copied }) {
+function ContactTile({ icon: Icon, className, title, sub, href, onClick, copyLabel, copied }) {
   const Tag = href ? "a" : "button";
   return <Tag className={`contact-tile ${className}`} href={href}
     target={href?.startsWith("https://") ? "_blank" : undefined}
     rel={href?.startsWith("https://") ? "noopener noreferrer" : undefined}
     onClick={onClick} type={href ? undefined : "button"} title={copyLabel}
-    aria-label={copyLabel || `${title}: ${detail}`}>
+    aria-label={copyLabel || title}>
     <span className="contact-icon" aria-hidden="true"><Icon /></span>
-    <strong>{title}</strong><span className="contact-detail">{detail}</span>
+    <strong>{title}</strong>
     <small aria-live={onClick ? "polite" : undefined} aria-atomic={onClick ? "true" : undefined}>{copied ? copied : sub}</small>
   </Tag>;
 }
@@ -282,12 +282,12 @@ export function App() {
   }
 
   const socials = [
-    { icon: FaXTwitter, className: "x", title: "X", detail: "@" + HANDLE, sub: t.xSub, href: "https://x.com/loveyong07" },
-    { icon: FaLine, className: "line", title: "LINE", detail: "LINE", sub: t.lineSub, href: "https://line.me/ti/p/LSaMZQcRLu" },
-    { icon: FaTelegram, className: "telegram", title: "Telegram", detail: "@" + HANDLE, sub: t.telegramSub, href: "https://t.me/loveyong07" },
-    { icon: FaWeixin, className: "wechat", title: language === "zh" ? "微信" : "WeChat", detail: HANDLE, sub: t.wechatSub, onClick: () => copyId(HANDLE), copyLabel: t.copy + ": " + HANDLE, copied: copiedId === HANDLE ? t.copied : undefined },
-    { icon: FaQq, className: "qq", title: "QQ", detail: "3437702786", sub: t.qqSub, onClick: () => copyId("3437702786"), copyLabel: t.copy + ": 3437702786", copied: copiedId === "3437702786" ? t.copied : undefined },
-    { icon: FaEnvelope, className: "email", title: language === "zh" ? "邮箱" : language === "ja" ? "メール" : "Email", detail: t.emailDetail, sub: t.emailSub, href: "mailto:fyh20071004@gmail.com" },
+    { icon: FaXTwitter, className: "x", title: "X", sub: t.xSub, href: "https://x.com/loveyong07" },
+    { icon: FaLine, className: "line", title: "LINE", sub: t.lineSub, href: "https://line.me/ti/p/LSaMZQcRLu" },
+    { icon: FaTelegram, className: "telegram", title: "Telegram", sub: t.telegramSub, href: "https://t.me/loveyong07" },
+    { icon: FaWeixin, className: "wechat", title: language === "zh" ? "微信" : "WeChat", sub: t.wechatSub, onClick: () => copyId(HANDLE), copyLabel: t.copy + ": " + HANDLE, copied: copiedId === HANDLE ? t.copied : undefined },
+    { icon: FaQq, className: "qq", title: "QQ", sub: t.qqSub, onClick: () => copyId("3437702786"), copyLabel: t.copy + ": 3437702786", copied: copiedId === "3437702786" ? t.copied : undefined },
+    { icon: FaEnvelope, className: "email", title: language === "zh" ? "邮箱" : language === "ja" ? "メール" : "Email", sub: t.emailSub, href: "mailto:fyh20071004@gmail.com" },
   ];
 
   const header = <header className="site-header">

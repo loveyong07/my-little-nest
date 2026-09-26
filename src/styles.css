@@ -368,8 +368,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid #ff7ea0; outline-offs
 .contact-tile.qq .contact-icon svg { background: #fff; color: #151d2d; }
 .contact-tile.email .contact-icon svg { background: #248fdd; }
 .contact-tile strong { font-size: 14px; font-weight: 700; line-height: 1.45; }
-.contact-detail { min-height: 20px; color: #4e6b92; font: 13px/1.4 Arial, sans-serif; overflow-wrap: anywhere; }
-.contact-tile small { color: #788eaf; font-size: 12px; line-height: 1.4; }
+.contact-tile small { margin-top: 2px; color: #788eaf; font-size: 12px; line-height: 1.4; }
 .email-row { display: flex; align-items: baseline; gap: 16px; margin: 19px 2px 0; padding: 9px 0 0; border-top: 1px solid #e1edfb; font-size: 12px; }
 .email-row > span { display: inline-flex; align-items: center; gap: 5px; flex: 0 0 auto; color: #3975b5; font-weight: 700; }
 .email-row > div { display: flex; flex-wrap: wrap; gap: 5px 13px; }
@@ -414,9 +413,13 @@ button:focus-visible, a:focus-visible { outline: 3px solid #ff7ea0; outline-offs
   gap: 0;
 }
 .route-panel-posts {
-  background: #fbfdfff2;
+  background: #fbfdff99;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
+}
+.route-panel-posts .post-card,
+.route-panel-posts .pinned-placeholder {
+  background: #fbfdff99;
 }
 .route-panel .section-heading h2 { font-size: 20px; }
 .route-panel-posts .posts-group { max-width: 850px; margin-inline: auto; }
@@ -551,7 +554,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid #ff7ea0; outline-offs
   .contact-icon { width: 59px; height: 59px; }
   .contact-icon svg { width: 46px; height: 46px; }
   .contact-tile strong { font-size: 13px; }
-  .contact-detail, .contact-tile small { font-size: 11px; }
+  .contact-tile small { font-size: 11px; }
   .footer-note { font-size: 11px; }
   .footer-flower { width: 35px; height: 35px; }
 }
