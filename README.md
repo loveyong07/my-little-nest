@@ -11,14 +11,14 @@ npm run dev:proxy -- --host 127.0.0.1 --port 4173 --strictPort
 
 打开 `http://127.0.0.1:4173/`。网站目前提供中文、日文、英文切换和可点击的联系方式。微信与 QQ 按钮会复制账号；三个邮箱可通过 `mailto:` 打开邮件应用。
 
-**当前交接状态（2026-09-26）：** GitHub 私有仓库已推送，Vercel 生产部署已就绪，`/api/x-posts` 在线返回 6 条原创帖。自定义域名 `loveyong07.top` 已添加到 Vercel，但 DNS 尚未指向 Vercel；GitHub 自动部署集成也还需授权。没有修改 DNS。Cloudflare 不用于部署。新窗口先读父目录的 [网站设计进度交接.md](../网站设计进度交接.md)。
+**当前交接状态（2026-09-26）：** GitHub 私有仓库已推送，Vercel 生产部署已就绪，`/api/x-posts` 曾验证返回 6 条原创帖。用户报告已修改 `loveyong07.top` 的 DNS；本次复核仍未通过，详情见下文。GitHub 自动部署集成还需授权。没有由本助手修改 DNS。新窗口先读父目录的 [网站设计进度交接.md](../网站设计进度交接.md)。
 
 ## 域名与上线状态
 
 - **GitHub 仓库：** [fyh2026/my-little-nest](https://github.com/fyh2026/my-little-nest)，私有仓库，项目已推送到 `master`。`.env.local` 不在仓库中。
 - **Vercel 生产部署：** [打开站点](https://my-little-nest-82txmckrm-fyh2026s-projects.vercel.app) · [部署详情](https://vercel.com/fyh2026s-projects/my-little-nest/Bhp5oryWd2hpALbE2TFbjxTgSBhq)。状态为 Ready；首页、`/posts`、`/contact` 均已返回网站页面，线上 `/api/x-posts` 返回 `status: ok` 和 6 条帖子。`.vercel.app` 地址受 Vercel 登录保护；域名 DNS 生效后，`loveyong07.top` 按项目设置可公开访问。
 - **GitHub 自动部署：** 仓库尚未连接到 Vercel。需要在 [Vercel 项目 Git 设置](https://vercel.com/fyh2026s-projects/my-little-nest/settings/git) 授权 Vercel GitHub App 访问该私有仓库；完成后 GitHub 推送才会自动部署。
-- **自定义域名：** `loveyong07.top` 已添加到 Vercel 项目，但验证结果为 DNS 配置无效。最新 `vercel domains inspect loveyong07.top` 建议根域名 `A @ → 76.76.21.21`；当前检测到的名称服务器仍是 `conrad.ns.cloudflare.com` 和 `rosalie.ns.cloudflare.com`。用户不希望使用 Cloudflare，因此若要彻底移除 Cloudflare DNS，可在域名注册商处切换为 `ns1.vercel-dns.com`、`ns2.vercel-dns.com`；切换前先迁移已有邮箱等 DNS 记录。没有更改 DNS。
+- **自定义域名：** 用户报告已修改 DNS。2026-09-26 本次复核时，Vercel `domains verify` 仍为 `invalid_configuration`，检测到的名称服务器为 `conrad.ns.cloudflare.com`、`rosalie.ns.cloudflare.com`，且当前 A/CNAME 记录列表为空；公共解析器 1.1.1.1、8.8.8.8 也未返回根域名 A 记录，`www.loveyong07.top` 不存在，HTTPS 请求未成功。`domains inspect` 建议 `A @ → 76.76.21.21`；项目级 `domains verify` 又给出 `CNAME @ → c9e7548748e901a2.vercel-dns-017.com.`（关闭代理）的建议。下一窗口需先确认用户实际修改了哪条记录、修改在哪个 DNS 控制面板，并以 Vercel Domains 页面当前建议为准。DNS 记录只有在当前权威 DNS 服务处修改才会生效；没有由本助手修改 DNS。
 - **兼容文件：** Cloudflare Workers 配置已撤回，项目不使用 Cloudflare 部署。`.openai/hosting.json`、`worker/index.js`、`scripts/prepare-sites-build.mjs` 和 Sites 测试文件仍保留，以遵循项目已有的兼容性约定。
 
 ## X 原创帖同步
