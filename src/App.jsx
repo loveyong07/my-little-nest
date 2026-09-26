@@ -31,8 +31,8 @@ const copy = {
     feedLive: "X 原创帖 · 自动同步", feedStale: "暂时无法更新 · 显示上次同步", feedSnapshot: "公开帖快照 · 2026-09-25",
     pinnedLive: "X 置顶帖 · 自动同步", pinnedStale: "暂时无法更新 · 显示上次置顶",
     pinnedLoading: "正在同步 X 置顶帖…", pinnedNone: "X 当前没有置顶帖子", pinnedUnavailable: "置顶帖暂时无法同步", noPosts: "X 当前还没有原创帖子",
-    openPost: "在 X 查看原帖", artLabel: "网站装饰插画 · 非帖子图片", postPhotoAlt: (number) => `帖子图片 ${number}`,
-    photoUnavailable: "图片暂时无法加载",
+    openPost: "在 X 查看原帖", artLabel: "网站装饰插画 · 非帖子图片", postPhotoAlt: (number) => `帖子图片 ${number}`, postVideoAlt: "X 帖子视频",
+    photoUnavailable: "图片暂时无法加载", videoUnavailable: "视频暂时无法加载",
     imageAlt: "蓝天、海面与白色建筑的二次元风格装饰插画",
     prevPost: "上一条动态", nextPost: "下一条动态", prevPhoto: "上一张图片", nextPhoto: "下一张图片",
     postNumber: (current, total) => `${current} / ${total}`,
@@ -55,8 +55,8 @@ const copy = {
     feedLive: "X オリジナル投稿 · 自動更新", feedStale: "一時的に更新できません · 前回の投稿を表示", feedSnapshot: "公開投稿の記録 · 2026-09-25",
     pinnedLive: "X の固定した投稿 · 自動更新", pinnedStale: "一時的に更新できません · 前回の固定投稿を表示",
     pinnedLoading: "X の固定した投稿を読み込み中…", pinnedNone: "現在、固定した投稿はありません", pinnedUnavailable: "固定した投稿を読み込めません", noPosts: "オリジナルの投稿はまだありません",
-    openPost: "X で原文を見る", artLabel: "サイト用イラスト · 投稿画像ではありません", postPhotoAlt: (number) => `投稿画像 ${number}`,
-    photoUnavailable: "画像を読み込めませんでした",
+    openPost: "X で原文を見る", artLabel: "サイト用イラスト · 投稿画像ではありません", postPhotoAlt: (number) => `投稿画像 ${number}`, postVideoAlt: "X の投稿動画",
+    photoUnavailable: "画像を読み込めませんでした", videoUnavailable: "動画を読み込めませんでした",
     imageAlt: "青空と海、白い建物のアニメ風イラスト",
     prevPost: "前の投稿", nextPost: "次の投稿", prevPhoto: "前の画像", nextPhoto: "次の画像",
     postNumber: (current, total) => `${current} / ${total}`,
@@ -79,8 +79,8 @@ const copy = {
     feedLive: "Original X posts · auto updated", feedStale: "Update unavailable · showing last sync", feedSnapshot: "Public post snapshot · 2026-09-25",
     pinnedLive: "Pinned on X · auto updated", pinnedStale: "Update unavailable · showing last pinned post",
     pinnedLoading: "Syncing pinned post from X…", pinnedNone: "No post is currently pinned on X", pinnedUnavailable: "Pinned post is temporarily unavailable", noPosts: "No original X posts yet",
-    openPost: "View original post on X", artLabel: "Site illustration · not an image from this post", postPhotoAlt: (number) => `Post photo ${number}`,
-    photoUnavailable: "Image is temporarily unavailable",
+    openPost: "View original post on X", artLabel: "Site illustration · not an image from this post", postPhotoAlt: (number) => `Post photo ${number}`, postVideoAlt: "Video from this X post",
+    photoUnavailable: "Image is temporarily unavailable", videoUnavailable: "Video is temporarily unavailable",
     imageAlt: "Anime style decorative illustration of a blue sky, sea, and white buildings",
     prevPost: "Previous post", nextPost: "Next post", prevPhoto: "Previous photo", nextPhoto: "Next photo",
     postNumber: (current, total) => `${current} / ${total}`,
@@ -99,9 +99,22 @@ function xMediaSrc(value) {
   if (typeof value !== "string") return null;
   try {
     const url = new URL(value);
-    const allowedPath = url.pathname.startsWith("/media/") || url.pathname.startsWith("/profile_images/");
+    const allowedPath = url.pathname.startsWith("/media/") || url.pathname.startsWith("/profile_images/")
+      || url.pathname.startsWith("/ext_tw_video_thumb/");
     if (url.protocol !== "https:" || url.hostname !== "pbs.twimg.com" || !allowedPath) return null;
     return `/api/x-media?url=${encodeURIComponent(url.href)}`;
+  } catch {
+    return null;
+  }
+}
+
+function xVideoSrc(value) {
+  if (typeof value !== "string") return null;
+  try {
+    const url = new URL(value);
+    const allowedPath = ["/ext_tw_video/", "/amplify_video/", "/tweet_video/"].some((prefix) => url.pathname.startsWith(prefix));
+    if (url.protocol !== "https:" || url.hostname !== "video.twimg.com" || url.username || url.password || url.port || !allowedPath) return null;
+    return `/api/x-video?url=${encodeURIComponent(url.href)}`;
   } catch {
     return null;
   }
@@ -191,13 +204,21 @@ function ContactTile({ icon: Icon, className, title, sub, href, onClick, copyLab
 function PostCard({ post, feedSource, language, t, label, profile }) {
   const isSnapshot = feedSource === "snapshot";
   const photos = Array.isArray(post.media)
-    ? post.media.filter((media) => xMediaSrc(media?.url)).map((media) => ({ ...media, src: xMediaSrc(media.url) })).slice(0, 4)
+    ? post.media.filter((media) => (media?.type ?? "photo") === "photo" && xMediaSrc(media?.url)).map((media) => ({ ...media, src: xMediaSrc(media.url) })).slice(0, 4)
     : [];
+  const video = Array.isArray(post.media)
+    ? post.media.find((media) => media?.type === "video" && xVideoSrc(media?.url))
+    : null;
+  const videoSrc = video ? xVideoSrc(video.url) : null;
   const [photoIndex, setPhotoIndex] = useState(0);
   const [imageUnavailable, setImageUnavailable] = useState(false);
+  const [videoUnavailable, setVideoUnavailable] = useState(false);
   const currentPhotoIndex = Math.min(photoIndex, photos.length - 1);
   const currentPhoto = photos[currentPhotoIndex];
-  useEffect(() => setImageUnavailable(false), [currentPhoto?.url]);
+  useEffect(() => {
+    setImageUnavailable(false);
+    setVideoUnavailable(false);
+  }, [currentPhoto?.url, videoSrc]);
   return <article className="post-card">
     <div className="post-topline">
       <img className="post-avatar" src={xMediaSrc(post.avatar) || FALLBACK_AVATAR} alt="" onError={handleAvatarError} onLoad={handleAvatarLoad} />
@@ -217,6 +238,14 @@ function PostCard({ post, feedSource, language, t, label, profile }) {
       <button className="post-media-nav post-media-next" type="button" aria-label={t.nextPhoto}
         onClick={() => setPhotoIndex((index) => (Math.min(index, photos.length - 1) + 1) % photos.length)}><FiChevronRight aria-hidden="true" /></button>
       <span className="post-media-count" aria-live="polite">{t.postNumber(currentPhotoIndex + 1, photos.length)}</span>
+    </div>}
+    {video && <div className="post-video">
+      {videoUnavailable
+        ? <div className="post-media-unavailable" role="status">{t.videoUnavailable}</div>
+        : <video controls playsInline preload="metadata" poster={xMediaSrc(video.poster) || undefined}
+          aria-label={video.alt || t.postVideoAlt} onError={() => setVideoUnavailable(true)}>
+          <source src={videoSrc} type="video/mp4" />
+        </video>}
     </div>}
     {isSnapshot && <figure className="post-illustration">
       <img src={`${ASSETS}/post-seaside.png`} alt={t.imageAlt} />

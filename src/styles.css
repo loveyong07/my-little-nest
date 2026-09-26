@@ -332,6 +332,8 @@ button:focus-visible, a:focus-visible { outline: 3px solid #ff7ea0; outline-offs
 .post-text p { margin: 0; white-space: pre-wrap; }
 .post-text p + p { margin-top: 4px; }
 .post-media { position: relative; margin: 8px 0 0 57px; overflow: hidden; border-radius: 8px; background: #eef4fb; }
+.post-video { margin: 8px 0 0 57px; overflow: hidden; border-radius: 8px; background: #101820; }
+.post-video video { display: block; width: 100%; max-height: 480px; object-fit: contain; background: #101820; }
 .post-media a { display: block; min-width: 0; }
 .post-media img { display: block; width: 100%; height: clamp(220px, 30vw, 420px); object-fit: contain; }
 .post-media-unavailable { display: grid; min-height: 220px; padding: 20px; place-items: center; color: #547096; font-size: 13px; text-align: center; }
@@ -545,7 +547,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid #ff7ea0; outline-offs
   .post-author strong { font-size: 14px; }
   .post-author span, .post-date { font-size: 11px; }
   .post-date::before { margin-right: 4px; }
-  .post-text, .post-media, .post-illustration, .post-bottomline { margin-left: 0; }
+  .post-text, .post-media, .post-video, .post-illustration, .post-bottomline { margin-left: 0; }
   .post-media img { height: clamp(220px, 62vw, 340px); }
   .post-media-single img { height: auto; max-height: 420px; }
   .post-media-nav { width: 34px; height: 34px; }

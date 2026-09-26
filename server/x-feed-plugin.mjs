@@ -1,4 +1,5 @@
 import { proxyXMedia } from "./x-media.mjs";
+import { proxyXVideo } from "./x-video.mjs";
 
 const USERNAME = "loveyong07";
 const USER_ID = "2061726102180311040";
@@ -27,35 +28,37 @@ function safePhotoUrl(value) {
   if (typeof value !== "string") return null;
   try {
     const url = new URL(value);
-    return url.protocol === "https:" && url.hostname === "pbs.twimg.com" && url.pathname.startsWith("/media/")
+    return url.protocol === "https:" && url.hostname === "pbs.twimg.com"
+      && (url.pathname.startsWith("/media/") || url.pathname.startsWith("/ext_tw_video_thumb/"))
       ? url.href : null;
   } catch {
     return null;
   }
 }
 
-function isPhotoLinkForPost(entity, postId, photoCount, username) {
+function isMediaLinkForPost(entity, postId, media, username) {
   if (!/^https:\/\/t\.co\/[A-Za-z0-9]+$/.test(entity?.url ?? "")) return false;
   try {
     const expanded = new URL(entity.expanded_url);
     if (expanded.protocol !== "https:" || !["x.com", "www.x.com", "twitter.com", "www.twitter.com"].includes(expanded.hostname)) return false;
     const parts = expanded.pathname.split("/").filter(Boolean);
-    return parts.length === 5 && parts[0].toLowerCase() === username.toLowerCase() && parts[1] === "status"
-      && parts[2] === postId && parts[3] === "photo"
-      && /^\d+$/.test(parts[4]) && Number(parts[4]) <= photoCount;
+    if (parts.length !== 5 || parts[0].toLowerCase() !== username.toLowerCase() || parts[1] !== "status"
+      || parts[2] !== postId || !/^\d+$/.test(parts[4])) return false;
+    const type = parts[3] === "photo" ? "photo" : parts[3] === "video" ? "video" : null;
+    return type !== null && Number(parts[4]) <= media.filter((item) => (item.type ?? "photo") === type).length;
   } catch {
     return false;
   }
 }
 
-function withoutPhotoLinks(text, post, photoCount, username) {
-  if (!photoCount) return text;
+function withoutMediaLinks(text, post, media, username) {
+  if (!media.length) return text;
   const entities = [
     ...(Array.isArray(post.entities?.urls) ? post.entities.urls : []),
     ...(Array.isArray(post.note_tweet?.entities?.urls) ? post.note_tweet.entities.urls : []),
     ...(Array.isArray(post.note_post?.entities?.urls) ? post.note_post.entities.urls : []),
   ];
-  const mediaLinks = new Set(entities.filter((entity) => isPhotoLinkForPost(entity, post.id, photoCount, username)).map((entity) => entity.url));
+  const mediaLinks = new Set(entities.filter((entity) => isMediaLinkForPost(entity, post.id, media, username)).map((entity) => entity.url));
   for (const link of mediaLinks) text = text.replaceAll(link, "");
   return text.trimEnd();
 }
@@ -92,17 +95,27 @@ function normalizedPost(post, user, mediaByKey, { allowReferences = false } = {}
   if (post.author_id && post.author_id !== user.id) return null;
   if (allowReferences && post.author_id !== user.id) return null;
   if (!allowReferences && (post.in_reply_to_user_id || post.referenced_tweets?.length || post.referenced_posts?.length)) return null;
-  const photos = [];
+  const mediaItems = [];
   const usedKeys = new Set();
   for (const key of Array.isArray(post.attachments?.media_keys) ? post.attachments.media_keys : []) {
     if (usedKeys.has(key)) continue;
     usedKeys.add(key);
     const media = mediaByKey.get(key);
-    const url = media?.type === "photo" ? safePhotoUrl(media.url) : null;
-    if (url) photos.push({ url, alt: typeof media.alt_text === "string" ? media.alt_text.trim() : "" });
+    const alt = typeof media?.alt_text === "string" ? media.alt_text.trim() : "";
+    if (media?.type === "photo") {
+      const url = safePhotoUrl(media.url);
+      if (url) mediaItems.push({ url, alt });
+    } else if (media?.type === "video") {
+      const variants = Array.isArray(media.variants) ? media.variants : [];
+      const videoVariants = variants.filter((variant) => variant?.content_type === "video/mp4" && safeVideoUrl(variant.url));
+      videoVariants.sort((left, right) => (Number(right.bit_rate) || 0) - (Number(left.bit_rate) || 0));
+      const url = videoVariants[0] ? safeVideoUrl(videoVariants[0].url) : null;
+      const poster = safePhotoUrl(media.preview_image_url);
+      if (url) mediaItems.push({ type: "video", url, ...(poster ? { poster } : {}), alt });
+    }
   }
-  const text = withoutPhotoLinks(post.note_tweet?.text || post.note_post?.text || post.text, post, photos.length, user.username);
-  if (!text.trim() && photos.length === 0) return null;
+  const text = withoutMediaLinks(post.note_tweet?.text || post.note_post?.text || post.text, post, mediaItems, user.username);
+  if (!text.trim() && mediaItems.length === 0) return null;
   return {
     id: post.id,
     text,
@@ -110,8 +123,20 @@ function normalizedPost(post, user, mediaByKey, { allowReferences = false } = {}
     author: user.name || USERNAME,
     avatar: safeAvatar(user.profile_image_url),
     permalink: `https://x.com/${user.username}/status/${post.id}`,
-    ...(photos.length ? { media: photos } : {}),
+    ...(mediaItems.length ? { media: mediaItems } : {}),
   };
+}
+
+function safeVideoUrl(value) {
+  if (typeof value !== "string") return null;
+  try {
+    const url = new URL(value);
+    const allowedPath = ["/ext_tw_video/", "/amplify_video/", "/tweet_video/"].some((prefix) => url.pathname.startsWith(prefix));
+    return url.protocol === "https:" && url.hostname === "video.twimg.com" && !url.username && !url.password
+      && !url.port && allowedPath ? url.href : null;
+  } catch {
+    return null;
+  }
 }
 
 export function createXFeedService({
@@ -175,7 +200,7 @@ export function createXFeedService({
         url.searchParams.set("post.fields", "created_at,note_post,attachments,entities");
         url.searchParams.set("expansions", "attachments.media_keys,author_id");
       }
-      url.searchParams.set("media.fields", "media_key,type,url,alt_text,width,height");
+      url.searchParams.set("media.fields", "media_key,type,url,alt_text,width,height,preview_image_url,variants");
       return getXJson(url, token, fetchImpl);
     }
     try {
@@ -218,7 +243,7 @@ export function createXFeedService({
       // The live X API accepted tweet.fields for this endpoint on 2026-09-26.
       url.searchParams.set("tweet.fields", "created_at,referenced_tweets,author_id,in_reply_to_user_id,note_tweet,attachments,entities");
       url.searchParams.set("expansions", "attachments.media_keys");
-      url.searchParams.set("media.fields", "media_key,type,url,alt_text,width,height");
+      url.searchParams.set("media.fields", "media_key,type,url,alt_text,width,height,preview_image_url,variants");
       url.searchParams.set("max_results", String(PAGE_SIZE));
       if (!fullRefresh) {
         url.searchParams.set("since_id", newestSeenId);
@@ -342,6 +367,57 @@ export function xFeedPlugin(options = {}) {
       response.statusCode = proxyResponse.status;
       for (const [name, value] of proxyResponse.headers) response.setHeader(name, value);
       response.end(Buffer.from(await proxyResponse.arrayBuffer()));
+    });
+
+    server.middlewares.use("/api/x-video", async (request, response) => {
+      if (request.url?.split("?")[0] !== "/") {
+        response.statusCode = 404;
+        response.end("Not found");
+        return;
+      }
+      const headers = new Headers();
+      if (request.headers.range) headers.set("Range", request.headers.range);
+      if (request.headers["if-range"]) headers.set("If-Range", request.headers["if-range"]);
+      const proxyResponse = await proxyXVideo(new Request(new URL(request.url ?? "/", "http://localhost"), {
+        method: request.method,
+        headers,
+      }));
+      response.statusCode = proxyResponse.status;
+      for (const [name, value] of proxyResponse.headers) response.setHeader(name, value);
+      if (!proxyResponse.body) {
+        response.end();
+        return;
+      }
+      const reader = proxyResponse.body.getReader();
+      let disconnected = false;
+      const onClose = () => {
+        disconnected = true;
+        void reader.cancel().catch(() => {});
+      };
+      response.once("close", onClose);
+      try {
+        while (!disconnected) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          if (!response.write(value)) {
+            await new Promise((resolve) => {
+              const finish = () => {
+                response.off("drain", finish);
+                response.off("close", finish);
+                resolve();
+              };
+              response.once("drain", finish);
+              response.once("close", finish);
+            });
+          }
+        }
+        if (!disconnected) response.end();
+      } catch {
+        if (!disconnected) response.destroy();
+      } finally {
+        response.off("close", onClose);
+        if (!disconnected) reader.releaseLock();
+      }
     });
 
     for (const route of ["/api/x-posts", "/api/x-profile"]) server.middlewares.use(route, async (request, response) => {
