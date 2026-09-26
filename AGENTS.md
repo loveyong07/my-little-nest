@@ -11,7 +11,7 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 ## Selected design and wording
 
 - The user selected the first blue anime sky mock. `design-reference.png` is the visual source of truth. Recreate its open blue sky, right-side character artwork, large blue serif greeting, and white rounded social panel.
-- The site title is exactly `Welcome to my little nest！` in browser metadata and the visible homepage heading.
+- The browser tab title is exactly `初咏的小窝`; keep the visible homepage heading as `Welcome to my little nest！`.
 - This is a social calling card, not a job-search portfolio. Provide Chinese, Japanese, and English UI. Keep the user's own original X posts in cards, and label any decorative art separately from actual post media.
 - When a synced X post displays its photo, hide the short URL that X adds for that photo from the card text. Preserve unrelated links in the post.
 - For iterative visual changes, return a screenshot of the updated page so the user can mark areas for the next revision.
