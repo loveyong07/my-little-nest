@@ -23,7 +23,7 @@ npm run dev:proxy -- --host 127.0.0.1 --port 4173 --strictPort
 - **线上 X 动态：** 2026-09-26 本轮对 `https://loveyong07.top/api/x-posts` 仅请求一次，HTTP 200，返回 `status: ok` 和 6 条帖子；未复制帖子正文或令牌。`X_BEARER_TOKEN` 仅保存在 Vercel Production 服务端环境变量中。
 - **兼容文件：** Cloudflare Workers 配置已撤回，项目不使用 Cloudflare 部署。`.openai/hosting.json`、`worker/index.js`、`scripts/prepare-sites-build.mjs` 和 Sites 测试文件仍按项目兼容约定保留。
 
-## X 原创帖同步
+## X 置顶帖与日常原创帖同步
 
 本地页面在没有 X API 凭据时显示一条标明日期的公开帖子快照，**不是实时同步**。本站读取公开帖子需要的是 **App-Only Authentication → Bearer Token**，不是 OAuth 1.0 的 Consumer Key（API Key）。在 [X Developer Console](https://console.x.com/) 打开 Apps → 对应应用 → Keys & Tokens，生成 Bearer Token 并自行安全保存。X 官方的[开通说明](https://docs.x.com/x-api/getting-started/getting-access)列出了创建应用和获取令牌的步骤。
 
@@ -33,12 +33,12 @@ npm run dev:proxy -- --host 127.0.0.1 --port 4173 --strictPort
 if (-not (Test-Path .env.local)) { Copy-Item .env.example .env.local }
 notepad .env.local
 npm run dev:proxy -- --host 127.0.0.1 --port 4173 --strictPort
-(Invoke-RestMethod http://127.0.0.1:4173/api/x-posts) | Select-Object status, @{Name='count';Expression={$_.posts.Count}}
+(Invoke-RestMethod http://127.0.0.1:4173/api/x-posts) | Select-Object status, pinnedStatus, @{Name='dailyCount';Expression={$_.posts.Count}}, @{Name='hasPinnedPost';Expression={$null -ne $_.pinnedPost}}
 ```
 
-若端口 4173 已有开发服务器，先在原终端停止并重启，让它读入新令牌。本机访问 X API 需要使用现有代理，所以上述命令使用 Node 24 的 `--use-env-proxy`；没有代理需求的环境仍可用 `npm run dev`。`status: ok` 且条数大于 0 才说明这台机器已经取得原创帖；`unavailable` 表示还需检查令牌、接口权限、余额或网络。不要把接口返回的完整帖子或令牌发到聊天中。
+若端口 4173 已有开发服务器，先在原终端停止并重启，让它读入新令牌。本机访问 X API 需要使用现有代理，所以上述命令使用 Node 24 的 `--use-env-proxy`；没有代理需求的环境仍可用 `npm run dev`。`status: ok` 且日常帖子条数大于 0 说明已取得原创帖；`pinnedStatus: ok` 且 `hasPinnedPost: True` 说明已取得当前置顶帖。`unavailable` 表示还需检查令牌、接口权限、余额或网络。不要把接口返回的完整帖子或令牌发到聊天中。
 
-接口 `/api/x-posts` 从 [X 官方 API](https://docs.x.com/x-api/users/get-posts) 读取 @loveyong07 的帖子，排除回复、转发和引用帖；最多按需读取两页、每页 10 条，显示最多 6 条原创帖。服务端缓存 15 分钟，后续请求使用 `since_id` 只找新帖，并把用户资料缓存 24 小时。前端每 15 分钟请求一次，在页面重新变为可见时也会检查。暂时断线时保留本次进程上次成功同步的帖子并标为“显示上次同步”；首次失败则展示日期快照。2026-09-26 已用本机令牌实测：`/api/x-posts` 返回 `status: ok` 和 6 条原创帖，浏览器动态页显示“X 原创帖 · 自动同步”。
+接口 `/api/x-posts` 从 [X 官方用户查询](https://docs.x.com/x-api/users/get-user-by-username)读取 @loveyong07 的当前置顶帖 ID，再读取该帖的图文。动态页将它固定在上方的独立卡片；下方保留原来的六帖轮播，且不会重复展示置顶帖。置顶被更换或取消后，下一次成功同步会更新上方卡片；取不到置顶时显示明确的状态，不会把日期快照冒充置顶。日常帖从[用户时间线](https://docs.x.com/x-api/users/get-posts)读取，排除回复、转发和引用帖；最多按需读取四页、每页 10 条，显示最多 6 条原创帖。服务端缓存与用户资料缓存均为 15 分钟，后续请求在不需补位时使用 `since_id`；前端每 15 分钟请求一次，页面重新变为可见时也会检查。因此这是自动同步，不是秒级更新。暂时断线时显示上次成功同步的内容；日常帖首次失败仍回退到标明日期的公开快照。2026-09-26 本机真实 X 接口与浏览器复核：`status: ok`、`pinnedStatus: ok`、6 条日常帖，置顶与日常卡的图片均加载成功，置顶帖未在日常轮播中重复出现。
 
 同一帖子 API 请求还读取 `attachments.media_keys` 和媒体扩展，将照片与对应帖子关联。页面直接加载 X 图片 CDN 的 HTTPS 地址，不将图片文件永久保存到项目；无照片的帖子只显示文字，视频与 GIF 暂不展示封面。2026-09-26 实测六条帖子各带一张照片，浏览器已确认图片加载。日期快照继续使用明确标记的**网站装饰插画**，不冒充帖子配图。[X 媒体字段说明](https://docs.x.com/x-api/fundamentals/data-dictionary)。
 

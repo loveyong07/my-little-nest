@@ -1,3 +1,15 @@
+# Pinned X post QA — 2026-09-26
+
+result for the **local** site with the existing X token: passed
+
+- `/api/x-posts` returned `status: ok`, `pinnedStatus: ok`, one pinned post, and six daily posts. The pinned post ID did not appear in the daily list. No token or full post body was recorded in this QA note.
+- In the browser, the pinned card stayed on the same X post while the daily carousel changed from `1 / 6` to `2 / 6`. Both visible post photos loaded, and the daily and pinned cards had separate original-post links.
+- Captured and visually inspected the real synced page after both photos loaded at desktop 1487 × 1850 and phone 390 × 1450 sizes. The screenshots remain local because the pinned photo contains personal documents. The 390 px and 320 px layout checks found no horizontal overflow; the two cards stayed within the viewport.
+- `npm test` passed 22/22 and `npm run build` passed. This QA was performed locally before the production release; verify the deployed page separately.
+- For smoother scrolling, the Posts background now moves with a transform instead of animating `background-position`, and the full Posts panel no longer applies backdrop blur. The desktop and 390 px local previews kept the post cards and background in place; no device FPS measurement was made.
+
+---
+
 # Hosting and custom-domain handoff — 2026-09-26
 
 The project is pushed to the private [GitHub repository](https://github.com/fyh2026/my-little-nest), and its Vercel Production deployment is Ready at [the deployment URL](https://my-little-nest-82txmckrm-fyh2026s-projects.vercel.app). The live `/api/x-posts` endpoint previously returned `status: ok` with 6 posts. `.env.local` is excluded from GitHub; `X_BEARER_TOKEN` is configured as a Vercel server-side Production variable.
