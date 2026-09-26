@@ -1,3 +1,14 @@
+# Post photo layout QA — 2026-09-26
+
+result for the **local built page with mock feed data**: passed
+
+- Captured `/posts` at exact 1487 × 1058 and 390 × 844 CSS viewports using Chrome DevTools Protocol: [desktop](qa/posts-photo-mock-desktop-2026-09-26.png) · [phone](qa/posts-photo-mock-mobile-2026-09-26.png). Both PNG files use the same pixel dimensions as their CSS viewports.
+- Served the existing `dist/client` build with a temporary local endpoint returning six **simulated** original posts and an existing project image as each photo. The preview did not load `.env.local` or make an X API request. The screenshots verify card layout and image handling, not the appearance or availability of the actual X photos.
+- In both viewports the first card showed its author, text, photo, sync label, original-post link, and carousel controls without clipping. Chrome reported the photo fully loaded (`naturalWidth = 600`) and `documentElement.scrollWidth = clientWidth` (1487 on desktop, 390 on phone). The first card's right edge was inside each viewport (1168.5 and 364 CSS px respectively). Both captures were visually inspected.
+- Existing mocked tests cover association of real X media keys with posts and removal of a displayed photo's own `t.co` link. This layout capture does not repeat the earlier live X check or verify a public deployment.
+
+---
+
 # X feed and media QA — 2026-09-26
 
 result for observed **local** sync path: passed
