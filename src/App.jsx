@@ -129,7 +129,7 @@ function isOwnPost(post) {
   if (!post.text.trim() && !post.media?.length) return false;
   try {
     const url = new URL(post.permalink);
-    return url.protocol === "https:" && url.hostname === "x.com" && url.pathname === `/${HANDLE}/status/${post.id}`;
+    return url.protocol === "https:" && url.hostname === "x.com" && /^\/[A-Za-z0-9_]{1,15}\/status\/\d+$/.test(url.pathname) && url.pathname.endsWith(`/status/${post.id}`);
   } catch { return false; }
 }
 
@@ -161,7 +161,7 @@ function ContactTile({ icon: Icon, className, title, sub, href, onClick, copyLab
   </Tag>;
 }
 
-function PostCard({ post, feedSource, language, t, label }) {
+function PostCard({ post, feedSource, language, t, label, profile }) {
   const isSnapshot = feedSource === "snapshot";
   const photos = Array.isArray(post.media) ? post.media.filter((media) => typeof media?.url === "string").slice(0, 4) : [];
   const [photoIndex, setPhotoIndex] = useState(0);
@@ -170,7 +170,7 @@ function PostCard({ post, feedSource, language, t, label }) {
   return <article className="post-card">
     <div className="post-topline">
       <img className="post-avatar" src={post.avatar || `${ASSETS}/x-avatar.jpg`} alt="" />
-      <div className="post-author"><strong>{post.author || t.name}</strong><span>@{HANDLE}</span></div>
+      <div className="post-author"><strong>{post.author || profile.name}</strong><span>@{profile.username}</span></div>
       <span className="post-date">{formatPostDate(post.created_at, language)}</span>
       <FaXTwitter className="post-x-mark" aria-hidden="true" />
     </div>
@@ -207,6 +207,7 @@ export function App() {
   const [copiedId, setCopiedId] = useState("");
   const [clickSparkle, setClickSparkle] = useState(null);
   const [visitDate, setVisitDate] = useState(() => new Date());
+  const [profile, setProfile] = useState({ name: "初咏", username: HANDLE, avatar: `${ASSETS}/x-avatar.jpg` });
   const page = resolvePage();
   const t = copy[language];
 
@@ -214,6 +215,25 @@ export function App() {
     setLanguage(nextLanguage);
     try { window.localStorage.setItem(LANGUAGE_STORAGE_KEY, nextLanguage); } catch { /* Storage is optional. */ }
   }
+
+  useEffect(() => {
+    let mounted = true;
+    async function refreshProfile() {
+      try {
+        const response = await fetch("/api/x-profile", { cache: "no-store" });
+        if (!response.ok) return;
+        const result = await response.json();
+        if (mounted && result.status === "ok" && result.profile?.username) {
+          setProfile({ name: result.profile.name, username: result.profile.username, avatar: result.profile.avatar || `${ASSETS}/x-avatar.jpg` });
+        }
+      } catch { /* Keep the last known profile. */ }
+    }
+    refreshProfile();
+    const interval = window.setInterval(refreshProfile, 15 * 60 * 1000);
+    const onVisible = () => { if (!document.hidden) refreshProfile(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => { mounted = false; window.clearInterval(interval); document.removeEventListener("visibilitychange", onVisible); };
+  }, []);
 
   useEffect(() => {
     document.documentElement.lang = language === "zh" ? "zh-CN" : language === "ja" ? "ja" : "en";
@@ -282,7 +302,7 @@ export function App() {
   }
 
   const socials = [
-    { icon: FaXTwitter, className: "x", title: "X", sub: t.xSub, href: "https://x.com/loveyong07" },
+    { icon: FaXTwitter, className: "x", title: "X", sub: t.xSub, href: `https://x.com/${profile.username}` },
     { icon: FaLine, className: "line", title: "LINE", sub: t.lineSub, href: "https://line.me/ti/p/LSaMZQcRLu" },
     { icon: FaTelegram, className: "telegram", title: "Telegram", sub: t.telegramSub, href: "https://t.me/loveyong07" },
     { icon: FaWeixin, className: "wechat", title: language === "zh" ? "微信" : "WeChat", sub: t.wechatSub, onClick: () => copyId(HANDLE), copyLabel: t.copy + ": " + HANDLE, copied: copiedId === HANDLE ? t.copied : undefined },
@@ -307,12 +327,12 @@ export function App() {
   const postsSection = <div className="posts-section" id="posts">
     <section className="posts-group" aria-label={t.pinnedHeading}>
       <div className="section-heading"><PiPushPinFill aria-hidden="true" /><h2>{t.pinnedHeading}</h2></div>
-      {pinnedPost ? <PostCard key={pinnedPost.id} post={pinnedPost} feedSource={pinState} language={language} t={t} label={pinState === "stale" ? t.pinnedStale : t.pinnedLive} />
+      {pinnedPost ? <PostCard key={pinnedPost.id} post={pinnedPost} feedSource={pinState} language={language} t={t} profile={profile} label={pinState === "stale" ? t.pinnedStale : t.pinnedLive} />
         : <div className="pinned-placeholder" role="status">{pinState === "loading" ? t.pinnedLoading : pinState === "none" ? t.pinnedNone : t.pinnedUnavailable}</div>}
     </section>
     <section className="posts-group" aria-label={t.postsHeading}>
       <div className="section-heading"><HiOutlineSparkles aria-hidden="true" /><h2>{t.postsHeading}</h2></div>
-      {posts.length > 0 ? <PostCard key={posts[postIndex].id} post={posts[postIndex]} feedSource={feedSource} language={language} t={t} />
+      {posts.length > 0 ? <PostCard key={posts[postIndex].id} post={posts[postIndex]} feedSource={feedSource} language={language} t={t} profile={profile} />
         : <div className="pinned-placeholder" role="status">{t.noPosts}</div>}
       {posts.length > 1 && <div className="post-controls">
         <button onClick={() => setPostIndex((postIndex - 1 + posts.length) % posts.length)} aria-label={t.prevPost}><FiChevronLeft /></button>
@@ -357,8 +377,8 @@ export function App() {
         <h1><span>Welcome</span><span>to my little nest<em>！</em></span></h1>
         <div className="ornament" aria-hidden="true"><span /><PiFlowerLight /><span /></div>
         <div className="profile">
-          <img src={ASSETS + "/x-avatar.jpg"} alt={t.profileAlt} />
-          <div><strong>{t.name}</strong><a href="https://x.com/loveyong07" target="_blank" rel="noopener noreferrer">@{HANDLE}</a></div>
+          <img src={profile.avatar} alt={t.profileAlt} />
+          <div><strong>{profile.name}</strong><a href={`https://x.com/${profile.username}`} target="_blank" rel="noopener noreferrer">@{profile.username}</a></div>
         </div>
         <p className="bio">{t.bio}</p>
         <p className="motto">{t.motto}</p>

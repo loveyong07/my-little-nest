@@ -1,4 +1,5 @@
 const USERNAME = "loveyong07";
+const USER_ID = "2061726102180311040";
 const X_API = "https://api.x.com/2";
 const CACHE_TTL_MS = 15 * 60 * 1000;
 const FULL_REFRESH_TTL_MS = 24 * 60 * 60 * 1000;
@@ -31,13 +32,13 @@ function safePhotoUrl(value) {
   }
 }
 
-function isPhotoLinkForPost(entity, postId, photoCount) {
+function isPhotoLinkForPost(entity, postId, photoCount, username) {
   if (!/^https:\/\/t\.co\/[A-Za-z0-9]+$/.test(entity?.url ?? "")) return false;
   try {
     const expanded = new URL(entity.expanded_url);
     if (expanded.protocol !== "https:" || !["x.com", "www.x.com", "twitter.com", "www.twitter.com"].includes(expanded.hostname)) return false;
     const parts = expanded.pathname.split("/").filter(Boolean);
-    return parts.length === 5 && parts[0].toLowerCase() === USERNAME && parts[1] === "status"
+    return parts.length === 5 && parts[0].toLowerCase() === username.toLowerCase() && parts[1] === "status"
       && parts[2] === postId && parts[3] === "photo"
       && /^\d+$/.test(parts[4]) && Number(parts[4]) <= photoCount;
   } catch {
@@ -45,14 +46,14 @@ function isPhotoLinkForPost(entity, postId, photoCount) {
   }
 }
 
-function withoutPhotoLinks(text, post, photoCount) {
+function withoutPhotoLinks(text, post, photoCount, username) {
   if (!photoCount) return text;
   const entities = [
     ...(Array.isArray(post.entities?.urls) ? post.entities.urls : []),
     ...(Array.isArray(post.note_tweet?.entities?.urls) ? post.note_tweet.entities.urls : []),
     ...(Array.isArray(post.note_post?.entities?.urls) ? post.note_post.entities.urls : []),
   ];
-  const mediaLinks = new Set(entities.filter((entity) => isPhotoLinkForPost(entity, post.id, photoCount)).map((entity) => entity.url));
+  const mediaLinks = new Set(entities.filter((entity) => isPhotoLinkForPost(entity, post.id, photoCount, username)).map((entity) => entity.url));
   for (const link of mediaLinks) text = text.replaceAll(link, "");
   return text.trimEnd();
 }
@@ -98,7 +99,7 @@ function normalizedPost(post, user, mediaByKey, { allowReferences = false } = {}
     const url = media?.type === "photo" ? safePhotoUrl(media.url) : null;
     if (url) photos.push({ url, alt: typeof media.alt_text === "string" ? media.alt_text.trim() : "" });
   }
-  const text = withoutPhotoLinks(post.note_tweet?.text || post.note_post?.text || post.text, post, photos.length);
+  const text = withoutPhotoLinks(post.note_tweet?.text || post.note_post?.text || post.text, post, photos.length, user.username);
   if (!text.trim() && photos.length === 0) return null;
   return {
     id: post.id,
@@ -106,7 +107,7 @@ function normalizedPost(post, user, mediaByKey, { allowReferences = false } = {}
     created_at: post.created_at ?? null,
     author: user.name || USERNAME,
     avatar: safeAvatar(user.profile_image_url),
-    permalink: `https://x.com/${USERNAME}/status/${post.id}`,
+    permalink: `https://x.com/${user.username}/status/${post.id}`,
     ...(photos.length ? { media: photos } : {}),
   };
 }
@@ -131,7 +132,7 @@ export function createXFeedService({
   async function getUser() {
     if (user && now() - userAt < USER_CACHE_TTL_MS) return user;
     async function lookup(mode) {
-      const url = new URL(`${X_API}/users/by/username/${USERNAME}`);
+      const url = new URL(`${X_API}/users/${USER_ID}`);
       url.searchParams.set("user.fields", mode === "tweet"
         ? "name,username,profile_image_url,pinned_tweet_id"
         : "name,username,profile_image_url");
@@ -147,7 +148,7 @@ export function createXFeedService({
       userFieldMode = "post";
     }
     const nextUser = json.data;
-    if (!isId(nextUser?.id) || nextUser?.username?.toLowerCase() !== USERNAME) {
+    if (nextUser?.id !== USER_ID || !/^[A-Za-z0-9_]{1,15}$/.test(nextUser?.username ?? "")) {
       throw new Error("X user unavailable");
     }
     if (!nextUser.pinned_tweet_id && !nextUser.pinned_post_id) {
@@ -281,7 +282,21 @@ export function createXFeedService({
     };
   }
 
-  return async function getFeed() {
+  async function getProfile() {
+    if (!token?.trim()) return { status: "unavailable" };
+    try {
+      const current = await getUser();
+      return { status: "ok", profile: {
+        name: current.name || current.username,
+        username: current.username,
+        avatar: safeAvatar(current.profile_image_url),
+      } };
+    } catch {
+      return { status: "unavailable" };
+    }
+  }
+
+  async function getFeed() {
     if (!token?.trim()) return unavailable();
     if (cached && now() - cachedAt < CACHE_TTL_MS) return cached;
     if (now() < retryAt) return cached ? { ...cached, status: "stale", pinnedStatus: cached.pinnedPost ? "stale" : cached.pinnedStatus } : unavailable();
@@ -305,13 +320,15 @@ export function createXFeedService({
         inFlight = null;
       });
     return inFlight;
-  };
+  }
+  getFeed.getProfile = getProfile;
+  return getFeed;
 }
 
 export function xFeedPlugin(options = {}) {
   const getFeed = createXFeedService(options);
   function installMiddleware(server) {
-    server.middlewares.use("/api/x-posts", async (request, response) => {
+    for (const route of ["/api/x-posts", "/api/x-profile"]) server.middlewares.use(route, async (request, response) => {
         response.setHeader("Content-Type", "application/json; charset=utf-8");
         response.setHeader("Cache-Control", "no-store");
         if (request.method !== "GET") {
@@ -325,7 +342,7 @@ export function xFeedPlugin(options = {}) {
           response.end(JSON.stringify(unavailable()));
           return;
         }
-        response.end(JSON.stringify(await getFeed()));
+        response.end(JSON.stringify(route === "/api/x-profile" ? await getFeed.getProfile() : await getFeed()));
     });
   }
   return {

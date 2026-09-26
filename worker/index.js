@@ -6,7 +6,7 @@ let getFeed = null;
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (url.pathname === "/api/x-posts") {
+    if (url.pathname === "/api/x-posts" || url.pathname === "/api/x-profile") {
       const headers = { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" };
       if (request.method !== "GET") {
         return new Response(JSON.stringify({ status: "method_not_allowed", posts: [] }), {
@@ -18,7 +18,7 @@ export default {
         feedToken = token;
         getFeed = createXFeedService({ token });
       }
-      return new Response(JSON.stringify(await getFeed()), { headers });
+      return new Response(JSON.stringify(url.pathname === "/api/x-profile" ? await getFeed.getProfile() : await getFeed()), { headers });
     }
 
     const response = await env.ASSETS.fetch(request);

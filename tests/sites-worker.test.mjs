@@ -19,13 +19,20 @@ test("serves the X feed API without a credential or asset fallback", async () =>
   assert.equal(rejected.headers.get("allow"), "GET");
 });
 
+test("serves the profile API without a credential or asset fallback", async () => {
+  const env = { ASSETS: { fetch: () => { throw new Error("Should not request assets"); } } };
+  const response = await worker.fetch(new Request("https://example.test/api/x-profile"), env);
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { status: "unavailable" });
+});
+
 test("serves original posts from the Worker without exposing its token", async () => {
   const priorFetch = globalThis.fetch;
   globalThis.fetch = async (url, options) => {
     assert.equal(options.headers.Authorization, "Bearer private-test-token");
-    const body = new URL(url).pathname.includes("/by/username/")
-      ? { data: { id: "123", username: "loveyong07", name: "初咏" } }
-      : { data: [{ id: "456", text: "Original post", author_id: "123", created_at: "2026-09-26T00:00:00Z" }] };
+    const body = new URL(url).pathname.endsWith("/users/2061726102180311040")
+      ? { data: { id: "2061726102180311040", username: "loveyong07", name: "初咏" } }
+      : { data: [{ id: "456", text: "Original post", author_id: "2061726102180311040", created_at: "2026-09-26T00:00:00Z" }] };
     return new Response(JSON.stringify(body), { status: 200 });
   };
   try {
