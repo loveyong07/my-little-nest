@@ -1,3 +1,5 @@
+import { proxyXMedia } from "./x-media.mjs";
+
 const USERNAME = "loveyong07";
 const USER_ID = "2061726102180311040";
 const X_API = "https://api.x.com/2";
@@ -15,7 +17,7 @@ function safeAvatar(value) {
   if (typeof value !== "string") return null;
   try {
     const url = new URL(value);
-    return url.protocol === "https:" ? url.href : null;
+    return url.protocol === "https:" && url.hostname === "pbs.twimg.com" ? url.href : null;
   } catch {
     return null;
   }
@@ -328,6 +330,20 @@ export function createXFeedService({
 export function xFeedPlugin(options = {}) {
   const getFeed = createXFeedService(options);
   function installMiddleware(server) {
+    server.middlewares.use("/api/x-media", async (request, response) => {
+      if (request.url?.split("?")[0] !== "/") {
+        response.statusCode = 404;
+        response.end("Not found");
+        return;
+      }
+      const proxyResponse = await proxyXMedia(new Request(new URL(request.url ?? "/", "http://localhost"), {
+        method: request.method,
+      }));
+      response.statusCode = proxyResponse.status;
+      for (const [name, value] of proxyResponse.headers) response.setHeader(name, value);
+      response.end(Buffer.from(await proxyResponse.arrayBuffer()));
+    });
+
     for (const route of ["/api/x-posts", "/api/x-profile"]) server.middlewares.use(route, async (request, response) => {
         response.setHeader("Content-Type", "application/json; charset=utf-8");
         response.setHeader("Cache-Control", "no-store");
