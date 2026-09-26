@@ -11,7 +11,7 @@ npm run dev:proxy -- --host 127.0.0.1 --port 4173 --strictPort
 
 打开 `http://127.0.0.1:4173/`。网站目前提供中文、日文、英文切换和可点击的联系方式。微信与 QQ 按钮会复制账号；三个邮箱可通过 `mailto:` 打开邮件应用。
 
-**当前交接状态（2026-09-26）：** Vercel 根域名首页、`/posts`、`/contact` 当前均可通过 HTTPS 访问；线上 X 接口本轮实测 HTTP 200、`status: ok`、6 条。Vercel 已连接 GitHub 私有仓库 `fyh2026/my-little-nest` 的 `master` 分支；2026-09-26 自动部署实测通过：提交 `3e9bd1d` 推送后，GitHub 上 Vercel 状态变为 success，并生成生产部署 `CRNHUn4kSuk1RKrkykebDoB2oLtX`。`www.loveyong07.top` 的 DNS 有解析，但本轮 HTTPS/TLS 连接失败，尚未绑定到项目；本机缺少 Vercel 管理会话，需登录恢复后绑定并跳转至根域名。没有修改 DNS。详情见仓库内的 [网站设计进度交接.md](网站设计进度交接.md)。
+**当前交接状态（2026-09-26）：** Vercel 根域名首页、`/posts`、`/contact` 当前均可通过 HTTPS 访问；线上 X 接口本轮实测 HTTP 200、`status: ok`、6 条。Vercel 已连接 GitHub 私有仓库 `fyh2026/my-little-nest` 的 `master` 分支；2026-09-26 自动部署实测通过：提交 `3e9bd1d` 推送后，GitHub 上 Vercel 状态变为 success，并生成生产部署 `CRNHUn4kSuk1RKrkykebDoB2oLtX`。`www.loveyong07.top` 已绑定到项目并设置 308 永久跳转到根域名；HTTPS/TLS 与 `/posts` 路径跳转复核通过。没有修改 DNS。详情见仓库内的 [网站设计进度交接.md](网站设计进度交接.md)。
 
 ## 域名与上线状态
 
@@ -19,7 +19,7 @@ npm run dev:proxy -- --host 127.0.0.1 --port 4173 --strictPort
 - **Vercel 生产部署：** [打开正式站点](https://loveyong07.top) · [本轮自动部署详情](https://vercel.com/fyh2026s-projects/my-little-nest/CRNHUn4kSuk1RKrkykebDoB2oLtX)。本轮生产部署完成；首页、`/posts`、`/contact` 均返回 200。`.vercel.app` 地址受 Vercel 登录保护。
 - **GitHub 自动部署：** Vercel 项目已连接私有仓库 `fyh2026/my-little-nest`，生产分支为 `master`。已实测通过：提交 `3e9bd1d` 推送至 `master` 后自动生成 [Vercel 生产部署](https://vercel.com/fyh2026s-projects/my-little-nest/CRNHUn4kSuk1RKrkykebDoB2oLtX)，GitHub Vercel check 为 success（Deployment has completed）。部署后正式站三条路由均为 HTTP 200。
 - **根域名与 SSL：** `https://loveyong07.top` 正常访问；此前已核实 Vercel DNS 与证书配置。本轮没有修改 DNS。
-- **`www` 子域名：** `www.loveyong07.top` 当前解析到 A 记录 `216.198.79.1`、`64.29.17.65`，但本轮 HTTPS/TLS 连接未成功，不能视为可访问。它尚未绑定到项目，也未设置跳转。本机缺少 Vercel CLI 登录或可用控制台会话；恢复管理会话后，将其加入 `my-little-nest` 并设置跳转到 `https://loveyong07.top`，再复核证书和跳转。没有修改 DNS。
+- **`www` 子域名：已完成。** 已添加到 `my-little-nest`，Vercel 状态为 `configured-correctly`、`verified: true`，并设置 HTTP 308 永久跳转到 `https://loveyong07.top`。公网请求 `https://www.loveyong07.top/` 返回 308；`/posts?from=www` 保留路径和查询参数跳转，最终目标返回 HTTP 200，HTTPS/TLS 成功。没有修改 DNS。
 - **线上 X 动态：** 2026-09-26 本轮对 `https://loveyong07.top/api/x-posts` 仅请求一次，HTTP 200，返回 `status: ok` 和 6 条帖子；未复制帖子正文或令牌。`X_BEARER_TOKEN` 仅保存在 Vercel Production 服务端环境变量中。
 - **兼容文件：** Cloudflare Workers 配置已撤回，项目不使用 Cloudflare 部署。`.openai/hosting.json`、`worker/index.js`、`scripts/prepare-sites-build.mjs` 和 Sites 测试文件仍按项目兼容约定保留。
 
