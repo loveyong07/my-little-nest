@@ -1,3 +1,15 @@
+# Hosting and custom-domain handoff — 2026-09-26
+
+The user selected GitHub plus Vercel for hosting and asked to use `loveyong07.top` as the custom domain. Cloudflare is not part of the deployment plan; DNS changes must wait until Vercel provides exact records and the user is told what to change.
+
+- Prepare and push the current project to a private GitHub repository named `my-little-nest`.
+- Connect that repository to Vercel for automatic deployments on pushes.
+- Add `loveyong07.top` to the Vercel project, inspect the exact DNS requirements, and report them to the user. Do not change nameservers or DNS records.
+- Preserve `.env.local` outside GitHub and configure `X_BEARER_TOKEN` only as a server-side Vercel environment variable.
+- The existing Sites deployment remains separate and may still return the previously observed 403. Do not treat it as the Vercel deployment.
+
+---
+
 # Post photo layout QA — 2026-09-26
 
 result for the **local built page with mock feed data**: passed

@@ -1,4 +1,4 @@
-# Welcome to my little nest！
+# My little nest
 
 初咏的个人社交名片网站。视觉以项目根目录的 `design-reference.png` 为准；页面使用独立生成的蓝天主视觉和海边插画。
 
@@ -11,15 +11,16 @@ npm run dev:proxy -- --host 127.0.0.1 --port 4173 --strictPort
 
 打开 `http://127.0.0.1:4173/`。网站目前提供中文、日文、英文切换和可点击的联系方式。微信与 QQ 按钮会复制账号；三个邮箱可通过 `mailto:` 打开邮件应用。
 
-**当前交接状态（2026-09-26）：** 本地已真实同步 6 条 X 原创帖及照片，配图卡片的桌面和手机模拟数据截图已存档。Codex Sites 版本 1 已发布并设为公开，服务端 `X_BEARER_TOKEN` 已配置；但用户和本机上次访问平台地址均遇到 Cloudflare 403，线上取帖和照片尚未验证。用户正在办理腾讯云域名实名认证，尚未购买或提供确切域名。新窗口先读父目录的 [网站设计进度交接.md](../网站设计进度交接.md)。
+**当前交接状态（2026-09-26）：** 本地 X 同步与照片卡片检查已通过。用户选择将项目上传到 GitHub，并用 Vercel 直接连接 GitHub 部署；GitHub 仓库名为 `my-little-nest`，站点域名目标为 `loveyong07.top`。Cloudflare 不再作为本项目托管方案，DNS 暂不修改。新窗口先读父目录的 [网站设计进度交接.md](../网站设计进度交接.md)。
 
 ## 域名与上线状态
 
-域名和网站托管是两回事：用户选择自行购买包含 `loveyong07` 的自定义域名，正在办理腾讯云实名认证，具体域名尚未确定。网站当前由 Codex Sites / [Cloudflare Workers 全球边缘网络](https://developers.cloudflare.com/workers/reference/how-workers-works/)托管，没有一台固定城市的腾讯云中国内地服务器。仅注册腾讯云域名需要实名认证；域名指向非中国内地托管的网站通常无需 ICP 备案。若将来迁到中国内地服务器，应按实际接入情况办理备案。参考：[腾讯云域名与备案说明](https://cloud.tencent.com/document/product/242/18621)。
+- **既有部署：** Codex Sites 版本 1 仍为公开部署，平台地址为 [hello-nice-site.loveyong071004.chatgpt.site](https://hello-nice-site.loveyong071004.chatgpt.site)。上次访问遇到 403，线上 X 接口与照片尚未验证；它不是本次 Vercel 部署。
+- **新目标：** GitHub 私有仓库 `my-little-nest` 与 Vercel 生产部署。仓库推送后将由 Vercel GitHub 集成自动部署；`vercel.json` 配置 Vite 静态输出和 SPA 深链接，`api/x-posts.js` 提供服务端 X 动态接口。
+- **自定义域名：** `loveyong07.top` 已在腾讯云购买。待 Vercel 项目创建并添加域名后，检查平台返回的精确 DNS 要求，再告知用户在 DNS 管理方设置；本次不会改名称服务器或任何 DNS 记录。
+- Cloudflare Workers 配置已撤回，项目不使用 Cloudflare 部署。`.openai/hosting.json`、`worker/index.js`、`scripts/prepare-sites-build.mjs` 和 Sites 测试文件仍保留，以遵循项目已有的兼容性约定。
 
-Sites 当前平台地址为 [hello-nice-site.loveyong071004.chatgpt.site](https://hello-nice-site.loveyong071004.chatgpt.site)。管理侧确认公开权限和部署成功，但上次实际访问仍被 Cloudflare 安全页以 403 拦截；购买或绑定自定义域名不能保证自动解决。拿到确切域名后，在 Sites 添加域名并按其返回记录配置 DNS，再检查 HTTPS 和实际访问。暂未迁移托管。
-
-截至 2026-09-26，腾讯云官方标准价列出：`.top` 注册首年 14 元、续费 34 元/年；`.cn` 为 33/38 元；`.ink` 为 18/79 元。实际可购性、溢价及结算价格以购买页为准；域名实名认证与网站 ICP 备案是不同事项。[腾讯云域名价格表](https://buy.cloud.tencent.com/domain/price) · [域名实名认证说明](https://cloud.tencent.com/document/product/242/6707)。
+Vercel 项目尚待本机完成账号授权、导入 GitHub 仓库和添加域名。`.env.local` 不提交；部署时把 `X_BEARER_TOKEN` 作为 Vercel 服务端环境变量配置。域名 DNS 记录等 Vercel 返回确切值后再由用户处理。
 
 ## X 原创帖同步
 
@@ -44,7 +45,7 @@ npm run dev:proxy -- --host 127.0.0.1 --port 4173 --strictPort
 
 **浏览网页本身不直接向 X 计费。** 访问 `/posts` 会请求网站自己的 `/api/x-posts`；只有服务端实际向 X API 取回资源时，才可能计入 X API 用量。X 当前实行按读取资源计费，普通帖子和用户资料有不同单价，同一资源在 UTC 日内通常去重但不是绝对保证。启用前请在[官方计费说明](https://docs.x.com/x-api/getting-started/pricing)和 Developer Console 核对现价、余额与消费上限；余额为零时，令牌生成后也可能无法取回帖子。不要开启自动充值，除非你明确希望这样做。
 
-本地 Vite 开发服务器、Vite 构建预览和项目自带的 Sites Worker 都提供 `/api/x-posts`。Sites 已将 `X_BEARER_TOKEN` 保存为仅服务端可见的 secret；项目不会把令牌打进前端文件。版本 1 已公开部署，但上次访问被 Cloudflare 403 在请求到达 Worker 前拦截；线上接口、真实照片加载与实际用量仍需在访问恢复后验证。Worker 的内存缓存只在各自运行实例内有效，不是全站统一缓存；公开访问量增加时需重新评估 API 用量。
+本地 Vite 开发服务器、Vite 构建预览和 Sites Worker 都提供 `/api/x-posts`；Vercel 使用 `api/x-posts.js` 提供同一路径。部署到 Vercel 时，`X_BEARER_TOKEN` 必须作为仅服务端可见的环境变量配置，令牌不会进入 GitHub 或前端构建文件。线上接口、照片加载和实际用量需在部署完成后验证。函数内存缓存只在各运行实例有效，不是全站统一缓存；公开访问量增加时需重新评估 API 用量。
 
 ## 后续修改
 
