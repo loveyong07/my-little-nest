@@ -11,16 +11,15 @@ npm run dev:proxy -- --host 127.0.0.1 --port 4173 --strictPort
 
 打开 `http://127.0.0.1:4173/`。网站目前提供中文、日文、英文切换和可点击的联系方式。微信与 QQ 按钮会复制账号；三个邮箱可通过 `mailto:` 打开邮件应用。
 
-**当前交接状态（2026-09-26）：** 本地 X 同步与照片卡片检查已通过。用户选择将项目上传到 GitHub，并用 Vercel 直接连接 GitHub 部署；GitHub 仓库名为 `my-little-nest`，站点域名目标为 `loveyong07.top`。Cloudflare 不再作为本项目托管方案，DNS 暂不修改。新窗口先读父目录的 [网站设计进度交接.md](../网站设计进度交接.md)。
+**当前交接状态（2026-09-26）：** GitHub 私有仓库已推送，Vercel 生产部署已就绪，`/api/x-posts` 在线返回 6 条原创帖。自定义域名 `loveyong07.top` 已添加到 Vercel，但 DNS 尚未指向 Vercel；GitHub 自动部署集成也还需授权。没有修改 DNS。Cloudflare 不用于部署。新窗口先读父目录的 [网站设计进度交接.md](../网站设计进度交接.md)。
 
 ## 域名与上线状态
 
-- **既有部署：** Codex Sites 版本 1 仍为公开部署，平台地址为 [hello-nice-site.loveyong071004.chatgpt.site](https://hello-nice-site.loveyong071004.chatgpt.site)。上次访问遇到 403，线上 X 接口与照片尚未验证；它不是本次 Vercel 部署。
-- **新目标：** GitHub 私有仓库 `my-little-nest` 与 Vercel 生产部署。仓库推送后将由 Vercel GitHub 集成自动部署；`vercel.json` 配置 Vite 静态输出和 SPA 深链接，`api/x-posts.js` 提供服务端 X 动态接口。
-- **自定义域名：** `loveyong07.top` 已在腾讯云购买。待 Vercel 项目创建并添加域名后，检查平台返回的精确 DNS 要求，再告知用户在 DNS 管理方设置；本次不会改名称服务器或任何 DNS 记录。
-- Cloudflare Workers 配置已撤回，项目不使用 Cloudflare 部署。`.openai/hosting.json`、`worker/index.js`、`scripts/prepare-sites-build.mjs` 和 Sites 测试文件仍保留，以遵循项目已有的兼容性约定。
-
-Vercel 项目尚待本机完成账号授权、导入 GitHub 仓库和添加域名。`.env.local` 不提交；部署时把 `X_BEARER_TOKEN` 作为 Vercel 服务端环境变量配置。域名 DNS 记录等 Vercel 返回确切值后再由用户处理。
+- **GitHub 仓库：** [fyh2026/my-little-nest](https://github.com/fyh2026/my-little-nest)，私有仓库，项目已推送到 `master`。`.env.local` 不在仓库中。
+- **Vercel 生产部署：** [打开站点](https://my-little-nest-82txmckrm-fyh2026s-projects.vercel.app) · [部署详情](https://vercel.com/fyh2026s-projects/my-little-nest/Bhp5oryWd2hpALbE2TFbjxTgSBhq)。状态为 Ready；首页、`/posts`、`/contact` 均已返回网站页面，线上 `/api/x-posts` 返回 `status: ok` 和 6 条帖子。`.vercel.app` 地址受 Vercel 登录保护；域名 DNS 生效后，`loveyong07.top` 按项目设置可公开访问。
+- **GitHub 自动部署：** 仓库尚未连接到 Vercel。需要在 [Vercel 项目 Git 设置](https://vercel.com/fyh2026s-projects/my-little-nest/settings/git) 授权 Vercel GitHub App 访问该私有仓库；完成后 GitHub 推送才会自动部署。
+- **自定义域名：** `loveyong07.top` 已添加到 Vercel 项目，但验证结果为 DNS 配置无效。最新 `vercel domains inspect loveyong07.top` 建议根域名 `A @ → 76.76.21.21`；当前检测到的名称服务器仍是 `conrad.ns.cloudflare.com` 和 `rosalie.ns.cloudflare.com`。用户不希望使用 Cloudflare，因此若要彻底移除 Cloudflare DNS，可在域名注册商处切换为 `ns1.vercel-dns.com`、`ns2.vercel-dns.com`；切换前先迁移已有邮箱等 DNS 记录。没有更改 DNS。
+- **兼容文件：** Cloudflare Workers 配置已撤回，项目不使用 Cloudflare 部署。`.openai/hosting.json`、`worker/index.js`、`scripts/prepare-sites-build.mjs` 和 Sites 测试文件仍保留，以遵循项目已有的兼容性约定。
 
 ## X 原创帖同步
 
@@ -45,7 +44,7 @@ npm run dev:proxy -- --host 127.0.0.1 --port 4173 --strictPort
 
 **浏览网页本身不直接向 X 计费。** 访问 `/posts` 会请求网站自己的 `/api/x-posts`；只有服务端实际向 X API 取回资源时，才可能计入 X API 用量。X 当前实行按读取资源计费，普通帖子和用户资料有不同单价，同一资源在 UTC 日内通常去重但不是绝对保证。启用前请在[官方计费说明](https://docs.x.com/x-api/getting-started/pricing)和 Developer Console 核对现价、余额与消费上限；余额为零时，令牌生成后也可能无法取回帖子。不要开启自动充值，除非你明确希望这样做。
 
-本地 Vite 开发服务器、Vite 构建预览和 Sites Worker 都提供 `/api/x-posts`；Vercel 使用 `api/x-posts.js` 提供同一路径。部署到 Vercel 时，`X_BEARER_TOKEN` 必须作为仅服务端可见的环境变量配置，令牌不会进入 GitHub 或前端构建文件。线上接口、照片加载和实际用量需在部署完成后验证。函数内存缓存只在各运行实例有效，不是全站统一缓存；公开访问量增加时需重新评估 API 用量。
+本地 Vite 开发服务器、Vite 构建预览和 Sites Worker 都提供 `/api/x-posts`；Vercel 使用 `api/x-posts.js` 提供同一路径。Vercel Production 的 `X_BEARER_TOKEN` 已作为仅服务端可见的环境变量配置，线上接口已验证返回 `status: ok` 和 6 条帖子；令牌不会进入 GitHub 或前端构建文件。自定义域名 DNS 生效后仍需从公开域名复核页面及照片加载。函数内存缓存只在各运行实例有效，不是全站统一缓存；公开访问量增加时需重新评估 API 用量。
 
 ## 后续修改
 

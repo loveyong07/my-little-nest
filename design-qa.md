@@ -1,12 +1,11 @@
 # Hosting and custom-domain handoff — 2026-09-26
 
-The user selected GitHub plus Vercel for hosting and asked to use `loveyong07.top` as the custom domain. Cloudflare is not part of the deployment plan; DNS changes must wait until Vercel provides exact records and the user is told what to change.
+The project is pushed to the private [GitHub repository](https://github.com/fyh2026/my-little-nest), and its Vercel Production deployment is Ready at [the deployment URL](https://my-little-nest-82txmckrm-fyh2026s-projects.vercel.app). The live `/api/x-posts` endpoint returned `status: ok` with 6 posts. `.env.local` is excluded from GitHub; `X_BEARER_TOKEN` is configured as a Vercel server-side Production variable.
 
-- Prepare and push the current project to a private GitHub repository named `my-little-nest`.
-- Connect that repository to Vercel for automatic deployments on pushes.
-- Add `loveyong07.top` to the Vercel project, inspect the exact DNS requirements, and report them to the user. Do not change nameservers or DNS records.
-- Preserve `.env.local` outside GitHub and configure `X_BEARER_TOKEN` only as a server-side Vercel environment variable.
-- The existing Sites deployment remains separate and may still return the previously observed 403. Do not treat it as the Vercel deployment.
+- GitHub automatic deployments are not connected yet. Authorize the Vercel GitHub App for this private repository in [Project Settings → Git](https://vercel.com/fyh2026s-projects/my-little-nest/settings/git).
+- `loveyong07.top` is attached to the Vercel project, but DNS verification reports an invalid configuration. `vercel domains inspect` currently recommends `A @ → 76.76.21.21`; the detected nameservers remain `conrad.ns.cloudflare.com` and `rosalie.ns.cloudflare.com`.
+- The user selected Vercel and said not to use Cloudflare. To remove Cloudflare DNS as well, the registrar nameservers can be changed to `ns1.vercel-dns.com` and `ns2.vercel-dns.com`; migrate any existing mail or other DNS records first. No nameservers or DNS records have been changed.
+- The previous Codex Sites deployment is separate from this Vercel deployment.
 
 ---
 
