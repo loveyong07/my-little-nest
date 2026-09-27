@@ -11,14 +11,14 @@ npm run dev:proxy -- --host 127.0.0.1 --port 4173 --strictPort
 
 打开 `http://127.0.0.1:4173/`。网站目前提供中文、日文、英文切换和可点击的联系方式。微信与 QQ 按钮会复制账号；三个邮箱可通过 `mailto:` 打开邮件应用。
 
-**最新交接状态（2026-09-27）：** 手机直连切页与资源加载优化提交 [`dfa7b78`](https://github.com/fyh2026/my-little-nest/commit/dfa7b78) 已部署至[正式站](https://loveyong07.top/)。站内三页使用客户端切换；四个 X API 函数固定到香港区；图片代理启用 1 天浏览器/CDN 缓存，并可后台更新 7 天。部署 [`MwZeuwvyTN8vrwuKSAcWBndNrFa5`](https://vercel.com/fyh2026s-projects/my-little-nest/MwZeuwvyTN8vrwuKSAcWBndNrFa5) 状态为 success。生产图片接口直连检查返回 200，连续请求由 `MISS` 转为 `HIT`。详细记录见[网站设计进度交接.md](网站设计进度交接.md)。
+**最新交接状态（2026-09-27）：** 手机直连切页与资源加载优化提交 [`e65c31c`](https://github.com/fyh2026/my-little-nest/commit/e65c31c) 已部署至[正式站](https://loveyong07.top/)。站内三页使用客户端切换；四个 X API 函数固定到香港区；图片代理启用 1 天浏览器/CDN 缓存，并可后台更新 7 天。已知长度的图片边收边传，仍保留 12 MB 限制；没有长度信息时继续先校验完整图片。部署 [`tXHYrBbRjLaRtr5pPJ9xuQFAUUrx`](https://vercel.com/fyh2026s-projects/my-little-nest/tXHYrBbRjLaRtr5pPJ9xuQFAUUrx) 状态为 success。生产动态接口返回 `status: ok`、置顶 `ok`、23 条动态；图片接口连续直连请求从 `MISS` 转为 `HIT`。详细记录见[网站设计进度交接.md](网站设计进度交接.md)。
 
 **当前代码：** 动态卡片支持帖内图片切换、完整原创帖轮播、图片和视频放大预览，以及 X MP4 视频同源代理播放。文档中更早的 6 条帖子记录仅作历史参考。
 
 ## 域名与上线状态
 
 - **GitHub 仓库：** [fyh2026/my-little-nest](https://github.com/fyh2026/my-little-nest)，私有仓库，生产分支 `master`。`.env.local` 不在仓库中。
-- **Vercel 生产部署：** [打开正式站点](https://loveyong07.top)。提交 `dfa7b78` 对应的[部署](https://vercel.com/fyh2026s-projects/my-little-nest/MwZeuwvyTN8vrwuKSAcWBndNrFa5)状态为 `success`；首页、`/posts`、`/contact` 均返回 HTTP 200。`.vercel.app` 地址受 Vercel 登录保护。
+- **Vercel 生产部署：** [打开正式站点](https://loveyong07.top)。提交 `e65c31c` 对应的[部署](https://vercel.com/fyh2026s-projects/my-little-nest/tXHYrBbRjLaRtr5pPJ9xuQFAUUrx)状态为 `success`；首页、`/posts`、`/contact` 均返回 HTTP 200。`.vercel.app` 地址受 Vercel 登录保护。
 - **GitHub 自动部署：** Vercel 项目连接私有仓库 `fyh2026/my-little-nest` 的 `master` 分支。线上 `/assets/` 下 JS 文件返回 `Cache-Control: public, max-age=86400, stale-while-revalidate=604800`；图片代理函数在香港区，缓存响应在连续请求中验证为 `MISS` 后 `HIT`。
 - **根域名与 SSL：** `https://loveyong07.top` 正常访问；此前已核实 Vercel DNS 与证书配置。本轮没有修改 DNS。
 - **`www` 子域名：已完成。** 已添加到 `my-little-nest`，Vercel 状态为 `configured-correctly`、`verified: true`，并设置 HTTP 308 永久跳转到 `https://loveyong07.top`。公网请求 `https://www.loveyong07.top/` 返回 308；`/posts?from=www` 保留路径和查询参数跳转，最终目标返回 HTTP 200，HTTPS/TLS 成功。没有修改 DNS。
@@ -42,7 +42,7 @@ npm run dev:proxy -- --host 127.0.0.1 --port 4173 --strictPort
 
 接口 `/api/x-posts` 从 [X 官方用户查询](https://docs.x.com/x-api/users/get-user-by-username)读取 @loveyong07 的当前置顶帖 ID，再读取该帖的媒体。动态页将它固定在上方的独立卡片；下方按同步到的原创帖数量轮播，且不会重复展示置顶帖。置顶被更换或取消后，下一次成功同步会更新上方卡片；取不到置顶时显示明确的状态，不会把日期快照冒充置顶。日常帖从[用户时间线](https://docs.x.com/x-api/users/get-posts)读取，排除回复、转发和引用帖；每页最多 100 条，逐页读取至结束，X 官方时间线最多提供最近 3,200 条帖子。服务端缓存与用户资料缓存均为 15 分钟，后续请求使用 `since_id` 增量读取新帖，每 24 小时完整核对一次以移除已删除的帖子；前端每 15 分钟请求一次，页面重新变为可见时也会检查。因此这是自动同步，不是秒级更新。暂时断线时显示上次成功同步的内容；日常帖首次失败仍回退到标明日期的公开快照。2026-09-27 线上验证 `api/x-posts` 可返回包含媒体的动态；香港函数区部署后，图片接口返回 200。
 
-同一帖子 API 请求还读取 `attachments.media_keys` 和媒体扩展，将照片、视频与对应帖子关联。置顶和日常卡片的图片区域都有左右切换按钮：多图帖子按附件顺序切换，单图帖子也显示按钮但按下后仍是同一张。访客浏览器通过本站 `/api/x-media` 加载 X 照片、头像和视频预览图；该接口仅接收 HTTPS 地址，仅允许 `pbs.twimg.com`、`video.twimg.com` 和 `abs.twimg.com` 三个主机，并继续只返回受支持的图片类型，不使用 X Bearer Token。X 的 MP4 视频通过同源 `/api/x-video` 加载；该路由只允许 `video.twimg.com` 的视频路径，透传单段 HTTP `Range` 请求并流式返回视频数据，供浏览器缓冲和拖动进度。图片成功响应使用浏览器 1 天缓存、Vercel CDN 1 天缓存并后台更新 7 天；视频仍使用浏览器 30 分钟、共享 CDN 12 小时缓存，不会永久保存到项目。图片或视频代理失败时显示本地错误提示；头像失败时回退到项目图片。X 的视频按最高可用 MP4 码率播放；无 MP4 变体的视频和 GIF 暂不展示。日期快照继续使用明确标记的**网站装饰插画**，不冒充帖子配图。[X 媒体字段说明](https://docs.x.com/x-api/fundamentals/data-dictionary)。
+同一帖子 API 请求还读取 `attachments.media_keys` 和媒体扩展，将照片、视频与对应帖子关联。置顶和日常卡片的图片区域都有左右切换按钮：多图帖子按附件顺序切换，单图帖子也显示按钮但按下后仍是同一张。访客浏览器通过本站 `/api/x-media` 加载 X 照片、头像和视频预览图；该接口仅接收 HTTPS 地址，仅允许 `pbs.twimg.com`、`video.twimg.com` 和 `abs.twimg.com` 三个主机，并继续只返回受支持的图片类型，不使用 X Bearer Token。已知长度的图片边收边传，并对传输及完整图片都保留 12 MB 限制；上游未提供长度时会先完整校验再返回。图片响应使用浏览器 1 天缓存、Vercel CDN 1 天缓存并后台更新 7 天。X 的 MP4 视频通过同源 `/api/x-video` 加载；该路由只允许 `video.twimg.com` 的视频路径，透传单段 HTTP `Range` 请求并流式返回视频数据，供浏览器缓冲和拖动进度；视频仍使用浏览器 30 分钟、共享 CDN 12 小时缓存，不会永久保存到项目。图片或视频代理失败时显示本地错误提示；头像失败时回退到项目图片。X 的视频按最高可用 MP4 码率播放；无 MP4 变体的视频和 GIF 暂不展示。日期快照继续使用明确标记的**网站装饰插画**，不冒充帖子配图。[X 媒体字段说明](https://docs.x.com/x-api/fundamentals/data-dictionary)。
 
 当帖子配图已经展示时，接口根据 X 返回的 `entities.urls` 只隐藏指向**本帖照片**的 `t.co` 短链；普通网页链接保留。2026-09-26 实测六条帖子中原有四条图片短链已从卡片正文消失，照片仍显示。
 
