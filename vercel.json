@@ -3,6 +3,12 @@
   "framework": "vite",
   "buildCommand": "npm run build",
   "outputDirectory": "dist/client",
+  "functions": {
+    "api/x-media.js": { "regions": ["hkg1"] },
+    "api/x-video.js": { "regions": ["hkg1"] },
+    "api/x-posts.js": { "regions": ["hkg1"] },
+    "api/x-profile.js": { "regions": ["hkg1"] }
+  },
   "headers": [
     {
       "source": "/assets/(.*)",
