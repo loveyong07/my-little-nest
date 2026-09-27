@@ -11,15 +11,15 @@ npm run dev:proxy -- --host 127.0.0.1 --port 4173 --strictPort
 
 打开 `http://127.0.0.1:4173/`。网站目前提供中文、日文、英文切换和可点击的联系方式。微信与 QQ 按钮会复制账号；三个邮箱可通过 `mailto:` 打开邮件应用。
 
-**最新交接状态（2026-09-27）：** 提交 `749b588` 已推送至 `master` 并由 Vercel 成功部署。首页和动态页改用更清晰的 X 头像，动态图片与视频支持站内放大预览；置顶帖和日常帖的“自动同步”字样已移除，原帖链接保留。正式站首页、`/posts`、`/contact` 均返回 HTTP 200，`/api/x-profile`、`/api/x-posts` 均返回 `status: ok`。详细验证与此前安全响应头、视频代理的部署记录见[网站设计进度交接.md](网站设计进度交接.md)。
+**最新交接状态（2026-09-27）：** 视觉优化提交 `2bd59bd` 已推送至 `master`，正式站首页、`/posts`、`/contact` 均返回 HTTP 200，线上 JS/CSS 文件名与该提交的本地生产构建一致；`/api/x-profile`、`/api/x-posts` 返回 `status: ok`，置顶帖状态为 `ok`，日常帖 23 条。首页、动态和联系页的既有功能与详细发布记录见[网站设计进度交接.md](网站设计进度交接.md)。
 
 **当前代码：** 动态卡片支持帖内图片切换、完整原创帖轮播、图片和视频放大预览，以及 X MP4 视频同源代理播放。文档中更早的 6 条帖子记录仅作历史参考。
 
 ## 域名与上线状态
 
 - **GitHub 仓库：** [fyh2026/my-little-nest](https://github.com/fyh2026/my-little-nest)，私有仓库，生产分支 `master`。`.env.local` 不在仓库中。
-- **Vercel 生产部署：** [打开正式站点](https://loveyong07.top)。最新功能发布为提交 `749b588`，部署 [`Cumt3ezF9BHC3C8kvMzsdvxpXUZw`](https://vercel.com/fyh2026s-projects/my-little-nest/Cumt3ezF9BHC3C8kvMzsdvxpXUZw) 已成功；此前安全响应头与 API 缓存由 `434d701` 发布。`.vercel.app` 地址受 Vercel 登录保护。
-- **GitHub 自动部署：** Vercel 项目连接私有仓库 `fyh2026/my-little-nest` 的 `master` 分支。功能提交 `749b588` 推送后，Vercel GitHub 状态为 `success`；正式站三条页面路由均返回 HTTP 200，构建文件名与本地一致。
+- **Vercel 生产部署：** [打开正式站点](https://loveyong07.top)。最新视觉代码提交为 `2bd59bd`，正式站已返回该次本地构建对应的 JS/CSS 文件；此前安全响应头与 API 缓存由 `434d701` 发布。`.vercel.app` 地址受 Vercel 登录保护。
+- **GitHub 自动部署：** Vercel 项目连接私有仓库 `fyh2026/my-little-nest` 的 `master` 分支。提交 `2bd59bd` 已推送；正式站首页、`/posts`、`/contact` 返回 HTTP 200，两个 X API 返回 `status: ok`。
 - **根域名与 SSL：** `https://loveyong07.top` 正常访问；此前已核实 Vercel DNS 与证书配置。本轮没有修改 DNS。
 - **`www` 子域名：已完成。** 已添加到 `my-little-nest`，Vercel 状态为 `configured-correctly`、`verified: true`，并设置 HTTP 308 永久跳转到 `https://loveyong07.top`。公网请求 `https://www.loveyong07.top/` 返回 308；`/posts?from=www` 保留路径和查询参数跳转，最终目标返回 HTTP 200，HTTPS/TLS 成功。没有修改 DNS。
 - **线上 X 动态：** 2026-09-26 本轮对 `https://loveyong07.top/api/x-posts` 请求一次，HTTP 200，返回 `status: ok`、`pinnedStatus: ok`、23 条动态且包含 1 条视频；未复制帖子正文或令牌。`X_BEARER_TOKEN` 仅保存在 Vercel Production 服务端环境变量中。
