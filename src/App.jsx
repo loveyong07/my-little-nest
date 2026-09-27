@@ -19,10 +19,10 @@ const SNAPSHOT = {
 
 const copy = {
   zh: {
-    homeLabel: "首页区域", homeLinkLabel: "Welcome to my little nest！· 返回首页",
+    homeLabel: "首页区域", homeLinkLabel: "Welcome to my little nest! · 返回首页",
     navLabel: "主导航", languageLabel: "语言", openMenu: "打开菜单", closeMenu: "关闭菜单",
     profileAlt: "初咏的 X 头像",
-    nav: ["首页", "动态", "联系"], pageTitle: { posts: "动态", contact: "联系" },
+    nav: ["首页", "动态", "联系"], pageTitle: { posts: "动态", contact: "联系" }, pageKicker: { posts: "冬日手帐", contact: "海风来信" }, homePlaceLabel: "初咏的小窝",
     heroScript: "愿好的相遇\n让平凡的日子\n也闪闪发光",
     name: "初咏",
     bio: "来世请让我做东京的帅哥吧.",
@@ -44,10 +44,10 @@ const copy = {
     footerSmall: "Different People　/　Same Beautiful Sky　/　Always Here for You",
   },
   ja: {
-    homeLabel: "ホーム", homeLinkLabel: "Welcome to my little nest！· ホーム",
+    homeLabel: "ホーム", homeLinkLabel: "Welcome to my little nest! · ホーム",
     navLabel: "メインナビゲーション", languageLabel: "言語", openMenu: "メニューを開く", closeMenu: "メニューを閉じる",
     profileAlt: "初咏の X プロフィール画像",
-    nav: ["ホーム", "投稿", "連絡先"], pageTitle: { posts: "投稿", contact: "連絡先" },
+    nav: ["ホーム", "投稿", "連絡先"], pageTitle: { posts: "投稿", contact: "連絡先" }, pageKicker: { posts: "冬の日記", contact: "海辺からのお便り" }, homePlaceLabel: "初咏の小さなおうち",
     heroScript: "素敵な出会いが\n何気ない日々を\n輝かせますように",
     name: "初咏",
     bio: "来世では東京のイケメンになりたい。",
@@ -69,10 +69,10 @@ const copy = {
     footerSmall: "Different People　/　Same Beautiful Sky　/　Always Here for You",
   },
   en: {
-    homeLabel: "Home", homeLinkLabel: "Welcome to my little nest！ · Home",
+    homeLabel: "Home", homeLinkLabel: "Welcome to my little nest! · Home",
     navLabel: "Main navigation", languageLabel: "Language", openMenu: "Open menu", closeMenu: "Close menu",
     profileAlt: "初咏's X profile photo",
-    nav: ["Home", "Posts", "Contact"], pageTitle: { posts: "Posts", contact: "Contact" },
+    nav: ["Home", "Posts", "Contact"], pageTitle: { posts: "Posts", contact: "Contact" }, pageKicker: { posts: "WINTER JOURNAL", contact: "LETTERS BY THE SEA" }, homePlaceLabel: "My little nest",
     heroScript: "May lovely meetings\nmake ordinary days\nshine a little brighter",
     name: "初咏",
     bio: "In my next life, let me be a handsome guy in Tokyo.",
@@ -196,7 +196,7 @@ function formatPostDate(value, language) {
 
 function ContactTile({ icon: Icon, className, title, sub, href, onClick, copyLabel, copied }) {
   const Tag = href ? "a" : "button";
-  return <Tag className={`contact-tile ${className}`} href={href}
+  return <Tag className={`contact-tile ${className}${copied ? " is-copied" : ""}`} href={href}
     target={href?.startsWith("https://") ? "_blank" : undefined}
     rel={href?.startsWith("https://") ? "noopener noreferrer" : undefined}
     onClick={onClick} type={href ? undefined : "button"} title={copyLabel}
@@ -452,7 +452,7 @@ export function App() {
       <span className="brand-caption">A LITTLE NEST</span>
     </a>
     <nav className={"site-nav " + (menuOpen ? "is-open" : "")} id="site-navigation" aria-label={t.navLabel}>
-      {navIds.map((id, index) => <a key={id} className={page === id ? "active" : ""} href={pagePaths[id]} aria-current={page === id ? "page" : undefined}>{t.nav[index]}</a>)}
+      {navIds.map((id, index) => <a key={id} className={page === id ? "active" : ""} href={pagePaths[id]} aria-current={page === id ? "page" : undefined}><PiFlowerLight className="nav-active-flower" aria-hidden="true" />{t.nav[index]}</a>)}
     </nav>
     <div className="language-picker" role="group" aria-label={t.languageLabel}>
       {[["zh", "中文"], ["ja", "日本語"], ["en", "EN"]].map(([code, label]) => <button key={code} className={language === code ? "active" : ""} onClick={() => changeLanguage(code)} aria-pressed={language === code}>{label}</button>)}
@@ -487,6 +487,7 @@ export function App() {
     <div className="email-row">
       <span><FaEnvelope aria-hidden="true" />{t.emailHeading}</span>
       <div>{mailboxes.map(({ label, address }) => <a key={address} href={"mailto:" + address} title={address}>{label}<span>{address}</span></a>)}</div>
+      <span className="email-stamp" aria-hidden="true"><PiFlowerLight /></span>
     </div>
     <div className="panel-footer">
       <p className="footer-script">{t.footerScript}</p>
@@ -510,7 +511,15 @@ export function App() {
       </div>
       {header}
       <div className="hero-copy">
-        <h1><span>Welcome</span><span>to my little nest<em>！</em></span></h1>
+        <p className="home-place-badge">
+          <span className="home-place-seal" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <path d="M9 20V9l3-4 3 4v11M8 9h8M10 13h1m2 0h1M7.5 20h9M12 2v1.5M3.9 6.8l1.4.7m14.8-.7-1.4.7" />
+            </svg>
+          </span>
+          {t.homePlaceLabel}
+        </p>
+        <h1><span>Welcome</span><span>to my little nest<em>!</em></span></h1>
         <div className="ornament" aria-hidden="true"><span /><PiFlowerLight /><span /></div>
         <div className="profile">
           <img src={xMediaSrc(profile.avatar, true) || FALLBACK_AVATAR}
@@ -529,7 +538,10 @@ export function App() {
     </section> : <>
       <section className={"route-hero route-hero-" + page} aria-label={t.pageTitle[page]}>
         {header}
-        <div className="route-page-title"><h1>{t.pageTitle[page]}</h1></div>
+        <div className="route-page-title">
+          <span className="route-page-kicker"><PiFlowerLight aria-hidden="true" />{t.pageKicker[page]}</span>
+          <h1>{t.pageTitle[page]}</h1>
+        </div>
       </section>
       <section className={"content-panel route-panel route-panel-" + page} aria-label={page === "posts" ? t.postsHeading : t.contactsHeading}>
         {page === "posts" ? postsSection : contactsSection}
