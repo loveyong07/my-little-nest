@@ -11,6 +11,7 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 ## Selected design and wording
 
 - The user selected the first blue anime sky mock. `design-reference.png` is the visual source of truth. Recreate its open blue sky, right-side character artwork, large blue serif greeting, and white rounded social panel.
+- For the 2026-09-27 design audit upgrade, the user selected route A (refine the existing design). Keep the established artwork and welcome mood while improving responsive composition, Posts readability, and Contact hierarchy. The user chose to leave new personal-interest or recent-status copy blank; do not invent it.
 - The browser tab title is exactly `初咏的小窝`; keep the visible homepage heading as `Welcome to my little nest！`.
 - This is a social calling card, not a job-search portfolio. Provide Chinese, Japanese, and English UI. Keep the user's own original X posts in cards, and label any decorative art separately from actual post media.
 - Render X video attachments inline in Posts cards and load MP4 files through the same-origin `/api/x-video` route with byte-range support, so playback does not depend on direct access to X's video host.

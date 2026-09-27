@@ -32,6 +32,8 @@ const copy = {
     feedStale: "暂时无法更新 · 显示上次同步", feedSnapshot: "公开帖快照 · 2026-09-25",
     pinnedStale: "暂时无法更新 · 显示上次置顶",
     pinnedLoading: "正在同步 X 置顶帖…", pinnedNone: "X 当前没有置顶帖子", pinnedUnavailable: "置顶帖暂时无法同步", noPosts: "X 当前还没有原创帖子",
+    feedLoading: "正在同步最新动态；下方暂显示有日期的公开帖快照。", feedUnavailable: "暂时无法获取最新动态；下方是有日期的公开帖快照。", feedEmpty: "目前没有可展示的原创动态。",
+    visitX: "前往 X 查看", retry: "重新尝试", latestPosts: "直接看最新日常", postsIndexLabel: "按日期浏览动态",
     openPost: "在 X 查看原帖", artLabel: "网站装饰插画 · 非帖子图片", postPhotoAlt: (number) => `帖子图片 ${number}`, postVideoAlt: "X 帖子视频",
     enlargePhoto: "放大图片", enlargeVideo: "放大视频", closePreview: "关闭预览",
     photoUnavailable: "图片暂时无法加载", videoUnavailable: "视频暂时无法加载",
@@ -39,7 +41,8 @@ const copy = {
     prevPost: "上一条动态", nextPost: "下一条动态", prevPhoto: "上一张图片", nextPhoto: "下一张图片",
     postNumber: (current, total) => `${current} / ${total}`,
     xSub: "随时分享", lineSub: "日常聊天", telegramSub: "欢迎私信", wechatSub: "好友交流", qqSub: "一起玩耍", emailSub: "商务/合作/来信",
-    copied: "已复制", copy: "点击复制账号", emailHeading: "期待你的来信",
+    copied: "已复制", copy: "点击复制账号", copyFailed: "复制未成功。请选择下方账号手动复制。", manualCopyId: "可手动复制的账号", emailHeading: "期待你的来信",
+    actionOpen: "打开 ↗", actionCopy: "复制账号", actionWrite: "选择邮箱 ↓",
     footerScript: "Thank you\nfor being here ♡", footerNote: "相遇是故事的开始，\n愿我们都被温柔以待。",
     footerSmall: "Different People　/　Same Beautiful Sky　/　Always Here for You",
   },
@@ -57,6 +60,8 @@ const copy = {
     feedStale: "一時的に更新できません · 前回の投稿を表示", feedSnapshot: "公開投稿の記録 · 2026-09-25",
     pinnedStale: "一時的に更新できません · 前回の固定投稿を表示",
     pinnedLoading: "X の固定した投稿を読み込み中…", pinnedNone: "現在、固定した投稿はありません", pinnedUnavailable: "固定した投稿を読み込めません", noPosts: "オリジナルの投稿はまだありません",
+    feedLoading: "最新の投稿を読み込み中です。下には日付付きの公開投稿記録を表示しています。", feedUnavailable: "最新の投稿を取得できません。下には日付付きの公開投稿記録を表示しています。", feedEmpty: "表示できるオリジナル投稿はまだありません。",
+    visitX: "X で見る", retry: "再試行", latestPosts: "最新の投稿へ", postsIndexLabel: "日付で投稿を探す",
     openPost: "X で原文を見る", artLabel: "サイト用イラスト · 投稿画像ではありません", postPhotoAlt: (number) => `投稿画像 ${number}`, postVideoAlt: "X の投稿動画",
     enlargePhoto: "画像を拡大", enlargeVideo: "動画を拡大", closePreview: "プレビューを閉じる",
     photoUnavailable: "画像を読み込めませんでした", videoUnavailable: "動画を読み込めませんでした",
@@ -64,7 +69,8 @@ const copy = {
     prevPost: "前の投稿", nextPost: "次の投稿", prevPhoto: "前の画像", nextPhoto: "次の画像",
     postNumber: (current, total) => `${current} / ${total}`,
     xSub: "日々のこと", lineSub: "気軽にお話", telegramSub: "メッセージ歓迎", wechatSub: "友達になろう", qqSub: "一緒に遊ぼう", emailSub: "お仕事・お便り",
-    copied: "コピーしました", copy: "ID をコピー", emailHeading: "お便りをお待ちしています",
+    copied: "コピーしました", copy: "ID をコピー", copyFailed: "コピーできませんでした。下の ID を選んで手動でコピーしてください。", manualCopyId: "手動でコピーできる ID", emailHeading: "お便りをお待ちしています",
+    actionOpen: "開く ↗", actionCopy: "ID をコピー", actionWrite: "メールを選ぶ ↓",
     footerScript: "Thank you\nfor being here ♡", footerNote: "出会いは物語の始まり。\n優しい日々になりますように。",
     footerSmall: "Different People　/　Same Beautiful Sky　/　Always Here for You",
   },
@@ -82,6 +88,8 @@ const copy = {
     feedStale: "Update unavailable · showing last sync", feedSnapshot: "Public post snapshot · 2026-09-25",
     pinnedStale: "Update unavailable · showing last pinned post",
     pinnedLoading: "Syncing pinned post from X…", pinnedNone: "No post is currently pinned on X", pinnedUnavailable: "Pinned post is temporarily unavailable", noPosts: "No original X posts yet",
+    feedLoading: "Checking for recent posts. A dated public snapshot appears below for now.", feedUnavailable: "Recent posts are unavailable. A dated public snapshot appears below.", feedEmpty: "There are no original posts to show yet.",
+    visitX: "See on X", retry: "Try again", latestPosts: "Jump to latest posts", postsIndexLabel: "Browse posts by date",
     openPost: "View original post on X", artLabel: "Site illustration · not an image from this post", postPhotoAlt: (number) => `Post photo ${number}`, postVideoAlt: "Video from this X post",
     enlargePhoto: "Enlarge photo", enlargeVideo: "Enlarge video", closePreview: "Close preview",
     photoUnavailable: "Image is temporarily unavailable", videoUnavailable: "Video is temporarily unavailable",
@@ -89,7 +97,8 @@ const copy = {
     prevPost: "Previous post", nextPost: "Next post", prevPhoto: "Previous photo", nextPhoto: "Next photo",
     postNumber: (current, total) => `${current} / ${total}`,
     xSub: "Little updates", lineSub: "Everyday chat", telegramSub: "Say hello", wechatSub: "Let's be friends", qqSub: "Let's hang out", emailSub: "Work · hello",
-    copied: "Copied", copy: "Copy ID", emailHeading: "Looking forward to your letter",
+    copied: "Copied", copy: "Copy ID", copyFailed: "Copying failed. Select the ID below to copy it manually.", manualCopyId: "ID to copy manually", emailHeading: "Looking forward to your letter",
+    actionOpen: "Open ↗", actionCopy: "Copy ID", actionWrite: "Choose an email ↓",
     footerScript: "Thank you\nfor being here ♡", footerNote: "Every meeting begins a story.\nMay life be gentle to us all.",
     footerSmall: "Different People　/　Same Beautiful Sky　/　Always Here for You",
   },
@@ -194,20 +203,36 @@ function formatPostDate(value, language) {
   return `${dateText} ${timeText}`;
 }
 
-function ContactTile({ icon: Icon, className, title, sub, href, onClick, copyLabel, copied }) {
+function postExcerpt(post, t) {
+  const text = typeof post.text === "string" ? post.text.trim().replace(/\s+/g, " ") : "";
+  if (text) {
+    const characters = Array.from(text);
+    return characters.length > 38 ? `${characters.slice(0, 38).join("")}…` : text;
+  }
+  return Array.isArray(post.media) && post.media.some((media) => media?.type === "video") ? t.postVideoAlt : t.postPhotoAlt(1);
+}
+
+function ContactTile({ icon: Icon, className, title, sub, href, onClick, copyLabel, copied, action, failedId, failureMessage, manualCopyLabel, inputRef }) {
   const Tag = href ? "a" : "button";
-  return <Tag className={`contact-tile ${className}${copied ? " is-copied" : ""}`} href={href}
+  return <><Tag className={`contact-tile ${className}${copied ? " is-copied" : ""}`} href={href}
     target={href?.startsWith("https://") ? "_blank" : undefined}
     rel={href?.startsWith("https://") ? "noopener noreferrer" : undefined}
     onClick={onClick} type={href ? undefined : "button"} title={copyLabel}
-    aria-label={copyLabel || title}>
+    aria-label={copyLabel || undefined}>
     <span className="contact-icon" aria-hidden="true"><Icon /></span>
     <strong>{title}</strong>
     <small aria-live={onClick ? "polite" : undefined} aria-atomic={onClick ? "true" : undefined}>{copied ? copied : sub}</small>
-  </Tag>;
+    <span className="contact-action">{copied || action}</span>
+  </Tag>
+    {failedId && <div className="contact-copy-fallback" role="status">
+      <p>{failureMessage}</p>
+      <input ref={inputRef} type="text" readOnly value={failedId} aria-label={manualCopyLabel}
+        onFocus={(event) => event.currentTarget.select()} onClick={(event) => event.currentTarget.select()} />
+    </div>}
+  </>;
 }
 
-function MediaLightbox({ kind, photo, photoAlt, video, videoSrc, t, onClose, returnFocusRef }) {
+function MediaLightbox({ kind, photo, photoAlt, photoCount, onPhotoChange, video, videoSrc, t, onClose, returnFocusRef }) {
   const dialogRef = useRef(null);
   const closeRef = useRef(null);
 
@@ -218,6 +243,9 @@ function MediaLightbox({ kind, photo, photoAlt, video, videoSrc, t, onClose, ret
     function handleKeyDown(event) {
       if (event.key === "Escape") {
         onClose(null);
+      } else if (kind === "photo" && (event.key === "ArrowLeft" || event.key === "ArrowRight")) {
+        event.preventDefault();
+        onPhotoChange((index) => (index + (event.key === "ArrowLeft" ? -1 : 1) + photoCount) % photoCount);
       } else if (event.key === "Tab") {
         const focusable = [...dialogRef.current.querySelectorAll("video[controls], button")];
         const first = focusable[0];
@@ -237,14 +265,21 @@ function MediaLightbox({ kind, photo, photoAlt, video, videoSrc, t, onClose, ret
       document.body.style.overflow = previousOverflow;
       returnFocusRef.current?.focus();
     };
-  }, [onClose, returnFocusRef]);
+  }, [kind, onClose, onPhotoChange, photoCount, returnFocusRef]);
 
   return createPortal(<div className="media-lightbox" role="presentation"
     onClick={(event) => { if (event.target === event.currentTarget) onClose(null); }}>
     <div className="media-lightbox-content" role="dialog" aria-modal="true"
       aria-label={kind === "photo" ? t.enlargePhoto : t.enlargeVideo} ref={dialogRef}>
       {kind === "photo"
-        ? <img src={photo.src} alt={photo.alt || photoAlt} />
+        ? <><img src={photo.src} alt={photo.alt || photoAlt} />
+          <div className="media-lightbox-navigation">
+            <button className="media-lightbox-prev" type="button" aria-label={t.prevPhoto}
+              onClick={() => onPhotoChange((index) => (index - 1 + photoCount) % photoCount)}><FiChevronLeft aria-hidden="true" /></button>
+            <span className="media-lightbox-count" aria-live="polite">{t.postNumber(photo.number, photoCount)}</span>
+            <button className="media-lightbox-next" type="button" aria-label={t.nextPhoto}
+              onClick={() => onPhotoChange((index) => (index + 1) % photoCount)}><FiChevronRight aria-hidden="true" /></button>
+          </div></>
         : <video controls playsInline preload="metadata" poster={xMediaSrc(video.poster) || undefined}
           aria-label={video.alt || t.postVideoAlt} tabIndex="0">
           <source src={videoSrc} type="video/mp4" />
@@ -326,7 +361,7 @@ function PostCard({ post, feedSource, language, t, label, profile }) {
       <a href={post.permalink} target="_blank" rel="noopener noreferrer">{t.openPost}<FaArrowRight aria-hidden="true" /></a>
     </div>
   </article>
-    {expandedMedia && <MediaLightbox kind={expandedMedia} photo={currentPhoto}
+    {expandedMedia && (expandedMedia === "photo" ? currentPhoto : video) && <MediaLightbox kind={expandedMedia} photo={currentPhoto ? { ...currentPhoto, number: currentPhotoIndex + 1 } : null} photoCount={photos.length} onPhotoChange={setPhotoIndex}
       photoAlt={t.postPhotoAlt(currentPhotoIndex + 1)} video={video}
       videoSrc={videoSrc} t={t} onClose={setExpandedMedia} returnFocusRef={returnFocusRef} />}
   </>;
@@ -337,13 +372,24 @@ export function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [posts, setPosts] = useState([SNAPSHOT]);
   const [feedSource, setFeedSource] = useState("snapshot");
+  const [feedLoading, setFeedLoading] = useState(true);
+  const [feedRefreshToken, setFeedRefreshToken] = useState(0);
+  const [retryDisabled, setRetryDisabled] = useState(false);
   const [pinnedPost, setPinnedPost] = useState(null);
   const [pinState, setPinState] = useState("loading");
+  const pinnedPostRef = useRef(null);
   const [postIndex, setPostIndex] = useState(0);
   const [copiedId, setCopiedId] = useState("");
+  const [copyFailedId, setCopyFailedId] = useState("");
   const [clickSparkle, setClickSparkle] = useState(null);
   const [visitDate, setVisitDate] = useState(() => new Date());
   const [profile, setProfile] = useState({ name: "初咏", username: HANDLE, avatar: `${ASSETS}/x-avatar.jpg` });
+  const headerRef = useRef(null);
+  const menuToggleRef = useRef(null);
+  const menuOpenedByKeyboardRef = useRef(false);
+  const manualCopyRef = useRef(null);
+  const copyTimerRef = useRef(null);
+  const retryTimerRef = useRef(null);
   const page = resolvePage();
   const t = copy[language];
 
@@ -381,6 +427,37 @@ export function App() {
   }, []);
 
   useEffect(() => {
+    if (!menuOpen) return undefined;
+    if (menuOpenedByKeyboardRef.current) headerRef.current?.querySelector(".site-nav a")?.focus();
+    function closeMenuOnEscape(event) {
+      if (event.key !== "Escape") return;
+      setMenuOpen(false);
+      menuToggleRef.current?.focus();
+    }
+    function closeMenuOutside(event) {
+      if (!headerRef.current?.contains(event.target)) setMenuOpen(false);
+    }
+    document.addEventListener("keydown", closeMenuOnEscape);
+    document.addEventListener("pointerdown", closeMenuOutside);
+    return () => {
+      document.removeEventListener("keydown", closeMenuOnEscape);
+      document.removeEventListener("pointerdown", closeMenuOutside);
+    };
+  }, [menuOpen]);
+
+  useEffect(() => {
+    if (copyFailedId) {
+      manualCopyRef.current?.focus();
+      manualCopyRef.current?.select();
+    }
+  }, [copyFailedId]);
+
+  useEffect(() => () => {
+    window.clearTimeout(copyTimerRef.current);
+    window.clearTimeout(retryTimerRef.current);
+  }, []);
+
+  useEffect(() => {
     if (page !== "posts") return undefined;
     let mounted = true;
     async function refreshFeed() {
@@ -392,25 +469,36 @@ export function App() {
         const hasPinStatus = ["ok", "stale", "none", "unavailable"].includes(feed.pinnedStatus);
         const nextPinned = isOwnPost(feed.pinnedPost) && (!hasPinStatus || ["ok", "stale"].includes(feed.pinnedStatus)) ? feed.pinnedPost : null;
         if (hasPinStatus) {
-          setPinnedPost(nextPinned);
-          setPinState(nextPinned ? (feed.pinnedStatus === "stale" ? "stale" : "live") : (feed.pinnedStatus === "none" ? "none" : "unavailable"));
+          if (feed.pinnedStatus === "none") {
+            pinnedPostRef.current = null;
+            setPinnedPost(null); setPinState("none");
+          } else if (feed.pinnedStatus === "unavailable") {
+            setPinState(pinnedPostRef.current ? "stale" : "unavailable");
+          } else {
+            pinnedPostRef.current = nextPinned;
+            setPinnedPost(nextPinned);
+            setPinState(nextPinned ? (feed.pinnedStatus === "stale" ? "stale" : "live") : "unavailable");
+          }
         } else if (feed.status === "ok" || feed.status === "stale") {
+          pinnedPostRef.current = nextPinned;
           setPinnedPost(nextPinned);
           setPinState(nextPinned ? (feed.status === "stale" ? "stale" : "live") : (feed.status === "stale" ? "unavailable" : "none"));
         } else {
-          setPinState((current) => current === "live" ? "stale" : current === "loading" ? "unavailable" : current);
+          setPinState(pinnedPostRef.current ? "stale" : "unavailable");
         }
-        const originals = Array.isArray(feed.posts) ? feed.posts.filter((post) => isOriginalPost(post) && post.id !== nextPinned?.id) : [];
+        const originals = Array.isArray(feed.posts) ? feed.posts.filter((post) => isOriginalPost(post) && post.id !== pinnedPostRef.current?.id) : [];
         if (feed.status === "ok" || feed.status === "stale") {
           setPosts(originals); setFeedSource(feed.status === "stale" ? "stale" : "live");
           setPostIndex((index) => Math.min(index, Math.max(0, originals.length - 1)));
         } else {
-          setPosts([SNAPSHOT]); setFeedSource("snapshot"); setPostIndex(0);
+          setFeedSource((current) => current === "live" ? "stale" : current);
         }
+        setFeedLoading(false);
       } catch {
         if (mounted) {
           setFeedSource((current) => current === "live" ? "stale" : current);
-          setPinState((current) => current === "live" ? "stale" : current === "loading" ? "unavailable" : current);
+          setPinState(pinnedPostRef.current ? "stale" : "unavailable");
+          setFeedLoading(false);
         }
       }
     }
@@ -419,14 +507,28 @@ export function App() {
     const onVisible = () => { if (!document.hidden) refreshFeed(); };
     document.addEventListener("visibilitychange", onVisible);
     return () => { mounted = false; window.clearInterval(interval); document.removeEventListener("visibilitychange", onVisible); };
-  }, [page]);
+  }, [page, feedRefreshToken]);
+
+  function retryFeed() {
+    if (retryDisabled) return;
+    setRetryDisabled(true);
+    setFeedLoading(true);
+    setFeedRefreshToken((value) => value + 1);
+    retryTimerRef.current = window.setTimeout(() => setRetryDisabled(false), 30_000);
+  }
 
   async function copyId(id) {
     try {
       await navigator.clipboard.writeText(id);
+      window.clearTimeout(copyTimerRef.current);
+      setCopyFailedId("");
       setCopiedId(id);
-      window.setTimeout(() => setCopiedId(""), 2400);
-    } catch { setCopiedId(""); }
+      copyTimerRef.current = window.setTimeout(() => setCopiedId(""), 2400);
+    } catch {
+      window.clearTimeout(copyTimerRef.current);
+      setCopiedId("");
+      setCopyFailedId(id);
+    }
   }
 
   function showClickSparkle(event) {
@@ -438,15 +540,15 @@ export function App() {
   }
 
   const socials = [
-    { icon: FaXTwitter, className: "x", title: "X", sub: t.xSub, href: `https://x.com/${profile.username}` },
-    { icon: FaLine, className: "line", title: "LINE", sub: t.lineSub, href: "https://line.me/ti/p/LSaMZQcRLu" },
-    { icon: FaTelegram, className: "telegram", title: "Telegram", sub: t.telegramSub, href: "https://t.me/loveyong07" },
-    { icon: FaWeixin, className: "wechat", title: language === "zh" ? "微信" : "WeChat", sub: t.wechatSub, onClick: () => copyId(HANDLE), copyLabel: t.copy + ": " + HANDLE, copied: copiedId === HANDLE ? t.copied : undefined },
-    { icon: FaQq, className: "qq", title: "QQ", sub: t.qqSub, onClick: () => copyId("3437702786"), copyLabel: t.copy + ": 3437702786", copied: copiedId === "3437702786" ? t.copied : undefined },
-    { icon: FaEnvelope, className: "email", title: language === "zh" ? "邮箱" : language === "ja" ? "メール" : "Email", sub: t.emailSub, href: "mailto:fyh20071004@gmail.com" },
+    { icon: FaXTwitter, className: "x", title: "X", sub: t.xSub, href: `https://x.com/${profile.username}`, action: t.actionOpen },
+    { icon: FaLine, className: "line", title: "LINE", sub: t.lineSub, href: "https://line.me/ti/p/LSaMZQcRLu", action: t.actionOpen },
+    { icon: FaTelegram, className: "telegram", title: "Telegram", sub: t.telegramSub, href: "https://t.me/loveyong07", action: t.actionOpen },
+    { icon: FaWeixin, className: "wechat", title: language === "zh" ? "微信" : "WeChat", sub: t.wechatSub, onClick: () => copyId(HANDLE), copyLabel: t.copy + ": " + HANDLE, copied: copiedId === HANDLE ? t.copied : undefined, action: t.actionCopy, failedId: copyFailedId === HANDLE ? HANDLE : undefined },
+    { icon: FaQq, className: "qq", title: "QQ", sub: t.qqSub, onClick: () => copyId("3437702786"), copyLabel: t.copy + ": 3437702786", copied: copiedId === "3437702786" ? t.copied : undefined, action: t.actionCopy, failedId: copyFailedId === "3437702786" ? "3437702786" : undefined },
+    { icon: FaEnvelope, className: "email", title: language === "zh" ? "邮箱" : language === "ja" ? "メール" : "Email", sub: t.emailSub, href: "#email-options", action: t.actionWrite },
   ];
 
-  const header = <header className="site-header">
+  const header = <header className="site-header" ref={headerRef}>
     <a className="brand" href={pagePaths.home} aria-label={t.homeLinkLabel}>
       <span className="brand-script">Nest<PiFlowerLight aria-hidden="true" /></span>
       <span className="brand-caption">A LITTLE NEST</span>
@@ -457,23 +559,48 @@ export function App() {
     <div className="language-picker" role="group" aria-label={t.languageLabel}>
       {[["zh", "中文"], ["ja", "日本語"], ["en", "EN"]].map(([code, label]) => <button key={code} className={language === code ? "active" : ""} onClick={() => changeLanguage(code)} aria-pressed={language === code}>{label}</button>)}
     </div>
-    <button className="menu-toggle" type="button" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? t.closeMenu : t.openMenu} aria-expanded={menuOpen} aria-controls="site-navigation">{menuOpen ? <FiX /> : <FiMenu />}</button>
+    <button className="menu-toggle" ref={menuToggleRef} type="button" onClick={(event) => {
+      menuOpenedByKeyboardRef.current = event.detail === 0;
+      setMenuOpen((current) => !current);
+    }} aria-label={menuOpen ? t.closeMenu : t.openMenu} aria-expanded={menuOpen} aria-controls="site-navigation">{menuOpen ? <FiX /> : <FiMenu />}</button>
   </header>;
 
   const postsSection = <div className="posts-section" id="posts">
+    {feedSource === "snapshot" && <div className="feed-status" role="status">
+      <span>{feedLoading ? t.feedLoading : t.feedUnavailable}</span>
+      {!feedLoading && <div className="feed-status-actions">
+        <a href={`https://x.com/${profile.username}`} target="_blank" rel="noopener noreferrer">{t.visitX}<FaArrowRight aria-hidden="true" /></a>
+        <button type="button" onClick={retryFeed} disabled={retryDisabled || feedLoading}>{t.retry}</button>
+      </div>}
+    </div>}
     <section className="posts-group" aria-label={t.pinnedHeading}>
-      <div className="section-heading"><PiPushPinFill aria-hidden="true" /><h2>{t.pinnedHeading}</h2></div>
+      <div className="section-heading"><PiPushPinFill aria-hidden="true" /><h2>{t.pinnedHeading}</h2>
+        <a className="posts-jump-link" href="#latest-posts">{t.latestPosts}<FaArrowRight aria-hidden="true" /></a>
+      </div>
       {pinnedPost ? <PostCard key={pinnedPost.id} post={pinnedPost} feedSource={pinState} language={language} t={t} profile={profile} label={pinState === "stale" ? t.pinnedStale : undefined} />
-        : <div className="pinned-placeholder" role="status">{pinState === "loading" ? t.pinnedLoading : pinState === "none" ? t.pinnedNone : t.pinnedUnavailable}</div>}
+        : <div className="pinned-placeholder" role="status">{pinState === "loading" ? t.pinnedLoading : pinState === "none" ? t.pinnedNone : t.pinnedUnavailable}
+          {pinState === "unavailable" && feedSource !== "snapshot" && <span className="feed-status-actions">
+            <a href={`https://x.com/${profile.username}`} target="_blank" rel="noopener noreferrer">{t.visitX}<FaArrowRight aria-hidden="true" /></a>
+            <button type="button" onClick={retryFeed} disabled={retryDisabled || feedLoading}>{t.retry}</button>
+          </span>}
+        </div>}
     </section>
-    <section className="posts-group" aria-label={t.postsHeading}>
+    <section className="posts-group" id="latest-posts" tabIndex="-1" aria-label={t.postsHeading}>
       <div className="section-heading"><HiOutlineSparkles aria-hidden="true" /><h2>{t.postsHeading}</h2></div>
+      {posts.length > 1 && <div className="post-index" role="group" aria-label={t.postsIndexLabel}>
+        {posts.map((post, index) => <button key={post.id} className={`post-index-button${index === postIndex ? " is-active" : ""}`}
+          type="button" aria-current={index === postIndex ? "true" : undefined} onClick={() => setPostIndex(index)}>
+          <span>{t.postNumber(index + 1, posts.length)}</span>
+          <time dateTime={post.created_at}>{formatPostDate(post.created_at, language)}</time>
+          <span className="post-index-excerpt">{postExcerpt(post, t)}</span>
+        </button>)}
+      </div>}
       {posts.length > 0 ? <PostCard key={posts[postIndex].id} post={posts[postIndex]} feedSource={feedSource} language={language} t={t} profile={profile} />
-        : <div className="pinned-placeholder" role="status">{t.noPosts}</div>}
+        : <div className="pinned-placeholder" role="status">{t.feedEmpty} <a href={`https://x.com/${profile.username}`} target="_blank" rel="noopener noreferrer">{t.visitX}</a></div>}
       {posts.length > 1 && <div className="post-controls">
-        <button onClick={() => setPostIndex((postIndex - 1 + posts.length) % posts.length)} aria-label={t.prevPost}><FiChevronLeft /></button>
-        <span>{t.postNumber(postIndex + 1, posts.length)}</span>
-        <button onClick={() => setPostIndex((postIndex + 1) % posts.length)} aria-label={t.nextPost}><FiChevronRight /></button>
+        <button type="button" onClick={() => setPostIndex((postIndex - 1 + posts.length) % posts.length)} aria-label={t.prevPost}><FiChevronLeft /></button>
+        <span aria-live="polite">{t.postNumber(postIndex + 1, posts.length)}</span>
+        <button type="button" onClick={() => setPostIndex((postIndex + 1) % posts.length)} aria-label={t.nextPost}><FiChevronRight /></button>
       </div>}
     </section>
   </div>;
@@ -483,8 +610,9 @@ export function App() {
       <div className="section-heading"><HiOutlineSparkles aria-hidden="true" /><h2>{t.contactsHeading}</h2></div>
       <span className="micro-slogan">{t.footerSmall}</span>
     </div>
-    <div className="contact-grid">{socials.map((social) => <ContactTile key={social.title} {...social} />)}</div>
-    <div className="email-row">
+    <div className="contact-grid">{socials.map((social) => <ContactTile key={social.title} {...social}
+      failureMessage={t.copyFailed} manualCopyLabel={t.manualCopyId} inputRef={manualCopyRef} />)}</div>
+    <div className="email-row" id="email-options">
       <span><FaEnvelope aria-hidden="true" />{t.emailHeading}</span>
       <div>{mailboxes.map(({ label, address }) => <a key={address} href={"mailto:" + address} title={address}>{label}<span>{address}</span></a>)}</div>
       <span className="email-stamp" aria-hidden="true"><PiFlowerLight /></span>
