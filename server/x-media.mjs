@@ -1,20 +1,7 @@
-const MEDIA_HOST = "pbs.twimg.com";
-const MEDIA_PATHS = ["/media/", "/profile_images/", "/ext_tw_video_thumb/"];
+const MEDIA_HOSTS = new Set(["pbs.twimg.com", "video.twimg.com", "abs.twimg.com"]);
 const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"]);
 const MAX_IMAGE_BYTES = 12 * 1024 * 1024;
-const CACHE_CONTROL = "public, max-age=1800, s-maxage=43200";
-
-function parseXImageUrl(value) {
-  if (typeof value !== "string") return null;
-  try {
-    const url = new URL(value);
-    const allowedPath = MEDIA_PATHS.some((prefix) => url.pathname.startsWith(prefix));
-    return url.protocol === "https:" && url.hostname === MEDIA_HOST && !url.username && !url.password
-      && !url.port && allowedPath ? url : null;
-  } catch {
-    return null;
-  }
-}
+const CACHE_CONTROL = "public, max-age=3600";
 
 function errorResponse(status, message) {
   return new Response(message, {
@@ -66,8 +53,17 @@ export async function proxyXMedia(request, fetchImpl = globalThis.fetch) {
 
   const requestUrl = new URL(request.url);
   const sourceValues = requestUrl.searchParams.getAll("url");
-  const source = sourceValues.length === 1 ? parseXImageUrl(sourceValues[0]) : null;
-  if (!source) return errorResponse(400, "Unsupported image URL");
+  if (sourceValues.length !== 1) return errorResponse(400, "Unsupported image URL");
+  let source;
+  try {
+    source = new URL(sourceValues[0]);
+  } catch {
+    return errorResponse(400, "Unsupported image URL");
+  }
+  if (source.protocol !== "https:" || !MEDIA_HOSTS.has(source.hostname)
+    || source.username || source.password || source.port) {
+    return errorResponse(403, "Unsupported image URL");
+  }
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 10000);
