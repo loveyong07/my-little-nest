@@ -332,9 +332,13 @@ button:focus-visible, a:focus-visible { outline: 3px solid #ff7ea0; outline-offs
 .post-text p { margin: 0; white-space: pre-wrap; }
 .post-text p + p { margin-top: 4px; }
 .post-media { position: relative; margin: 8px 0 0 57px; overflow: hidden; border-radius: 8px; background: #eef4fb; }
-.post-video { margin: 8px 0 0 57px; overflow: hidden; border-radius: 8px; background: #101820; }
+.post-video { position: relative; margin: 8px 0 0 57px; overflow: hidden; border-radius: 8px; background: #101820; }
 .post-video video { display: block; width: 100%; max-height: 480px; object-fit: contain; background: #101820; }
-.post-media a { display: block; min-width: 0; }
+.post-media-open, .post-video-open { display: block; padding: 0; border: 0; text-align: left; }
+.post-media-open { width: 100%; background: transparent; cursor: zoom-in; }
+.post-video-open { position: absolute; inset: 0 0 54px; width: 100%; background: transparent; color: #fff; cursor: zoom-in; }
+.post-video-expand { position: absolute; top: 10px; right: 10px; display: inline-flex; align-items: center; gap: 6px; padding: 7px 10px; border-radius: 999px; background: #102841d9; font-size: 13px; }
+.post-video-expand svg { width: 16px; height: 16px; }
 .post-media img { display: block; width: 100%; height: clamp(220px, 30vw, 420px); object-fit: contain; }
 .post-media-unavailable { display: grid; min-height: 220px; padding: 20px; place-items: center; color: #547096; font-size: 13px; text-align: center; }
 .post-media-single img { height: auto; max-height: 480px; }
@@ -349,13 +353,21 @@ button:focus-visible, a:focus-visible { outline: 3px solid #ff7ea0; outline-offs
 .post-illustration img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; }
 .post-illustration figcaption { position: absolute; right: 6px; bottom: 5px; padding: 3px 6px; border-radius: 4px; background: #1c548bc9; color: #fff; font-size: 10px; line-height: 1.3; }
 .post-bottomline { display: flex; justify-content: space-between; gap: 10px; margin: 2px 0 0 57px; color: #6984a8; font-size: 11px; line-height: 1.25; }
-.post-bottomline a { display: inline-flex; align-items: center; gap: 4px; color: #337dc9; text-decoration: none; white-space: nowrap; }
+.post-bottomline a { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; color: #337dc9; text-decoration: none; white-space: nowrap; }
 .post-bottomline a:hover { text-decoration: underline; }
 .post-controls { display: flex; align-items: center; justify-content: center; gap: 15px; padding-top: 8px; color: #5b79a6; font-size: 12px; }
 .post-controls button { display: grid; width: 25px; height: 25px; place-items: center; border: 1px solid #c9dbef; border-radius: 50%; background: #fff; color: #3b81c4; }
 .post-controls button:hover { background: #eaf6ff; }
 .post-controls button:active { transform: scale(.94); }
 .post-controls svg { width: 15px; }
+
+.media-lightbox { position: fixed; z-index: 1000; inset: 0; display: grid; padding: 24px; place-items: center; background: #07182ee8; }
+.media-lightbox-content { display: flex; flex-direction: column; align-items: center; gap: 16px; max-width: 100%; }
+.media-lightbox-content img, .media-lightbox-content video { display: block; max-width: min(92vw, 1280px); max-height: calc(100dvh - 130px); object-fit: contain; border-radius: 8px; box-shadow: 0 12px 38px #0006; }
+.media-lightbox-content video { width: min(92vw, 1100px); background: #101820; }
+.media-lightbox-close { display: grid; width: 50px; height: 50px; padding: 0; place-items: center; border: 1px solid #fff9; border-radius: 50%; background: #fff; color: #235787; }
+.media-lightbox-close:hover { background: #eaf6ff; }
+.media-lightbox-close svg { width: 28px; height: 28px; pointer-events: none; }
 
 .contacts-heading-row { display: flex; align-items: center; justify-content: space-between; gap: 15px; }
 .micro-slogan { color: #9aaac0; font: 11px Arial, sans-serif; white-space: nowrap; }
@@ -560,6 +572,9 @@ button:focus-visible, a:focus-visible { outline: 3px solid #ff7ea0; outline-offs
   .contact-tile small { font-size: 11px; }
   .footer-note { font-size: 11px; }
   .footer-flower { width: 35px; height: 35px; }
+  .media-lightbox { padding: 12px; }
+  .media-lightbox-content { gap: 12px; }
+  .media-lightbox-content img, .media-lightbox-content video { max-width: 96vw; max-height: calc(100dvh - 105px); }
 }
 
 @media (max-width: 360px) {
