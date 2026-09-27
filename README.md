@@ -11,15 +11,15 @@ npm run dev:proxy -- --host 127.0.0.1 --port 4173 --strictPort
 
 打开 `http://127.0.0.1:4173/`。网站目前提供中文、日文、英文切换和可点击的联系方式。微信与 QQ 按钮会复制账号；三个邮箱可通过 `mailto:` 打开邮件应用。
 
-**最新交接状态（2026-09-27）：** A「现有方案精修」的代码提交 [`5403bdc`](https://github.com/fyh2026/my-little-nest/commit/5403bdc5d084e8a04b1c1df5d8f18225652f465e) 已部署至 [正式站](https://loveyong07.top/)。首页、`/posts`、`/contact` 与四张新背景图均返回 HTTP 200；线上 JS/CSS 文件名与本地生产构建一致。`/api/x-posts` 返回 `status: ok`、`pinnedStatus: ok` 和 23 条原创帖。此前的图片代理白名单与 1 小时缓存由 `3401d48` 发布。详细记录见[网站设计进度交接.md](网站设计进度交接.md)。
+**最新交接状态（2026-09-27）：** A 方案后续直连体验修复提交 [`5532286`](https://github.com/fyh2026/my-little-nest/commit/5532286b282796cf3ccf4c1a4c98cf98e0b03673) 已部署至 [正式站](https://loveyong07.top/)。站内三页使用客户端切换；`/assets/` 文件按 1 天缓存并可后台更新。正式站首页、`/posts`、`/contact`、JS、CSS 与四张新背景图均返回 HTTP 200，JS 已返回新缓存头。此前的图片代理白名单与 1 小时缓存由 `3401d48` 发布。详细记录见[网站设计进度交接.md](网站设计进度交接.md)。
 
 **当前代码：** 动态卡片支持帖内图片切换、完整原创帖轮播、图片和视频放大预览，以及 X MP4 视频同源代理播放。文档中更早的 6 条帖子记录仅作历史参考。
 
 ## 域名与上线状态
 
 - **GitHub 仓库：** [fyh2026/my-little-nest](https://github.com/fyh2026/my-little-nest)，私有仓库，生产分支 `master`。`.env.local` 不在仓库中。
-- **Vercel 生产部署：** [打开正式站点](https://loveyong07.top)。A 方案代码提交 `5403bdc` 对应的[部署](https://vercel.com/fyh2026s-projects/my-little-nest/2jPwxGXa7ucBFEoYY6kdB6JrSDFZ)状态为 `success`；线上 JS/CSS 文件名与该提交的本地构建一致。`.vercel.app` 地址受 Vercel 登录保护。
-- **GitHub 自动部署：** Vercel 项目连接私有仓库 `fyh2026/my-little-nest` 的 `master` 分支。提交 `5403bdc` 已发布；正式站首页、`/posts`、`/contact` 均返回 HTTP 200。
+- **Vercel 生产部署：** [打开正式站点](https://loveyong07.top)。直连体验修复提交 `5532286` 对应的[部署](https://vercel.com/fyh2026s-projects/my-little-nest/BYzpGGJq1cne4Pw3WY43uYCg5svR)状态为 `success`；首页、`/posts`、`/contact` 均返回 HTTP 200。`.vercel.app` 地址受 Vercel 登录保护。
+- **GitHub 自动部署：** Vercel 项目连接私有仓库 `fyh2026/my-little-nest` 的 `master` 分支。提交 `5532286` 已发布；线上 `/assets/` 下 JS 文件返回 `Cache-Control: public, max-age=86400, stale-while-revalidate=604800`。
 - **根域名与 SSL：** `https://loveyong07.top` 正常访问；此前已核实 Vercel DNS 与证书配置。本轮没有修改 DNS。
 - **`www` 子域名：已完成。** 已添加到 `my-little-nest`，Vercel 状态为 `configured-correctly`、`verified: true`，并设置 HTTP 308 永久跳转到 `https://loveyong07.top`。公网请求 `https://www.loveyong07.top/` 返回 308；`/posts?from=www` 保留路径和查询参数跳转，最终目标返回 HTTP 200，HTTPS/TLS 成功。没有修改 DNS。
 - **线上 X 动态：** 2026-09-27 发布后对 `https://loveyong07.top/api/x-posts` 请求一次，返回 `status: ok`、`pinnedStatus: ok`、23 条原创动态及置顶帖；未复制帖子正文或令牌。`X_BEARER_TOKEN` 仅保存在 Vercel Production 服务端环境变量中。
