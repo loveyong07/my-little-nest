@@ -12,7 +12,10 @@ function mediaRequest(source, options) {
 
 function imageResponse() {
   return new Response(IMAGE_BYTES, {
-    headers: { "Content-Type": "image/jpeg; charset=binary" },
+    headers: {
+      "Content-Type": "image/jpeg; charset=binary",
+      "Content-Length": String(IMAGE_BYTES.byteLength),
+    },
   });
 }
 
@@ -43,6 +46,36 @@ test("proxies images from each allowed X media host with the requested cache hea
       assert.deepEqual(new Uint8Array(await response.arrayBuffer()), IMAGE_BYTES);
     });
   }
+});
+
+test("streams known-length images before the upstream body finishes", async () => {
+  let upstreamController;
+  const upstreamBody = new ReadableStream({
+    start(controller) {
+      upstreamController = controller;
+      controller.enqueue(IMAGE_BYTES);
+    },
+  });
+  const pendingResponse = proxyXMedia(mediaRequest("https://pbs.twimg.com/media/stream.jpg"), async () => new Response(upstreamBody, {
+    headers: {
+      "Content-Type": "image/jpeg",
+      "Content-Length": "4",
+    },
+  }));
+  let timeoutId;
+  const result = await Promise.race([
+    pendingResponse,
+    new Promise((resolve) => { timeoutId = setTimeout(() => resolve(null), 100); }),
+  ]);
+  clearTimeout(timeoutId);
+  upstreamController.close();
+
+  assert.ok(result instanceof Response, "proxy should return response headers without waiting for the full image");
+  assert.equal(result.status, 200);
+  const reader = result.body.getReader();
+  const firstChunk = await reader.read();
+  assert.deepEqual(firstChunk.value, IMAGE_BYTES);
+  await reader.cancel();
 });
 
 test("rejects missing and malformed URL parameters without fetching", async (t) => {

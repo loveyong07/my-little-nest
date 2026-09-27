@@ -44,6 +44,45 @@ async function readLimitedImage(body) {
   return { image };
 }
 
+function streamLimitedImage(body, onDone) {
+  const reader = body.getReader();
+  let size = 0;
+  let finished = false;
+  function finish() {
+    if (finished) return;
+    finished = true;
+    try { reader.releaseLock(); } catch { /* The stream may already be unlocked. */ }
+    onDone?.();
+  }
+  return new ReadableStream({
+    async pull(controller) {
+      try {
+        const { done, value } = await reader.read();
+        if (done) {
+          finish();
+          controller.close();
+          return;
+        }
+        size += value.byteLength;
+        if (size > MAX_IMAGE_BYTES) {
+          await reader.cancel();
+          finish();
+          controller.error(new Error("Image is too large"));
+          return;
+        }
+        controller.enqueue(value);
+      } catch (error) {
+        finish();
+        controller.error(error);
+      }
+    },
+    async cancel(reason) {
+      try { await reader.cancel(reason); }
+      finally { finish(); }
+    },
+  });
+}
+
 export async function proxyXMedia(request, fetchImpl = globalThis.fetch) {
   if (request.method !== "GET") {
     return new Response("Method not allowed", {
@@ -68,6 +107,8 @@ export async function proxyXMedia(request, fetchImpl = globalThis.fetch) {
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 10000);
+  let streamingResponse = false;
+  let keepTimeoutForStream = false;
   try {
     const upstream = await fetchImpl(source.href, {
       headers: { Accept: "image/avif,image/webp,image/png,image/jpeg,image/gif" },
@@ -84,16 +125,24 @@ export async function proxyXMedia(request, fetchImpl = globalThis.fetch) {
       await upstream.body?.cancel();
       return errorResponse(415, "Unsupported image type");
     }
-    const contentLength = Number(upstream.headers.get("content-length"));
+    const contentLengthHeader = upstream.headers.get("content-length");
+    const contentLength = contentLengthHeader === null ? Number.NaN : Number(contentLengthHeader);
     if (Number.isFinite(contentLength) && contentLength > MAX_IMAGE_BYTES) {
       await upstream.body?.cancel();
       return errorResponse(413, "Image is too large");
     }
-    const body = await readLimitedImage(upstream.body);
-    if (body.tooLarge) return errorResponse(413, "Image is too large");
-    if (!body.image?.byteLength) return errorResponse(502, "Image source unavailable");
+    let responseBody;
+    if (upstream.body && contentLengthHeader !== null && Number.isFinite(contentLength)) {
+      streamingResponse = true;
+      responseBody = streamLimitedImage(upstream.body, () => clearTimeout(timeout));
+    } else {
+      const body = await readLimitedImage(upstream.body);
+      if (body.tooLarge) return errorResponse(413, "Image is too large");
+      if (!body.image?.byteLength) return errorResponse(502, "Image source unavailable");
+      responseBody = body.image;
+    }
 
-    return new Response(body.image, {
+    const response = new Response(responseBody, {
       status: 200,
       headers: {
         "Content-Type": contentType,
@@ -103,9 +152,11 @@ export async function proxyXMedia(request, fetchImpl = globalThis.fetch) {
         "Cross-Origin-Resource-Policy": "same-origin",
       },
     });
+    keepTimeoutForStream = streamingResponse;
+    return response;
   } catch {
     return errorResponse(502, "Image source unavailable");
   } finally {
-    clearTimeout(timeout);
+    if (!keepTimeoutForStream) clearTimeout(timeout);
   }
 }
