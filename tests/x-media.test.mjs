@@ -36,7 +36,8 @@ test("proxies images from each allowed X media host with the requested cache hea
       assert.equal(requestedUrl, source);
       assert.equal(fetchOptions.redirect, "error");
       assert.equal(response.headers.get("content-type"), "image/jpeg");
-      assert.equal(response.headers.get("cache-control"), "public, max-age=3600");
+      assert.equal(response.headers.get("cache-control"), "public, max-age=86400, stale-while-revalidate=604800");
+      assert.equal(response.headers.get("vercel-cdn-cache-control"), "public, s-maxage=86400, stale-while-revalidate=604800");
       assert.equal(response.headers.get("x-content-type-options"), "nosniff");
       assert.equal(response.headers.get("cross-origin-resource-policy"), "same-origin");
       assert.deepEqual(new Uint8Array(await response.arrayBuffer()), IMAGE_BYTES);

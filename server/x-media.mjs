@@ -1,7 +1,8 @@
 const MEDIA_HOSTS = new Set(["pbs.twimg.com", "video.twimg.com", "abs.twimg.com"]);
 const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"]);
 const MAX_IMAGE_BYTES = 12 * 1024 * 1024;
-const CACHE_CONTROL = "public, max-age=3600";
+const CACHE_CONTROL = "public, max-age=86400, stale-while-revalidate=604800";
+const VERCEL_CDN_CACHE_CONTROL = "public, s-maxage=86400, stale-while-revalidate=604800";
 
 function errorResponse(status, message) {
   return new Response(message, {
@@ -97,6 +98,7 @@ export async function proxyXMedia(request, fetchImpl = globalThis.fetch) {
       headers: {
         "Content-Type": contentType,
         "Cache-Control": CACHE_CONTROL,
+        "Vercel-CDN-Cache-Control": VERCEL_CDN_CACHE_CONTROL,
         "X-Content-Type-Options": "nosniff",
         "Cross-Origin-Resource-Policy": "same-origin",
       },
