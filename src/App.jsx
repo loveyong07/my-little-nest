@@ -390,7 +390,7 @@ export function App() {
   const manualCopyRef = useRef(null);
   const copyTimerRef = useRef(null);
   const retryTimerRef = useRef(null);
-  const page = resolvePage();
+  const [page, setPage] = useState(resolvePage);
   const t = copy[language];
 
   function changeLanguage(nextLanguage) {
@@ -420,6 +420,16 @@ export function App() {
   useEffect(() => {
     document.documentElement.lang = language === "zh" ? "zh-CN" : language === "ja" ? "ja" : "en";
   }, [language]);
+
+  useEffect(() => {
+    function handleHistoryNavigation() {
+      setPage(resolvePage());
+      setMenuOpen(false);
+      window.scrollTo(0, 0);
+    }
+    window.addEventListener("popstate", handleHistoryNavigation);
+    return () => window.removeEventListener("popstate", handleHistoryNavigation);
+  }, []);
 
   useEffect(() => {
     const timer = window.setInterval(() => setVisitDate(new Date()), 60_000);
@@ -533,10 +543,26 @@ export function App() {
 
   function showClickSparkle(event) {
     const control = event.target.closest("button, a");
-    if (!control || event.detail === 0) return;
-    const id = Date.now() + "-" + Math.random();
-    setClickSparkle({ id, x: event.clientX, y: event.clientY });
-    window.setTimeout(() => setClickSparkle((current) => current?.id === id ? null : current), 700);
+    if (control && event.detail !== 0) {
+      const id = Date.now() + "-" + Math.random();
+      setClickSparkle({ id, x: event.clientX, y: event.clientY });
+      window.setTimeout(() => setClickSparkle((current) => current?.id === id ? null : current), 700);
+    }
+
+    const link = event.target.closest("a[href]");
+    if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey
+      || (link.target && link.target !== "_self") || link.hasAttribute("download")) return;
+    const destination = new URL(link.href, window.location.href);
+    if (destination.origin !== window.location.origin || destination.hash || destination.search) return;
+    const normalizedPath = destination.pathname.replace(/\/+$/, "") || "/";
+    const nextPage = Object.entries(pagePaths).find(([, path]) => path === normalizedPath)?.[0];
+    if (!nextPage) return;
+
+    event.preventDefault();
+    if (window.location.pathname !== normalizedPath) window.history.pushState({ page: nextPage }, "", normalizedPath);
+    setPage(nextPage);
+    setMenuOpen(false);
+    if (nextPage !== page) window.scrollTo(0, 0);
   }
 
   const socials = [
