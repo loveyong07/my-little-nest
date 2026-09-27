@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { FaArrowRight, FaEnvelope, FaLine, FaQq, FaTelegram, FaWeixin, FaXTwitter } from "react-icons/fa6";
-import { FiChevronLeft, FiChevronRight, FiMenu, FiX } from "react-icons/fi";
+import { FiChevronLeft, FiChevronRight, FiMaximize2, FiMenu, FiX } from "react-icons/fi";
 import { HiOutlineSparkles } from "react-icons/hi2";
 import { PiFlowerLight, PiPushPinFill } from "react-icons/pi";
 
@@ -28,10 +29,11 @@ const copy = {
     motto: "Same Sky, More Good Friends.",
     postsCta: "看看我的动态", contactCta: "联系我", note: "初次相遇，\n就很喜欢你了 ♡",
     pinnedHeading: "置顶帖子", postsHeading: "日常动态 · X 原创帖", contactsHeading: "找到我，一起聊聊天吧",
-    feedLive: "X 原创帖 · 自动同步", feedStale: "暂时无法更新 · 显示上次同步", feedSnapshot: "公开帖快照 · 2026-09-25",
-    pinnedLive: "X 置顶帖 · 自动同步", pinnedStale: "暂时无法更新 · 显示上次置顶",
+    feedStale: "暂时无法更新 · 显示上次同步", feedSnapshot: "公开帖快照 · 2026-09-25",
+    pinnedStale: "暂时无法更新 · 显示上次置顶",
     pinnedLoading: "正在同步 X 置顶帖…", pinnedNone: "X 当前没有置顶帖子", pinnedUnavailable: "置顶帖暂时无法同步", noPosts: "X 当前还没有原创帖子",
     openPost: "在 X 查看原帖", artLabel: "网站装饰插画 · 非帖子图片", postPhotoAlt: (number) => `帖子图片 ${number}`, postVideoAlt: "X 帖子视频",
+    enlargePhoto: "放大图片", enlargeVideo: "放大视频", closePreview: "关闭预览",
     photoUnavailable: "图片暂时无法加载", videoUnavailable: "视频暂时无法加载",
     imageAlt: "蓝天、海面与白色建筑的二次元风格装饰插画",
     prevPost: "上一条动态", nextPost: "下一条动态", prevPhoto: "上一张图片", nextPhoto: "下一张图片",
@@ -52,10 +54,11 @@ const copy = {
     motto: "Same Sky, More Good Friends.",
     postsCta: "投稿を見る", contactCta: "連絡する", note: "はじめまして、\nもうあなたが好きです ♡",
     pinnedHeading: "固定した投稿", postsHeading: "日々の投稿 · X のオリジナル投稿", contactsHeading: "見つけてね、話しましょう",
-    feedLive: "X オリジナル投稿 · 自動更新", feedStale: "一時的に更新できません · 前回の投稿を表示", feedSnapshot: "公開投稿の記録 · 2026-09-25",
-    pinnedLive: "X の固定した投稿 · 自動更新", pinnedStale: "一時的に更新できません · 前回の固定投稿を表示",
+    feedStale: "一時的に更新できません · 前回の投稿を表示", feedSnapshot: "公開投稿の記録 · 2026-09-25",
+    pinnedStale: "一時的に更新できません · 前回の固定投稿を表示",
     pinnedLoading: "X の固定した投稿を読み込み中…", pinnedNone: "現在、固定した投稿はありません", pinnedUnavailable: "固定した投稿を読み込めません", noPosts: "オリジナルの投稿はまだありません",
     openPost: "X で原文を見る", artLabel: "サイト用イラスト · 投稿画像ではありません", postPhotoAlt: (number) => `投稿画像 ${number}`, postVideoAlt: "X の投稿動画",
+    enlargePhoto: "画像を拡大", enlargeVideo: "動画を拡大", closePreview: "プレビューを閉じる",
     photoUnavailable: "画像を読み込めませんでした", videoUnavailable: "動画を読み込めませんでした",
     imageAlt: "青空と海、白い建物のアニメ風イラスト",
     prevPost: "前の投稿", nextPost: "次の投稿", prevPhoto: "前の画像", nextPhoto: "次の画像",
@@ -76,10 +79,11 @@ const copy = {
     motto: "Same Sky, More Good Friends.",
     postsCta: "See my posts", contactCta: "Get in touch", note: "We just met,\nand I already like you ♡",
     pinnedHeading: "Pinned post", postsHeading: "Everyday posts · originals from X", contactsHeading: "Find me and say hello",
-    feedLive: "Original X posts · auto updated", feedStale: "Update unavailable · showing last sync", feedSnapshot: "Public post snapshot · 2026-09-25",
-    pinnedLive: "Pinned on X · auto updated", pinnedStale: "Update unavailable · showing last pinned post",
+    feedStale: "Update unavailable · showing last sync", feedSnapshot: "Public post snapshot · 2026-09-25",
+    pinnedStale: "Update unavailable · showing last pinned post",
     pinnedLoading: "Syncing pinned post from X…", pinnedNone: "No post is currently pinned on X", pinnedUnavailable: "Pinned post is temporarily unavailable", noPosts: "No original X posts yet",
     openPost: "View original post on X", artLabel: "Site illustration · not an image from this post", postPhotoAlt: (number) => `Post photo ${number}`, postVideoAlt: "Video from this X post",
+    enlargePhoto: "Enlarge photo", enlargeVideo: "Enlarge video", closePreview: "Close preview",
     photoUnavailable: "Image is temporarily unavailable", videoUnavailable: "Video is temporarily unavailable",
     imageAlt: "Anime style decorative illustration of a blue sky, sea, and white buildings",
     prevPost: "Previous post", nextPost: "Next post", prevPhoto: "Previous photo", nextPhoto: "Next photo",
@@ -95,13 +99,16 @@ const navIds = ["home", "posts", "contact"];
 const pagePaths = { home: "/", posts: "/posts", contact: "/contact" };
 const LANGUAGE_STORAGE_KEY = "hello-nice-site-language";
 
-function xMediaSrc(value) {
+function xMediaSrc(value, highResAvatar = false) {
   if (typeof value !== "string") return null;
   try {
     const url = new URL(value);
     const allowedPath = url.pathname.startsWith("/media/") || url.pathname.startsWith("/profile_images/")
       || url.pathname.startsWith("/ext_tw_video_thumb/");
     if (url.protocol !== "https:" || url.hostname !== "pbs.twimg.com" || !allowedPath) return null;
+    if (highResAvatar && url.pathname.startsWith("/profile_images/")) {
+      url.pathname = url.pathname.replace(/_normal(?=\.[^/.]+$)/, "_400x400");
+    }
     return `/api/x-media?url=${encodeURIComponent(url.href)}`;
   } catch {
     return null;
@@ -122,13 +129,12 @@ function xVideoSrc(value) {
 
 function handleAvatarError(event) {
   const image = event.currentTarget;
-  if (image.dataset.fallbackApplied === "true" || image.getAttribute("src") === FALLBACK_AVATAR) return;
-  image.dataset.fallbackApplied = "true";
-  image.src = FALLBACK_AVATAR;
-}
-
-function handleAvatarLoad(event) {
-  delete event.currentTarget.dataset.fallbackApplied;
+  const lowResSrc = image.dataset.avatarLowRes;
+  if (lowResSrc && image.getAttribute("src") !== lowResSrc) {
+    image.src = lowResSrc;
+  } else if (image.getAttribute("src") !== FALLBACK_AVATAR) {
+    image.src = FALLBACK_AVATAR;
+  }
 }
 
 function resolvePage() {
@@ -201,8 +207,57 @@ function ContactTile({ icon: Icon, className, title, sub, href, onClick, copyLab
   </Tag>;
 }
 
+function MediaLightbox({ kind, photo, photoAlt, video, videoSrc, t, onClose, returnFocusRef }) {
+  const dialogRef = useRef(null);
+  const closeRef = useRef(null);
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeRef.current?.focus();
+    function handleKeyDown(event) {
+      if (event.key === "Escape") {
+        onClose(null);
+      } else if (event.key === "Tab") {
+        const focusable = [...dialogRef.current.querySelectorAll("video[controls], button")];
+        const first = focusable[0];
+        const last = focusable.at(-1);
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      returnFocusRef.current?.focus();
+    };
+  }, [onClose, returnFocusRef]);
+
+  return createPortal(<div className="media-lightbox" role="presentation"
+    onClick={(event) => { if (event.target === event.currentTarget) onClose(null); }}>
+    <div className="media-lightbox-content" role="dialog" aria-modal="true"
+      aria-label={kind === "photo" ? t.enlargePhoto : t.enlargeVideo} ref={dialogRef}>
+      {kind === "photo"
+        ? <img src={photo.src} alt={photo.alt || photoAlt} />
+        : <video controls playsInline preload="metadata" poster={xMediaSrc(video.poster) || undefined}
+          aria-label={video.alt || t.postVideoAlt} tabIndex="0">
+          <source src={videoSrc} type="video/mp4" />
+        </video>}
+      <button ref={closeRef} className="media-lightbox-close" type="button"
+        aria-label={t.closePreview} onClick={() => onClose(null)}><FiX aria-hidden="true" /></button>
+    </div>
+  </div>, document.body);
+}
+
 function PostCard({ post, feedSource, language, t, label, profile }) {
   const isSnapshot = feedSource === "snapshot";
+  const sourceLabel = label ?? (isSnapshot ? t.feedSnapshot : feedSource === "stale" ? t.feedStale : null);
   const photos = Array.isArray(post.media)
     ? post.media.filter((media) => (media?.type ?? "photo") === "photo" && xMediaSrc(media?.url)).map((media) => ({ ...media, src: xMediaSrc(media.url) })).slice(0, 4)
     : [];
@@ -213,15 +268,23 @@ function PostCard({ post, feedSource, language, t, label, profile }) {
   const [photoIndex, setPhotoIndex] = useState(0);
   const [imageUnavailable, setImageUnavailable] = useState(false);
   const [videoUnavailable, setVideoUnavailable] = useState(false);
+  const [expandedMedia, setExpandedMedia] = useState(null);
+  const returnFocusRef = useRef(null);
   const currentPhotoIndex = Math.min(photoIndex, photos.length - 1);
   const currentPhoto = photos[currentPhotoIndex];
   useEffect(() => {
     setImageUnavailable(false);
     setVideoUnavailable(false);
   }, [currentPhoto?.url, videoSrc]);
-  return <article className="post-card">
+  function openMedia(kind, event) {
+    if (kind === "video") event.currentTarget.parentElement.querySelector("video")?.pause();
+    returnFocusRef.current = event.currentTarget;
+    setExpandedMedia(kind);
+  }
+  return <><article className="post-card">
     <div className="post-topline">
-      <img className="post-avatar" src={xMediaSrc(post.avatar) || FALLBACK_AVATAR} alt="" onError={handleAvatarError} onLoad={handleAvatarLoad} />
+      <img className="post-avatar" src={xMediaSrc(post.avatar, true) || FALLBACK_AVATAR}
+        data-avatar-low-res={xMediaSrc(post.avatar) || undefined} alt="" onError={handleAvatarError} />
       <div className="post-author"><strong>{post.author || profile.name}</strong><span>@{profile.username}</span></div>
       <span className="post-date">{formatPostDate(post.created_at, language)}</span>
       <FaXTwitter className="post-x-mark" aria-hidden="true" />
@@ -230,9 +293,10 @@ function PostCard({ post, feedSource, language, t, label, profile }) {
     {photos.length > 0 && <div className={`post-media${photos.length === 1 ? " post-media-single" : ""}`}>
       {imageUnavailable
         ? <div className="post-media-unavailable" role="status">{t.photoUnavailable}</div>
-        : <a href={post.permalink} target="_blank" rel="noopener noreferrer" aria-label={`${t.openPost} · ${t.postPhotoAlt(currentPhotoIndex + 1)}`}>
+        : <button className="post-media-open" type="button" onClick={(event) => openMedia("photo", event)}
+          aria-label={`${t.enlargePhoto} · ${t.postPhotoAlt(currentPhotoIndex + 1)}`}>
           <img key={currentPhoto.src} src={currentPhoto.src} alt={currentPhoto.alt || t.postPhotoAlt(currentPhotoIndex + 1)} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={() => setImageUnavailable(true)} />
-        </a>}
+        </button>}
       <button className="post-media-nav post-media-prev" type="button" aria-label={t.prevPhoto}
         onClick={() => setPhotoIndex((index) => (Math.min(index, photos.length - 1) - 1 + photos.length) % photos.length)}><FiChevronLeft aria-hidden="true" /></button>
       <button className="post-media-nav post-media-next" type="button" aria-label={t.nextPhoto}
@@ -242,20 +306,30 @@ function PostCard({ post, feedSource, language, t, label, profile }) {
     {video && <div className="post-video">
       {videoUnavailable
         ? <div className="post-media-unavailable" role="status">{t.videoUnavailable}</div>
-        : <video controls playsInline preload="metadata" poster={xMediaSrc(video.poster) || undefined}
-          aria-label={video.alt || t.postVideoAlt} onError={() => setVideoUnavailable(true)}>
-          <source src={videoSrc} type="video/mp4" />
-        </video>}
+        : <>
+          <video controls playsInline preload="metadata" poster={xMediaSrc(video.poster) || undefined}
+            aria-label={video.alt || t.postVideoAlt} onError={() => setVideoUnavailable(true)}>
+            <source src={videoSrc} type="video/mp4" />
+          </video>
+          <button className="post-video-open" type="button" aria-label={t.enlargeVideo}
+            onClick={(event) => openMedia("video", event)}>
+            <span className="post-video-expand"><FiMaximize2 aria-hidden="true" />{t.enlargeVideo}</span>
+          </button>
+        </>}
     </div>}
     {isSnapshot && <figure className="post-illustration">
       <img src={`${ASSETS}/post-seaside.png`} alt={t.imageAlt} />
       <figcaption>{t.artLabel}</figcaption>
     </figure>}
     <div className="post-bottomline">
-      <span>{label || (isSnapshot ? t.feedSnapshot : feedSource === "stale" ? t.feedStale : t.feedLive)}</span>
+      {sourceLabel && <span>{sourceLabel}</span>}
       <a href={post.permalink} target="_blank" rel="noopener noreferrer">{t.openPost}<FaArrowRight aria-hidden="true" /></a>
     </div>
-  </article>;
+  </article>
+    {expandedMedia && <MediaLightbox kind={expandedMedia} photo={currentPhoto}
+      photoAlt={t.postPhotoAlt(currentPhotoIndex + 1)} video={video}
+      videoSrc={videoSrc} t={t} onClose={setExpandedMedia} returnFocusRef={returnFocusRef} />}
+  </>;
 }
 
 export function App() {
@@ -389,7 +463,7 @@ export function App() {
   const postsSection = <div className="posts-section" id="posts">
     <section className="posts-group" aria-label={t.pinnedHeading}>
       <div className="section-heading"><PiPushPinFill aria-hidden="true" /><h2>{t.pinnedHeading}</h2></div>
-      {pinnedPost ? <PostCard key={pinnedPost.id} post={pinnedPost} feedSource={pinState} language={language} t={t} profile={profile} label={pinState === "stale" ? t.pinnedStale : t.pinnedLive} />
+      {pinnedPost ? <PostCard key={pinnedPost.id} post={pinnedPost} feedSource={pinState} language={language} t={t} profile={profile} label={pinState === "stale" ? t.pinnedStale : undefined} />
         : <div className="pinned-placeholder" role="status">{pinState === "loading" ? t.pinnedLoading : pinState === "none" ? t.pinnedNone : t.pinnedUnavailable}</div>}
     </section>
     <section className="posts-group" aria-label={t.postsHeading}>
@@ -439,7 +513,8 @@ export function App() {
         <h1><span>Welcome</span><span>to my little nest<em>！</em></span></h1>
         <div className="ornament" aria-hidden="true"><span /><PiFlowerLight /><span /></div>
         <div className="profile">
-          <img src={xMediaSrc(profile.avatar) || FALLBACK_AVATAR} alt={t.profileAlt} onError={handleAvatarError} onLoad={handleAvatarLoad} />
+          <img src={xMediaSrc(profile.avatar, true) || FALLBACK_AVATAR}
+            data-avatar-low-res={xMediaSrc(profile.avatar) || undefined} alt={t.profileAlt} onError={handleAvatarError} />
           <div><strong>{profile.name}</strong><a href={`https://x.com/${profile.username}`} target="_blank" rel="noopener noreferrer">@{profile.username}</a></div>
         </div>
         <p className="bio">{t.bio}</p>
