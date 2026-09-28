@@ -5,6 +5,7 @@ import { FiChevronLeft, FiChevronRight, FiMaximize2, FiMenu, FiX } from "react-i
 import { HiOutlineSparkles } from "react-icons/hi2";
 import { PiFlowerLight, PiPushPinFill } from "react-icons/pi";
 import { xMediaSrc, xVideoSrc } from "./media-urls.js";
+import { readFeedCache, writeFeedCache, fetchFeed, canPrefetch, prefetchImage } from "./feed-cache.js";
 
 const ASSETS = "/assets";
 const HANDLE = "loveyong07";
@@ -143,6 +144,12 @@ function preloadScene(page) {
 }
 
 preloadScene(resolvePage());
+// Start the feed before React mounts when opening /posts directly.
+let earlyFeed = resolvePage() === "posts" ? fetchFeed() : null;
+earlyFeed?.catch(() => {});
+function initialFeedCache() {
+  try { return readFeedCache(window.localStorage); } catch { return null; }
+}
 
 function readStoredLanguage() {
   try {
@@ -305,7 +312,7 @@ function MediaLightbox({ kind, photo, photoAlt, photoCount, onPhotoChange, video
   </div>, document.body);
 }
 
-function PostCard({ post, feedSource, language, t, label, profile, priorityMedia = false }) {
+function PostCard({ post, feedSource, language, t, label, profile, priorityMedia = false, nextPost }) {
   const isSnapshot = feedSource === "snapshot";
   const sourceLabel = label ?? (isSnapshot ? t.feedSnapshot : feedSource === "stale" ? t.feedStale : null);
   const photos = Array.isArray(post.media)
@@ -367,7 +374,11 @@ function PostCard({ post, feedSource, language, t, label, profile, priorityMedia
           aria-label={`${t.enlargePhoto} · ${t.postPhotoAlt(currentPhotoIndex + 1)}`}>
           <img key={photoRequestSrc} src={photoRequestSrc} alt={currentPhoto.alt || t.postPhotoAlt(currentPhotoIndex + 1)}
             loading={priorityMedia ? "eager" : "lazy"} fetchPriority={priorityMedia ? "high" : undefined}
-            decoding="async" referrerPolicy="no-referrer" onError={() => setImageUnavailable(true)} />
+            decoding="async" referrerPolicy="no-referrer" onLoad={() => {
+              const nextPhoto = photos.length > 1 ? photos[(currentPhotoIndex + 1) % photos.length]?.src : null;
+              prefetchImage(nextPhoto);
+              prefetchImage(xMediaSrc(nextPost?.media?.find((media) => (media.type ?? "photo") === "photo")?.url));
+            }} onError={() => setImageUnavailable(true)} />
         </button>}
       <button className="post-media-nav post-media-prev" type="button" aria-label={t.prevPhoto}
         onClick={() => changePhotoIndex((index) => (Math.min(index, photos.length - 1) - 1 + photos.length) % photos.length)}><FiChevronLeft aria-hidden="true" /></button>
@@ -408,14 +419,17 @@ function PostCard({ post, feedSource, language, t, label, profile, priorityMedia
 export function App() {
   const [language, setLanguage] = useState(readStoredLanguage);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [posts, setPosts] = useState([SNAPSHOT]);
-  const [feedSource, setFeedSource] = useState("snapshot");
-  const [feedLoading, setFeedLoading] = useState(true);
+  const [cachedFeed] = useState(initialFeedCache);
+  const cachedPin = cachedFeed && ["ok", "stale"].includes(cachedFeed.feed.pinnedStatus) && isOwnPost(cachedFeed.feed.pinnedPost) ? cachedFeed.feed.pinnedPost : null;
+  const [posts, setPosts] = useState(() => cachedFeed ? cachedFeed.feed.posts.filter((post) => isOriginalPost(post) && post.id !== cachedPin?.id) : [SNAPSHOT]);
+  const [feedSource, setFeedSource] = useState(cachedFeed ? "stale" : "snapshot");
+  const [feedLoading, setFeedLoading] = useState(!cachedFeed);
+  const [feedUpdatedAt, setFeedUpdatedAt] = useState(cachedFeed?.savedAt ?? null);
   const [feedRefreshToken, setFeedRefreshToken] = useState(0);
   const [retryDisabled, setRetryDisabled] = useState(false);
-  const [pinnedPost, setPinnedPost] = useState(null);
-  const [pinState, setPinState] = useState("loading");
-  const pinnedPostRef = useRef(null);
+  const [pinnedPost, setPinnedPost] = useState(cachedPin);
+  const [pinState, setPinState] = useState(cachedPin ? "stale" : cachedFeed?.feed.pinnedStatus === "none" ? "none" : "loading");
+  const pinnedPostRef = useRef(cachedPin);
   const [postIndex, setPostIndex] = useState(0);
   const [copiedId, setCopiedId] = useState("");
   const [copyFailedId, setCopyFailedId] = useState("");
@@ -512,9 +526,9 @@ export function App() {
     let mounted = true;
     async function refreshFeed() {
       try {
-        const response = await fetch("/api/x-posts", { cache: "no-store" });
-        if (!response.ok) throw new Error("Feed unavailable");
-        const feed = await response.json();
+        const request = earlyFeed ?? fetchFeed();
+        earlyFeed = null;
+        const feed = await request;
         if (!mounted) return;
         const hasPinStatus = ["ok", "stale", "none", "unavailable"].includes(feed.pinnedStatus);
         const nextPinned = isOwnPost(feed.pinnedPost) && (!hasPinStatus || ["ok", "stale"].includes(feed.pinnedStatus)) ? feed.pinnedPost : null;
@@ -538,6 +552,11 @@ export function App() {
         }
         const originals = Array.isArray(feed.posts) ? feed.posts.filter((post) => isOriginalPost(post) && post.id !== pinnedPostRef.current?.id) : [];
         if (feed.status === "ok" || feed.status === "stale") {
+          if (feed.status === "ok") {
+            const savedAt = Date.now();
+            try { writeFeedCache(window.localStorage, { ...feed, posts: originals }, savedAt); } catch { /* Storage is optional. */ }
+            setFeedUpdatedAt(savedAt);
+          }
           setPosts(originals); setFeedSource(feed.status === "stale" ? "stale" : "live");
           setPostIndex((index) => Math.min(index, Math.max(0, originals.length - 1)));
         } else {
@@ -558,6 +577,13 @@ export function App() {
     document.addEventListener("visibilitychange", onVisible);
     return () => { mounted = false; window.clearInterval(interval); document.removeEventListener("visibilitychange", onVisible); };
   }, [page, feedRefreshToken]);
+
+  function preparePosts(event) {
+    const link = event.target.closest("a[href]");
+    if (!link || !canPrefetch()) return;
+    const target = new URL(link.href, window.location.href);
+    if (target.origin === window.location.origin && target.pathname === "/posts") preloadScene("posts");
+  }
 
   function retryFeed() {
     if (retryDisabled) return;
@@ -633,6 +659,9 @@ export function App() {
   </header>;
 
   const postsSection = <div className="posts-section" id="posts">
+    {feedSource === "stale" && feedUpdatedAt && <div className="feed-status" role="status">
+      <span>{language === "zh" ? "当前显示缓存内容。上次获取：" : language === "ja" ? "保存された内容を表示中。取得日時：" : "Showing saved posts. Last fetched: "}{formatPostDate(new Date(feedUpdatedAt).toISOString(), language)}</span>
+    </div>}
     {feedSource === "snapshot" && <div className="feed-status" role="status">
       <span>{feedLoading ? t.feedLoading : t.feedUnavailable}</span>
       {!feedLoading && <div className="feed-status-actions">
@@ -669,7 +698,7 @@ export function App() {
           <span className="post-index-excerpt">{postExcerpt(post, t)}</span>
         </button>)}
       </div>}
-      {posts.length > 0 ? <PostCard key={posts[postIndex].id} post={posts[postIndex]} feedSource={feedSource} language={language} t={t} profile={profile} priorityMedia={!pinnedPost} />
+      {posts.length > 0 ? <PostCard key={posts[postIndex].id} post={posts[postIndex]} feedSource={feedSource} language={language} t={t} profile={profile} nextPost={posts.length > 1 ? posts[(postIndex + 1) % posts.length] : null} priorityMedia={!pinnedPost} />
         : <div className="pinned-placeholder" role="status">{t.feedEmpty} <a href={`https://x.com/${profile.username}`} target="_blank" rel="noopener noreferrer">{t.visitX}</a></div>}
       {posts.length > 1 && <div className="post-controls">
         <button type="button" onClick={() => setPostIndex((postIndex - 1 + posts.length) % posts.length)} aria-label={t.prevPost}><FiChevronLeft /></button>
@@ -698,7 +727,7 @@ export function App() {
     </div>
   </div>;
 
-  return <main className={"site language-" + language + (page === "home" ? "" : " site-route site-route-" + page)} onClick={showClickSparkle}>
+  return <main className={"site language-" + language + (page === "home" ? "" : " site-route site-route-" + page)} onClick={showClickSparkle} onPointerOver={preparePosts} onFocus={preparePosts} onTouchStart={preparePosts}>
     {page === "posts" && <div className="route-floating-elements" aria-hidden="true" />}
     {page === "contact" && <div className="route-floating-elements" aria-hidden="true">
       <img className="route-floating-dove" src={ASSETS + "/contact-sky-dove-v2.png"} alt="" draggable="false" />
