@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { FaArrowRight, FaEnvelope, FaLine, FaQq, FaTelegram, FaWeixin, FaXTwitter } from "react-icons/fa6";
 import { FiChevronLeft, FiChevronRight, FiMaximize2, FiMenu, FiX } from "react-icons/fi";
 import { HiOutlineSparkles } from "react-icons/hi2";
 import { PiFlowerLight, PiPushPinFill } from "react-icons/pi";
+import { xMediaSrc, xVideoSrc } from "./media-urls.js";
 
 const ASSETS = "/assets";
 const HANDLE = "loveyong07";
@@ -19,7 +20,7 @@ const SNAPSHOT = {
 
 const copy = {
   zh: {
-    homeLabel: "首页区域", homeLinkLabel: "Welcome to my little nest! · 返回首页",
+    homeLabel: "首页区域", homeLinkLabel: "初咏的小窝 · 返回首页",
     navLabel: "主导航", languageLabel: "语言", openMenu: "打开菜单", closeMenu: "关闭菜单",
     profileAlt: "初咏的 X 头像",
     nav: ["首页", "动态", "联系"], pageTitle: { posts: "动态", contact: "联系" }, pageKicker: { posts: "冬日手帐", contact: "海风来信" }, homePlaceLabel: "初咏的小窝",
@@ -47,7 +48,7 @@ const copy = {
     footerSmall: "Different People　/　Same Beautiful Sky　/　Always Here for You",
   },
   ja: {
-    homeLabel: "ホーム", homeLinkLabel: "Welcome to my little nest! · ホーム",
+    homeLabel: "ホーム", homeLinkLabel: "初咏の小さなおうち · ホーム",
     navLabel: "メインナビゲーション", languageLabel: "言語", openMenu: "メニューを開く", closeMenu: "メニューを閉じる",
     profileAlt: "初咏の X プロフィール画像",
     nav: ["ホーム", "投稿", "連絡先"], pageTitle: { posts: "投稿", contact: "連絡先" }, pageKicker: { posts: "冬の日記", contact: "海辺からのお便り" }, homePlaceLabel: "初咏の小さなおうち",
@@ -75,7 +76,7 @@ const copy = {
     footerSmall: "Different People　/　Same Beautiful Sky　/　Always Here for You",
   },
   en: {
-    homeLabel: "Home", homeLinkLabel: "Welcome to my little nest! · Home",
+    homeLabel: "Home", homeLinkLabel: "My little nest · Home",
     navLabel: "Main navigation", languageLabel: "Language", openMenu: "Open menu", closeMenu: "Close menu",
     profileAlt: "初咏's X profile photo",
     nav: ["Home", "Posts", "Contact"], pageTitle: { posts: "Posts", contact: "Contact" }, pageKicker: { posts: "WINTER JOURNAL", contact: "LETTERS BY THE SEA" }, homePlaceLabel: "My little nest",
@@ -98,7 +99,7 @@ const copy = {
     postNumber: (current, total) => `${current} / ${total}`,
     xSub: "Little updates", lineSub: "Everyday chat", telegramSub: "Say hello", wechatSub: "Let's be friends", qqSub: "Let's hang out", emailSub: "Work · hello",
     copied: "Copied", copy: "Copy ID", copyFailed: "Copying failed. Select the ID below to copy it manually.", manualCopyId: "ID to copy manually", emailHeading: "Looking forward to your letter",
-    actionOpen: "Open ↗", actionCopy: "Copy ID", actionWrite: "Choose an email ↓",
+    actionOpen: "Open ↗", actionCopy: "Copy ID", actionWrite: "Choose email ↓",
     footerScript: "Thank you\nfor being here ♡", footerNote: "Every meeting begins a story.\nMay life be gentle to us all.",
     footerSmall: "Different People　/　Same Beautiful Sky　/　Always Here for You",
   },
@@ -107,34 +108,6 @@ const copy = {
 const navIds = ["home", "posts", "contact"];
 const pagePaths = { home: "/", posts: "/posts", contact: "/contact" };
 const LANGUAGE_STORAGE_KEY = "hello-nice-site-language";
-
-function xMediaSrc(value, highResAvatar = false) {
-  if (typeof value !== "string") return null;
-  try {
-    const url = new URL(value);
-    const allowedPath = url.pathname.startsWith("/media/") || url.pathname.startsWith("/profile_images/")
-      || url.pathname.startsWith("/ext_tw_video_thumb/");
-    if (url.protocol !== "https:" || url.hostname !== "pbs.twimg.com" || !allowedPath) return null;
-    if (highResAvatar && url.pathname.startsWith("/profile_images/")) {
-      url.pathname = url.pathname.replace(/_normal(?=\.[^/.]+$)/, "_400x400");
-    }
-    return `/api/x-media?url=${encodeURIComponent(url.href)}`;
-  } catch {
-    return null;
-  }
-}
-
-function xVideoSrc(value) {
-  if (typeof value !== "string") return null;
-  try {
-    const url = new URL(value);
-    const allowedPath = ["/ext_tw_video/", "/amplify_video/", "/tweet_video/"].some((prefix) => url.pathname.startsWith(prefix));
-    if (url.protocol !== "https:" || url.hostname !== "video.twimg.com" || url.username || url.password || url.port || !allowedPath) return null;
-    return `/api/x-video?url=${encodeURIComponent(url.href)}`;
-  } catch {
-    return null;
-  }
-}
 
 function handleAvatarError(event) {
   const image = event.currentTarget;
@@ -152,6 +125,24 @@ function resolvePage() {
   if (path === pagePaths.contact) return "contact";
   return "home";
 }
+
+const preloadedScenes = new Set();
+function preloadScene(page) {
+  const file = page === "posts" ? "posts-winter-hero-q90.webp"
+    : page === "contact" ? "contact-sky-letter-v2-clean-q90.webp"
+      : window.matchMedia("(max-width: 700px)").matches ? "hero-sky-mobile-motion-q90.webp" : "hero-sky-alt-motion-q90.webp";
+  if (preloadedScenes.has(file)) return;
+  preloadedScenes.add(file);
+  const link = document.createElement("link");
+  link.rel = "preload";
+  link.as = "image";
+  link.type = "image/webp";
+  link.href = `${ASSETS}/${file}`;
+  link.fetchPriority = "high";
+  document.head.append(link);
+}
+
+preloadScene(resolvePage());
 
 function readStoredLanguage() {
   try {
@@ -235,6 +226,22 @@ function ContactTile({ icon: Icon, className, title, sub, href, onClick, copyLab
 function MediaLightbox({ kind, photo, photoAlt, photoCount, onPhotoChange, video, videoSrc, t, onClose, returnFocusRef }) {
   const dialogRef = useRef(null);
   const closeRef = useRef(null);
+  const [photoUnavailable, setPhotoUnavailable] = useState(false);
+  const [photoRetryCount, setPhotoRetryCount] = useState(0);
+  const [videoUnavailable, setVideoUnavailable] = useState(false);
+  const [videoRetryCount, setVideoRetryCount] = useState(0);
+  const photoLightboxSrc = photo?.src ? `${photo.src}${photoRetryCount ? `&lightboxRetry=${photoRetryCount}` : ""}` : null;
+  const videoLightboxSrc = videoSrc ? `${videoSrc}${videoRetryCount ? `&lightboxRetry=${videoRetryCount}` : ""}` : null;
+
+  useEffect(() => {
+    setPhotoUnavailable(false);
+    setPhotoRetryCount(0);
+  }, [photo?.src]);
+
+  useEffect(() => {
+    setVideoUnavailable(false);
+    setVideoRetryCount(0);
+  }, [videoSrc]);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -247,6 +254,11 @@ function MediaLightbox({ kind, photo, photoAlt, photoCount, onPhotoChange, video
         event.preventDefault();
         onPhotoChange((index) => (index + (event.key === "ArrowLeft" ? -1 : 1) + photoCount) % photoCount);
       } else if (event.key === "Tab") {
+        if (!dialogRef.current.contains(document.activeElement)) {
+          event.preventDefault();
+          closeRef.current?.focus();
+          return;
+        }
         const focusable = [...dialogRef.current.querySelectorAll("video[controls], button")];
         const first = focusable[0];
         const last = focusable.at(-1);
@@ -272,7 +284,9 @@ function MediaLightbox({ kind, photo, photoAlt, photoCount, onPhotoChange, video
     <div className="media-lightbox-content" role="dialog" aria-modal="true"
       aria-label={kind === "photo" ? t.enlargePhoto : t.enlargeVideo} ref={dialogRef}>
       {kind === "photo"
-        ? <><img src={photo.src} alt={photo.alt || photoAlt} />
+        ? <>{photoLightboxSrc && !photoUnavailable ? <img key={photoLightboxSrc} src={photoLightboxSrc} alt={photo.alt || photoAlt} onError={() => setPhotoUnavailable(true)} />
+          : <div className="media-lightbox-unavailable" role="status"><span>{t.photoUnavailable}</span>
+            {photo?.src && <button type="button" onClick={() => { setPhotoRetryCount((count) => count + 1); setPhotoUnavailable(false); closeRef.current?.focus(); }}>{t.retry}</button>}</div>}
           <div className="media-lightbox-navigation">
             <button className="media-lightbox-prev" type="button" aria-label={t.prevPhoto}
               onClick={() => onPhotoChange((index) => (index - 1 + photoCount) % photoCount)}><FiChevronLeft aria-hidden="true" /></button>
@@ -280,42 +294,62 @@ function MediaLightbox({ kind, photo, photoAlt, photoCount, onPhotoChange, video
             <button className="media-lightbox-next" type="button" aria-label={t.nextPhoto}
               onClick={() => onPhotoChange((index) => (index + 1) % photoCount)}><FiChevronRight aria-hidden="true" /></button>
           </div></>
-        : <video controls playsInline preload="metadata" poster={xMediaSrc(video.poster) || undefined}
-          aria-label={video.alt || t.postVideoAlt} tabIndex="0">
-          <source src={videoSrc} type="video/mp4" />
-        </video>}
+        : videoLightboxSrc && !videoUnavailable ? <video key={videoLightboxSrc} controls playsInline preload="metadata" poster={xMediaSrc(video.poster) || undefined}
+          aria-label={video.alt || t.postVideoAlt} tabIndex="0" onError={() => setVideoUnavailable(true)}>
+          <source src={videoLightboxSrc} type="video/mp4" />
+        </video> : <div className="media-lightbox-unavailable" role="status"><span>{t.videoUnavailable}</span>
+          {videoSrc && <button type="button" onClick={() => { setVideoRetryCount((count) => count + 1); setVideoUnavailable(false); closeRef.current?.focus(); }}>{t.retry}</button>}</div>}
       <button ref={closeRef} className="media-lightbox-close" type="button"
         aria-label={t.closePreview} onClick={() => onClose(null)}><FiX aria-hidden="true" /></button>
     </div>
   </div>, document.body);
 }
 
-function PostCard({ post, feedSource, language, t, label, profile }) {
+function PostCard({ post, feedSource, language, t, label, profile, priorityMedia = false }) {
   const isSnapshot = feedSource === "snapshot";
   const sourceLabel = label ?? (isSnapshot ? t.feedSnapshot : feedSource === "stale" ? t.feedStale : null);
   const photos = Array.isArray(post.media)
-    ? post.media.filter((media) => (media?.type ?? "photo") === "photo" && xMediaSrc(media?.url)).map((media) => ({ ...media, src: xMediaSrc(media.url) })).slice(0, 4)
+    ? post.media.filter((media) => (media?.type ?? "photo") === "photo").slice(0, 4).map((media) => ({ ...media, src: xMediaSrc(media?.url) }))
     : [];
   const video = Array.isArray(post.media)
-    ? post.media.find((media) => media?.type === "video" && xVideoSrc(media?.url))
+    ? post.media.find((media) => media?.type === "video")
     : null;
   const videoSrc = video ? xVideoSrc(video.url) : null;
   const [photoIndex, setPhotoIndex] = useState(0);
   const [imageUnavailable, setImageUnavailable] = useState(false);
   const [videoUnavailable, setVideoUnavailable] = useState(false);
+  const [imageRetryCount, setImageRetryCount] = useState(0);
+  const [videoRetryCount, setVideoRetryCount] = useState(0);
   const [expandedMedia, setExpandedMedia] = useState(null);
   const returnFocusRef = useRef(null);
+  const photoOpenRef = useRef(null);
+  const photoRetryRef = useRef(null);
+  const videoPlayerRef = useRef(null);
+  const videoRetryRef = useRef(null);
   const currentPhotoIndex = Math.min(photoIndex, photos.length - 1);
   const currentPhoto = photos[currentPhotoIndex];
+  const photoRequestSrc = currentPhoto?.src ? `${currentPhoto.src}${imageRetryCount ? `&retry=${imageRetryCount}` : ""}` : null;
+  const videoRequestSrc = videoSrc ? `${videoSrc}${videoRetryCount ? `&retry=${videoRetryCount}` : ""}` : null;
   useEffect(() => {
     setImageUnavailable(false);
     setVideoUnavailable(false);
   }, [currentPhoto?.url, videoSrc]);
+  useEffect(() => {
+    if (imageRetryCount > 0) (imageUnavailable ? photoRetryRef : photoOpenRef).current?.focus();
+  }, [imageRetryCount, imageUnavailable]);
+  useEffect(() => {
+    if (videoRetryCount > 0) (videoUnavailable ? videoRetryRef : videoPlayerRef).current?.focus();
+  }, [videoRetryCount, videoUnavailable]);
   function openMedia(kind, event) {
     if (kind === "video") event.currentTarget.parentElement.querySelector("video")?.pause();
     returnFocusRef.current = event.currentTarget;
     setExpandedMedia(kind);
   }
+  const changePhotoIndex = useCallback((updater) => {
+    setImageUnavailable(false);
+    setImageRetryCount(0);
+    setPhotoIndex(updater);
+  }, []);
   return <><article className="post-card">
     <div className="post-topline">
       <img className="post-avatar" src={xMediaSrc(post.avatar, true) || FALLBACK_AVATAR}
@@ -326,25 +360,29 @@ function PostCard({ post, feedSource, language, t, label, profile }) {
     </div>
     {post.text.trim() && <div className="post-text">{post.text.split(/(?:\r?\n){2,}/).map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div>}
     {photos.length > 0 && <div className={`post-media${photos.length === 1 ? " post-media-single" : ""}`}>
-      {imageUnavailable
-        ? <div className="post-media-unavailable" role="status">{t.photoUnavailable}</div>
-        : <button className="post-media-open" type="button" onClick={(event) => openMedia("photo", event)}
+      {imageUnavailable || !photoRequestSrc
+        ? <div className="post-media-unavailable" role="status"><span>{t.photoUnavailable}</span>
+          {photoRequestSrc && <button ref={photoRetryRef} type="button" onClick={() => { setImageRetryCount((count) => count + 1); setImageUnavailable(false); }}>{t.retry}</button>}</div>
+        : <button ref={photoOpenRef} className="post-media-open" type="button" onClick={(event) => openMedia("photo", event)}
           aria-label={`${t.enlargePhoto} · ${t.postPhotoAlt(currentPhotoIndex + 1)}`}>
-          <img key={currentPhoto.src} src={currentPhoto.src} alt={currentPhoto.alt || t.postPhotoAlt(currentPhotoIndex + 1)} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={() => setImageUnavailable(true)} />
+          <img key={photoRequestSrc} src={photoRequestSrc} alt={currentPhoto.alt || t.postPhotoAlt(currentPhotoIndex + 1)}
+            loading={priorityMedia ? "eager" : "lazy"} fetchPriority={priorityMedia ? "high" : undefined}
+            decoding="async" referrerPolicy="no-referrer" onError={() => setImageUnavailable(true)} />
         </button>}
       <button className="post-media-nav post-media-prev" type="button" aria-label={t.prevPhoto}
-        onClick={() => setPhotoIndex((index) => (Math.min(index, photos.length - 1) - 1 + photos.length) % photos.length)}><FiChevronLeft aria-hidden="true" /></button>
+        onClick={() => changePhotoIndex((index) => (Math.min(index, photos.length - 1) - 1 + photos.length) % photos.length)}><FiChevronLeft aria-hidden="true" /></button>
       <button className="post-media-nav post-media-next" type="button" aria-label={t.nextPhoto}
-        onClick={() => setPhotoIndex((index) => (Math.min(index, photos.length - 1) + 1) % photos.length)}><FiChevronRight aria-hidden="true" /></button>
+        onClick={() => changePhotoIndex((index) => (Math.min(index, photos.length - 1) + 1) % photos.length)}><FiChevronRight aria-hidden="true" /></button>
       <span className="post-media-count" aria-live="polite">{t.postNumber(currentPhotoIndex + 1, photos.length)}</span>
     </div>}
     {video && <div className="post-video">
-      {videoUnavailable
-        ? <div className="post-media-unavailable" role="status">{t.videoUnavailable}</div>
+      {videoUnavailable || !videoSrc
+        ? <div className="post-media-unavailable" role="status"><span>{t.videoUnavailable}</span>
+          {videoSrc && <button ref={videoRetryRef} type="button" onClick={() => { setVideoRetryCount((count) => count + 1); setVideoUnavailable(false); }}>{t.retry}</button>}</div>
         : <>
-          <video controls playsInline preload="metadata" poster={xMediaSrc(video.poster) || undefined}
+          <video ref={videoPlayerRef} key={videoRequestSrc} controls playsInline preload="none" tabIndex="0" poster={xMediaSrc(video.poster) || undefined}
             aria-label={video.alt || t.postVideoAlt} onError={() => setVideoUnavailable(true)}>
-            <source src={videoSrc} type="video/mp4" />
+            <source src={videoRequestSrc} type="video/mp4" />
           </video>
           <button className="post-video-open" type="button" aria-label={t.enlargeVideo}
             onClick={(event) => openMedia("video", event)}>
@@ -353,7 +391,7 @@ function PostCard({ post, feedSource, language, t, label, profile }) {
         </>}
     </div>}
     {isSnapshot && <figure className="post-illustration">
-      <img src={`${ASSETS}/post-seaside.png`} alt={t.imageAlt} />
+      <img src={`${ASSETS}/post-seaside.png`} alt={t.imageAlt} loading="lazy" decoding="async" />
       <figcaption>{t.artLabel}</figcaption>
     </figure>}
     <div className="post-bottomline">
@@ -361,9 +399,9 @@ function PostCard({ post, feedSource, language, t, label, profile }) {
       <a href={post.permalink} target="_blank" rel="noopener noreferrer">{t.openPost}<FaArrowRight aria-hidden="true" /></a>
     </div>
   </article>
-    {expandedMedia && (expandedMedia === "photo" ? currentPhoto : video) && <MediaLightbox kind={expandedMedia} photo={currentPhoto ? { ...currentPhoto, number: currentPhotoIndex + 1 } : null} photoCount={photos.length} onPhotoChange={setPhotoIndex}
+    {expandedMedia && (expandedMedia === "photo" ? currentPhoto : video) && <MediaLightbox kind={expandedMedia} photo={currentPhoto ? { ...currentPhoto, src: photoRequestSrc, number: currentPhotoIndex + 1 } : null} photoCount={photos.length} onPhotoChange={changePhotoIndex}
       photoAlt={t.postPhotoAlt(currentPhotoIndex + 1)} video={video}
-      videoSrc={videoSrc} t={t} onClose={setExpandedMedia} returnFocusRef={returnFocusRef} />}
+      videoSrc={videoRequestSrc} t={t} onClose={setExpandedMedia} returnFocusRef={returnFocusRef} />}
   </>;
 }
 
@@ -423,7 +461,9 @@ export function App() {
 
   useEffect(() => {
     function handleHistoryNavigation() {
-      setPage(resolvePage());
+      const nextPage = resolvePage();
+      preloadScene(nextPage);
+      setPage(nextPage);
       setMenuOpen(false);
       window.scrollTo(0, 0);
     }
@@ -559,6 +599,7 @@ export function App() {
     if (!nextPage) return;
 
     event.preventDefault();
+    preloadScene(nextPage);
     if (window.location.pathname !== normalizedPath) window.history.pushState({ page: nextPage }, "", normalizedPath);
     setPage(nextPage);
     setMenuOpen(false);
@@ -577,7 +618,7 @@ export function App() {
   const header = <header className="site-header" ref={headerRef}>
     <a className="brand" href={pagePaths.home} aria-label={t.homeLinkLabel}>
       <span className="brand-script">Nest<PiFlowerLight aria-hidden="true" /></span>
-      <span className="brand-caption">A LITTLE NEST</span>
+      <span className="brand-caption">{t.homePlaceLabel}</span>
     </a>
     <nav className={"site-nav " + (menuOpen ? "is-open" : "")} id="site-navigation" aria-label={t.navLabel}>
       {navIds.map((id, index) => <a key={id} className={page === id ? "active" : ""} href={pagePaths[id]} aria-current={page === id ? "page" : undefined}><PiFlowerLight className="nav-active-flower" aria-hidden="true" />{t.nav[index]}</a>)}
@@ -599,11 +640,18 @@ export function App() {
         <button type="button" onClick={retryFeed} disabled={retryDisabled || feedLoading}>{t.retry}</button>
       </div>}
     </div>}
+    {(feedSource === "stale" || (feedSource === "live" && pinState === "stale")) && <div className="feed-status" role="status">
+      <span>{feedSource === "stale" ? t.feedStale : t.pinnedStale}</span>
+      <div className="feed-status-actions">
+        <a href={`https://x.com/${profile.username}`} target="_blank" rel="noopener noreferrer">{t.visitX}<FaArrowRight aria-hidden="true" /></a>
+        <button type="button" onClick={retryFeed} disabled={retryDisabled || feedLoading}>{t.retry}</button>
+      </div>
+    </div>}
     <section className="posts-group" aria-label={t.pinnedHeading}>
       <div className="section-heading"><PiPushPinFill aria-hidden="true" /><h2>{t.pinnedHeading}</h2>
         <a className="posts-jump-link" href="#latest-posts">{t.latestPosts}<FaArrowRight aria-hidden="true" /></a>
       </div>
-      {pinnedPost ? <PostCard key={pinnedPost.id} post={pinnedPost} feedSource={pinState} language={language} t={t} profile={profile} label={pinState === "stale" ? t.pinnedStale : undefined} />
+      {pinnedPost ? <PostCard key={pinnedPost.id} post={pinnedPost} feedSource={pinState} language={language} t={t} profile={profile} label={pinState === "stale" ? t.pinnedStale : undefined} priorityMedia />
         : <div className="pinned-placeholder" role="status">{pinState === "loading" ? t.pinnedLoading : pinState === "none" ? t.pinnedNone : t.pinnedUnavailable}
           {pinState === "unavailable" && feedSource !== "snapshot" && <span className="feed-status-actions">
             <a href={`https://x.com/${profile.username}`} target="_blank" rel="noopener noreferrer">{t.visitX}<FaArrowRight aria-hidden="true" /></a>
@@ -621,7 +669,7 @@ export function App() {
           <span className="post-index-excerpt">{postExcerpt(post, t)}</span>
         </button>)}
       </div>}
-      {posts.length > 0 ? <PostCard key={posts[postIndex].id} post={posts[postIndex]} feedSource={feedSource} language={language} t={t} profile={profile} />
+      {posts.length > 0 ? <PostCard key={posts[postIndex].id} post={posts[postIndex]} feedSource={feedSource} language={language} t={t} profile={profile} priorityMedia={!pinnedPost} />
         : <div className="pinned-placeholder" role="status">{t.feedEmpty} <a href={`https://x.com/${profile.username}`} target="_blank" rel="noopener noreferrer">{t.visitX}</a></div>}
       {posts.length > 1 && <div className="post-controls">
         <button type="button" onClick={() => setPostIndex((postIndex - 1 + posts.length) % posts.length)} aria-label={t.prevPost}><FiChevronLeft /></button>
