@@ -451,6 +451,9 @@ export function App() {
   }
 
   useEffect(() => {
+    // Keep the first Posts request clear of the non-critical profile lookup.
+    // Once feed loading finishes, refresh the profile as usual.
+    if (page === "posts" && feedLoading) return undefined;
     let mounted = true;
     async function refreshProfile() {
       try {
@@ -467,7 +470,7 @@ export function App() {
     const onVisible = () => { if (!document.hidden) refreshProfile(); };
     document.addEventListener("visibilitychange", onVisible);
     return () => { mounted = false; window.clearInterval(interval); document.removeEventListener("visibilitychange", onVisible); };
-  }, []);
+  }, [page, feedLoading]);
 
   useEffect(() => {
     document.documentElement.lang = language === "zh" ? "zh-CN" : language === "ja" ? "ja" : "en";
