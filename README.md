@@ -2,6 +2,8 @@
 
 初咏的个人社交名片网站。视觉以项目根目录的 `design-reference.png` 为准；页面使用独立生成的蓝天主视觉和海边插画。
 
+**2026-09-28 已上线：** 首页/内页、手机布局和同源场景资源优化由提交 [`8de1dad`](https://github.com/fyh2026/my-little-nest/commit/8de1dad24ed72b5a1fa3270eb2fc4cb0537d65b6) 发布。改动、截图、代理规则及验证边界见 [升级实施与验收记录_2026-09-28.md](升级实施与验收记录_2026-09-28.md)。实际项目目录为 `D:\chatGPT\design\my-little-nest`；旧资料里的 `hello-nice-site` 路径已过时。
+
 ## 本地预览
 
 ```powershell
@@ -11,7 +13,7 @@ npm run dev:proxy -- --host 127.0.0.1 --port 4173 --strictPort
 
 打开 `http://127.0.0.1:4173/`。网站目前提供中文、日文、英文切换和可点击的联系方式。微信与 QQ 按钮会复制账号；三个邮箱可通过 `mailto:` 打开邮件应用。
 
-**最新交接状态（2026-09-27）：** 手机直连切页与资源加载优化提交 [`e65c31c`](https://github.com/fyh2026/my-little-nest/commit/e65c31c) 已部署至[正式站](https://loveyong07.top/)。站内三页使用客户端切换；四个 X API 函数固定到香港区；图片代理启用 1 天浏览器/CDN 缓存，并可后台更新 7 天。已知长度的图片边收边传，仍保留 12 MB 限制；没有长度信息时继续先校验完整图片。部署 [`tXHYrBbRjLaRtr5pPJ9xuQFAUUrx`](https://vercel.com/fyh2026s-projects/my-little-nest/tXHYrBbRjLaRtr5pPJ9xuQFAUUrx) 状态为 success。生产动态接口返回 `status: ok`、置顶 `ok`、23 条动态；图片接口连续直连请求从 `MISS` 转为 `HIT`。详细记录见[网站设计进度交接.md](网站设计进度交接.md)。
+**上一版生产状态（2026-09-27）：** 手机直连切页与资源加载优化提交 [`e65c31c`](https://github.com/fyh2026/my-little-nest/commit/e65c31c) 已部署至[正式站](https://loveyong07.top/)。站内三页使用客户端切换；四个 X API 函数固定到香港区；图片代理启用 1 天浏览器/CDN 缓存，并可后台更新 7 天。已知长度的图片边收边传，仍保留 12 MB 限制；没有长度信息时继续先校验完整图片。部署 [`tXHYrBbRjLaRtr5pPJ9xuQFAUUrx`](https://vercel.com/fyh2026s-projects/my-little-nest/tXHYrBbRjLaRtr5pPJ9xuQFAUUrx) 状态为 success。生产动态接口返回 `status: ok`、置顶 `ok`、23 条动态；图片接口连续直连请求从 `MISS` 转为 `HIT`。详细记录见[网站设计进度交接.md](网站设计进度交接.md)。
 
 **当前代码：** 动态卡片支持帖内图片切换、完整原创帖轮播、图片和视频放大预览，以及 X MP4 视频同源代理播放。文档中更早的 6 条帖子记录仅作历史参考。
 
