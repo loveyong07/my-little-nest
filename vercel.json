@@ -11,6 +11,15 @@
   },
   "headers": [
     {
+      "source": "/posts",
+      "headers": [
+        {
+          "key": "Link",
+          "value": "</assets/posts-winter-hero-q90.webp>; rel=preload; as=image; type=\"image/webp\"; fetchpriority=high"
+        }
+      ]
+    },
+    {
       "source": "/assets/(.*)",
       "headers": [
         {
