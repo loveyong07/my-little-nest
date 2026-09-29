@@ -5,6 +5,10 @@ import { xFeedPlugin } from "./server/x-feed-plugin.mjs";
 
 export default defineConfig({
   output: "static",
+  trailingSlash: "never",
+  build: {
+    format: "file",
+  },
   adapter: vercel(),
   integrations: [react()],
   vite: {
