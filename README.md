@@ -2,7 +2,14 @@
 
 初咏的个人社交名片网站。视觉以项目根目录的 `design-reference.png` 为准；页面使用独立生成的蓝天主视觉和海边插画。
 
-**2026-09-30 已上线：** 组件与样式已按职责拆分，动态页和联系页按路由加载；未使用的原图移至 `archive/assets-raw/` 保留。代码提交 [`81ea292`](https://github.com/fyh2026/my-little-nest/commit/81ea2926943badef8015d26a3fa69b670c4de1f4) 的 [Vercel 部署](https://vercel.com/fyh2026s-projects/my-little-nest/C1DtYZoxc1Jojt3aKVmZeMHAUxAv) 已成功，正式站三页与新 JS/CSS 均返回 HTTP 200；详情见[网站设计进度交接.md](网站设计进度交接.md)。
+**2026-09-30 已上线（Astro 静态优先架构与分布式持久缓存）：**
+- **架构升级**：全面重构为 Astro 5 静态内容优先架构。首页（`/`）、动态页（`/posts`）和联系页（`/contact`）全部实现 SSG 静态预渲染直出，首屏 0-JS 秒开；交互部分（推文相册轮播、媒体灯箱、一键复制、点击闪光）作为独立 React 孤岛（Islands）按需水合；引入 `<ClientRouter />` 保持无刷新 SPA 级平滑切页。
+- **跨孤岛多语言联动**：建立 `site-language-change` 全局事件总线，实现导航栏与各内容孤岛间多语言毫秒级同步，自动切换 DOM `language-*` 根类与日语专属排版字体，并在 `<head>` 注入防闪烁脚本。
+- **自驱动点击动效与推文并行预取**：火花粒子动效重构为自驱动孤岛，脱离父组件依赖；动态页启用 `<link rel="preload" href="/api/x-posts" as="fetch">` 并行预取，消除等待感。
+- **分布式共享持久缓存（模块四）**：接入 Upstash Redis / Vercel KV 客户端（`server/kv-cache.mjs`），共享 Key `cache:x-posts:loveyong07` 与资料缓存；引入分布式防击穿互斥锁 `lock:x-posts:loveyong07`，防止多实例并发穿透 X API；配置软失效保底机制（故障自动续期 1 小时永不白屏）；边缘 CDN 缓存头升级为 `public, s-maxage=900, stale-while-revalidate=86400`。
+- **测试回归**：70 项单元测试与 7 项 Sites Worker 兼容性测试 100% 通过。
+
+**2026-09-30 历史发布：** 组件与样式已按职责拆分，动态页和联系页按路由加载；未使用的原图移至 `archive/assets-raw/` 保留。代码提交 [`81ea292`](https://github.com/fyh2026/my-little-nest/commit/81ea2926943badef8015d26a3fa69b670c4de1f4) 的 [Vercel 部署](https://vercel.com/fyh2026s-projects/my-little-nest/C1DtYZoxc1Jojt3aKVmZeMHAUxAv) 已成功，正式站三页与新 JS/CSS 均返回 HTTP 200；详情见[网站设计进度交接.md](网站设计进度交接.md)。
 
 **2026-09-28 已上线：** 首页/内页、手机布局和同源场景资源优化由提交 [`8de1dad`](https://github.com/fyh2026/my-little-nest/commit/8de1dad24ed72b5a1fa3270eb2fc4cb0537d65b6) 发布。改动、截图、代理规则及验证边界见 [升级实施与验收记录_2026-09-28.md](升级实施与验收记录_2026-09-28.md)。实际项目目录为 `D:\chatGPT\design\my-little-nest`；旧资料里的 `hello-nice-site` 路径已过时。
 
