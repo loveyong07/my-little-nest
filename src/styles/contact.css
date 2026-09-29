@@ -1,0 +1,43 @@
+.contacts-heading-row { display: flex; align-items: center; justify-content: space-between; gap: 15px; }
+.micro-slogan { color: var(--color-muted); font: 11px Arial, sans-serif; white-space: nowrap; }
+.contact-grid { display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); gap: 5px; margin-top: 19px; }
+.contact-tile { display: flex; flex-direction: column; align-items: center; min-width: 0; padding: 8px 3px 7px; border: 1px solid #e5eef7; border-radius: 14px; background: linear-gradient(150deg, #fffefd, #f6fbff); box-shadow: 0 3px 12px #5c80a40a; color: #264165; text-align: center; text-decoration: none; transition: transform .18s, border-color .18s, box-shadow .18s; }
+.contact-tile:hover { transform: translateY(-3px); border-color: #c7def0; box-shadow: 0 8px 18px #3c74a31a; }
+.contact-tile:active { transform: scale(.97); }
+.contact-icon { position: relative; display: grid; width: 62px; height: 62px; margin-bottom: 5px; place-items: center; border: 1px solid #e0eafa; border-radius: 50%; background: #f6f9ff; box-shadow: inset 0 0 0 4px #ffffffc9; transition: transform .18s, box-shadow .18s; }
+.contact-icon svg { display: block; width: 51px; height: 51px; padding: 11px; border-radius: 50%; background: #111; color: white; }
+.contact-icon::after { position: absolute; top: -3px; right: -4px; display: grid; width: 20px; height: 20px; place-items: center; border: 1px solid #fff; border-radius: 50%; background: #d5ad68; box-shadow: 0 2px 5px #49688830; color: white; content: "✓"; font: 700 11px/1 Arial, sans-serif; opacity: 0; pointer-events: none; transform: scale(.65) rotate(-14deg); }
+.contact-tile.is-copied .contact-icon::after { animation: contact-stamp-drop .32s cubic-bezier(.2,.8,.25,1) both; }
+.contact-tile.is-copied .contact-icon { box-shadow: inset 0 0 0 4px #ffffffc9, 0 0 0 2px #e9d5a8; }
+.contact-tile.email .contact-icon svg { transform-origin: 50% 16%; transition: transform .22s ease; }
+.contact-tile.email:hover .contact-icon svg { transform: translateY(-2px) rotateX(-18deg); }
+@keyframes contact-stamp-drop {
+  0% { opacity: 0; transform: translate(3px, -3px) scale(1.3) rotate(-22deg); }
+  68% { opacity: 1; transform: translate(0, 0) scale(.94) rotate(-10deg); }
+  100% { opacity: 1; transform: scale(1) rotate(-10deg); }
+}
+.contact-tile.line .contact-icon svg { background: #08b535; }
+.contact-tile.telegram .contact-icon svg { background: #268fc9; }
+.contact-tile.wechat .contact-icon svg { background: #10bf36; }
+.contact-tile.qq .contact-icon svg { background: #fff; color: #151d2d; }
+.contact-tile.email .contact-icon svg { background: #248fdd; }
+.contact-tile strong { font-size: 14px; font-weight: 700; line-height: 1.45; }
+.contact-tile small { margin-top: 2px; color: #526d8a; font-size: 12px; line-height: 1.4; }
+.contact-action { margin-top: auto; padding-top: 9px; color: #2469ac; font-size: 11px; font-weight: 700; line-height: 1.3; white-space: nowrap; }
+.contact-copy-fallback { display: grid; grid-column: 1 / -1; gap: 5px; padding: 10px 12px; border: 1px solid #cbdff0; border-radius: 10px; background: #f7fbff; color: #315f8d; font-size: 12px; line-height: 1.45; text-align: left; }
+.contact-copy-fallback p { margin: 0; }
+.contact-copy-fallback code, .contact-copy-fallback input { width: 100%; color: #203954; font: 700 13px/1.5 Consolas, monospace; overflow-wrap: anywhere; user-select: all; }
+.contact-copy-fallback input { min-height: 36px; padding: 5px 7px; border: 1px solid #bad8ee; border-radius: 7px; background: #fff; }
+.email-row { display: flex; align-items: baseline; gap: 16px; margin: 19px 2px 0; padding: 9px 0 0; border-top: 1px solid #e1edfb; font-size: 12px; }
+.email-row > span { display: inline-flex; align-items: center; gap: 5px; flex: 0 0 auto; color: #3975b5; font-weight: 700; }
+.email-row > div { display: flex; flex-wrap: wrap; gap: 5px 13px; }
+.email-row > .email-stamp { display: none; }
+.email-row a { color: #5c78a2; font-family: Arial, sans-serif; text-decoration: none; }
+.email-row a span { display: inline; margin-left: 4px; }
+.email-row a:hover { color: #287bcc; text-decoration: underline; }
+.email-row a:hover span, .email-row a:focus-visible span { color: #287bcc; }
+.panel-footer { display: flex; align-items: end; justify-content: space-between; gap: 15px; min-height: 57px; }
+.footer-script { margin: 4px 0 0 13px; color: #77a8df; font-family: "Segoe Script", "Brush Script MT", cursive; font-size: 20px; font-style: italic; line-height: 1.05; white-space: pre-line; transform: rotate(-7deg); }
+.footer-note { margin: 0 0 0 auto; color: #526d8a; font-size: 13px; line-height: 1.35; white-space: pre-line; }
+.footer-flower { width: 55px; height: 55px; color: #78a8d9; stroke-width: 1; }
+.handwritten-note time { display: block; }

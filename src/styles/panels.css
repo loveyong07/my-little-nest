@@ -1,0 +1,17 @@
+.content-panel {
+  position: relative;
+  z-index: 4;
+  display: grid;
+  grid-template-columns: minmax(0, 43%) minmax(0, 54%);
+  gap: 3%;
+  margin: -4px 2.15vw 0;
+  padding: 18px 31px 12px;
+  border: 1px solid #eef5ff;
+  border-radius: var(--card-radius);
+  background: var(--color-surface);
+  box-shadow: var(--panel-shadow);
+}
+.posts-section, .contacts-section { min-width: 0; scroll-margin-top: 20px; }
+.section-heading { display: flex; align-items: center; gap: 8px; min-height: 30px; color: #205899; }
+.section-heading svg { flex: 0 0 auto; width: 20px; height: 20px; color: #259eef; }
+.section-heading h2 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: .2px; }

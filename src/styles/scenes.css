@@ -1,0 +1,63 @@
+.site { min-height: 100vh; overflow: clip; background: var(--color-background); }
+.site-route { position: relative; isolation: isolate; background: transparent; }
+.site-route::before {
+  position: fixed;
+  z-index: -1;
+  inset: 0;
+  content: "";
+  background-repeat: no-repeat;
+  background-size: cover, cover;
+}
+.site-route-posts::before {
+  inset: -16px;
+  background-image: url("/assets/posts-winter-hero-q90.jpg");
+  background-image: image-set("/assets/posts-winter-hero-q90.webp" type("image/webp"), "/assets/posts-winter-hero-q90.jpg" type("image/jpeg"));
+  background-position: 60% 55%;
+  background-size: cover;
+  animation: route-background-drift 12s ease-in-out infinite alternate;
+}
+.site-route-posts .route-floating-elements::after {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  content: "";
+  background: linear-gradient(105deg, #173d6878 0%, #285d8d30 44%, #3c83c008 100%);
+  pointer-events: none;
+}
+.site-route-contact::before {
+  inset: -16px;
+  background-image: url("/assets/contact-sky-letter-v2-clean-q90.jpg");
+  background-image: image-set("/assets/contact-sky-letter-v2-clean-q90.webp" type("image/webp"), "/assets/contact-sky-letter-v2-clean-q90.jpg" type("image/jpeg"));
+  background-position: 60% 60%;
+  background-size: cover;
+  animation: route-background-drift 12s ease-in-out infinite alternate;
+}
+@keyframes route-background-drift {
+  from { transform: translate3d(-8px, -3px, 0); }
+  to { transform: translate3d(8px, 3px, 0); }
+}
+.site-route-contact .route-floating-elements::after {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  content: "";
+  background: linear-gradient(105deg, #173d6878 0%, #285d8d30 44%, #3c83c008 100%);
+  pointer-events: none;
+}
+.route-floating-elements {
+  position: fixed;
+  z-index: 0;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.route-floating-dove { position: absolute; z-index: 2; top: -7.2%; left: calc(60% - 134.4vh); width: auto; height: 112%; max-width: none; transform: scale(.56); transform-origin: 25% 16%; animation: contact-scene-wind 12s ease-in-out infinite alternate, contact-dove-flight 10s ease-in-out infinite alternate; will-change: transform, translate, rotate; }
+@keyframes contact-dove-flight {
+  from { transform: translate3d(0, 0, 0) scale(.56); rotate: -2deg; }
+  to { transform: translate3d(14vw, -2vh, 0) scale(.5); rotate: 3deg; }
+}
+@keyframes contact-dove-flight-mobile {
+  from { transform: translate3d(0, 0, 0) scale(.4); rotate: -2deg; }
+  to { transform: translate3d(14vw, -2vh, 0) scale(.36); rotate: 3deg; }
+}
+@keyframes contact-scene-wind { from { translate: -12px -3px; } to { translate: 12px 3px; } }

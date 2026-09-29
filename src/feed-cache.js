@@ -1,3 +1,7 @@
+import { canPrefetch } from "./utils/network.js";
+
+export { canPrefetch };
+
 const KEY = "little-nest-feed-v1";
 const MAX_AGE = 24 * 60 * 60 * 1000;
 
@@ -28,10 +32,6 @@ export function fetchFeed() {
     }).finally(() => { pending = null; });
   }
   return pending;
-}
-
-export function canPrefetch(connection = globalThis.navigator?.connection) {
-  return !connection?.saveData && !["slow-2g", "2g", "3g"].includes(connection?.effectiveType);
 }
 
 const warmed = new Set();
