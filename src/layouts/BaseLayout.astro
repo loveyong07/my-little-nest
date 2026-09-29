@@ -25,11 +25,35 @@ const {
     <meta name="theme-color" content="#eaf5ff" />
     <link rel="icon" type="image/png" href="/assets/site-favicon-2026-09-29.png" />
     {page === "posts" && (
-      <link rel="preload" href="/assets/posts-winter-hero-q90.webp" as="image" type="image/webp" fetchpriority="high" />
+      <>
+        <link rel="preload" href="/assets/posts-winter-hero-q90.webp" as="image" type="image/webp" fetchpriority="high" />
+        <link rel="preload" href="/api/x-posts" as="fetch" crossorigin="anonymous" />
+      </>
     )}
     <meta name="description" content={description} />
     <title>{title}</title>
     <ClientRouter />
+    <script is:inline>
+      (() => {
+        function applyLanguage() {
+          try {
+            const saved = localStorage.getItem("site_language");
+            if (saved && ["zh", "ja", "en"].includes(saved)) {
+              document.documentElement.lang = saved === "zh" ? "zh-CN" : saved;
+              document.documentElement.classList.remove("language-zh", "language-ja", "language-en");
+              document.documentElement.classList.add("language-" + saved);
+              const main = document.querySelector(".site");
+              if (main) {
+                main.classList.remove("language-zh", "language-ja", "language-en");
+                main.classList.add("language-" + saved);
+              }
+            }
+          } catch (_) {}
+        }
+        applyLanguage();
+        document.addEventListener("astro:after-swap", applyLanguage);
+      })();
+    </script>
   </head>
   <body>
     <main class={`site language-zh ${page === "home" ? "" : "site-route site-route-" + page}`}>
