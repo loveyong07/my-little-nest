@@ -1,0 +1,11 @@
+import { PiFlowerLight } from "react-icons/pi";
+
+export function RouteHero({ page, t, header }) {
+  return <section className={"route-hero route-hero-" + page} aria-label={t.pageTitle[page]}>
+    {header}
+    <div className="route-page-title">
+      <span className="route-page-kicker"><PiFlowerLight aria-hidden="true" />{t.pageKicker[page]}</span>
+      <h1>{t.pageTitle[page]}</h1>
+    </div>
+  </section>;
+}

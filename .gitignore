@@ -11,5 +11,6 @@ dist/
 backup-*/
 /qa-compare.html
 /public/qa-source.png
+/archive/assets-raw/qa-source.png
 
 .vercel/

@@ -56,10 +56,12 @@ npm run dev:proxy -- --host 127.0.0.1 --port 4173 --strictPort
 
 ## 后续修改
 
-- 个人简介和三语文案：`src/App.jsx` 中的 `copy`。
-- 联系方式：`src/App.jsx` 中的 `socials` 和 `mailboxes`。
-- 默认帖子快照：`src/App.jsx` 中的 `SNAPSHOT`。
-- 布局和颜色：`src/styles.css`。
-- 页面插画：`public/assets/`。
+- 三语文案：`src/constants/locales.js`；语言保存与页面语言设置：`src/hooks/useI18n.js`。
+- 首页、动态、联系页：`src/components/HeroSection.jsx`、`src/pages/PostsPage.jsx`、`src/pages/ContactPage.jsx`。动态和联系页由 `src/App.jsx` 按路由懒加载。
+- 联系方式：`src/pages/ContactPage.jsx` 中的 `socials` 与 `src/constants/site.js` 中的 `mailboxes`。
+- 默认帖子快照：`src/constants/site.js` 中的 `SNAPSHOT`；动态获取与缓存：`src/hooks/useXFeed.js`。
+- 三条站内路由与背景预加载：`src/hooks/useSiteRoute.js`、`src/routes/site-route.js`。
+- 布局和颜色：`src/styles.css` 按原级联顺序引入 `src/styles/` 下的场景与组件样式。
+- 当前页面插画：`public/assets/`；未使用的原图：`archive/assets-raw/`，不进入生产构建产物。
 
 页面保留帖子正文内容，只隐藏已展示照片对应的 X 短链；海边图片标为网站装饰插画，与帖子的媒体内容区分。
