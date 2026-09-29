@@ -14,3 +14,4 @@ backup-*/
 /archive/assets-raw/qa-source.png
 
 .vercel/
+.astro/
