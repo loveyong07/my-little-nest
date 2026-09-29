@@ -3,8 +3,13 @@ import { FiMenu, FiX } from "react-icons/fi";
 import { PiFlowerLight } from "react-icons/pi";
 import { navIds } from "../constants/site.js";
 import { pagePaths } from "../routes/site-route.js";
+import { useI18n } from "../hooks/useI18n.js";
 
-export function Header({ page, t, language, changeLanguage }) {
+export function Header({ page = "home", t: propT, language: propLang, changeLanguage: propChangeLanguage }) {
+  const i18n = useI18n();
+  const t = propT ?? i18n.t;
+  const language = propLang ?? i18n.language;
+  const changeLanguage = propChangeLanguage ?? i18n.changeLanguage;
   const [menuOpen, setMenuOpen] = useState(false);
   const headerRef = useRef(null);
   const menuToggleRef = useRef(null);

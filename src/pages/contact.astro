@@ -1,0 +1,12 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { RouteHero } from "../components/RouteHero.jsx";
+import ContactPage from "../components/ContactPage.jsx";
+---
+
+<BaseLayout title="初咏的小窝 · 联系" page="contact">
+  <RouteHero client:load page="contact" />
+  <section class="content-panel route-panel route-panel-contact" aria-label="找到我，一起聊聊天吧">
+    <ContactPage client:visible />
+  </section>
+</BaseLayout>
