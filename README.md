@@ -2,7 +2,9 @@
 
 初咏的个人社交名片网站。视觉以项目根目录的 `design-reference.png` 为准；页面使用独立生成的蓝天主视觉和海边插画。
 
-**2026-09-30 已上线：** 组件与样式已按职责拆分，动态页和联系页按路由加载；未使用的原图移至 `archive/assets-raw/` 保留。代码提交 [`81ea292`](https://github.com/fyh2026/my-little-nest/commit/81ea2926943badef8015d26a3fa69b670c4de1f4) 的 [Vercel 部署](https://vercel.com/fyh2026s-projects/my-little-nest/C1DtYZoxc1Jojt3aKVmZeMHAUxAv) 已成功，正式站三页与新 JS/CSS 均返回 HTTP 200；详情见[网站设计进度交接.md](网站设计进度交接.md)。
+**2026-09-30 整体重构已上线：** 统一请求与缓存节奏、媒体尺寸占位、场景预载、三页视觉规则、动态历史阅读及首页/联系布局。代码提交 [`bf01039`](https://github.com/fyh2026/my-little-nest/commit/bf01039333a59aa92cedf558806584ef0313d8e3) 的 [Vercel 生产部署](https://vercel.com/fyh2026s-projects/my-little-nest/BhWre6c7bZKUw7Qc5mCKiZFyD4CC) 状态为 success。82 项测试与生产构建通过；正式站三页、资源、场景预载和缓存响应头已核实，动态与置顶均为 ok。实施范围、证据及待测项见 [本轮重构记录](重构实施与验收记录_2026-09-30.md)。下方记录为此前发布历史。
+
+**2026-09-30 较早发布：** 组件与样式已按职责拆分，动态页和联系页按路由加载；未使用的原图移至 `archive/assets-raw/` 保留。代码提交 [`81ea292`](https://github.com/fyh2026/my-little-nest/commit/81ea2926943badef8015d26a3fa69b670c4de1f4) 的 [Vercel 部署](https://vercel.com/fyh2026s-projects/my-little-nest/C1DtYZoxc1Jojt3aKVmZeMHAUxAv) 已成功，正式站三页与新 JS/CSS 均返回 HTTP 200；详情见[网站设计进度交接.md](网站设计进度交接.md)。
 
 **2026-09-28 已上线：** 首页/内页、手机布局和同源场景资源优化由提交 [`8de1dad`](https://github.com/fyh2026/my-little-nest/commit/8de1dad24ed72b5a1fa3270eb2fc4cb0537d65b6) 发布。改动、截图、代理规则及验证边界见 [升级实施与验收记录_2026-09-28.md](升级实施与验收记录_2026-09-28.md)。实际项目目录为 `D:\chatGPT\design\my-little-nest`；旧资料里的 `hello-nice-site` 路径已过时。
 
@@ -22,8 +24,8 @@ npm run dev:proxy -- --host 127.0.0.1 --port 4173 --strictPort
 ## 域名与上线状态
 
 - **GitHub 仓库：** [fyh2026/my-little-nest](https://github.com/fyh2026/my-little-nest)，私有仓库，生产分支 `master`。`.env.local` 不在仓库中。
-- **Vercel 生产部署：** [打开正式站点](https://loveyong07.top)。代码提交 `81ea292` 对应的[部署](https://vercel.com/fyh2026s-projects/my-little-nest/C1DtYZoxc1Jojt3aKVmZeMHAUxAv)状态为 `success`；首页、`/posts`、`/contact` 均返回 HTTP 200。`.vercel.app` 地址受 Vercel 登录保护。
-- **GitHub 自动部署：** Vercel 项目连接私有仓库 `fyh2026/my-little-nest` 的 `master` 分支。线上 `/assets/` 下 JS 文件返回 `Cache-Control: public, max-age=86400, stale-while-revalidate=604800`；图片代理函数在香港区，缓存响应在连续请求中验证为 `MISS` 后 `HIT`。
+- **Vercel 生产部署：** [打开正式站点](https://loveyong07.top)。代码提交 `bf01039` 对应的[部署](https://vercel.com/fyh2026s-projects/my-little-nest/BhWre6c7bZKUw7Qc5mCKiZFyD4CC)状态为 `success`；首页、`/posts`、`/contact` 及内页尾斜杠路径均返回 HTTP 200，入口 JS/CSS 与本地构建完全一致。`.vercel.app` 地址受 Vercel 登录保护。
+- **GitHub 自动部署：** Vercel 项目连接私有仓库 `fyh2026/my-little-nest` 的 `master` 分支。带构建哈希的 JS/CSS/字体使用一年 immutable 缓存；已验证新 JS/CSS 响应头。固定名场景图仍为 `public, max-age=86400, stale-while-revalidate=604800`。图片代理函数保留香港区，历史连续请求曾验证 `MISS` 后 `HIT`。
 - **根域名与 SSL：** `https://loveyong07.top` 正常访问；此前已核实 Vercel DNS 与证书配置。本轮没有修改 DNS。
 - **`www` 子域名：已完成。** 已添加到 `my-little-nest`，Vercel 状态为 `configured-correctly`、`verified: true`，并设置 HTTP 308 永久跳转到 `https://loveyong07.top`。公网请求 `https://www.loveyong07.top/` 返回 308；`/posts?from=www` 保留路径和查询参数跳转，最终目标返回 HTTP 200，HTTPS/TLS 成功。没有修改 DNS。
 - **线上 X 动态：** 2026-09-30 发布后对 `https://loveyong07.top/api/x-posts` 请求一次，返回 `status: ok`、`pinnedStatus: ok`、27 条动态；未复制帖子正文或令牌。`X_BEARER_TOKEN` 仅保存在 Vercel Production 服务端环境变量中。
