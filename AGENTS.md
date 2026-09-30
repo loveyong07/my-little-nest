@@ -10,6 +10,8 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 
 ## Selected design and wording
 
+- 2026-10-01 remote PC removal: Remove the remote PC optimization (UU Remote) business card in all three languages. This supersedes its earlier inclusion; retain the other six cards.
+
 - 2026-09-30 navigation order: Swap Business and Contact so desktop navigation, mobile navigation and the custom context menu read Home, Posts, Business, Contact in all three languages. Keep Business yellow and Contact green, with colors bound to route identity. Continue the directly authorized release workflow for this focused follow-up.
 
 - 2026-09-30 background clarity: The user wants Home, Posts and Contact artwork as clear and vivid as Business. Render scene images at full opacity and remove broad white haze overlays; retain readable glass cards and use subtle blue shading with white text for exposed route titles and branding. The user explicitly authorized modifying and deploying this focused change through the existing GitHub master to Vercel production path.
