@@ -6,6 +6,8 @@ import { scenePreloadPlugin } from "./build/scene-preloads.mjs";
 export default defineConfig(({ mode }) => ({
   build: {
     outDir: "dist/client",
+    // Production font-src is self-only: even tiny segmented fonts need local files.
+    assetsInlineLimit: (filePath) => /\.(?:woff2?|ttf|otf)$/i.test(filePath) ? false : undefined,
   },
   optimizeDeps: {
     include: ["react", "react-dom/client"],

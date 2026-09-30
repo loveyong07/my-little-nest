@@ -4,6 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "assets:fantasy": "node scripts/prepare-fantasy-assets.mjs",
+    "predev": "npm run assets:fantasy",
+    "predev:proxy": "npm run assets:fantasy",
+    "prebuild": "npm run assets:fantasy",
     "dev": "vite",
     "dev:proxy": "node --use-env-proxy ./node_modules/vite/bin/vite.js",
     "build": "vite build && node scripts/prepare-sites-build.mjs",
@@ -15,7 +19,11 @@
   "dependencies": {
     "@fontsource/cormorant-garamond": "^5.3.0",
     "@fontsource/noto-sans-sc": "^5.3.0",
+    "@fontsource/quicksand": "^5.2.8",
+    "@fontsource/zcool-kuaile": "^5.3.0",
     "@vitejs/plugin-react": "5.0.4",
+    "live2d-widget-model-shizuku": "^1.0.5",
+    "live2d-widgets": "^1.0.1",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "react-icons": "^5.7.0",

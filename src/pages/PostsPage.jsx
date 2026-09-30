@@ -7,6 +7,7 @@ import { PostCard } from "../components/PostCard.jsx";
 import { useXFeed } from "../hooks/useXFeed.js";
 import { formatPostDate } from "../utils/date.js";
 import { postExcerpt, postMonthKey, postMonths } from "../utils/posts.js";
+import { canPrefetch } from "../utils/network.js";
 
 function PostControls({ postIndex, total, onChange, t, sticky = false }) {
   return <div className={`post-controls${sticky ? " post-controls-reading" : ""}`} role="group" aria-label={t.postNavigation}>
@@ -21,6 +22,17 @@ function PostControls({ postIndex, total, onChange, t, sticky = false }) {
 }
 
 export default function PostsPage({ language, t, profile, onFeedReady }) {
+  useEffect(() => {
+    // Decorative glyphs must not compete with post photos on constrained links.
+    if (!canPrefetch()) return undefined;
+    let timer;
+    const schedule = () => { timer = setTimeout(() => {
+      if (canPrefetch()) import("../styles/post-font.css").catch(() => {});
+    }, 3000); };
+    if (document.readyState === "complete") schedule();
+    else window.addEventListener("load", schedule, { once: true });
+    return () => { clearTimeout(timer); window.removeEventListener("load", schedule); };
+  }, []);
   const { posts, feedSource, feedLoading, feedUpdatedAt, retryDisabled, pinnedPost, pinState, postIndex, setPostIndex, retryFeed } = useXFeed();
   const latestRef = useRef(null);
   const readingRef = useRef(null);

@@ -10,6 +10,12 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 
 ## Selected design and wording
 
+- 2026-09-30 blue refinement: Use clean blue-and-white UI colors to match the existing sky illustrations. This supersedes the pink-and-cream palette below; retain the scrapbook layout and sakura/cursor animation effects, with the companion still removed. Keep changes local until release is authorized.
+
+- 2026-09-30: Remove the floating Live2D companion and its show/hide control from all pages. Keep the other kawaii features. This local change is not authorized for deployment.
+
+- 2026-09-30 Kawaii redesign: user explicitly approved sakura pink and cream scrapbook styling while retaining existing illustrations, all content, three languages and constrained X media routes. This supersedes earlier blue-only styling instructions. Implement the supplied Desktop brief in the current React/Vite app and deliver a local preview before release. Keep the recently removed sticky Posts navigation removed. New welcome/quote copy must not invent personal interests or life events.
+
 - On the Posts page, omit the sticky previous/next bar above the daily post card (the bar with text labels and a centered post count); keep the lower post navigation and date index.
 
 - The user selected the first blue anime sky mock. `design-reference.png` is the visual source of truth. Recreate its open blue sky, right-side character artwork, large blue serif greeting, and white rounded social panel.
@@ -32,3 +38,7 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 - On live Posts cards, omit the “automatically synced” source label from both the pinned card and daily card. Keep the source notice when data is stale or when the dated public snapshot is shown, and keep the original-post link on the right.
 
 - 2026-09-29 performance scope: improve direct access without adding a proxy. Preserve the original post-photo URLs and quality in both cards and enlarged previews; do not introduce reduced-size card images. Prioritize scene loading, cached feed rendering, and bounded adjacent-photo prefetch.
+
+- 2026-09-30 control accents: Keep the blue scene and blue-white reading surfaces, but use distinct soft pink, blue, mint, lavender and yellow fills for buttons, navigation, language selectors and small controls. The user explicitly prefers colorful clickable regions over uniformly blue controls.
+
+- 2026-09-30 home scrolling: Keep the homepage illustration fixed to the viewport on desktop and mobile; scroll the content over it and retain the scene while reading lower sections.

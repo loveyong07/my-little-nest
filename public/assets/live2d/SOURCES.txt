@@ -1,0 +1,8 @@
+Live2D Widgets 1.0.1 — stevenjoezhang — GPL-3.0-or-later
+https://github.com/stevenjoezhang/live2d-widget
+https://registry.npmjs.org/live2d-widgets/-/live2d-widgets-1.0.1.tgz
+Shizuku model from live2d-widget-model-shizuku 1.0.5 (package declares GPL-2.0)
+https://github.com/xiazeyu/live2d-widget-models
+https://registry.npmjs.org/live2d-widget-model-shizuku/-/live2d-widget-model-shizuku-1.0.5.tgz
+The Live2D Core and model retain their respective upstream notices and terms.
+Site modifications: model sound references removed; animation pacing and lifecycle in src/utils/live2d-runtime.js.

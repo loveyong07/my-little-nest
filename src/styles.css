@@ -1,4 +1,5 @@
-@import "@fontsource/cormorant-garamond/latin-700-italic.css";
+@import "@fontsource/quicksand/latin-500.css";
+@import "@fontsource/quicksand/latin-700.css";
 
 @import "./styles/globals.css";
 @import "./styles/scenes.css";
@@ -12,3 +13,4 @@
 @import "./styles/contact.css";
 @import "./styles/routes.css";
 @import "./styles/responsive.css";
+@import "./styles/fantasy-theme.css";
