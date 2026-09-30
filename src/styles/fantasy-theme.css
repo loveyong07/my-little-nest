@@ -239,7 +239,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .hero-actions .secondary-cta { color: #315f53; background: #dff2e8; border-color: #a9d1bf; }
 .site-nav a:nth-child(1) { --control-bg: #e3effc; --control-ink: #345d83; }
 .site-nav a:nth-child(2) { --control-bg: #fbe1eb; --control-ink: #743e59; }
-.site-nav a:nth-child(3) { --control-bg: #e0f2e9; --control-ink: #315f53; }
+.site-nav a[href="/contact"] { --control-bg: #e0f2e9; --control-ink: #315f53; }
 .site-nav a, .site-route .site-nav a { background: var(--control-bg); color: var(--control-ink); }
 .site-nav a.active, .site-route .site-nav a.active { background: var(--control-bg); color: var(--control-ink); box-shadow: inset 0 -3px currentColor; }
 .site-nav a:hover, .site-route .site-nav a:hover { filter: brightness(.96); }
