@@ -46,3 +46,5 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 - 2026-09-30 music: Label the player AIR in all languages and use Uno's piano arrangement of 鳥の詩 as a same-origin audio asset with source attribution. Remove unused companion components, styles, dependencies and model preparation; retired model assets stay in archive only.
 
 - 2026-09-30 desktop scrolling: Keep the fixed artwork and translucent cards, but avoid large live backdrop blur. Reuse prerendered particle sprites and bound decorative canvas resolution on high-DPI displays; keep original photo resolution.
+
+- 2026-09-30 desktop home: Supersedes desktop home scrolling above. On fine-pointer viewports wider than 900px, fit the entire homepage into one fixed viewport, including journal cards. Keep mobile scrolling and other routes unchanged.

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { FaArrowRight, FaEnvelope, FaXTwitter } from "react-icons/fa6";
 import { HiOutlineSparkles } from "react-icons/hi2";
 import { PiFlowerLight } from "react-icons/pi";
@@ -12,6 +12,29 @@ import { HomeJournal } from "./HomeJournal.jsx";
 import { fantasyCopy } from "../constants/fantasy.js";
 
 export function HeroSection({ header, language, t, profile }) {
+  const heroRef = useRef(null);
+  const introRef = useRef(null);
+  useLayoutEffect(() => {
+    const desktop = matchMedia("(min-width: 901px) and (pointer: fine)");
+    const hero = heroRef.current;
+    const intro = introRef.current;
+    const fit = () => {
+      if (!desktop.matches) { hero.style.removeProperty("--home-fit"); return; }
+      const headerHeight = hero.querySelector(".site-header").offsetHeight;
+      const available = Math.max(1, innerHeight - headerHeight - 110);
+      hero.style.setProperty("--home-fit", String(Math.min(1, available / intro.offsetHeight)));
+    };
+    const observer = new ResizeObserver(fit);
+    observer.observe(intro);
+    observer.observe(hero.querySelector(".site-header"));
+    window.addEventListener("resize", fit);
+    desktop.addEventListener("change", fit);
+    fit();
+    return () => {
+      observer.disconnect(); window.removeEventListener("resize", fit);
+      desktop.removeEventListener("change", fit);
+    };
+  }, []);
   const [visitDate, setVisitDate] = useState(() => new Date());
   const [mobileScene, setMobileScene] = useState(() => window.matchMedia("(max-width: 700px)").matches);
   useEffect(() => {
@@ -25,7 +48,7 @@ export function HeroSection({ header, language, t, profile }) {
     return () => query.removeEventListener("change", updateScene);
   }, []);
 
-  return <section className="hero" aria-label={t.homeLabel}>
+  return <section className="hero" ref={heroRef} aria-label={t.homeLabel}>
       <div className="home-floating-elements" aria-hidden="true">
         {mobileScene ? <>
           <img className="home-floating-element home-floating-dove-mobile" src={ASSETS + "/home-mobile-dove-motion.png"} alt="" draggable="false" fetchPriority="low" decoding="async" />
@@ -38,7 +61,7 @@ export function HeroSection({ header, language, t, profile }) {
       </div>
       {header}
       <div className="hero-layout">
-      <div className="hero-intro-stack">
+      <div className="hero-intro-stack" ref={introRef}>
       <div className="hero-copy">
         <GiBowTieRibbon className="hero-bow" aria-hidden="true" />
         <p className="home-place-badge">
