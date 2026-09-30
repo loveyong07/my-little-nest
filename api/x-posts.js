@@ -1,4 +1,5 @@
 import { createXFeedService } from "../server/x-feed-plugin.mjs";
+import { authorizeFeed } from "../server/x-media-auth.mjs";
 
 const getFeed = createXFeedService({ token: process.env.X_BEARER_TOKEN ?? "" });
 
@@ -16,7 +17,7 @@ export default {
       });
     }
 
-    return new Response(JSON.stringify(await getFeed()), {
+    return new Response(JSON.stringify(await authorizeFeed(await getFeed())), {
       headers: {
         ...headers,
         "Vercel-CDN-Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",

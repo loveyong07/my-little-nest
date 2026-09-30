@@ -1,6 +1,7 @@
 import { createXFeedService } from "../server/x-feed-plugin.mjs";
 import { proxyXMedia } from "../server/x-media.mjs";
 import { proxyXVideo } from "../server/x-video.mjs";
+import { authorizeFeed, authorizeProfile } from "../server/x-media-auth.mjs";
 
 let feedToken = null;
 let getFeed = null;
@@ -8,8 +9,9 @@ let getFeed = null;
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (url.pathname === "/api/x-media") return proxyXMedia(request);
-    if (url.pathname === "/api/x-video") return proxyXVideo(request);
+    const secret = env.X_MEDIA_SIGNING_SECRET || env.X_BEARER_TOKEN || "";
+    if (url.pathname === "/api/x-media") return proxyXMedia(request, globalThis.fetch, { secret });
+    if (url.pathname === "/api/x-video") return proxyXVideo(request, globalThis.fetch, { secret });
     if (url.pathname === "/api/x-posts" || url.pathname === "/api/x-profile") {
       const headers = { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" };
       if (request.method !== "GET") {
@@ -22,7 +24,10 @@ export default {
         feedToken = token;
         getFeed = createXFeedService({ token });
       }
-      return new Response(JSON.stringify(url.pathname === "/api/x-profile" ? await getFeed.getProfile() : await getFeed()), { headers });
+      const result = url.pathname === "/api/x-profile"
+        ? await authorizeProfile(await getFeed.getProfile(), { secret })
+        : await authorizeFeed(await getFeed(), { secret });
+      return new Response(JSON.stringify(result), { headers });
     }
 
     const response = await env.ASSETS.fetch(request);

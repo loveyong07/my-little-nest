@@ -13,12 +13,12 @@ export function PostCard({ post, feedSource, language, t, label, profile, priori
   const isSnapshot = feedSource === "snapshot";
   const sourceLabel = label ?? (isSnapshot ? t.feedSnapshot : feedSource === "stale" ? t.feedStale : null);
   const photos = Array.isArray(post.media)
-    ? post.media.filter((media) => (media?.type ?? "photo") === "photo").slice(0, 4).map((media) => ({ ...media, src: xMediaSrc(media?.url) }))
+    ? post.media.filter((media) => (media?.type ?? "photo") === "photo").slice(0, 4).map((media) => ({ ...media, src: xMediaSrc(media?.url, false, media?.proxyUrl) }))
     : [];
   const video = Array.isArray(post.media)
     ? post.media.find((media) => media?.type === "video")
     : null;
-  const videoSrc = video ? xVideoSrc(video.url) : null;
+  const videoSrc = video ? xVideoSrc(video.url, video.proxyUrl) : null;
   const [photoIndex, setPhotoIndex] = useState(0);
   const [imageUnavailable, setImageUnavailable] = useState(false);
   const [loadedImageSrc, setLoadedImageSrc] = useState(null);
@@ -59,8 +59,8 @@ export function PostCard({ post, feedSource, language, t, label, profile, priori
   }, []);
   return <><article className="post-card">
     <div className="post-topline">
-      <img className="post-avatar" src={xMediaSrc(post.avatar, true) || FALLBACK_AVATAR}
-        data-avatar-low-res={xMediaSrc(post.avatar) || undefined} alt="" onError={handleAvatarError} />
+      <img className="post-avatar" src={xMediaSrc(post.avatar, true, post.avatarProxy?.highRes) || FALLBACK_AVATAR}
+        data-avatar-low-res={xMediaSrc(post.avatar, false, post.avatarProxy?.normal) || undefined} alt="" onError={handleAvatarError} />
       <div className="post-author"><strong>{post.author || profile.name}</strong><span>@{profile.username}</span></div>
       <time className="post-date" dateTime={post.created_at}>{formatPostDate(post.created_at, language)}</time>
       <FaXTwitter className="post-x-mark" aria-hidden="true" />
@@ -79,7 +79,8 @@ export function PostCard({ post, feedSource, language, t, label, profile, priori
               setLoadedImageSrc(photoRequestSrc);
               const nextPhoto = photos.length > 1 ? photos[(currentPhotoIndex + 1) % photos.length]?.src : null;
               prefetchImage(nextPhoto);
-              prefetchImage(xMediaSrc(nextPost?.media?.find((media) => (media.type ?? "photo") === "photo")?.url));
+              const nextPostPhoto = nextPost?.media?.find((media) => (media.type ?? "photo") === "photo");
+              prefetchImage(xMediaSrc(nextPostPhoto?.url, false, nextPostPhoto?.proxyUrl));
             }} onError={() => setImageUnavailable(true)} />
           {loadedImageSrc !== photoRequestSrc && <span className="post-media-loading" role="status">{t.photoLoading}</span>}
         </button>}
@@ -94,7 +95,7 @@ export function PostCard({ post, feedSource, language, t, label, profile, priori
         ? <div className="post-media-unavailable" role="status"><span>{t.videoUnavailable}</span>
           {videoSrc && <button ref={videoRetryRef} type="button" onClick={() => { setVideoRetryCount((count) => count + 1); setVideoUnavailable(false); }}>{t.retry}</button>}</div>
         : <>
-          <video ref={videoPlayerRef} key={videoRequestSrc} controls playsInline preload="none" tabIndex="0" poster={xMediaSrc(video.poster) || undefined}
+          <video ref={videoPlayerRef} key={videoRequestSrc} controls playsInline preload="none" tabIndex="0" poster={xMediaSrc(video.poster, false, video.posterProxyUrl) || undefined}
             width={videoDimensions?.width} height={videoDimensions?.height}
             aria-label={video.alt || t.postVideoAlt} onError={() => setVideoUnavailable(true)}>
             <source src={videoRequestSrc} type="video/mp4" />

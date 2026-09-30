@@ -1,4 +1,4 @@
-const MEDIA_HOSTS = new Set(["pbs.twimg.com", "video.twimg.com", "abs.twimg.com"]);
+import { authorizedMediaRequest, boundedMediaCache, parseMediaSource, validMediaQuery } from "./x-media-auth.mjs";
 const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"]);
 const MAX_IMAGE_BYTES = 12 * 1024 * 1024;
 const CACHE_CONTROL = "public, max-age=86400, stale-while-revalidate=604800";
@@ -83,7 +83,7 @@ function streamLimitedImage(body, onDone) {
   });
 }
 
-export async function proxyXMedia(request, fetchImpl = globalThis.fetch) {
+export async function proxyXMedia(request, fetchImpl = globalThis.fetch, authOptions) {
   if (request.method !== "GET") {
     return new Response("Method not allowed", {
       status: 405,
@@ -93,15 +93,15 @@ export async function proxyXMedia(request, fetchImpl = globalThis.fetch) {
 
   const requestUrl = new URL(request.url);
   const sourceValues = requestUrl.searchParams.getAll("url");
-  if (sourceValues.length !== 1) return errorResponse(400, "Unsupported image URL");
+  if (sourceValues.length !== 1 || !validMediaQuery(request)) return errorResponse(400, "Unsupported image URL");
   let source;
   try {
     source = new URL(sourceValues[0]);
   } catch {
     return errorResponse(400, "Unsupported image URL");
   }
-  if (source.protocol !== "https:" || !MEDIA_HOSTS.has(source.hostname)
-    || source.username || source.password || source.port) {
+  source = parseMediaSource(source.href, "image");
+  if (!source || !await authorizedMediaRequest(request, source, "image", authOptions)) {
     return errorResponse(403, "Unsupported image URL");
   }
 
@@ -146,8 +146,8 @@ export async function proxyXMedia(request, fetchImpl = globalThis.fetch) {
       status: 200,
       headers: {
         "Content-Type": contentType,
-        "Cache-Control": CACHE_CONTROL,
-        "Vercel-CDN-Cache-Control": VERCEL_CDN_CACHE_CONTROL,
+        "Cache-Control": boundedMediaCache(request, CACHE_CONTROL, authOptions?.now),
+        "Vercel-CDN-Cache-Control": boundedMediaCache(request, VERCEL_CDN_CACHE_CONTROL, authOptions?.now),
         "X-Content-Type-Options": "nosniff",
         "Cross-Origin-Resource-Policy": "same-origin",
       },

@@ -1,18 +1,9 @@
-const VIDEO_HOST = "video.twimg.com";
-const VIDEO_PATHS = ["/ext_tw_video/", "/amplify_video/", "/tweet_video/"];
+import { authorizedMediaRequest, boundedMediaCache, parseMediaSource, validMediaQuery } from "./x-media-auth.mjs";
 const VIDEO_TYPE = "video/mp4";
 const CACHE_CONTROL = "public, max-age=1800, s-maxage=43200";
 
 function parseXVideoUrl(value) {
-  if (typeof value !== "string") return null;
-  try {
-    const url = new URL(value);
-    const allowedPath = VIDEO_PATHS.some((prefix) => url.pathname.startsWith(prefix));
-    return url.protocol === "https:" && url.hostname === VIDEO_HOST && !url.username && !url.password
-      && !url.port && allowedPath ? url : null;
-  } catch {
-    return null;
-  }
+  return parseMediaSource(value, "video");
 }
 
 function errorResponse(status, message, extraHeaders = {}) {
@@ -60,15 +51,16 @@ function responseBody(upstreamBody, controller, cleanup) {
   });
 }
 
-export async function proxyXVideo(request, fetchImpl = globalThis.fetch) {
+export async function proxyXVideo(request, fetchImpl = globalThis.fetch, authOptions) {
   if (request.method !== "GET") {
     return errorResponse(405, "Method not allowed", { Allow: "GET" });
   }
 
   const requestUrl = new URL(request.url);
   const sourceValues = requestUrl.searchParams.getAll("url");
-  const source = sourceValues.length === 1 ? parseXVideoUrl(sourceValues[0]) : null;
+  const source = sourceValues.length === 1 && validMediaQuery(request) ? parseXVideoUrl(sourceValues[0]) : null;
   if (!source) return errorResponse(400, "Unsupported video URL");
+  if (!await authorizedMediaRequest(request, source, "video", authOptions)) return errorResponse(403, "Unsupported video URL");
 
   const range = request.headers.get("range");
   if (!validSingleByteRange(range)) {
@@ -112,7 +104,7 @@ export async function proxyXVideo(request, fetchImpl = globalThis.fetch) {
 
     const responseHeaders = new Headers({
       "Content-Type": VIDEO_TYPE,
-      "Cache-Control": CACHE_CONTROL,
+      "Cache-Control": boundedMediaCache(request, CACHE_CONTROL, authOptions?.now),
       "Accept-Ranges": "bytes",
       "X-Content-Type-Options": "nosniff",
       "Cross-Origin-Resource-Policy": "same-origin",

@@ -4,7 +4,7 @@ import { fetchProfile, getProfileSnapshot } from "../profile-cache.js";
 import { startVisibleRefresh } from "../request-cache.js";
 
 function displayProfile(profile) {
-  return { name: profile.name || profile.username, username: profile.username, avatar: profile.avatar || `${ASSETS}/x-avatar.jpg` };
+  return { name: profile.name || profile.username, username: profile.username, avatar: profile.avatar || `${ASSETS}/x-avatar.jpg`, avatarProxy: profile.avatarProxy };
 }
 
 function initialProfile() {

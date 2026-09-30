@@ -74,7 +74,7 @@ export function MediaLightbox({ kind, photo, photoAlt, photoCount, onPhotoChange
             <button className="media-lightbox-next" type="button" aria-label={t.nextPhoto}
               onClick={() => onPhotoChange((index) => (index + 1) % photoCount)}><FiChevronRight aria-hidden="true" /></button>
           </div></>
-        : videoLightboxSrc && !videoUnavailable ? <video key={videoLightboxSrc} controls playsInline preload="metadata" poster={xMediaSrc(video.poster) || undefined}
+        : videoLightboxSrc && !videoUnavailable ? <video key={videoLightboxSrc} controls playsInline preload="metadata" poster={xMediaSrc(video.poster, false, video.posterProxyUrl) || undefined}
           aria-label={video.alt || t.postVideoAlt} tabIndex="0" onError={() => setVideoUnavailable(true)}>
           <source src={videoLightboxSrc} type="video/mp4" />
         </video> : <div className="media-lightbox-unavailable" role="status"><span>{t.videoUnavailable}</span>
