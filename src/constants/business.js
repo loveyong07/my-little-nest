@@ -22,6 +22,8 @@ export const businessCopy = {
       { id: "muse", title: "Muse代注册", description: "Meta下的Muse注册", price: "22CNY" },
       { id: "memberships", title: "X Telegram", description: "X TG会员代送" },
       { id: "ai", title: "AI会员", description: "ChatGPT Claude Grok Gemini会员" },
+      { id: "chatgpt-desktop", title: "ChatGPT桌面端", description: "过号码验证", price: "11CNY" },
+      { id: "remote-pc", title: "远程优化电脑（UU远程）", description: "能力范围内按需优化电脑（激活，换Windows版本，环境等）", price: "价格按需求" },
     ],
   },
   ja: {
@@ -40,6 +42,8 @@ export const businessCopy = {
       { id: "muse", title: "Muse登録代行", description: "MetaのMuseへの登録", price: "22CNY" },
       { id: "memberships", title: "X Telegram", description: "X・TGのメンバーシップギフト代行" },
       { id: "ai", title: "AIメンバーシップ", description: "ChatGPT・Claude・Grok・Geminiのメンバーシップ" },
+      { id: "chatgpt-desktop", title: "ChatGPTデスクトップ版", description: "電話番号認証", price: "11CNY" },
+      { id: "remote-pc", title: "PCのリモート最適化（UU遠程）", description: "対応可能な範囲で、ご要望に応じてPCを最適化（ライセンス認証、Windowsのバージョン変更、環境設定など）", price: "料金はご要望に応じて" },
     ],
   },
   en: {
@@ -58,6 +62,8 @@ export const businessCopy = {
       { id: "muse", title: "Muse registration", description: "Registration for Meta's Muse", price: "22CNY" },
       { id: "memberships", title: "X Telegram", description: "X and TG membership gifting" },
       { id: "ai", title: "AI memberships", description: "ChatGPT, Claude, Grok and Gemini memberships" },
+      { id: "chatgpt-desktop", title: "ChatGPT desktop", description: "Phone number verification", price: "11CNY" },
+      { id: "remote-pc", title: "Remote PC optimization (UU Remote)", description: "Optimize your PC to suit your needs within my capabilities (activation, Windows version changes, environment setup, etc.)", price: "Price based on requirements" },
     ],
   },
 };
