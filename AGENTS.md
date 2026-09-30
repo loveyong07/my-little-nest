@@ -10,6 +10,8 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 
 ## Selected design and wording
 
+- 2026-09-30 additional business services: Append two separate glass cards: ChatGPT桌面端 / 过号码验证 / 11CNY and 远程优化电脑（UU远程） / 能力范围内按需优化电脑（激活，换Windows版本，环境等） / 价格按需求. Localize both in Japanese and English and use the existing Contact action. The user subsequently authorized deploying these two cards through the existing GitHub master to Vercel production path.
+
 - 2026-09-30 business release: The user explicitly authorized deploying the reviewed Business page, including the latest 66CNY price and separate non-iOS/iOS Clash guidance, through the existing GitHub master to Vercel production path.
 
 - 2026-09-30 business content: Supersedes the earlier title-and-background-only preference. Show six separate transparent glass cards for internet/registration help (66CNY), Sailingnet with promo code touchgal, FlClash, Meta Muse registration (22CNY), X/Telegram membership gifting and AI memberships; preserve the exact supplied referral URLs. The recommended Clash card distinguishes platforms: 非ios：https://github.com/chen08209/FlClash; ios：自行查看风帆sailing帮助文档. Show the supplied disclaimer on each entry to Business, highlighting user responsibility, site liability exclusion, no refunds and after-sales support in red. Keep the existing illustration, responsive navigation and three languages. Keep this change local until release is authorized.
