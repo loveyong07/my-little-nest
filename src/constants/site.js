@@ -10,7 +10,7 @@ export const SNAPSHOT = {
   permalink: "https://x.com/loveyong07/status/2103361629748682978",
 };
 
-export const navIds = ["home", "posts", "contact", "business"];
+export const navIds = ["home", "posts", "business", "contact"];
 export const LANGUAGE_STORAGE_KEY = "hello-nice-site-language";
 
 export const mailboxes = [

@@ -44,5 +44,5 @@
 .player-disc { border-color: #d9adc2; background: #fff0f6; color: #743e59; }
 .mini-player input { accent-color: #8b70b0; }
 .nest-context-menu a:nth-of-type(2) { background: #fbe1eb; color: #743e59; }
-.nest-context-menu a:nth-of-type(3) { background: #e0f2e9; color: #315f53; }
+.nest-context-menu a[href="/contact"] { background: #e0f2e9; color: #315f53; }
 .nest-context-menu a:hover, .nest-context-menu button:hover { background: #eee5fa; color: #654c83; }
