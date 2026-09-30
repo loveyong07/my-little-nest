@@ -76,8 +76,8 @@ export function HeroSection({ header, language, t, profile }) {
         <h1 id="page-heading" tabIndex={-1} aria-label="Welcome to my little nest！"><span aria-hidden="true">{"Welcome".split("").map((letter, i) => <b className="greeting-letter" style={{ "--letter": i }} key={i}>{letter}</b>)}</span><span className="greeting-line" aria-hidden="true">to my little nest<em>!</em></span></h1>
         <div className="ornament" aria-hidden="true"><span /><PiFlowerLight /><span /></div>
         <div className="profile">
-          <img src={xMediaSrc(profile.avatar, true) || FALLBACK_AVATAR}
-            data-avatar-low-res={xMediaSrc(profile.avatar) || undefined} alt={t.profileAlt} onError={handleAvatarError} />
+          <img src={xMediaSrc(profile.avatar, true, profile.avatarProxy?.highRes) || FALLBACK_AVATAR}
+            data-avatar-low-res={xMediaSrc(profile.avatar, false, profile.avatarProxy?.normal) || undefined} alt={t.profileAlt} onError={handleAvatarError} />
           <div><strong>{profile.name}</strong><a href={`https://x.com/${profile.username}`} target="_blank" rel="noopener noreferrer">@{profile.username}</a></div>
         </div>
         <p className="bio">{t.bio}</p>

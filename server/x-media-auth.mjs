@@ -1,0 +1,132 @@
+import { LEGACY_IMAGE_URLS, LEGACY_VIDEO_URLS } from "./x-media-legacy.mjs";
+
+const IMAGE_PATHS = ["/media/", "/profile_images/", "/ext_tw_video_thumb/"];
+const VIDEO_PATHS = ["/ext_tw_video/", "/amplify_video/", "/tweet_video/"];
+const DAY_SECONDS = 86400;
+const MAX_LIFETIME_SECONDS = 8 * DAY_SECONDS;
+const legacy = { image: new Set(LEGACY_IMAGE_URLS), video: new Set(LEGACY_VIDEO_URLS) };
+const encoder = new TextEncoder();
+let cachedSecret;
+let cachedKey;
+
+export function mediaSigningSecret() {
+  return globalThis.process?.env?.X_MEDIA_SIGNING_SECRET || globalThis.process?.env?.X_BEARER_TOKEN || "";
+}
+
+export function parseMediaSource(value, kind) {
+  if (typeof value !== "string" || value.length > 2048) return null;
+  try {
+    const url = new URL(value);
+    const host = kind === "image" ? "pbs.twimg.com" : "video.twimg.com";
+    const paths = kind === "image" ? IMAGE_PATHS : VIDEO_PATHS;
+    if (url.protocol !== "https:" || url.hostname !== host || url.username || url.password || url.port
+      || url.hash || !paths.some((prefix) => url.pathname.startsWith(prefix))) return null;
+    // Signed and legacy permissions bind the complete URL, including the original size/format query.
+    return url;
+  } catch { return null; }
+}
+
+export function validMediaQuery(request) {
+  const params = new URL(request.url).searchParams;
+  const allowed = new Set(["url", "expires", "signature", "retry", "lightboxRetry"]);
+  for (const key of params.keys()) {
+    if (!allowed.has(key) || params.getAll(key).length !== 1) return false;
+  }
+  for (const key of ["retry", "lightboxRetry"]) {
+    const value = params.get(key);
+    if (value !== null && (!/^\d{1,3}$/.test(value) || Number(value) > 100)) return false;
+  }
+  return params.getAll("url").length === 1;
+}
+
+async function signingKey(secret) {
+  if (!secret) return null;
+  if (secret !== cachedSecret) {
+    cachedSecret = secret;
+    cachedKey = (async () => {
+      const rootKey = await crypto.subtle.importKey("raw", encoder.encode(secret),
+        { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+      const derived = await crypto.subtle.sign("HMAC", rootKey, encoder.encode("little-nest/media-signing-key/v1"));
+      return crypto.subtle.importKey("raw", derived, { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
+    })();
+  }
+  return cachedKey;
+}
+
+function payload(kind, source, expires) {
+  return encoder.encode(`little-nest/media/v1\n${kind}\n${expires}\n${source.href}`);
+}
+
+export async function signedMediaUrl(value, kind, { secret = mediaSigningSecret(), now = Date.now() } = {}) {
+  const source = parseMediaSource(value, kind);
+  const key = source ? await signingKey(secret) : null;
+  if (!key) return null;
+  // One URL per resource/day retains shared CDN caching and outlives the 24-hour browser feed cache.
+  const expires = (Math.floor(now / (DAY_SECONDS * 1000)) + 8) * DAY_SECONDS;
+  const bytes = new Uint8Array(await crypto.subtle.sign("HMAC", key, payload(kind, source, expires)));
+  const signature = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+  return `/api/x-${kind === "image" ? "media" : "video"}?url=${encodeURIComponent(source.href)}&expires=${expires}&signature=${signature}`;
+}
+
+export async function authorizedMediaRequest(request, source, kind, {
+  secret = mediaSigningSecret(), now = Date.now(),
+} = {}) {
+  if (!source || !validMediaQuery(request)) return false;
+  // This is an early browser hotlink check, not a substitute for cryptographic authorization.
+  if (request.headers.get("sec-fetch-site") === "cross-site") return false;
+  const params = new URL(request.url).searchParams;
+  const expiresText = params.get("expires");
+  const signature = params.get("signature");
+  if (expiresText === null && signature === null) return legacy[kind]?.has(source.href) ?? false;
+  if (!/^\d{10}$/.test(expiresText ?? "") || !/^[a-f0-9]{64}$/.test(signature ?? "")) return false;
+  const expires = Number(expiresText);
+  const nowSeconds = Math.floor(now / 1000);
+  if (expires <= nowSeconds || expires > nowSeconds + MAX_LIFETIME_SECONDS + 60) return false;
+  const key = await signingKey(secret);
+  if (!key) return false;
+  const bytes = Uint8Array.from(signature.match(/.{2}/g), (hex) => Number.parseInt(hex, 16));
+  return crypto.subtle.verify("HMAC", key, bytes, payload(kind, source, expires));
+}
+
+export function boundedMediaCache(request, policy, now = Date.now()) {
+  const expires = new URL(request.url).searchParams.get("expires");
+  if (expires === null) return policy;
+  const remaining = Math.max(0, Number(expires) - Math.floor(now / 1000) - 1);
+  const ages = [...policy.matchAll(/(?:^|,\s*)(?:s-maxage|max-age)=(\d+)/g)].map((match) => Number(match[1]));
+  const fresh = Math.min(remaining, Math.max(0, ...ages));
+  return policy.replace(/((?:s-maxage|max-age)=)(\d+)/g, (_, directive, age) => directive + Math.min(Number(age), remaining))
+    .replace(/(stale-while-revalidate=)(\d+)/g, (_, directive, age) => directive + Math.min(Number(age), Math.max(0, remaining - fresh)));
+}
+
+async function avatarProxy(value, options) {
+  const url = parseMediaSource(value, "image");
+  if (!url || !url.pathname.startsWith("/profile_images/")) return undefined;
+  const normal = await signedMediaUrl(url.href, "image", options);
+  url.pathname = url.pathname.replace(/_normal(?=\.[^/.]+$)/, "_400x400");
+  const highRes = await signedMediaUrl(url.href, "image", options);
+  return normal && highRes ? { normal, highRes } : undefined;
+}
+
+export async function authorizeProfile(result, options) {
+  if (!result?.profile) return result;
+  const proxy = await avatarProxy(result.profile.avatar, options);
+  return { ...result, profile: { ...result.profile, ...(proxy ? { avatarProxy: proxy } : {}) } };
+}
+
+export async function authorizeFeed(result, options) {
+  async function postWithMedia(post) {
+    if (!post) return post;
+    const proxy = await avatarProxy(post.avatar, options);
+    const media = Array.isArray(post.media) ? await Promise.all(post.media.map(async (item) => {
+      const proxyUrl = await signedMediaUrl(item.url, item.type === "video" ? "video" : "image", options);
+      const posterProxyUrl = item.poster ? await signedMediaUrl(item.poster, "image", options) : null;
+      return { ...item, ...(proxyUrl ? { proxyUrl } : {}), ...(posterProxyUrl ? { posterProxyUrl } : {}) };
+    })) : undefined;
+    return { ...post, ...(proxy ? { avatarProxy: proxy } : {}), ...(media ? { media } : {}) };
+  }
+  return {
+    ...result,
+    posts: await Promise.all((result?.posts ?? []).map(postWithMedia)),
+    ...(result?.pinnedPost ? { pinnedPost: await postWithMedia(result.pinnedPost) } : {}),
+  };
+}

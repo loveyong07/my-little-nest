@@ -19,5 +19,8 @@ export default defineConfig(({ mode }) => ({
       clientFiles: ["./src/main.jsx"],
     },
   },
-  plugins: [scenePreloadPlugin(), react(), xFeedPlugin({ token: loadEnv(mode, process.cwd(), "X_BEARER_TOKEN").X_BEARER_TOKEN })],
+  plugins: [scenePreloadPlugin(), react(), xFeedPlugin({
+    token: loadEnv(mode, process.cwd(), "X_BEARER_TOKEN").X_BEARER_TOKEN,
+    mediaSigningSecret: loadEnv(mode, process.cwd(), "X_MEDIA_SIGNING_SECRET").X_MEDIA_SIGNING_SECRET,
+  })],
 }));

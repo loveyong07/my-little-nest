@@ -1,5 +1,6 @@
 import { proxyXMedia } from "./x-media.mjs";
 import { proxyXVideo } from "./x-video.mjs";
+import { authorizeFeed, authorizeProfile, mediaSigningSecret } from "./x-media-auth.mjs";
 
 const USERNAME = "loveyong07";
 const USER_ID = "2061726102180311040";
@@ -360,6 +361,7 @@ export function createXFeedService({
 
 export function xFeedPlugin(options = {}) {
   const getFeed = createXFeedService(options);
+  const authOptions = { secret: options.mediaSigningSecret || globalThis.process?.env?.X_MEDIA_SIGNING_SECRET || options.token || mediaSigningSecret() };
   function installMiddleware(server) {
     server.middlewares.use("/api/x-media", async (request, response) => {
       if (request.url?.split("?")[0] !== "/") {
@@ -369,7 +371,8 @@ export function xFeedPlugin(options = {}) {
       }
       const proxyResponse = await proxyXMedia(new Request(new URL(request.url ?? "/", "http://localhost"), {
         method: request.method,
-      }));
+        headers: request.headers,
+      }), globalThis.fetch, authOptions);
       response.statusCode = proxyResponse.status;
       for (const [name, value] of proxyResponse.headers) response.setHeader(name, value);
       response.end(Buffer.from(await proxyResponse.arrayBuffer()));
@@ -384,10 +387,11 @@ export function xFeedPlugin(options = {}) {
       const headers = new Headers();
       if (request.headers.range) headers.set("Range", request.headers.range);
       if (request.headers["if-range"]) headers.set("If-Range", request.headers["if-range"]);
+      if (request.headers["sec-fetch-site"]) headers.set("Sec-Fetch-Site", request.headers["sec-fetch-site"]);
       const proxyResponse = await proxyXVideo(new Request(new URL(request.url ?? "/", "http://localhost"), {
         method: request.method,
         headers,
-      }));
+      }), globalThis.fetch, authOptions);
       response.statusCode = proxyResponse.status;
       for (const [name, value] of proxyResponse.headers) response.setHeader(name, value);
       if (!proxyResponse.body) {
@@ -440,7 +444,10 @@ export function xFeedPlugin(options = {}) {
           response.end(JSON.stringify(unavailable()));
           return;
         }
-        response.end(JSON.stringify(route === "/api/x-profile" ? await getFeed.getProfile() : await getFeed()));
+        const result = route === "/api/x-profile"
+          ? await authorizeProfile(await getFeed.getProfile(), authOptions)
+          : await authorizeFeed(await getFeed(), authOptions);
+        response.end(JSON.stringify(result));
     });
   }
   return {
