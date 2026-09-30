@@ -1,0 +1,3 @@
+/* Only timeline text needs arbitrary Chinese characters. */
+@import "@fontsource/zcool-kuaile";
+.post-text { font-family: "Quicksand", "Nest Kuaile", "ZCOOL KuaiLe", "Microsoft YaHei", sans-serif; }

@@ -2,11 +2,14 @@ import { useEffect, useState } from "react";
 import { FaArrowRight, FaEnvelope, FaXTwitter } from "react-icons/fa6";
 import { HiOutlineSparkles } from "react-icons/hi2";
 import { PiFlowerLight } from "react-icons/pi";
+import { GiBowTieRibbon } from "react-icons/gi";
 import { ASSETS, FALLBACK_AVATAR } from "../constants/site.js";
 import { pagePaths } from "../routes/site-route.js";
 import { xMediaSrc } from "../media-urls.js";
 import { handleAvatarError } from "../utils/profile.js";
 import { formatLocalDate, formatVisitDate } from "../utils/date.js";
+import { HomeJournal } from "./HomeJournal.jsx";
+import { fantasyCopy } from "../constants/fantasy.js";
 
 export function HeroSection({ header, language, t, profile }) {
   const [visitDate, setVisitDate] = useState(() => new Date());
@@ -25,17 +28,19 @@ export function HeroSection({ header, language, t, profile }) {
   return <section className="hero" aria-label={t.homeLabel}>
       <div className="home-floating-elements" aria-hidden="true">
         {mobileScene ? <>
-          <img className="home-floating-element home-floating-dove-mobile" src={ASSETS + "/home-mobile-dove-motion.png"} alt="" draggable="false" />
-          <img className="home-mobile-petal home-mobile-petal-one" src={ASSETS + "/home-floating-petal.png"} alt="" draggable="false" />
-          <img className="home-mobile-petal home-mobile-petal-two" src={ASSETS + "/home-floating-petal.png"} alt="" draggable="false" />
+          <img className="home-floating-element home-floating-dove-mobile" src={ASSETS + "/home-mobile-dove-motion.png"} alt="" draggable="false" fetchPriority="low" decoding="async" />
+          <img className="home-mobile-petal home-mobile-petal-one" src={ASSETS + "/home-floating-petal.png"} alt="" draggable="false" fetchPriority="low" decoding="async" />
+          <img className="home-mobile-petal home-mobile-petal-two" src={ASSETS + "/home-floating-petal.png"} alt="" draggable="false" fetchPriority="low" decoding="async" />
         </> : <>
-          <img className="home-floating-element home-floating-dove" src={ASSETS + "/home-dove-motion.png"} alt="" draggable="false" />
-          <img className="home-floating-element home-floating-petal" src={ASSETS + "/home-petal-motion.png"} alt="" draggable="false" />
+          <img className="home-floating-element home-floating-dove" src={ASSETS + "/home-dove-motion.png"} alt="" draggable="false" fetchPriority="low" decoding="async" />
+          <img className="home-floating-element home-floating-petal" src={ASSETS + "/home-petal-motion.png"} alt="" draggable="false" fetchPriority="low" decoding="async" />
         </>}
       </div>
       {header}
       <div className="hero-layout">
+      <div className="hero-intro-stack">
       <div className="hero-copy">
+        <GiBowTieRibbon className="hero-bow" aria-hidden="true" />
         <p className="home-place-badge">
           <span className="home-place-seal" aria-hidden="true">
             <svg viewBox="0 0 24 24" focusable="false">
@@ -44,7 +49,8 @@ export function HeroSection({ header, language, t, profile }) {
           </span>
           {t.homePlaceLabel}
         </p>
-        <h1 id="page-heading" tabIndex={-1} aria-label="Welcome to my little nest！"><span>Welcome</span><span>to my little nest<em>!</em></span></h1>
+        <p className="hero-chapter">{fantasyCopy[language].chapter}</p>
+        <h1 id="page-heading" tabIndex={-1} aria-label="Welcome to my little nest！"><span aria-hidden="true">{"Welcome".split("").map((letter, i) => <b className="greeting-letter" style={{ "--letter": i }} key={i}>{letter}</b>)}</span><span className="greeting-line" aria-hidden="true">to my little nest<em>!</em></span></h1>
         <div className="ornament" aria-hidden="true"><span /><PiFlowerLight /><span /></div>
         <div className="profile">
           <img src={xMediaSrc(profile.avatar, true) || FALLBACK_AVATAR}
@@ -57,6 +63,8 @@ export function HeroSection({ header, language, t, profile }) {
           <a className="primary-cta" href={pagePaths.posts}><FaXTwitter aria-hidden="true" />{t.postsCta}<FaArrowRight aria-hidden="true" /></a>
           <a className="secondary-cta" href={pagePaths.contact}><FaEnvelope aria-hidden="true" />{t.contactCta}</a>
         </div>
+      </div>
+      <HomeJournal language={language} />
       </div>
       <div className="hero-character-space" aria-hidden="true" />
       </div>
