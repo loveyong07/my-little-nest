@@ -106,7 +106,6 @@ export default function PostsPage({ language, t, profile, onFeedReady }) {
         </button>)}
       </div>}
       <div className="post-reading" ref={readingRef}>
-        {posts.length > 1 && <PostControls postIndex={postIndex} total={posts.length} onChange={changeReadingPost} t={t} sticky />}
         {currentPost ? <PostCard key={currentPost.id} post={currentPost} feedSource={feedSource} language={language} t={t} profile={profile} nextPost={posts.length > 1 ? posts[(postIndex + 1) % posts.length] : null} priorityMedia={!pinnedPost} />
           : <div className="pinned-placeholder feed-empty" role="status"><span>{feedLoading ? t.feedRefreshing : t.feedEmpty}</span>
             {!feedLoading && <a href={xProfileUrl} target="_blank" rel="noopener noreferrer">{t.visitX}<FaArrowRight aria-hidden="true" /></a>}
