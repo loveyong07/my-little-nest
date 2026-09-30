@@ -27,7 +27,7 @@ export function MiniPlayer({ f }) {
     let cancelled = false;
     let audio;
     try {
-      audio = createNestAudio(window.AudioContext || window.webkitAudioContext);
+      audio = createNestAudio(window.Audio);
       engine.current = audio;
       audio.volume(.6);
       void audio.play(true).then((started) => {
@@ -42,7 +42,7 @@ export function MiniPlayer({ f }) {
   async function toggle() {
     setBusy(true); setError(false);
     try {
-      if (!engine.current) engine.current = createNestAudio(window.AudioContext || window.webkitAudioContext);
+      if (!engine.current) engine.current = createNestAudio(window.Audio);
       if (playing) { requested.current = false; await engine.current.pause(); setPlaying(false); }
       else {
         requested.current = true; engine.current.volume(volume); await engine.current.play();

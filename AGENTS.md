@@ -42,3 +42,7 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 - 2026-09-30 control accents: Keep the blue scene and blue-white reading surfaces, but use distinct soft pink, blue, mint, lavender and yellow fills for buttons, navigation, language selectors and small controls. The user explicitly prefers colorful clickable regions over uniformly blue controls.
 
 - 2026-09-30 home scrolling: Keep the homepage illustration fixed to the viewport on desktop and mobile; scroll the content over it and retain the scene while reading lower sections.
+
+- 2026-09-30 music: Label the player AIR in all languages and use Uno's piano arrangement of 鳥の詩 as a same-origin audio asset with source attribution. Remove unused companion components, styles, dependencies and model preparation; retired model assets stay in archive only.
+
+- 2026-09-30 desktop scrolling: Keep the fixed artwork and translucent cards, but avoid large live backdrop blur. Reuse prerendered particle sprites and bound decorative canvas resolution on high-DPI displays; keep original photo resolution.

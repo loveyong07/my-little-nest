@@ -11,7 +11,40 @@ export function SakuraCanvas({ snow = false }) {
     const mobile = matchMedia("(max-width: 700px)");
     const finePointer = matchMedia("(hover: hover) and (pointer: fine)");
     const petal = new Image();
+    // Rasterize decorative artwork once instead of resampling the source and
+    // stroking blurred snowflake paths for every particle on every frame.
+    const petalSprite = document.createElement("canvas");
+    petalSprite.width = petalSprite.height = 64;
+    let petalReady = false;
+    petal.onload = () => {
+      petalSprite.getContext("2d").drawImage(petal, 0, 0, 64, 64);
+      petalReady = true;
+    };
     petal.src = "/assets/home-floating-petal.png";
+    const snowSprite = document.createElement("canvas");
+    snowSprite.width = snowSprite.height = 80;
+    if (snow) {
+      const brush = snowSprite.getContext("2d");
+      brush.translate(40, 40);
+      brush.strokeStyle = "#ffffff";
+      brush.lineWidth = 3.6;
+      brush.lineCap = "round";
+      brush.shadowColor = "#5283b3";
+      brush.shadowBlur = 6;
+      brush.beginPath();
+      for (let arm = 0; arm < 6; arm++) {
+        const angle = arm * Math.PI / 3;
+        const x = Math.cos(angle) * 28, y = Math.sin(angle) * 28;
+        brush.moveTo(0, 0); brush.lineTo(x, y);
+        for (const side of [-1, 1]) {
+          const branch = angle + side * Math.PI / 3;
+          brush.moveTo(x * .58, y * .58);
+          brush.lineTo(x * .58 + Math.cos(branch) * 28 * .34,
+            y * .58 + Math.sin(branch) * 28 * .34);
+        }
+      }
+      brush.stroke();
+    }
     const trail = [...trailRef.current.children];
     let width, height, petals = [], flakes = [], sparks = [], frame = 0, last = 0, pointerAt = 0, slot = 0;
     let active = true;
@@ -19,7 +52,10 @@ export function SakuraCanvas({ snow = false }) {
     const compact = () => mobile.matches || connection?.saveData;
     function resize() {
       width = innerWidth; height = innerHeight;
-      const ratio = Math.min(devicePixelRatio || 1, compact() ? 1 : 1.5);
+      // Bound the full-screen decorative surface on large/high-DPI monitors.
+      // This does not change the resolution of scene images or post media.
+      const ratio = Math.min(devicePixelRatio || 1, compact() ? 1 : 1.5,
+        Math.sqrt(1920 * 1080 / Math.max(1, width * height)));
       canvas.width = Math.round(width * ratio); canvas.height = Math.round(height * ratio);
       context.setTransform(ratio, 0, 0, ratio, 0, 0);
       petals = Array.from({ length: compact() ? 9 : 26 }, () => ({
@@ -55,7 +91,7 @@ export function SakuraCanvas({ snow = false }) {
       const elapsed = Math.min((now - (last || now)) / 1000, .1);
       last = now;
       context.clearRect(0, 0, width, height);
-      if (petal.complete && petal.naturalWidth) {
+      if (petalReady) {
         for (const p of petals) {
           p.y += p.speed * elapsed; p.x += (9 + Math.sin(now / 1800 + p.phase) * 13) * elapsed;
           p.rotation += elapsed * .4;
@@ -64,7 +100,7 @@ export function SakuraCanvas({ snow = false }) {
           context.save(); context.globalAlpha = .65;
           context.translate(p.x, p.y); context.rotate(p.rotation);
           context.scale(Math.cos(now / 1700 + p.phase) * .35 + .65, 1);
-          context.drawImage(petal, -p.size / 2, -p.size / 2, p.size, p.size);
+          context.drawImage(petalSprite, -p.size / 2, -p.size / 2, p.size, p.size);
           context.restore();
         }
       }
@@ -77,25 +113,8 @@ export function SakuraCanvas({ snow = false }) {
         context.translate(flake.x, flake.y);
         context.rotate(now / 9000 + flake.phase);
         context.globalAlpha = .95;
-        context.strokeStyle = "#ffffff";
-        context.lineWidth = 1.8;
-        context.lineCap = "round";
-        context.shadowColor = "#5283b3";
-        context.shadowBlur = 3;
-        context.beginPath();
-        for (let arm = 0; arm < 6; arm++) {
-          const angle = arm * Math.PI / 3;
-          const x = Math.cos(angle) * flake.size, y = Math.sin(angle) * flake.size;
-          context.moveTo(0, 0); context.lineTo(x, y);
-          const branchX = x * .58, branchY = y * .58;
-          for (const side of [-1, 1]) {
-            const branchAngle = angle + side * Math.PI / 3;
-            context.moveTo(branchX, branchY);
-            context.lineTo(branchX + Math.cos(branchAngle) * flake.size * .34,
-              branchY + Math.sin(branchAngle) * flake.size * .34);
-          }
-        }
-        context.stroke();
+        const extent = flake.size * 80 / 28;
+        context.drawImage(snowSprite, -extent / 2, -extent / 2, extent, extent);
         context.restore();
       }
       sparks = sparks.filter((spark) => {
@@ -119,6 +138,7 @@ export function SakuraCanvas({ snow = false }) {
     document.addEventListener("visibilitychange", visibility);
     return () => {
       active = false; cancelAnimationFrame(frame);
+      petal.onload = null;
       window.removeEventListener("resize", resize); window.removeEventListener("pointermove", move);
       window.removeEventListener("click", click); document.removeEventListener("visibilitychange", visibility);
     };
