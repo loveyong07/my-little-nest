@@ -263,6 +263,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .hero::before { position: fixed; background-size: cover; }
 .hero::after { position: fixed; background: linear-gradient(90deg, #edf5fb70, #f5f9fc28 40%, #f0f6fb00 68%); }
 .home-floating-elements { position: fixed; }
+/* Desktop home fits the viewport; phones and other routes retain scrolling. */
+@media (min-width: 901px) and (pointer: fine) {
+  .site:not(.site-route) { height: 100dvh; min-height: 0; padding-bottom: 0; overflow: clip; }
+  .site:not(.site-route) .hero { height: 100dvh; min-height: 0; padding-bottom: 0; }
+  .site:not(.site-route) .hero-layout { padding-top: 18px; padding-bottom: 90px; }
+  .site:not(.site-route) .hero-intro-stack { transform: scale(var(--home-fit, 1)); transform-origin: top left; }
+}
 @media (max-width: 900px) {
   .hero::before { background-size: cover; background-position: var(--home-scene-position) top; }
   .hero::after { background: linear-gradient(0deg, #f7fafd38, #f7fafd00 65%); }
