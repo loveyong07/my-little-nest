@@ -21,17 +21,7 @@ test("built fonts remain same-origin files compatible with production font-src s
   assert.ok(fontCount > 0, "Check the actual built CSS, not an empty asset folder");
 });
 
-test("the shipped companion has a complete local model graph without automatic audio", () => {
-  const folder = path.join(client, "assets/live2d/shizuku");
-  const model = JSON.parse(readFileSync(path.join(folder, "shizuku.model.json"), "utf8"));
-  const motions = Object.values(model.motions).flat();
-  const refs = [model.model, model.physics, model.pose, ...model.textures,
-    ...model.expressions.map(item => item.file), ...motions.map(item => item.file)];
-  for (const ref of refs) {
-    const file = path.resolve(folder, ref);
-    assert.ok(file.startsWith(folder + path.sep), `Model path must stay local: ${ref}`);
-    assert.ok(existsSync(file), `Missing model asset: ${ref}`);
-  }
-  assert.ok(motions.every(motion => !motion.sound));
-  assert.ok(existsSync(path.join(client, "assets/live2d/live2d-core-1.0.1.min.js")));
+test("removed companion assets are not shipped", () => {
+  assert.equal(existsSync(path.join(client, "assets/live2d")), false);
+  assert.ok(existsSync(path.join(client, "assets/audio/air-tori-no-uta-piano-uno.mp3")));
 });
