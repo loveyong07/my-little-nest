@@ -9,8 +9,8 @@ import { useXProfile } from "./hooks/useXProfile.js";
 import { useSiteRoute } from "./hooks/useSiteRoute.js";
 import { useClickSparkles } from "./hooks/useClickSparkles.js";
 
-const PostsPage = lazy(() => import("./components/PostsPage.jsx"));
-const ContactPage = lazy(() => import("./components/ContactPage.jsx"));
+const PostsPage = lazy(() => import("./pages/PostsPage.jsx"));
+const ContactPage = lazy(() => import("./pages/ContactPage.jsx"));
 
 export function App() {
   const { language, t, changeLanguage } = useI18n();

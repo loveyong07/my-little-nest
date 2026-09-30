@@ -7,17 +7,8 @@ import { pagePaths } from "../routes/site-route.js";
 import { xMediaSrc } from "../media-urls.js";
 import { handleAvatarError } from "../utils/profile.js";
 import { formatLocalDate, formatVisitDate } from "../utils/date.js";
-import { useI18n } from "../hooks/useI18n.js";
-import { useXProfile } from "../hooks/useXProfile.js";
 
-import { Header } from "./Header.jsx";
-
-export function HeroSection({ header, children, language: propLang, t: propT, profile: propProfile }) {
-  const i18n = useI18n();
-  const profileState = useXProfile("home", true);
-  const language = propLang ?? i18n.language;
-  const t = propT ?? i18n.t;
-  const profile = propProfile ?? profileState;
+export function HeroSection({ header, language, t, profile }) {
   const [visitDate, setVisitDate] = useState(() => new Date());
   useEffect(() => {
     const timer = window.setInterval(() => setVisitDate(new Date()), 60_000);
@@ -32,7 +23,7 @@ export function HeroSection({ header, children, language: propLang, t: propT, pr
         <img className="home-mobile-petal home-mobile-petal-one" src={ASSETS + "/home-floating-petal.png"} alt="" draggable="false" />
         <img className="home-mobile-petal home-mobile-petal-two" src={ASSETS + "/home-floating-petal.png"} alt="" draggable="false" />
       </div>
-      {header || children || <Header page="home" t={t} language={language} />}
+      {header}
       <div className="hero-copy">
         <p className="home-place-badge">
           <span className="home-place-seal" aria-hidden="true">

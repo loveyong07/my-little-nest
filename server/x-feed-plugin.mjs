@@ -1,6 +1,5 @@
 import { proxyXMedia } from "./x-media.mjs";
 import { proxyXVideo } from "./x-video.mjs";
-import { createKvCache } from "./kv-cache.mjs";
 
 const USERNAME = "loveyong07";
 const USER_ID = "2061726102180311040";
@@ -9,10 +8,6 @@ const CACHE_TTL_MS = 15 * 60 * 1000;
 const FULL_REFRESH_TTL_MS = 24 * 60 * 60 * 1000;
 const USER_CACHE_TTL_MS = CACHE_TTL_MS;
 const ERROR_RETRY_MS = 60 * 1000;
-const SOFT_RENEW_TTL_MS = 60 * 60 * 1000;
-const FEED_CACHE_KEY = `cache:x-posts:${USERNAME}`;
-const FEED_LOCK_KEY = `lock:x-posts:${USERNAME}`;
-const PROFILE_CACHE_KEY = `cache:x-profile:${USERNAME}`;
 const PAGE_SIZE = 100;
 const MAX_PAGES = 32;
 
@@ -148,9 +143,7 @@ export function createXFeedService({
   token = globalThis.process?.env?.X_BEARER_TOKEN ?? "",
   fetchImpl = globalThis.fetch,
   now = Date.now,
-  kv = null,
 } = {}) {
-  const kvCache = kv ?? createKvCache();
   let user = null;
   let userAt = 0;
   let cached = null;
@@ -318,51 +311,14 @@ export function createXFeedService({
 
   async function getProfile() {
     if (!token?.trim()) return { status: "unavailable" };
-    if (user && now() - userAt < USER_CACHE_TTL_MS) {
-      return {
-        status: "ok",
-        profile: {
-          name: user.name || user.username,
-          username: user.username,
-          avatar: safeAvatar(user.profile_image_url),
-        },
-      };
-    }
-    if (kvCache.isAvailable()) {
-      try {
-        const kvProfile = await kvCache.get(PROFILE_CACHE_KEY);
-        if (kvProfile?.profile) {
-          const isFresh = now() - (kvProfile.cachedAt ?? 0) < USER_CACHE_TTL_MS;
-          if (isFresh) {
-            return { status: "ok", profile: kvProfile.profile };
-          }
-        }
-      } catch {}
-    }
     try {
       const current = await getUser();
-      const profile = {
+      return { status: "ok", profile: {
         name: current.name || current.username,
         username: current.username,
         avatar: safeAvatar(current.profile_image_url),
-      };
-      if (kvCache.isAvailable()) {
-        try {
-          await kvCache.set(PROFILE_CACHE_KEY, { profile, cachedAt: now() }, { ex: 86400 * 2 });
-        } catch {}
-      }
-      return { status: "ok", profile };
+      } };
     } catch {
-      if (user) {
-        return {
-          status: "ok",
-          profile: {
-            name: user.name || user.username,
-            username: user.username,
-            avatar: safeAvatar(user.profile_image_url),
-          },
-        };
-      }
       return { status: "unavailable" };
     }
   }
@@ -370,72 +326,25 @@ export function createXFeedService({
   async function getFeed() {
     if (!token?.trim()) return unavailable();
     if (cached && now() - cachedAt < CACHE_TTL_MS) return cached;
-
-    // Check distributed KV cache if available
-    if (kvCache.isAvailable()) {
-      try {
-        const kvData = await kvCache.get(FEED_CACHE_KEY);
-        if (kvData?.result) {
-          const isFresh = now() - (kvData.cachedAt ?? 0) < CACHE_TTL_MS;
-          cached = kvData.result;
-          cachedAt = kvData.cachedAt ?? now();
-          newestSeenId = kvData.latestId ?? newestSeenId;
-          cachedPinnedId = kvData.pinnedId ?? cachedPinnedId;
-          if (kvData.fullRefreshAt) fullRefreshAt = kvData.fullRefreshAt;
-          if (isFresh) return cached;
-        }
-      } catch {}
-    }
-
-    if (now() < retryAt) {
-      return cached ? { ...cached, status: "stale", pinnedStatus: cached.pinnedPost ? "stale" : cached.pinnedStatus } : unavailable();
-    }
-    if (inFlight) {
-      return cached ? { ...cached, status: "stale", pinnedStatus: cached.pinnedPost ? "stale" : cached.pinnedStatus } : inFlight;
-    }
-
-    let lockAcquired = false;
-    if (kvCache.isAvailable()) {
-      lockAcquired = await kvCache.acquireLock(FEED_LOCK_KEY, 60);
-      if (!lockAcquired && cached) {
-        return { ...cached, status: "stale", pinnedStatus: cached.pinnedPost ? "stale" : cached.pinnedStatus };
-      }
-    } else {
-      lockAcquired = true;
-    }
+    if (now() < retryAt) return cached ? { ...cached, status: "stale", pinnedStatus: cached.pinnedPost ? "stale" : cached.pinnedStatus } : unavailable();
+    if (inFlight) return inFlight;
 
     inFlight = fetchFeed()
-      .then(async ({ result, latestId, pinnedId, fullRefresh }) => {
+      .then(({ result, latestId, pinnedId, fullRefresh }) => {
         cached = result;
         cachedAt = now();
         newestSeenId = latestId;
         cachedPinnedId = pinnedId;
         if (fullRefresh) fullRefreshAt = cachedAt;
         retryAt = 0;
-        if (kvCache.isAvailable()) {
-          try {
-            await kvCache.set(FEED_CACHE_KEY, { result, cachedAt, latestId, pinnedId, fullRefreshAt }, { ex: 86400 * 2 });
-          } catch {}
-        }
         return result;
       })
-      .catch(async () => {
+      .catch(() => {
         retryAt = now() + ERROR_RETRY_MS;
-        if (cached) {
-          if (kvCache.isAvailable()) {
-            try {
-              await kvCache.set(FEED_CACHE_KEY, { result: cached, cachedAt: now() - CACHE_TTL_MS, latestId: newestSeenId, pinnedId: cachedPinnedId, fullRefreshAt }, { ex: 3600 });
-            } catch {}
-          }
-          return { ...cached, status: "stale", pinnedStatus: cached.pinnedPost ? "stale" : cached.pinnedStatus };
-        }
-        return unavailable();
+        return cached ? { ...cached, status: "stale", pinnedStatus: cached.pinnedPost ? "stale" : cached.pinnedStatus } : unavailable();
       })
-      .finally(async () => {
+      .finally(() => {
         inFlight = null;
-        if (lockAcquired && kvCache.isAvailable()) {
-          await kvCache.releaseLock(FEED_LOCK_KEY);
-        }
       });
     return inFlight;
   }
