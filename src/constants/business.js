@@ -1,0 +1,63 @@
+export const businessLinks = {
+  sailing: "https://my.sailingnet.pro/zh/auth/signup?referrer=tCvO65Sn",
+  clash: "https://github.com/chen08209/FlClash",
+  memberships: "https://ronvip.pages.dev/?ref=RP0P13306W5H31014J",
+  ai: "https://hongyuhub.com?from=22182",
+};
+
+export const businessCopy = {
+  zh: {
+    cardsLabel: "商务服务与站内推荐", disclaimerTitle: "免责声明",
+    viewDisclaimer: "查看免责声明", closeDisclaimer: "关闭免责声明", continueBrowsing: "我已知晓，继续浏览",
+    disclaimerIntro: "本网站所提供的内容仅作为信息参考与个人观点分享，用户应根据自身需求及实际情况进行判断与选择。",
+    responsibilityBefore: "因浏览、使用或参考本站内容所产生的任何行为及相关法律责任，均由",
+    responsibility: "用户自行承担", responsibilityAfter: "，",
+    noLiability: "本网站不承担由此引发的任何直接或间接责任。",
+    refundPolicy: "在本站购买的产品不退款", supportBefore: "但会有", support: "售后",
+    contact: "联系我", openLink: "前往查看", promoCode: "优惠码",
+    cards: [
+      { id: "network", title: "科学上网", description: "学会科学上网以及大多数产品的注册", price: "66CNY" },
+      { id: "sailing", title: "站内推荐站" },
+      { id: "clash", title: "站内推荐Clash", platformLabel: "非iOS", iosDescription: "自行查看风帆sailing帮助文档" },
+      { id: "muse", title: "Muse代注册", description: "Meta下的Muse注册", price: "22CNY" },
+      { id: "memberships", title: "X Telegram", description: "X TG会员代送" },
+      { id: "ai", title: "AI会员", description: "ChatGPT Claude Grok Gemini会员" },
+    ],
+  },
+  ja: {
+    cardsLabel: "サービスとおすすめ", disclaimerTitle: "免責事項",
+    viewDisclaimer: "免責事項を見る", closeDisclaimer: "免責事項を閉じる", continueBrowsing: "確認しました · 続ける",
+    disclaimerIntro: "本サイトの内容は情報の参考および個人的な意見の共有を目的としています。ご自身のニーズと実際の状況に応じて判断・選択してください。",
+    responsibilityBefore: "本サイトの閲覧・利用・参照により生じる行為および関連する法的責任は、すべて",
+    responsibility: "利用者ご自身が負うものとします", responsibilityAfter: "。",
+    noLiability: "本サイトは、それによって生じる直接的・間接的な責任を一切負いません。",
+    refundPolicy: "本サイトで購入した商品は返金できません", supportBefore: "が、", support: "購入後のサポートは提供します",
+    contact: "お問い合わせ", openLink: "サイトを見る", promoCode: "割引コード",
+    cards: [
+      { id: "network", title: "ネット接続サポート", description: "ネット接続の方法と、さまざまなサービスの登録方法を学ぶ", price: "66CNY" },
+      { id: "sailing", title: "おすすめサイト" },
+      { id: "clash", title: "おすすめClash", platformLabel: "iOS以外", iosDescription: "風帆sailingのヘルプドキュメントをご確認ください" },
+      { id: "muse", title: "Muse登録代行", description: "MetaのMuseへの登録", price: "22CNY" },
+      { id: "memberships", title: "X Telegram", description: "X・TGのメンバーシップギフト代行" },
+      { id: "ai", title: "AIメンバーシップ", description: "ChatGPT・Claude・Grok・Geminiのメンバーシップ" },
+    ],
+  },
+  en: {
+    cardsLabel: "Services and recommendations", disclaimerTitle: "Disclaimer",
+    viewDisclaimer: "Read disclaimer", closeDisclaimer: "Close disclaimer", continueBrowsing: "Understood · Continue browsing",
+    disclaimerIntro: "This website provides content for informational reference and to share personal views. Users should make judgments and choices according to their own needs and circumstances.",
+    responsibilityBefore: "Any actions and related legal responsibilities arising from browsing, using or referring to this website's content are ",
+    responsibility: "the user's sole responsibility", responsibilityAfter: ". ",
+    noLiability: "This website assumes no direct or indirect liability arising from such actions.",
+    refundPolicy: "Products purchased on this website are non-refundable", supportBefore: ", but ", support: "after-sales support is available",
+    contact: "Get in touch", openLink: "Visit website", promoCode: "Promo code",
+    cards: [
+      { id: "network", title: "Internet access", description: "Learn how to access the internet and register for most services", price: "66CNY" },
+      { id: "sailing", title: "Recommended website" },
+      { id: "clash", title: "Recommended Clash", platformLabel: "Non-iOS", iosDescription: "Please refer to the Sailing help documentation" },
+      { id: "muse", title: "Muse registration", description: "Registration for Meta's Muse", price: "22CNY" },
+      { id: "memberships", title: "X Telegram", description: "X and TG membership gifting" },
+      { id: "ai", title: "AI memberships", description: "ChatGPT, Claude, Grok and Gemini memberships" },
+    ],
+  },
+};

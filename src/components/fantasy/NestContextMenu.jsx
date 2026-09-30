@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { FaHouse, FaRegEnvelope, FaArrowUp, FaWandMagicSparkles, FaBookOpen } from "react-icons/fa6";
+import { FaHouse, FaRegEnvelope, FaArrowUp, FaWandMagicSparkles, FaBookOpen, FaBriefcase } from "react-icons/fa6";
+import { navIds } from "../../constants/site.js";
+import { pagePaths } from "../../routes/site-route.js";
+
+const routeIcons = { home: FaHouse, posts: FaBookOpen, contact: FaRegEnvelope, business: FaBriefcase };
 
 export function NestContextMenu({ f, page, effects, onToggleEffects }) {
   const [position, setPosition] = useState(null);
@@ -40,7 +44,10 @@ export function NestContextMenu({ f, page, effects, onToggleEffects }) {
   }
   return <div className="nest-context-menu" ref={ref} style={{ left: position.x, top: position.y }} role="menu" aria-label={f.menu} onKeyDown={keyboard}>
     <p>{f.menu}</p>
-    {[["/", f.home, FaHouse], ["/posts", f.posts, FaBookOpen], ["/contact", f.contact, FaRegEnvelope]].map(([href, label, Icon]) => <a key={href} role="menuitem" tabIndex={-1} href={href} onClick={() => setPosition(null)}><Icon aria-hidden="true" />{label}</a>)}
+    {navIds.map((id) => {
+      const Icon = routeIcons[id];
+      return <a key={id} role="menuitem" tabIndex={-1} href={pagePaths[id]} onClick={() => setPosition(null)}><Icon aria-hidden="true" />{f[id]}</a>;
+    })}
     <button type="button" role="menuitem" tabIndex={-1} onClick={() => { setPosition(null); window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" }); previousFocus.current?.focus(); }}><FaArrowUp aria-hidden="true" />{f.top}</button>
     <button type="button" role="menuitemcheckbox" aria-checked={effects} tabIndex={-1} onClick={() => { onToggleEffects(); setPosition(null); previousFocus.current?.focus(); }}><FaWandMagicSparkles aria-hidden="true" />{effects ? f.effectsOn : f.effectsOff}</button>
     <small>{f.nativeMenu}</small>

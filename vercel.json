@@ -11,6 +11,15 @@
   },
   "headers": [
     {
+      "source": "/business",
+      "headers": [
+        {
+          "key": "Link",
+          "value": "</assets/business-sky-studio-smile-v2-q90.webp>; rel=preload; as=image; type=\"image/webp\"; fetchpriority=high"
+        }
+      ]
+    },
+    {
       "source": "/posts",
       "headers": [
         {
@@ -69,12 +78,20 @@
       "destination": "/route-shells/contact.html"
     },
     {
+      "source": "/business",
+      "destination": "/route-shells/business.html"
+    },
+    {
       "source": "/posts/",
       "destination": "/route-shells/posts.html"
     },
     {
       "source": "/contact/",
       "destination": "/route-shells/contact.html"
+    },
+    {
+      "source": "/business/",
+      "destination": "/route-shells/business.html"
     }
   ]
 }
