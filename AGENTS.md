@@ -10,6 +10,8 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 
 ## Selected design and wording
 
+- On the Posts page, omit the sticky previous/next bar above the daily post card (the bar with text labels and a centered post count); keep the lower post navigation and date index.
+
 - The user selected the first blue anime sky mock. `design-reference.png` is the visual source of truth. Recreate its open blue sky, right-side character artwork, large blue serif greeting, and white rounded social panel.
 - For the 2026-09-27 design audit upgrade, the user selected route A (refine the existing design). Keep the established artwork and welcome mood while improving responsive composition, Posts readability, and Contact hierarchy. The user chose to leave new personal-interest or recent-status copy blank; do not invent it.
 - The browser tab title is exactly `初咏的小窝`; keep the visible homepage heading as `Welcome to my little nest！`.
