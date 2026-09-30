@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFeedCache, writeFeedCache, canPrefetch, fetchFeed } from "../src/feed-cache.js";
+import { readFeedCache, writeFeedCache, canPrefetch, fetchFeed, getFeedSnapshot } from "../src/feed-cache.js";
 
 function storage() {
   let value = null;
@@ -46,16 +46,17 @@ test("speculative images are disabled on slow or metered connections", () => {
   assert.equal(canPrefetch({ effectiveType: "4g" }), true);
 });
 
-test("concurrent feed consumers share a request and a failure remains retryable", async () => {
+test("concurrent feed consumers share a request and fresh reads retain its success timestamp", async () => {
   const original = globalThis.fetch;
   let calls = 0;
-  globalThis.fetch = async () => { calls++; return { ok: false }; };
+  globalThis.fetch = async () => { calls++; return { ok: true, json: async () => ({ status: "ok", posts: [], pinnedStatus: "none" }) }; };
   try {
     const first = fetchFeed();
     assert.equal(fetchFeed(), first);
-    await assert.rejects(first);
-    globalThis.fetch = async () => { calls++; return { ok: true, json: async () => ({ status: "ok", posts: [] }) }; };
+    await first;
+    const savedAt = getFeedSnapshot().savedAt;
     assert.equal((await fetchFeed()).status, "ok");
-    assert.equal(calls, 2);
+    assert.equal(calls, 1);
+    assert.equal(getFeedSnapshot().savedAt, savedAt);
   } finally { globalThis.fetch = original; }
 });

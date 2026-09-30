@@ -10,20 +10,31 @@ import { formatLocalDate, formatVisitDate } from "../utils/date.js";
 
 export function HeroSection({ header, language, t, profile }) {
   const [visitDate, setVisitDate] = useState(() => new Date());
+  const [mobileScene, setMobileScene] = useState(() => window.matchMedia("(max-width: 700px)").matches);
   useEffect(() => {
     const timer = window.setInterval(() => setVisitDate(new Date()), 60_000);
     return () => window.clearInterval(timer);
   }, []);
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 700px)");
+    const updateScene = () => setMobileScene(query.matches);
+    query.addEventListener("change", updateScene);
+    return () => query.removeEventListener("change", updateScene);
+  }, []);
 
   return <section className="hero" aria-label={t.homeLabel}>
       <div className="home-floating-elements" aria-hidden="true">
-        <img className="home-floating-element home-floating-dove home-floating-dove-desktop" src={ASSETS + "/home-dove-motion.png"} alt="" draggable="false" />
-        <img className="home-floating-element home-floating-petal home-floating-petal-desktop" src={ASSETS + "/home-petal-motion.png"} alt="" draggable="false" />
-        <img className="home-floating-element home-floating-dove-mobile" src={ASSETS + "/home-mobile-dove-motion.png"} alt="" draggable="false" />
-        <img className="home-mobile-petal home-mobile-petal-one" src={ASSETS + "/home-floating-petal.png"} alt="" draggable="false" />
-        <img className="home-mobile-petal home-mobile-petal-two" src={ASSETS + "/home-floating-petal.png"} alt="" draggable="false" />
+        {mobileScene ? <>
+          <img className="home-floating-element home-floating-dove-mobile" src={ASSETS + "/home-mobile-dove-motion.png"} alt="" draggable="false" />
+          <img className="home-mobile-petal home-mobile-petal-one" src={ASSETS + "/home-floating-petal.png"} alt="" draggable="false" />
+          <img className="home-mobile-petal home-mobile-petal-two" src={ASSETS + "/home-floating-petal.png"} alt="" draggable="false" />
+        </> : <>
+          <img className="home-floating-element home-floating-dove" src={ASSETS + "/home-dove-motion.png"} alt="" draggable="false" />
+          <img className="home-floating-element home-floating-petal" src={ASSETS + "/home-petal-motion.png"} alt="" draggable="false" />
+        </>}
       </div>
       {header}
+      <div className="hero-layout">
       <div className="hero-copy">
         <p className="home-place-badge">
           <span className="home-place-seal" aria-hidden="true">
@@ -33,7 +44,7 @@ export function HeroSection({ header, language, t, profile }) {
           </span>
           {t.homePlaceLabel}
         </p>
-        <h1><span>Welcome</span><span>to my little nest<em>!</em></span></h1>
+        <h1 id="page-heading" tabIndex={-1} aria-label="Welcome to my little nest！"><span>Welcome</span><span>to my little nest<em>!</em></span></h1>
         <div className="ornament" aria-hidden="true"><span /><PiFlowerLight /><span /></div>
         <div className="profile">
           <img src={xMediaSrc(profile.avatar, true) || FALLBACK_AVATAR}
@@ -46,6 +57,8 @@ export function HeroSection({ header, language, t, profile }) {
           <a className="primary-cta" href={pagePaths.posts}><FaXTwitter aria-hidden="true" />{t.postsCta}<FaArrowRight aria-hidden="true" /></a>
           <a className="secondary-cta" href={pagePaths.contact}><FaEnvelope aria-hidden="true" />{t.contactCta}</a>
         </div>
+      </div>
+      <div className="hero-character-space" aria-hidden="true" />
       </div>
       <p className="sky-quote">{t.heroScript}<HiOutlineSparkles aria-hidden="true" /></p>
       <div className="handwritten-note"><p>{t.note}</p><span>Nice people<br />Brighter tomorrow<br /><time dateTime={formatLocalDate(visitDate)}>— {formatVisitDate(visitDate, language)} ✧</time></span></div>

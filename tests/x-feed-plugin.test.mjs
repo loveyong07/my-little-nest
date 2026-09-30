@@ -146,6 +146,40 @@ test("keeps an image-only original post after removing its photo link", async ()
   assert.equal(result.posts[0].media.length, 1);
 });
 
+test("retains safe photo and video dimensions for daily and pinned media without altering URLs", async () => {
+  const photoUrl = "https://pbs.twimg.com/media/original.jpg?name=orig";
+  const videoUrl = "https://video.twimg.com/ext_tw_video/123/pu/vid/1920x1080/clip.mp4";
+  const dimensions = [
+    { width: 1200, height: 1800 }, { width: 0, height: 100 }, { width: -1, height: 100 },
+    { width: 100.5, height: 100 }, { width: "100", height: 100 }, { width: 100 },
+    { width: 20_001, height: 100 }, { width: 100, height: Number.MAX_SAFE_INTEGER + 1 },
+  ];
+  const media = dimensions.map((size, index) => ({ media_key: `photo-${index}`, type: "photo", url: photoUrl, ...size }));
+  media.push({ media_key: "video", type: "video", width: 1920, height: 1080,
+    preview_image_url: "https://pbs.twimg.com/ext_tw_video_thumb/123/poster.jpg",
+    variants: [{ content_type: "video/mp4", bit_rate: 1000, url: videoUrl }],
+  });
+  const feed = createXFeedService({ token: "private-test-token", fetchImpl: async (url) => {
+    const pathname = new URL(url).pathname;
+    if (pathname.endsWith("/users/2061726102180311040")) {
+      return new Response(JSON.stringify({ data: { id: "2061726102180311040", username: "loveyong07", pinned_tweet_id: "8" } }));
+    }
+    const data = post(pathname === "/2/tweets/8" ? "8" : "10", "Media", { attachments: { media_keys: media.map((item) => item.media_key) } });
+    return new Response(JSON.stringify({ data: pathname === "/2/tweets/8" ? data : [data], includes: { media } }));
+  } });
+  const result = await feed();
+  for (const item of [result.posts[0], result.pinnedPost]) {
+    assert.deepEqual(item.media[0], { url: photoUrl, alt: "", width: 1200, height: 1800 });
+    for (const invalid of item.media.slice(1, -1)) {
+      assert.equal(invalid.url, photoUrl);
+      assert.equal("width" in invalid, false);
+      assert.equal("height" in invalid, false);
+    }
+    assert.deepEqual(item.media.at(-1), { type: "video", url: videoUrl,
+      poster: "https://pbs.twimg.com/ext_tw_video_thumb/123/poster.jpg", alt: "", width: 1920, height: 1080 });
+  }
+});
+
 test("paginates the original feed and merges newer posts without a six-post cap", async () => {
   const urls = [];
   let time = 0;

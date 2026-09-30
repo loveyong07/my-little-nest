@@ -8,6 +8,7 @@ import { useI18n } from "./hooks/useI18n.js";
 import { useXProfile } from "./hooks/useXProfile.js";
 import { useSiteRoute } from "./hooks/useSiteRoute.js";
 import { useClickSparkles } from "./hooks/useClickSparkles.js";
+import { useSceneActivity } from "./hooks/useSceneActivity.js";
 
 const PostsPage = lazy(() => import("./pages/PostsPage.jsx"));
 const ContactPage = lazy(() => import("./pages/ContactPage.jsx"));
@@ -18,6 +19,7 @@ export function App() {
   const [postsReady, setPostsReady] = useState(false);
   const profile = useXProfile(page, page !== "posts" || postsReady);
   const { sparkle, showClickSparkle } = useClickSparkles();
+  const sceneActive = useSceneActivity(page);
   const header = <Header page={page} t={t} language={language} changeLanguage={changeLanguage} />;
 
   function handleClick(event) {
@@ -25,7 +27,7 @@ export function App() {
     handleRouteClick(event);
   }
 
-  return <main className={"site language-" + language + (page === "home" ? "" : " site-route site-route-" + page)}
+  return <main aria-labelledby="page-heading" className={"site language-" + language + (sceneActive ? "" : " scene-paused") + (page === "home" ? "" : " site-route site-route-" + page)}
     onClick={handleClick} onPointerOver={preparePosts} onFocus={preparePosts} onTouchStart={preparePosts}>
     {page === "posts" && <div className="route-floating-elements" aria-hidden="true" />}
     {page === "contact" && <div className="route-floating-elements" aria-hidden="true">
@@ -43,5 +45,6 @@ export function App() {
       </section>
     </>}
     <ClickSparkles sparkle={sparkle} />
+    <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">{t.nav[["home", "posts", "contact"].indexOf(page)]}</div>
   </main>;
 }

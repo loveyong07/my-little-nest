@@ -19,3 +19,34 @@ export function postExcerpt(post, t) {
   }
   return Array.isArray(post.media) && post.media.some((media) => media?.type === "video") ? t.postVideoAlt : t.postPhotoAlt(1);
 }
+
+export function mediaDimensions(media) {
+  const { width, height } = media ?? {};
+  return Number.isSafeInteger(width) && Number.isSafeInteger(height)
+    && width > 0 && height > 0 && width <= 20_000 && height <= 20_000
+    ? { width, height } : null;
+}
+
+export function mediaFrameRatio(media, fallback = 4 / 3) {
+  const items = Array.isArray(media) ? media : [media];
+  return items.length ? Math.min(...items.map((item) => {
+    const size = mediaDimensions(item);
+    return size ? size.width / size.height : fallback;
+  })) : fallback;
+}
+
+export function postMonthKey(post) {
+  const date = new Date(post?.created_at);
+  return Number.isNaN(date.getTime()) ? "" : `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+export function postMonths(posts, language) {
+  const locale = language === "zh" ? "zh-CN" : language === "ja" ? "ja-JP" : "en-US";
+  const formatter = new Intl.DateTimeFormat(locale, { year: "numeric", month: "long" });
+  const months = new Map();
+  posts.forEach((post, index) => {
+    const key = postMonthKey(post);
+    if (key && !months.has(key)) months.set(key, { key, index, label: formatter.format(new Date(post.created_at)) });
+  });
+  return [...months.values()];
+}

@@ -1,8 +1,19 @@
 import { useEffect, useState } from "react";
 import { ASSETS, HANDLE } from "../constants/site.js";
+import { fetchProfile, getProfileSnapshot } from "../profile-cache.js";
+import { startVisibleRefresh } from "../request-cache.js";
+
+function displayProfile(profile) {
+  return { name: profile.name || profile.username, username: profile.username, avatar: profile.avatar || `${ASSETS}/x-avatar.jpg` };
+}
+
+function initialProfile() {
+  const cached = getProfileSnapshot();
+  return cached ? displayProfile(cached.profile) : { name: "初咏", username: HANDLE, avatar: `${ASSETS}/x-avatar.jpg` };
+}
 
 export function useXProfile(page, ready = true) {
-  const [profile, setProfile] = useState({ name: "初咏", username: HANDLE, avatar: `${ASSETS}/x-avatar.jpg` });
+  const [profile, setProfile] = useState(initialProfile);
 
   useEffect(() => {
     // Keep the first Posts request clear of the non-critical profile lookup.
@@ -10,19 +21,15 @@ export function useXProfile(page, ready = true) {
     let mounted = true;
     async function refreshProfile() {
       try {
-        const response = await fetch("/api/x-profile", { cache: "no-store" });
-        if (!response.ok) return;
-        const result = await response.json();
-        if (mounted && result.status === "ok" && result.profile?.username) {
-          setProfile({ name: result.profile.name, username: result.profile.username, avatar: result.profile.avatar || `${ASSETS}/x-avatar.jpg` });
+        const result = await fetchProfile();
+        if (mounted && result?.status === "ok" && typeof result.profile?.name === "string"
+          && typeof result.profile?.username === "string" && /^[A-Za-z0-9_]{1,15}$/.test(result.profile.username)) {
+          setProfile(displayProfile(result.profile));
         }
       } catch { /* Keep the last known profile. */ }
     }
-    refreshProfile();
-    const interval = window.setInterval(refreshProfile, 15 * 60 * 1000);
-    const onVisible = () => { if (!document.hidden) refreshProfile(); };
-    document.addEventListener("visibilitychange", onVisible);
-    return () => { mounted = false; window.clearInterval(interval); document.removeEventListener("visibilitychange", onVisible); };
+    const stop = startVisibleRefresh(refreshProfile);
+    return () => { mounted = false; stop(); };
   }, [page, ready]);
 
   return profile;

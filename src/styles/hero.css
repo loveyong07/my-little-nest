@@ -1,36 +1,39 @@
-.hero-copy {
-  position: absolute;
+.hero-layout {
+  position: relative;
   z-index: 2;
-  top: 121px;
-  bottom: auto;
-  left: 4.7vw;
-  width: min(550px, 47vw);
+  display: grid;
+  grid-template-columns: minmax(0, 44%) minmax(0, 56%);
+  width: min(100%, 1680px);
+  margin-inline: auto;
+  padding: var(--space-4) 4.7vw var(--space-8);
 }
+.hero-copy { width: 100%; max-width: 560px; min-width: 0; }
+.hero-character-space { min-width: 0; pointer-events: none; }
 .hero-copy h1 {
   margin: 0;
   color: #2763a7;
   font-family: "Cormorant Garamond", Georgia, serif;
   font-style: italic;
   font-weight: 700;
-  letter-spacing: -4px;
+  letter-spacing: -.035em;
   text-shadow: 0 1px 1px #fff9;
 }
 .home-place-badge {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   max-width: 100%;
-  margin: 0 0 15px 4px;
+  margin: 0 0 var(--space-5);
   padding: 7px 16px 7px 7px;
   border: 1px solid #ffffffdc;
   border-radius: 999px;
   background: linear-gradient(110deg, #fffdf2ec, #f7fcffed);
-  box-shadow: 0 4px 14px #4a789125, inset 0 1px #fff;
-  color: var(--color-secondary);
-  font-size: 15px;
+  box-shadow: var(--shadow-card), inset 0 1px #fff;
+  color: #3c6998;
+  font-size: var(--font-sm);
   font-weight: 700;
-  letter-spacing: .1em;
-  white-space: nowrap;
+  letter-spacing: .08em;
+  line-height: 1.4;
 }
 .home-place-seal {
   display: grid;
@@ -43,48 +46,73 @@
   background: linear-gradient(145deg, #fff, #f4f8ff);
   color: #488ac2;
 }
-.home-place-seal svg {
-  width: 15px;
-  height: 15px;
-  fill: none;
-  stroke: currentColor;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 1.45;
-}
+.home-place-seal svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.45; }
 .hero-copy h1 span { display: block; white-space: nowrap; }
-.hero-copy h1 span:first-child { font-size: clamp(104px, 8.9vw, 150px); line-height: .76; }
-.hero-copy h1 span:nth-child(2) { margin-top: 4px; font-size: clamp(54px, 5.2vw, 82px); line-height: 1; }
-.hero-copy h1 em { color: #fb83a7; font-family: "Cormorant Garamond", Georgia, serif; font-style: italic; letter-spacing: -9px; }
-.ornament { display: flex; align-items: center; width: 335px; gap: 12px; margin-top: 7px; color: #74a2d6; }
-.ornament span { height: 1px; flex: 1; background: #80aae0; }
+.hero-copy h1 span:first-child { font-size: clamp(82px, 9vw, 150px); line-height: .8; }
+.hero-copy h1 span:nth-child(2) { margin-top: 6px; font-size: clamp(44px, 5.2vw, 82px); line-height: 1; }
+.hero-copy h1 em { color: #ed7298; font-family: inherit; font-style: inherit; }
+.ornament { display: flex; align-items: center; width: min(100%, 335px); gap: var(--space-3); margin-top: var(--space-4); color: #6996c8; }
+.ornament span { height: 1px; flex: 1; background: #88add4; }
 .ornament svg { width: 26px; height: 26px; stroke-width: 1.3; }
-.profile { display: flex; align-items: center; gap: 19px; margin-top: 10px; scroll-margin-top: 40px; }
-.profile img { width: 85px; height: 85px; border: 2px solid white; border-radius: 50%; object-fit: cover; background: #f6fbff url("/assets/x-avatar.jpg") center / cover no-repeat; box-shadow: 0 2px 8px #31598e25; }
-.profile div { display: grid; gap: 0; min-width: 0; }
-.profile strong { color: #102e5d; font-size: 29px; line-height: 1.25; font-weight: 700; overflow-wrap: anywhere; }
-.profile a { color: #3d76b5; font-family: Arial, sans-serif; font-size: 21px; text-decoration: none; overflow-wrap: anywhere; }
+.profile { display: flex; align-items: center; gap: var(--space-4); margin-top: var(--space-4); }
+.profile img { width: 80px; height: 80px; flex: 0 0 auto; border: 2px solid white; border-radius: 50%; object-fit: cover; background: #f6fbff url("/assets/x-avatar.jpg") center / cover no-repeat; box-shadow: var(--shadow-card); }
+.profile div { display: grid; min-width: 0; }
+.profile strong { color: #102e5d; font-size: clamp(24px, 2vw, 29px); line-height: 1.3; font-weight: 700; overflow-wrap: anywhere; }
+.profile a { color: #376ca5; font-family: Arial, sans-serif; font-size: clamp(17px, 1.5vw, 21px); line-height: 1.45; text-decoration: none; overflow-wrap: anywhere; }
 .profile a:hover { text-decoration: underline; }
-.bio { margin: 3px 0 0 105px; color: #1f3456; font-size: 19px; font-weight: 500; line-height: 1.55; white-space: pre-line; }
-.motto {
-  width: fit-content;
-  margin: 27px 0 0 18px;
-  color: #74a5d9;
-  font-family: "Segoe Script", "Brush Script MT", cursive;
-  font-size: 23px;
-  font-style: italic;
-  transform: rotate(-7deg);
-}
-.hero-actions { position: static; display: flex; align-items: center; gap: 14px; margin-top: 30px; }
-.hero-actions a { display: inline-flex; align-items: center; justify-content: center; gap: 14px; min-height: 62px; border-radius: 999px; font-size: 19px; font-weight: 700; text-decoration: none; transition: transform .18s, box-shadow .18s; }
+.bio { margin: var(--space-2) 0 0 96px; color: var(--color-text); font-size: var(--font-lead); line-height: 1.65; white-space: pre-line; overflow-wrap: anywhere; }
+.motto { width: fit-content; max-width: 100%; margin: var(--space-5) 0 0 var(--space-3); color: #477fb5; font-family: "Segoe Script", "Brush Script MT", cursive; font-size: clamp(18px, 1.7vw, 23px); font-style: italic; line-height: 1.6; transform: rotate(-5deg); }
+.hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); margin-top: var(--space-5); }
+.hero-actions a { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-3); min-height: 58px; border-radius: 999px; font-size: var(--font-lead); font-weight: 700; line-height: 1.3; text-align: center; text-decoration: none; transition: transform .18s, box-shadow .18s; }
 .hero-actions a:hover { transform: translateY(-3px); box-shadow: 0 9px 18px #287ac33f; }
-.hero-actions a:active { transform: translateY(0) scale(.975); box-shadow: 0 2px 6px #287ac333; }
-.hero-actions svg { width: 22px; height: 22px; }
-.primary-cta { min-width: 254px; padding: 0 25px; border: 1px solid #fff; background: linear-gradient(105deg,#20a4ed,#2873df); color: white; box-shadow: 0 3px 10px #2989df35; }
-.primary-cta svg:last-child { width: 18px; margin-left: 1px; }
-.secondary-cta { min-width: 170px; padding: 0 20px; border: 1px solid #398dea; background: #fffd; color: #287bc5; }
-.sky-quote { position: absolute; top: 104px; right: 5vw; z-index: 1; margin: 0; color: white; font-family: "Segoe Script", "Yu Mincho", cursive; font-size: 25px; line-height: 1.55; letter-spacing: 4px; text-align: center; white-space: pre-line; text-shadow: 0 1px 5px #327db780; transform: rotate(-9deg); }
-.sky-quote svg { display: inline; width: 30px; height: 30px; margin-left: 7px; vertical-align: middle; }
-.handwritten-note { position: absolute; z-index: 1; top: 53%; right: 1.6%; width: 164px; min-height: 177px; padding: 13px 13px 10px; border: 1px solid #fff; border-radius: 4px; background: #fffffff0; box-shadow: 0 4px 15px #5378a12d; color: #62718b; transform: rotate(-10deg); }
-.handwritten-note p { margin: 3px 0 30px; font-family: "Segoe Script", "Yu Mincho", cursive; font-size: 18px; line-height: 1.5; white-space: pre-line; }
-.handwritten-note span { display: block; color: #5885c2; font-family: "Segoe Script", cursive; font-size: 12px; font-style: italic; line-height: 1.35; text-align: right; }
+.hero-actions a:active { transform: translateY(0) scale(.975); }
+.hero-actions svg { width: 21px; height: 21px; flex: 0 0 auto; }
+.primary-cta { padding: 12px 24px; border: 1px solid #fff; background: linear-gradient(105deg,#20a4ed,#2873df); color: white; box-shadow: 0 3px 10px #2989df35; }
+.primary-cta svg:last-child { width: 18px; }
+.secondary-cta { padding: 12px 22px; border: 1px solid #398dea; background: #fffd; color: #246cae; }
+.sky-quote { position: absolute; top: 110px; right: 4.5vw; z-index: 1; max-width: 21vw; margin: 0; color: white; font-family: "Segoe Script", "Yu Mincho", cursive; font-size: clamp(20px, 1.7vw, 25px); line-height: 1.65; letter-spacing: .12em; text-align: center; white-space: pre-line; text-shadow: 0 1px 5px #23567dcc, 0 0 14px #23567d55; transform: rotate(-8deg); }
+.sky-quote svg { display: inline; width: 28px; height: 28px; margin-left: 7px; vertical-align: middle; }
+.handwritten-note { position: absolute; z-index: 1; top: 54%; right: 1.6%; width: 164px; min-height: 177px; padding: 13px; border: 1px solid #fff; border-radius: 4px; background: #fffffff0; box-shadow: var(--shadow-card); color: #526684; transform: rotate(-10deg); }
+.handwritten-note p { margin: 3px 0 30px; font-family: "Segoe Script", "Yu Mincho", cursive; font-size: 17px; line-height: 1.5; white-space: pre-line; }
+.handwritten-note span { display: block; color: #4774ab; font-family: "Segoe Script", cursive; font-size: 12px; font-style: italic; line-height: 1.45; text-align: right; }
+.handwritten-note time { display: block; }
+
+@media (max-width: 1280px) {
+  .sky-quote, .handwritten-note { display: none; }
+  .hero-actions a { gap: var(--space-2); padding-inline: 18px; font-size: var(--font-body); }
+  .profile img { width: 72px; height: 72px; }
+  .bio { margin-left: 88px; font-size: var(--font-body); }
+}
+
+@media (max-width: 900px) {
+  .hero-layout { grid-template-columns: minmax(0, 1fr); padding: clamp(260px, 34vw, 310px) var(--space-5) var(--space-6); }
+  .hero-character-space { display: none; }
+  .hero-copy { display: flex; flex-direction: column; max-width: 560px; margin-inline: auto; padding: var(--space-6); border: 1px solid #ffffffdc; border-radius: var(--radius-lg); background: #ffffffed; box-shadow: var(--panel-shadow); }
+  .home-place-badge { align-self: flex-start; margin-bottom: var(--space-5); }
+  .hero-copy h1 span:first-child { font-size: clamp(94px, 13vw, 115px); }
+  .hero-copy h1 span:nth-child(2) { font-size: clamp(49px, 7.2vw, 62px); }
+  .ornament { width: 100%; margin-top: var(--space-5); }
+  .profile { margin-top: var(--space-5); }
+  .bio { margin: var(--space-4) 0 0; }
+  .hero-actions { order: 1; }
+  .motto { order: 2; margin: var(--space-5) 0 0; }
+}
+
+@media (max-width: 700px) {
+  .hero-layout { padding: clamp(176px, 48vw, 260px) var(--space-3) var(--space-6); }
+  .hero-copy { padding: var(--space-5); }
+  .home-place-badge { margin-bottom: var(--space-4); padding-right: 12px; font-size: var(--font-xs); letter-spacing: .04em; }
+  .hero-copy h1 span:first-child { font-size: clamp(60px, 20vw, 108px); }
+  .hero-copy h1 span:nth-child(2) { font-size: clamp(31px, 9.5vw, 54px); }
+  .ornament { margin-top: var(--space-4); }
+  .profile { gap: var(--space-3); margin-top: var(--space-4); }
+  .profile img { width: 64px; height: 64px; }
+  .profile strong { font-size: 23px; }
+  .profile a { font-size: var(--font-body); }
+  .bio { margin-top: var(--space-3); font-size: var(--font-sm); }
+  .hero-actions { gap: var(--space-2); margin-top: var(--space-5); }
+  .hero-actions a { min-height: 48px; gap: var(--space-2); padding: 10px 13px; font-size: var(--font-sm); }
+  .hero-actions svg { width: 17px; height: 17px; }
+  .primary-cta svg:last-child { width: 16px; }
+  .motto { margin-top: var(--space-4); font-size: clamp(14px, 4.3vw, 18px); }
+}

@@ -5,7 +5,7 @@ export function RouteHero({ page, t, header }) {
     {header}
     <div className="route-page-title">
       <span className="route-page-kicker"><PiFlowerLight aria-hidden="true" />{t.pageKicker[page]}</span>
-      <h1>{t.pageTitle[page]}</h1>
+      <h1 id="page-heading" tabIndex={-1}>{t.pageTitle[page]}</h1>
     </div>
   </section>;
 }

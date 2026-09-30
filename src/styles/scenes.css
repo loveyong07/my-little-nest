@@ -61,3 +61,7 @@
   to { transform: translate3d(14vw, -2vh, 0) scale(.36); rotate: 3deg; }
 }
 @keyframes contact-scene-wind { from { translate: -12px -3px; } to { translate: 12px 3px; } }
+
+.scene-paused::before, .scene-paused .hero::before,
+.scene-paused .home-floating-element, .scene-paused .home-mobile-petal,
+.scene-paused .route-floating-dove { animation-play-state: paused; }
