@@ -1,6 +1,7 @@
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import { xFeedPlugin } from "./server/x-feed-plugin.mjs";
+import { scenePreloadPlugin } from "./build/scene-preloads.mjs";
 
 export default defineConfig(({ mode }) => ({
   build: {
@@ -16,5 +17,5 @@ export default defineConfig(({ mode }) => ({
       clientFiles: ["./src/main.jsx"],
     },
   },
-  plugins: [react(), xFeedPlugin({ token: loadEnv(mode, process.cwd(), "X_BEARER_TOKEN").X_BEARER_TOKEN })],
+  plugins: [scenePreloadPlugin(), react(), xFeedPlugin({ token: loadEnv(mode, process.cwd(), "X_BEARER_TOKEN").X_BEARER_TOKEN })],
 }));

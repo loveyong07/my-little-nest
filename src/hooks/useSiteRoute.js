@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { canPrefetch } from "../utils/network.js";
 import { pagePaths, resolvePage, siteNavigation } from "../routes/site-route.js";
+import { scenePreloads } from "../routes/scene-assets.js";
 
 export { pagePaths };
 
-const ASSETS = "/assets";
 const preloadedScenes = new Set();
 
 function currentPage() {
@@ -12,21 +12,30 @@ function currentPage() {
 }
 
 function preloadScene(page) {
-  const file = page === "posts" ? "posts-winter-hero-q90.webp"
-    : page === "contact" ? "contact-sky-letter-v2-clean-q90.webp"
-      : window.matchMedia("(max-width: 700px)").matches ? "hero-sky-mobile-motion-q90.webp" : "hero-sky-alt-motion-q90.webp";
-  if (preloadedScenes.has(file)) return;
-  preloadedScenes.add(file);
+  const scenes = scenePreloads(page);
+  const { href } = scenes.find((scene) => !scene.media || window.matchMedia(scene.media).matches) ?? scenes.at(-1);
+  if (preloadedScenes.has(href)) return;
+  preloadedScenes.add(href);
+  if ([...document.querySelectorAll('link[rel="preload"][as="image"]')].some((link) => link.getAttribute("href") === href)) return;
   const link = document.createElement("link");
   link.rel = "preload";
   link.as = "image";
   link.type = "image/webp";
-  link.href = `${ASSETS}/${file}`;
+  link.dataset.scenePreload = "";
+  link.href = href;
   link.fetchPriority = "high";
   document.head.append(link);
 }
 
-if (typeof window !== "undefined") preloadScene(currentPage());
+function activateScene(page) {
+  const allowed = new Set(scenePreloads(page).map(({ href }) => href));
+  for (const link of document.querySelectorAll("link[data-scene-preload]")) {
+    if (!allowed.has(link.getAttribute("href"))) link.remove();
+  }
+  preloadScene(page);
+}
+
+if (typeof window !== "undefined") activateScene(currentPage());
 
 // A direct /posts visit starts loading before React mounts. fetchFeed coalesces
 // any later request until this one settles.
@@ -42,11 +51,19 @@ export function takeEarlyFeed() {
 
 export function useSiteRoute() {
   const [page, setPage] = useState(currentPage);
+  const previousPage = useRef(page);
+
+  useEffect(() => {
+    if (previousPage.current === page) return;
+    previousPage.current = page;
+    const frame = window.requestAnimationFrame(() => document.getElementById("page-heading")?.focus({ preventScroll: true }));
+    return () => window.cancelAnimationFrame(frame);
+  }, [page]);
 
   useEffect(() => {
     function handleHistoryNavigation() {
       const nextPage = currentPage();
-      preloadScene(nextPage);
+      activateScene(nextPage);
       setPage(nextPage);
       window.scrollTo(0, 0);
     }
@@ -69,7 +86,7 @@ export function useSiteRoute() {
     if (!destination) return;
 
     event.preventDefault();
-    preloadScene(destination.page);
+    activateScene(destination.page);
     if (window.location.pathname !== destination.path) {
       window.history.pushState({ page: destination.page }, "", destination.path);
     }

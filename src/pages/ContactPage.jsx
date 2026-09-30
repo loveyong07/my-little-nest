@@ -24,11 +24,11 @@ export default function ContactPage({ language, t, profile }) {
     </div>
     <div className="contact-grid">{socials.map((social) => <ContactTile key={social.title} {...social}
       failureMessage={t.copyFailed} manualCopyLabel={t.manualCopyId} inputRef={manualCopyRef} />)}</div>
-    <div className="email-row" id="email-options">
-      <span><FaEnvelope aria-hidden="true" />{t.emailHeading}</span>
+    <section className="email-row" id="email-options" aria-labelledby="email-options-heading">
+      <h3 id="email-options-heading"><FaEnvelope aria-hidden="true" />{t.emailHeading}</h3>
       <div>{mailboxes.map(({ label, address }) => <a key={address} href={"mailto:" + address} title={address}>{label}<span>{address}</span></a>)}</div>
       <span className="email-stamp" aria-hidden="true"><PiFlowerLight /></span>
-    </div>
+    </section>
     <div className="panel-footer">
       <p className="footer-script">{t.footerScript}</p>
       <p className="footer-note">{t.footerNote}</p>

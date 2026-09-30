@@ -90,6 +90,12 @@ async function getXJson(url, token, fetchImpl, { allowPartialErrors = false } = 
   }
 }
 
+function mediaDimensions(media) {
+  const { width, height } = media ?? {};
+  return Number.isSafeInteger(width) && Number.isSafeInteger(height)
+    && width > 0 && height > 0 && width <= 20_000 && height <= 20_000 ? { width, height } : {};
+}
+
 function normalizedPost(post, user, mediaByKey, { allowReferences = false } = {}) {
   if (!isId(post?.id) || typeof post.text !== "string") return null;
   if (post.author_id && post.author_id !== user.id) return null;
@@ -104,14 +110,14 @@ function normalizedPost(post, user, mediaByKey, { allowReferences = false } = {}
     const alt = typeof media?.alt_text === "string" ? media.alt_text.trim() : "";
     if (media?.type === "photo") {
       const url = safePhotoUrl(media.url);
-      if (url) mediaItems.push({ url, alt });
+      if (url) mediaItems.push({ url, alt, ...mediaDimensions(media) });
     } else if (media?.type === "video") {
       const variants = Array.isArray(media.variants) ? media.variants : [];
       const videoVariants = variants.filter((variant) => variant?.content_type === "video/mp4" && safeVideoUrl(variant.url));
       videoVariants.sort((left, right) => (Number(right.bit_rate) || 0) - (Number(left.bit_rate) || 0));
       const url = videoVariants[0] ? safeVideoUrl(videoVariants[0].url) : null;
       const poster = safePhotoUrl(media.preview_image_url);
-      if (url) mediaItems.push({ type: "video", url, ...(poster ? { poster } : {}), alt });
+      if (url) mediaItems.push({ type: "video", url, ...(poster ? { poster } : {}), alt, ...mediaDimensions(media) });
     }
   }
   const text = withoutMediaLinks(post.note_tweet?.text || post.note_post?.text || post.text, post, mediaItems, user.username);

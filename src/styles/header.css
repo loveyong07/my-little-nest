@@ -30,7 +30,7 @@
 }
 .brand-script svg { width: 28px; height: 28px; margin: 0 0 12px 9px; stroke-width: 1.8; }
 .brand-caption { display: block; margin: 3px 0 0 40px; color: var(--color-text); font-size: 10px; font-weight: 700; letter-spacing: .08em; white-space: nowrap; }
-.site-nav { display: flex; align-items: center; gap: 34px; padding-top: 11px; }
+.site-nav { display: flex; align-items: center; gap: var(--space-6); padding-top: 11px; }
 .site-nav a, .language-picker button {
   position: relative;
   padding: 1px 0 11px;
@@ -41,7 +41,7 @@
   font-weight: 500;
   white-space: nowrap;
 }
-.site-nav a { color: inherit; text-decoration: none; }
+.site-nav a { display: inline-flex; align-items: center; min-height: 44px; color: #1c4f87; text-decoration: none; }
 .site-nav a::after, .language-picker button::after {
   position: absolute;
   right: 0;
@@ -91,3 +91,10 @@
   font-weight: 700;
 }
 .menu-toggle { display: none; }
+
+@media (min-width: 901px) {
+  .site-route .site-nav { gap: var(--space-5); padding: 3px 20px; border: 1px solid #ffffff8c; border-radius: 999px; background: #fbfdffe6; box-shadow: var(--shadow-card); }
+  .site-route .site-nav a { padding: 5px 0; }
+  .site-route .brand { color: #ffffff; text-shadow: 0 1px 5px #153d64; }
+  .site-route .brand-caption { color: #ffffff; }
+}

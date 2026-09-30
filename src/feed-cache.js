@@ -1,9 +1,10 @@
 import { canPrefetch } from "./utils/network.js";
+import { createSharedRequest, SUCCESS_MAX_AGE_MS } from "./request-cache.js";
 
 export { canPrefetch };
 
 const KEY = "little-nest-feed-v1";
-const MAX_AGE = 24 * 60 * 60 * 1000;
+const MAX_AGE = SUCCESS_MAX_AGE_MS;
 
 export function readFeedCache(storage, now = Date.now()) {
   try {
@@ -23,15 +24,32 @@ export function writeFeedCache(storage, feed, now = Date.now()) {
   try { storage.setItem(KEY, JSON.stringify({ savedAt: now, feed: savedFeed })); } catch { /* Storage is optional. */ }
 }
 
-let pending;
-export function fetchFeed() {
-  if (!pending) {
-    pending = fetch("/api/x-posts").then((response) => {
-      if (!response.ok) throw new Error("Feed unavailable");
-      return response.json();
-    }).finally(() => { pending = null; });
+const request = createSharedRequest({
+  url: "/api/x-posts",
+  isSuccess: (feed) => feed?.status === "ok" && Array.isArray(feed.posts),
+  onSuccess: (feed, savedAt) => {
+    if (typeof window !== "undefined") writeFeedCache(window.localStorage, feed, savedAt);
+  },
+});
+
+export function getFeedSnapshot() {
+  if (!request.getSnapshot()) {
+    try {
+      const cached = readFeedCache(window.localStorage);
+      if (cached) request.prime(cached.feed, cached.savedAt);
+    } catch { /* Storage is optional. */ }
   }
-  return pending;
+  const snapshot = request.getSnapshot();
+  return snapshot ? { savedAt: snapshot.savedAt, feed: snapshot.value } : null;
+}
+
+export function fetchFeed(options) {
+  getFeedSnapshot();
+  return request.load(options);
+}
+
+export function getFeedRetryAfter() {
+  return request.getRetryAfter();
 }
 
 const warmed = new Set();
