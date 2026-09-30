@@ -4,15 +4,8 @@ import { PiFlowerLight } from "react-icons/pi";
 import { ContactTile } from "../components/ContactTile.jsx";
 import { mailboxes, HANDLE } from "../constants/site.js";
 import { useClipboard } from "../hooks/useClipboard.js";
-import { useI18n } from "../hooks/useI18n.js";
-import { useXProfile } from "../hooks/useXProfile.js";
 
-export default function ContactPage({ language: propLang, t: propT, profile: propProfile } = {}) {
-  const i18n = useI18n();
-  const profileState = useXProfile("contact", true);
-  const language = propLang ?? i18n.language;
-  const t = propT ?? i18n.t;
-  const profile = propProfile ?? profileState;
+export default function ContactPage({ language, t, profile }) {
   const { copiedId, copyFailedId, manualCopyRef, copyId } = useClipboard();
 
   const socials = [
