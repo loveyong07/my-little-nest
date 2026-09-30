@@ -1,0 +1,82 @@
+.site-route-business { min-height: 100svh; padding-bottom: 48px; }
+.site-route-business::before {
+  opacity: 1;
+  background-image: url("/assets/business-sky-studio-smile-v2-q90.jpg");
+  background-image: image-set("/assets/business-sky-studio-smile-v2-q90.webp" type("image/webp"), "/assets/business-sky-studio-smile-v2-q90.jpg" type("image/jpeg"));
+  background-position: 60% 50%;
+  background-size: cover;
+}
+.site-route-business .route-floating-elements::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: linear-gradient(100deg, #19426d38, #22496910 40%, transparent 70%);
+}
+.route-hero-business { height: 245px; }
+.route-hero-business .route-page-title { top: 156px; bottom: auto; gap: 12px; left: max(4.7vw, calc((100vw - 1100px) / 2)); }
+.route-hero-business .route-page-title h1 { color: #fff; text-shadow: 0 2px 14px #19426dc9; }
+.site-route-business .brand, .site-route-business .brand-caption { color: #f9fcff; text-shadow: 0 1px 8px #19426d; }
+.site-route-business .brand-script svg { color: #e5f0ff; }
+.site-nav a:nth-child(4) { --control-bg: #fff0ce; --control-ink: #79602e; }
+.nest-context-menu a:nth-of-type(4) { background: #fff0ce; color: #79602e; }
+
+.business-section { position: relative; z-index: 1; width: calc(100% - 9.4vw); max-width: 1100px; margin: 0 auto; }
+.business-toolbar { display: flex; justify-content: flex-end; margin-bottom: 15px; }
+.business-disclaimer-trigger { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; padding: 9px 15px; border: 1px solid #ffffffb8; border-radius: 999px; background: #f8fbffbd; color: #285f91; font-family: inherit; font-size: 12px; font-weight: 600; line-height: 1.5; cursor: pointer; }
+.business-disclaimer-trigger svg { width: 15px; height: 15px; }
+.business-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.business-card { --business-accent: #286ca5; --business-tint: #e4f3ff; position: relative; display: flex; flex-direction: column; align-items: flex-start; min-width: 0; padding: 24px; border: 1px solid #ffffffe0; border-radius: 22px; background: linear-gradient(135deg, #ffffffb8, #f2f8ff78); box-shadow: inset 0 1px 0 #fff, inset 0 -1px 0 #ffffff70, 0 10px 26px #163d6324; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); color: #183d60; }
+.business-card-sailing { --business-accent: #347868; --business-tint: #e0f6e9; }
+.business-card-clash { --business-accent: #64508c; --business-tint: #ede6fb; }
+.business-card-muse { --business-accent: #a24e7b; --business-tint: #ffe8f2; }
+.business-card-memberships { --business-accent: #316f94; --business-tint: #e3f5ff; }
+.business-card-ai { --business-accent: #87672a; --business-tint: #fff3d5; }
+.business-card-heading { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.business-card-icon { display: grid; flex: 0 0 auto; width: 42px; height: 42px; place-items: center; border: 1px solid #ffffffba; border-radius: 14px; background: var(--business-tint); color: var(--business-accent); box-shadow: inset 0 1px #fff; }
+.business-card-icon svg { width: 21px; height: 21px; }
+.business-card h2 { margin: 0; color: #183d60; font-size: 18px; font-weight: 700; line-height: 1.5; overflow-wrap: anywhere; }
+.business-card-description { margin: 0 0 13px; font-size: 14px; line-height: 1.8; overflow-wrap: anywhere; }
+.business-card-price { margin: 0 0 16px; color: var(--business-accent); font: 700 26px/1.2 "Quicksand", sans-serif; }
+.business-card-link { width: 100%; margin: 0 0 14px; font-size: 12px; line-height: 1.7; overflow-wrap: anywhere; }
+.business-card-url { color: #254f72; text-underline-offset: 3px; }
+.business-promo { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 16px; font-size: 12px; line-height: 1.6; }
+.business-promo strong { padding: 3px 9px; border: 1px dashed #518a76; border-radius: 7px; background: #f0fff2bd; color: #285f4c; font: 700 14px/1.5 "Quicksand", sans-serif; user-select: all; }
+.business-card-action { display: inline-flex; align-items: center; justify-content: center; gap: 14px; min-height: 44px; margin-top: auto; padding: 9px 14px; border: 1px solid #ffffffc9; border-radius: 12px; background: var(--business-tint); color: var(--business-accent); font-size: 12px; font-weight: 700; line-height: 1.6; text-decoration: none; transition: background .18s, box-shadow .18s; }
+.business-card-action:hover { background: #fffffff0; box-shadow: 0 3px 12px #19456b20; }
+.business-card-action svg { width: 14px; height: 14px; }
+.business-card-url:hover { color: #133b60; }
+.business-disclaimer { box-sizing: border-box; width: min(580px, calc(100% - 36px)); max-height: calc(100svh - 36px); margin: auto; padding: 30px; overflow-y: auto; border: 1px solid #ffffffed; border-radius: 24px; background: linear-gradient(135deg, #ffffffed, #eff8ffde); box-shadow: inset 0 1px #fff, 0 24px 80px #15395659; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); color: #244b69; }
+.business-disclaimer::backdrop { background: #12375461; }
+.business-disclaimer-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.business-disclaimer-icon { display: grid; flex: 0 0 auto; width: 40px; height: 40px; place-items: center; border: 1px solid #ffc7c7; border-radius: 13px; background: #fff0f0; color: #b52332; }
+.business-disclaimer-icon svg { width: 22px; height: 22px; }
+.business-disclaimer h2 { margin: 0; color: #244b69; font-size: 22px; line-height: 1.5; }
+.business-disclaimer h2:focus { outline: none; }
+.business-disclaimer-close { display: grid; flex: 0 0 auto; width: 44px; height: 44px; margin-left: auto; place-items: center; border: 1px solid #d2e4f1; border-radius: 50%; background: #fff9; color: #426a88; cursor: pointer; }
+.business-disclaimer-close svg { width: 20px; height: 20px; pointer-events: none; }
+.business-disclaimer-body p { margin: 0 0 16px; font-size: 14px; line-height: 1.95; overflow-wrap: anywhere; }
+.business-disclaimer-body strong { color: #b51f30; font-weight: 700; }
+.business-disclaimer-sales { padding: 14px 16px; border: 1px solid #edbac2; border-radius: 12px; background: #fff0f0cc; }
+.business-disclaimer-continue { display: block; width: 100%; min-height: 48px; padding: 12px 16px; border: 1px solid #b7d7f0; border-radius: 13px; background: #e0efff; color: #205785; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.business-disclaimer-continue:hover { background: #d2e7ff; }
+
+@media (max-width: 900px) {
+  .site-route-business::before { background-position: 70% 50%; }
+  .route-hero-business .route-page-title { top: 145px; }
+  .business-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .route-hero-business { height: 225px; }
+}
+@media (max-width: 700px) {
+  .site-route-business::before { background-position: 72% 50%; }
+  .site-route-business .route-floating-elements::after { background: linear-gradient(180deg, #19426d48, transparent 42%); }
+  .route-hero-business .route-page-title { top: 126px; left: 21px; }
+  .route-hero-business { height: 200px; }
+  .business-section { width: calc(100% - 36px); }
+  .business-toolbar { margin-bottom: 12px; }
+  .business-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .business-card { padding: 22px; }
+  .business-disclaimer { padding: 22px; border-radius: 20px; }
+  .business-disclaimer-header { gap: 10px; margin-bottom: 16px; }
+  .business-disclaimer h2 { font-size: 20px; }
+  .business-disclaimer-body p { font-size: 13px; line-height: 1.85; }
+}

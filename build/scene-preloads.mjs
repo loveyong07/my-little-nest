@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import path from "node:path";
-import { resolvePage } from "../src/routes/site-route.js";
+import { pagePaths, resolvePage } from "../src/routes/site-route.js";
 import { scenePreloads } from "../src/routes/scene-assets.js";
 
 export function withScenePreloads(html, page) {
@@ -11,7 +11,7 @@ export function withScenePreloads(html, page) {
 }
 
 // Separate shells discover only the current scene before JavaScript starts.
-// The React entry and routing remain shared across all three pages.
+// The React entry and routing remain shared across all pages.
 export function scenePreloadPlugin() {
   let outputDirectory;
   let building = false;
@@ -27,14 +27,15 @@ export function scenePreloadPlugin() {
       const html = readFileSync(path.join(outputDirectory, "index.html"), "utf8");
       const directory = path.join(outputDirectory, "route-shells");
       mkdirSync(directory, { recursive: true });
-      for (const page of ["posts", "contact"]) {
+      for (const page of Object.keys(pagePaths).filter((page) => page !== "home")) {
         writeFileSync(path.join(directory, `${page}.html`), withScenePreloads(html, page));
       }
     },
     configurePreviewServer(server) {
       server.middlewares.use((request, _response, next) => {
         const url = new URL(request.url, "http://localhost");
-        if (/^\/(posts|contact)\/?$/.test(url.pathname)) request.url = `/route-shells/${resolvePage(url.pathname)}.html${url.search}`;
+        const page = resolvePage(url.pathname);
+        if (page !== "home") request.url = `/route-shells/${page}.html${url.search}`;
         next();
       });
     },

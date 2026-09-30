@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import { Header } from "./components/Header.jsx";
 import { HeroSection } from "./components/HeroSection.jsx";
 import { RouteHero } from "./components/RouteHero.jsx";
-import { ASSETS } from "./constants/site.js";
+import { ASSETS, navIds } from "./constants/site.js";
 import { useI18n } from "./hooks/useI18n.js";
 import { useXProfile } from "./hooks/useXProfile.js";
 import { useSiteRoute } from "./hooks/useSiteRoute.js";
@@ -11,6 +11,7 @@ import { useFantasyPreferences } from "./hooks/useFantasyPreferences.js";
 
 const PostsPage = lazy(() => import("./pages/PostsPage.jsx"));
 const ContactPage = lazy(() => import("./pages/ContactPage.jsx"));
+const BusinessPage = lazy(() => import("./pages/BusinessPage.jsx"));
 const FantasyExtras = lazy(() => import("./components/fantasy/FantasyExtras.jsx"));
 
 export function App() {
@@ -39,22 +40,22 @@ export function App() {
 
   return <main aria-labelledby="page-heading" className={"site language-" + language + (sceneActive ? "" : " scene-paused") + (preferences.motion ? "" : " motion-off") + (page === "home" ? "" : " site-route site-route-" + page)}
     onClick={handleClick} onPointerOver={preparePosts} onFocus={preparePosts} onTouchStart={preparePosts}>
-    {page === "posts" && <div className="route-floating-elements" aria-hidden="true" />}
+    {(page === "posts" || page === "business") && <div className="route-floating-elements" aria-hidden="true" />}
     {page === "contact" && <div className="route-floating-elements" aria-hidden="true">
       <img className="route-floating-dove" src={ASSETS + "/contact-sky-dove-v2.png"} alt="" draggable="false" />
     </div>}
     {page === "home" ? <HeroSection header={header} language={language} t={t} profile={profile} /> : <>
       <RouteHero page={page} t={t} header={header} />
-      <section className={"content-panel route-panel route-panel-" + page}
+      {page === "business" ? <Suspense fallback={null}><BusinessPage language={language} /></Suspense> : <section className={"content-panel route-panel route-panel-" + page}
         aria-label={page === "posts" ? t.postsHeading : t.contactsHeading}>
         <Suspense fallback={<div className="pinned-placeholder" role="status">{page === "posts" ? t.feedLoading : t.contactsHeading}</div>}>
           {page === "posts"
             ? <PostsPage language={language} t={t} profile={profile} onFeedReady={setPostsReady} />
             : <ContactPage language={language} t={t} profile={profile} />}
         </Suspense>
-      </section>
+      </section>}
     </>}
     {extrasReady && <Suspense fallback={null}><FantasyExtras language={language} page={page} preferences={preferences} /></Suspense>}
-    <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">{t.nav[["home", "posts", "contact"].indexOf(page)]}</div>
+    <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">{t.nav[navIds.indexOf(page)]}</div>
   </main>;
 }

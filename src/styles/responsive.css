@@ -22,10 +22,11 @@
   .menu-toggle svg { width: 22px; height: 22px; }
   .site-nav { display: none; position: absolute; top: 62px; right: 14px; flex-direction: column; align-items: stretch; gap: 0; min-width: 150px; padding: 5px 14px; border: 1px solid #d7e9fb; border-radius: 12px; background: #fffefa; box-shadow: 0 10px 24px #568ac236; }
   .site-nav.is-open { display: flex; }
+  .site-nav { max-height: calc(100dvh - 88px); overflow-y: auto; overscroll-behavior: contain; }
   .site-nav a { display: block; min-height: 44px; padding: 10px 2px; text-align: left; }
   .site-nav a::after { bottom: 4px; }
   .content-panel { margin: 0 11px 14px; padding: 16px 14px 18px; gap: 23px; border-radius: 17px; }
-  .route-hero { height: 230px; }
+  .route-hero { height: 230px; overflow: visible; z-index: 5; }
   .route-page-title { bottom: 27px; left: 21px; gap: 6px; }
   .route-page-kicker { padding: 5px 9px; font-size: 10px; }
   .route-page-title h1 { font-size: 48px; }
