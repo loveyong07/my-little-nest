@@ -1,9 +1,9 @@
 import { useEffect, useRef } from "react";
-import { FiAlertCircle, FiCpu, FiExternalLink, FiGithub, FiGlobe, FiMonitor, FiSend, FiX } from "react-icons/fi";
+import { FiAlertCircle, FiCpu, FiCreditCard, FiExternalLink, FiGithub, FiGlobe, FiMonitor, FiSend, FiUserPlus, FiX } from "react-icons/fi";
 import { businessCopy, businessLinks } from "../constants/business.js";
 import { pagePaths } from "../routes/site-route.js";
 
-const cardIcons = { network: FiGlobe, sailing: FiSend, clash: FiGithub, memberships: FiSend, ai: FiCpu, "chatgpt-desktop": FiMonitor };
+const cardIcons = { network: FiGlobe, sailing: FiSend, clash: FiGithub, memberships: FiSend, ai: FiCpu, "chatgpt-desktop": FiMonitor, muse: FiUserPlus, gate: FiCreditCard };
 
 export default function BusinessPage({ language }) {
   const text = businessCopy[language];

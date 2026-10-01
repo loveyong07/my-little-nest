@@ -3,6 +3,7 @@ export const businessLinks = {
   clash: "https://github.com/chen08209/FlClash",
   memberships: "https://ronvip.pages.dev/?ref=RP0P13306W5H31014J",
   ai: "https://hongyuhub.com?from=22182",
+  gate: "https://www.gate.com/zh/referral/earn-together/invite/VFKSB15ABG?ref=VFKSB15ABG&ref_type=103&utm_cmp=rXJBDjtJ&activity_id=1790170412453",
 };
 
 export const businessCopy = {
@@ -17,11 +18,13 @@ export const businessCopy = {
     contact: "联系我", openLink: "前往查看", promoCode: "优惠码",
     cards: [
       { id: "network", title: "科学上网", description: "学会科学上网以及大多数产品的注册", price: "66CNY" },
-      { id: "sailing", title: "站内推荐站" },
+      { id: "sailing", title: "站内推荐机场" },
       { id: "clash", title: "站内推荐Clash", platformLabel: "非iOS", iosDescription: "自行查看风帆sailing帮助文档" },
       { id: "memberships", title: "X Telegram", description: "X TG会员代送" },
       { id: "ai", title: "AI会员", description: "ChatGPT Claude Grok Gemini会员" },
       { id: "chatgpt-desktop", title: "ChatGPT桌面端", description: "过号码验证", price: "11CNY" },
+      { id: "muse", title: "Muse ai", description: "Meta下的Muse ai注册", price: "22CNY" },
+      { id: "gate", title: "Gate", description: "虚拟卡" },
     ],
   },
   ja: {
@@ -35,11 +38,13 @@ export const businessCopy = {
     contact: "お問い合わせ", openLink: "サイトを見る", promoCode: "割引コード",
     cards: [
       { id: "network", title: "ネット接続サポート", description: "ネット接続の方法と、さまざまなサービスの登録方法を学ぶ", price: "66CNY" },
-      { id: "sailing", title: "おすすめサイト" },
+      { id: "sailing", title: "おすすめプロキシサービス" },
       { id: "clash", title: "おすすめClash", platformLabel: "iOS以外", iosDescription: "風帆sailingのヘルプドキュメントをご確認ください" },
       { id: "memberships", title: "X Telegram", description: "X・TGのメンバーシップギフト代行" },
       { id: "ai", title: "AIメンバーシップ", description: "ChatGPT・Claude・Grok・Geminiのメンバーシップ" },
       { id: "chatgpt-desktop", title: "ChatGPTデスクトップ版", description: "電話番号認証", price: "11CNY" },
+      { id: "muse", title: "Muse ai", description: "MetaのMuse ai登録", price: "22CNY" },
+      { id: "gate", title: "Gate", description: "バーチャルカード" },
     ],
   },
   en: {
@@ -53,11 +58,13 @@ export const businessCopy = {
     contact: "Get in touch", openLink: "Visit website", promoCode: "Promo code",
     cards: [
       { id: "network", title: "Internet access", description: "Learn how to access the internet and register for most services", price: "66CNY" },
-      { id: "sailing", title: "Recommended website" },
+      { id: "sailing", title: "Recommended proxy service" },
       { id: "clash", title: "Recommended Clash", platformLabel: "Non-iOS", iosDescription: "Please refer to the Sailing help documentation" },
       { id: "memberships", title: "X Telegram", description: "X and TG membership gifting" },
       { id: "ai", title: "AI memberships", description: "ChatGPT, Claude, Grok and Gemini memberships" },
       { id: "chatgpt-desktop", title: "ChatGPT desktop", description: "Phone number verification", price: "11CNY" },
+      { id: "muse", title: "Muse ai", description: "Registration for Meta's Muse ai", price: "22CNY" },
+      { id: "gate", title: "Gate", description: "Virtual card" },
     ],
   },
 };
