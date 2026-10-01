@@ -1,9 +1,9 @@
 import { useEffect, useRef } from "react";
-import { FiAlertCircle, FiCpu, FiCreditCard, FiExternalLink, FiGithub, FiGlobe, FiMonitor, FiSend, FiUserPlus, FiX } from "react-icons/fi";
+import { FiAlertCircle, FiBookOpen, FiCpu, FiCreditCard, FiExternalLink, FiFilm, FiGithub, FiGlobe, FiMonitor, FiSend, FiUserPlus, FiX } from "react-icons/fi";
 import { businessCopy, businessLinks } from "../constants/business.js";
 import { pagePaths } from "../routes/site-route.js";
 
-const cardIcons = { network: FiGlobe, sailing: FiSend, clash: FiGithub, memberships: FiSend, ai: FiCpu, "chatgpt-desktop": FiMonitor, muse: FiUserPlus, gate: FiCreditCard, telegram: FiSend, antigravity: FiCpu };
+const cardIcons = { network: FiGlobe, sailing: FiSend, clash: FiGithub, gal: FiBookOpen, anime: FiFilm, memberships: FiSend, ai: FiCpu, "chatgpt-desktop": FiMonitor, muse: FiUserPlus, gate: FiCreditCard, telegram: FiSend, antigravity: FiCpu };
 
 export default function BusinessPage({ language }) {
   const text = businessCopy[language];
@@ -71,10 +71,11 @@ export default function BusinessPage({ language }) {
           {card.price && <p className="business-card-price">{card.price}</p>}
           {href && <p className="business-card-link">
             {card.platformLabel && <strong>{card.platformLabel}：</strong>}
-            <a className="business-card-url" href={href} target="_blank" rel="noopener noreferrer">{href}</a>
+            <a className="business-card-url" href={href} target="_blank" rel="noopener noreferrer">{card.linkText ?? href}</a>
           </p>}
           {card.iosDescription && <p className="business-card-description"><strong>iOS：</strong>{card.iosDescription}</p>}
           {card.id === "sailing" && <p className="business-promo">{text.promoCode}<strong>touchgal</strong></p>}
+          {card.invitationCode && <p className="business-promo">{text.invitationCodeLabel}<strong>{card.invitationCode}</strong><span>{card.invitationNote}</span></p>}
           <a className="business-card-action" href={href ?? pagePaths.contact} target={href ? "_blank" : undefined} rel={href ? "noopener noreferrer" : undefined}>
             {href ? text.openLink : text.contact}<FiExternalLink aria-hidden="true" />
           </a>

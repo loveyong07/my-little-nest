@@ -28,6 +28,8 @@
 .business-card { --business-accent: #286ca5; --business-tint: #e4f3ff; position: relative; display: flex; flex-direction: column; align-items: flex-start; min-width: 0; padding: 24px; border: 1px solid #ffffffe0; border-radius: 22px; background: linear-gradient(135deg, #ffffffb8, #f2f8ff78); box-shadow: inset 0 1px 0 #fff, inset 0 -1px 0 #ffffff70, 0 10px 26px #163d6324; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); color: #183d60; }
 .business-card-sailing { --business-accent: #347868; --business-tint: #e0f6e9; }
 .business-card-clash { --business-accent: #64508c; --business-tint: #ede6fb; }
+.business-card-gal { --business-accent: #925670; --business-tint: #ffe7f0; }
+.business-card-anime { --business-accent: #316f94; --business-tint: #e3f5ff; }
 .business-card-memberships { --business-accent: #316f94; --business-tint: #e3f5ff; }
 .business-card-ai { --business-accent: #87672a; --business-tint: #fff3d5; }
 .business-card-chatgpt-desktop { --business-accent: #347868; --business-tint: #e0f6e9; }

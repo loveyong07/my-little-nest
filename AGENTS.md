@@ -10,6 +10,8 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 
 ## Selected design and wording
 
+- 2026-10-01 Business recommendations: Insert 站内推荐GAL (https://www.touchgal.ink/, displayed as www.touchgal.ink) and 站内推荐动漫站 (https://omoo.app/, 邀请码：CAH6F2192295（可获得积分）) as the fourth and fifth glass cards in all three languages. Shift the existing later cards in their original order and preserve the mobile blur fix. The user explicitly authorized direct deployment through GitHub master to Vercel production and requested no further online checks after deployment succeeds.
+
 - 2026-10-01 mobile Business rendering: Preserve separate translucent glass cards while scrolling. Disable both backdrop-filter properties for Business cards at widths up to 900px and on coarse-pointer devices to avoid stale filtered card layers in mobile browsers; keep the existing artwork, card gradients, copy, links and desktop blur.
 
 - 2026-10-01 Telegram and Antigravity: Change Internet access to 33CNY in all three languages. Append separate Telegram (过TG电话号码认证（首次）, 11CNY) and Antigravity (进入谷歌反重力, 9.9CNY) glass cards with matching Japanese and English copy and the existing Contact action. Preserve all eight existing cards and referral URLs. The user explicitly authorized direct deployment through GitHub master to Vercel production. This supersedes the earlier 66CNY price.
