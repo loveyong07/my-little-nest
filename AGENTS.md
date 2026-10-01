@@ -10,6 +10,14 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 
 ## Selected design and wording
 
+- 2026-10-01 business release: The user authorized deploying the reviewed eight-card Business page through GitHub master to Vercel production, including 站内推荐机场, Muse ai (22CNY) and Gate (虚拟卡) with the original referral URL.
+
+- 2026-10-01 Gate description: Shorten Gate's description to 虚拟卡 / バーチャルカード / Virtual card, removing the fiat and cryptocurrency support wording. Preserve the existing referral URL. This supersedes the earlier Gate description below.
+
+- 2026-10-01 business titles: Rename the second (Sailing) card to 站内推荐机场 with matching Japanese and English proxy-service wording; shorten the Muse and Gate titles to Muse ai and Gate in all three languages. Keep descriptions, prices and referral URLs unchanged. This supersedes the earlier titles below.
+
+- 2026-10-01 business additions: Append separate Muse ai注册 and Gate卡 glass cards in all three languages. Muse uses Meta下的Muse ai注册 and 22CNY with the existing Contact action; this supersedes the previous Muse removal. Gate uses 虚拟卡，支持法币与虚拟货币 and preserves the exact supplied referral URL with all query parameters. Keep this addition local until release is authorized.
+
 - 2026-10-01 remote PC removal: Remove the remote PC optimization (UU Remote) business card in all three languages. This supersedes its earlier inclusion; retain the other six cards.
 
 - 2026-09-30 navigation order: Swap Business and Contact so desktop navigation, mobile navigation and the custom context menu read Home, Posts, Business, Contact in all three languages. Keep Business yellow and Contact green, with colors bound to route identity. Continue the directly authorized release workflow for this focused follow-up.
