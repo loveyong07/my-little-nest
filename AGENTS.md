@@ -10,6 +10,8 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 
 ## Selected design and wording
 
+- 2026-10-01 Telegram and Antigravity: Change Internet access to 33CNY in all three languages. Append separate Telegram (过TG电话号码认证（首次）, 11CNY) and Antigravity (进入谷歌反重力, 9.9CNY) glass cards with matching Japanese and English copy and the existing Contact action. Preserve all eight existing cards and referral URLs. The user explicitly authorized direct deployment through GitHub master to Vercel production. This supersedes the earlier 66CNY price.
+
 - 2026-10-01 business release: The user authorized deploying the reviewed eight-card Business page through GitHub master to Vercel production, including 站内推荐机场, Muse ai (22CNY) and Gate (虚拟卡) with the original referral URL.
 
 - 2026-10-01 Gate description: Shorten Gate's description to 虚拟卡 / バーチャルカード / Virtual card, removing the fiat and cryptocurrency support wording. Preserve the existing referral URL. This supersedes the earlier Gate description below.

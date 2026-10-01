@@ -17,7 +17,7 @@ export const businessCopy = {
     refundPolicy: "在本站购买的产品不退款", supportBefore: "但会有", support: "售后",
     contact: "联系我", openLink: "前往查看", promoCode: "优惠码",
     cards: [
-      { id: "network", title: "科学上网", description: "学会科学上网以及大多数产品的注册", price: "66CNY" },
+      { id: "network", title: "科学上网", description: "学会科学上网以及大多数产品的注册", price: "33CNY" },
       { id: "sailing", title: "站内推荐机场" },
       { id: "clash", title: "站内推荐Clash", platformLabel: "非iOS", iosDescription: "自行查看风帆sailing帮助文档" },
       { id: "memberships", title: "X Telegram", description: "X TG会员代送" },
@@ -25,6 +25,8 @@ export const businessCopy = {
       { id: "chatgpt-desktop", title: "ChatGPT桌面端", description: "过号码验证", price: "11CNY" },
       { id: "muse", title: "Muse ai", description: "Meta下的Muse ai注册", price: "22CNY" },
       { id: "gate", title: "Gate", description: "虚拟卡" },
+      { id: "telegram", title: "Telegram", description: "过TG电话号码认证（首次）", price: "11CNY" },
+      { id: "antigravity", title: "Antigravity", description: "进入谷歌反重力", price: "9.9CNY" },
     ],
   },
   ja: {
@@ -37,7 +39,7 @@ export const businessCopy = {
     refundPolicy: "本サイトで購入した商品は返金できません", supportBefore: "が、", support: "購入後のサポートは提供します",
     contact: "お問い合わせ", openLink: "サイトを見る", promoCode: "割引コード",
     cards: [
-      { id: "network", title: "ネット接続サポート", description: "ネット接続の方法と、さまざまなサービスの登録方法を学ぶ", price: "66CNY" },
+      { id: "network", title: "ネット接続サポート", description: "ネット接続の方法と、さまざまなサービスの登録方法を学ぶ", price: "33CNY" },
       { id: "sailing", title: "おすすめプロキシサービス" },
       { id: "clash", title: "おすすめClash", platformLabel: "iOS以外", iosDescription: "風帆sailingのヘルプドキュメントをご確認ください" },
       { id: "memberships", title: "X Telegram", description: "X・TGのメンバーシップギフト代行" },
@@ -45,6 +47,8 @@ export const businessCopy = {
       { id: "chatgpt-desktop", title: "ChatGPTデスクトップ版", description: "電話番号認証", price: "11CNY" },
       { id: "muse", title: "Muse ai", description: "MetaのMuse ai登録", price: "22CNY" },
       { id: "gate", title: "Gate", description: "バーチャルカード" },
+      { id: "telegram", title: "Telegram", description: "Telegramの電話番号認証（初回）", price: "11CNY" },
+      { id: "antigravity", title: "Antigravity", description: "Google Antigravityへのアクセス", price: "9.9CNY" },
     ],
   },
   en: {
@@ -57,7 +61,7 @@ export const businessCopy = {
     refundPolicy: "Products purchased on this website are non-refundable", supportBefore: ", but ", support: "after-sales support is available",
     contact: "Get in touch", openLink: "Visit website", promoCode: "Promo code",
     cards: [
-      { id: "network", title: "Internet access", description: "Learn how to access the internet and register for most services", price: "66CNY" },
+      { id: "network", title: "Internet access", description: "Learn how to access the internet and register for most services", price: "33CNY" },
       { id: "sailing", title: "Recommended proxy service" },
       { id: "clash", title: "Recommended Clash", platformLabel: "Non-iOS", iosDescription: "Please refer to the Sailing help documentation" },
       { id: "memberships", title: "X Telegram", description: "X and TG membership gifting" },
@@ -65,6 +69,8 @@ export const businessCopy = {
       { id: "chatgpt-desktop", title: "ChatGPT desktop", description: "Phone number verification", price: "11CNY" },
       { id: "muse", title: "Muse ai", description: "Registration for Meta's Muse ai", price: "22CNY" },
       { id: "gate", title: "Gate", description: "Virtual card" },
+      { id: "telegram", title: "Telegram", description: "Telegram phone number verification (first time)", price: "11CNY" },
+      { id: "antigravity", title: "Antigravity", description: "Access Google Antigravity", price: "9.9CNY" },
     ],
   },
 };
