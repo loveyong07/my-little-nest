@@ -35,7 +35,6 @@
 .business-card-chatgpt-desktop { --business-accent: #347868; --business-tint: #e0f6e9; }
 .business-card-muse { --business-accent: #64508c; --business-tint: #ede6fb; }
 .business-card-gate { --business-accent: #347868; --business-tint: #e0f6e9; }
-.business-card-telegram { --business-accent: #316f94; --business-tint: #e3f5ff; }
 .business-card-antigravity { --business-accent: #64508c; --business-tint: #ede6fb; }
 .business-card-heading { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
 .business-card-icon { display: grid; flex: 0 0 auto; width: 42px; height: 42px; place-items: center; border: 1px solid #ffffffba; border-radius: 14px; background: var(--business-tint); color: var(--business-accent); box-shadow: inset 0 1px #fff; }
