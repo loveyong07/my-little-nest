@@ -10,6 +10,8 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 
 ## Selected design and wording
 
+- 2026-10-02 Telegram removal: Remove the standalone Telegram phone-number verification card (11CNY) from Business in Chinese, Japanese and English, together with its icon mapping and dedicated style. This supersedes its earlier inclusion. Preserve the X Telegram membership-gifting card, Contact Telegram link and other cards. The user authorized deploying this focused removal through GitHub master to Vercel production.
+
 - 2026-10-01 Business recommendations: Insert 站内推荐GAL (https://www.touchgal.ink/, displayed as www.touchgal.ink) and 站内推荐动漫站 (https://omoo.app/, 邀请码：CAH6F2192295（可获得积分）) as the fourth and fifth glass cards in all three languages. Shift the existing later cards in their original order and preserve the mobile blur fix. The user explicitly authorized direct deployment through GitHub master to Vercel production and requested no further online checks after deployment succeeds.
 
 - 2026-10-01 mobile Business rendering: Preserve separate translucent glass cards while scrolling. Disable both backdrop-filter properties for Business cards at widths up to 900px and on coarse-pointer devices to avoid stale filtered card layers in mobile browsers; keep the existing artwork, card gradients, copy, links and desktop blur.

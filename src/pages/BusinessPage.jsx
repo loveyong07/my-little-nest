@@ -3,7 +3,7 @@ import { FiAlertCircle, FiBookOpen, FiCpu, FiCreditCard, FiExternalLink, FiFilm,
 import { businessCopy, businessLinks } from "../constants/business.js";
 import { pagePaths } from "../routes/site-route.js";
 
-const cardIcons = { network: FiGlobe, sailing: FiSend, clash: FiGithub, gal: FiBookOpen, anime: FiFilm, memberships: FiSend, ai: FiCpu, "chatgpt-desktop": FiMonitor, muse: FiUserPlus, gate: FiCreditCard, telegram: FiSend, antigravity: FiCpu };
+const cardIcons = { network: FiGlobe, sailing: FiSend, clash: FiGithub, gal: FiBookOpen, anime: FiFilm, memberships: FiSend, ai: FiCpu, "chatgpt-desktop": FiMonitor, muse: FiUserPlus, gate: FiCreditCard, antigravity: FiCpu };
 
 export default function BusinessPage({ language }) {
   const text = businessCopy[language];
