@@ -10,6 +10,8 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 
 ## Selected design and wording
 
+- 2026-10-04 Business title, disclaimer and order: Rename ChatGPT desktop to ChatGPT in Chinese, Japanese and English. Remove the entire no-refund and after-sales-support sentence from the disclaimer in all three languages. Swap the Antigravity and AI memberships cards while preserving the remaining cards and links. This supersedes the earlier desktop title and sales-disclaimer instructions. The user authorized immediate deployment through GitHub master to Vercel production and requested no tests or additional checks.
+
 - 2026-10-04 Business price removal: Remove all displayed monetary prices (33CNY, 11CNY, 22CNY and 9.9CNY) from the Business cards in Chinese, Japanese and English. Preserve the service cards, descriptions, order and links. This supersedes earlier price-display instructions. The user authorized immediate deployment through GitHub master to Vercel production without additional checks.
 
 - 2026-10-04 Contact QQ update: Set the QQ contact number to 3077928326 in all languages, including the copy action, accessible label, success state and manual-copy fallback. The separate QQ Mail address is outside this number-only change. The user subsequently authorized direct deployment of this QQ update and the Business copy refinement through GitHub master to Vercel production, with no additional checks.
