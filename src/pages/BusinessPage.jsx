@@ -3,7 +3,7 @@ import { FiAlertCircle, FiBookOpen, FiCpu, FiCreditCard, FiExternalLink, FiFilm,
 import { businessCopy, businessLinks } from "../constants/business.js";
 import { pagePaths } from "../routes/site-route.js";
 
-const cardIcons = { network: FiGlobe, sailing: FiSend, clash: FiGithub, gal: FiBookOpen, anime: FiFilm, memberships: FiSend, ai: FiCpu, "chatgpt-desktop": FiMonitor, muse: FiUserPlus, gate: FiCreditCard, antigravity: FiCpu };
+const cardIcons = { network: FiGlobe, sailing: FiSend, clash: FiGithub, gal: FiBookOpen, anime: FiFilm, starryblu: FiCreditCard, ai: FiCpu, "chatgpt-desktop": FiMonitor, muse: FiUserPlus, gate: FiCreditCard, antigravity: FiCpu };
 
 export default function BusinessPage({ language }) {
   const text = businessCopy[language];
@@ -68,6 +68,7 @@ export default function BusinessPage({ language }) {
             <h2 id={"business-" + card.id}>{card.title}</h2>
           </div>
           {card.description && <p className="business-card-description">{card.description}</p>}
+          {card.descriptionLines?.map((line) => <p className="business-card-description" key={line}>{line}</p>)}
           {card.price && <p className="business-card-price">{card.price}</p>}
           {href && <p className="business-card-link">
             {card.platformLabel && <strong>{card.platformLabel}：</strong>}

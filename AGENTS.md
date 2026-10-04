@@ -10,6 +10,8 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 
 ## Selected design and wording
 
+- 2026-10-04 Business card replacement: Remove the X Telegram membership-gifting card and its referral link, icon mapping and dedicated style in all three languages. Place 站内推荐卡 (Starryblu, https://www.starryblu.com/, displayed as www.starryblu.com) sixth, immediately after the anime recommendation. Preserve the user's exact three Chinese paragraphs, including 卷 and Passport, and provide matching Japanese and English copy. Keep the remaining cards in their existing order. This supersedes the 2026-10-02 instruction to preserve X Telegram. The user explicitly authorized direct deployment through GitHub master to Vercel production without another confirmation.
+
 - 2026-10-02 Telegram removal: Remove the standalone Telegram phone-number verification card (11CNY) from Business in Chinese, Japanese and English, together with its icon mapping and dedicated style. This supersedes its earlier inclusion. Preserve the X Telegram membership-gifting card, Contact Telegram link and other cards. The user authorized deploying this focused removal through GitHub master to Vercel production.
 
 - 2026-10-01 Business recommendations: Insert 站内推荐GAL (https://www.touchgal.ink/, displayed as www.touchgal.ink) and 站内推荐动漫站 (https://omoo.app/, 邀请码：CAH6F2192295（可获得积分）) as the fourth and fifth glass cards in all three languages. Shift the existing later cards in their original order and preserve the mobile blur fix. The user explicitly authorized direct deployment through GitHub master to Vercel production and requested no further online checks after deployment succeeds.
