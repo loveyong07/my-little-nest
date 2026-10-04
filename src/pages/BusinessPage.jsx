@@ -68,7 +68,7 @@ export default function BusinessPage({ language }) {
             <h2 id={"business-" + card.id}>{card.title}</h2>
           </div>
           {card.description && <p className="business-card-description">{card.description}</p>}
-          {card.descriptionLines?.map((line) => <p className="business-card-description" key={line}>{line}</p>)}
+          {card.descriptionLines?.map((line) => <p className="business-card-description" key={line}>{card.emphasizeDescriptionLines ? <strong>{line}</strong> : line}</p>)}
           {card.price && <p className="business-card-price">{card.price}</p>}
           {href && <p className="business-card-link">
             {card.platformLabel && <strong>{card.platformLabel}：</strong>}

@@ -10,6 +10,10 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 
 ## Selected design and wording
 
+- 2026-10-04 Contact QQ update: Set the QQ contact number to 3077928326 in all languages, including the copy action, accessible label, success state and manual-copy fallback. The separate QQ Mail address is outside this number-only change. The user subsequently authorized direct deployment of this QQ update and the Business copy refinement through GitHub master to Vercel production, with no additional checks.
+
+- 2026-10-04 Business copy refinement: Add 一站式 Galgame 文化社区 to the GAL recommendation and 集动漫与社区一体的动漫小站 to the anime recommendation, with matching Japanese and English copy. Replace the Starryblu introduction with Starryblu新加坡万事达借记卡 10币种账户, then show 支持绑定微信 支付宝 每个月会有卷进行消费减免 and 支持线上虚拟卡（需要排队） 线下实体卡邮寄（需要Passport） as two bold paragraphs in all three languages. Preserve the supplied Chinese wording, including 卷 and Passport, plus card order, URLs and the anime invitation code. This supersedes the previous Starryblu wording below.
+
 - 2026-10-04 Business card replacement: Remove the X Telegram membership-gifting card and its referral link, icon mapping and dedicated style in all three languages. Place 站内推荐卡 (Starryblu, https://www.starryblu.com/, displayed as www.starryblu.com) sixth, immediately after the anime recommendation. Preserve the user's exact three Chinese paragraphs, including 卷 and Passport, and provide matching Japanese and English copy. Keep the remaining cards in their existing order. This supersedes the 2026-10-02 instruction to preserve X Telegram. The user explicitly authorized direct deployment through GitHub master to Vercel production without another confirmation.
 
 - 2026-10-02 Telegram removal: Remove the standalone Telegram phone-number verification card (11CNY) from Business in Chinese, Japanese and English, together with its icon mapping and dedicated style. This supersedes its earlier inclusion. Preserve the X Telegram membership-gifting card, Contact Telegram link and other cards. The user authorized deploying this focused removal through GitHub master to Vercel production.

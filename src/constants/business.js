@@ -22,11 +22,10 @@ export const businessCopy = {
       { id: "network", title: "科学上网", description: "学会科学上网以及大多数产品的注册", price: "33CNY" },
       { id: "sailing", title: "站内推荐机场" },
       { id: "clash", title: "站内推荐Clash", platformLabel: "非iOS", iosDescription: "自行查看风帆sailing帮助文档" },
-      { id: "gal", title: "站内推荐GAL", linkText: "www.touchgal.ink" },
-      { id: "anime", title: "站内推荐动漫站", invitationCode: "CAH6F2192295", invitationNote: "（可获得积分）" },
-      { id: "starryblu", title: "站内推荐卡", descriptionLines: [
-        "如果使用国内卡出现过被限额或者被拒付 Starryblu将会是你的不二之选",
-        "支持绑定微信 支付宝使用 每个月会有卷进行消费减免",
+      { id: "gal", title: "站内推荐GAL", description: "一站式 Galgame 文化社区", linkText: "www.touchgal.ink" },
+      { id: "anime", title: "站内推荐动漫站", description: "集动漫与社区一体的动漫小站", invitationCode: "CAH6F2192295", invitationNote: "（可获得积分）" },
+      { id: "starryblu", title: "站内推荐卡", description: "Starryblu新加坡万事达借记卡 10币种账户", emphasizeDescriptionLines: true, descriptionLines: [
+        "支持绑定微信 支付宝 每个月会有卷进行消费减免",
         "支持线上虚拟卡（需要排队） 线下实体卡邮寄（需要Passport）",
       ], linkText: "www.starryblu.com" },
       { id: "ai", title: "AI会员", description: "ChatGPT Claude Grok Gemini会员" },
@@ -49,10 +48,9 @@ export const businessCopy = {
       { id: "network", title: "ネット接続サポート", description: "ネット接続の方法と、さまざまなサービスの登録方法を学ぶ", price: "33CNY" },
       { id: "sailing", title: "おすすめプロキシサービス" },
       { id: "clash", title: "おすすめClash", platformLabel: "iOS以外", iosDescription: "風帆sailingのヘルプドキュメントをご確認ください" },
-      { id: "gal", title: "おすすめGALサイト", linkText: "www.touchgal.ink" },
-      { id: "anime", title: "おすすめアニメサイト", invitationCode: "CAH6F2192295", invitationNote: "（ポイントを獲得できます）" },
-      { id: "starryblu", title: "おすすめカード", descriptionLines: [
-        "中国国内のカードで利用制限や決済拒否を経験したことがあるなら、Starrybluが最適な選択肢です",
+      { id: "gal", title: "おすすめGALサイト", description: "Galgame文化を楽しめるワンストップコミュニティ", linkText: "www.touchgal.ink" },
+      { id: "anime", title: "おすすめアニメサイト", description: "アニメとコミュニティが一つになった小さなアニメサイト", invitationCode: "CAH6F2192295", invitationNote: "（ポイントを獲得できます）" },
+      { id: "starryblu", title: "おすすめカード", description: "Starryblu シンガポールのMastercardデビットカード · 10通貨対応口座", emphasizeDescriptionLines: true, descriptionLines: [
         "WeChat・Alipayに紐付けて利用できます 毎月、支払いの割引に使えるクーポンがあります",
         "オンラインのバーチャルカード（順番待ちが必要）と、オフラインで使える実物カードの郵送（パスポートが必要）に対応しています",
       ], linkText: "www.starryblu.com" },
@@ -76,10 +74,9 @@ export const businessCopy = {
       { id: "network", title: "Internet access", description: "Learn how to access the internet and register for most services", price: "33CNY" },
       { id: "sailing", title: "Recommended proxy service" },
       { id: "clash", title: "Recommended Clash", platformLabel: "Non-iOS", iosDescription: "Please refer to the Sailing help documentation" },
-      { id: "gal", title: "Recommended GAL site", linkText: "www.touchgal.ink" },
-      { id: "anime", title: "Recommended anime site", invitationCode: "CAH6F2192295", invitationNote: "(Earn points)" },
-      { id: "starryblu", title: "Recommended card", descriptionLines: [
-        "If you have experienced spending limits or declined payments with a card issued in China, Starryblu will be your go-to choice",
+      { id: "gal", title: "Recommended GAL site", description: "A one-stop community for Galgame culture", linkText: "www.touchgal.ink" },
+      { id: "anime", title: "Recommended anime site", description: "A small anime site combining anime and community", invitationCode: "CAH6F2192295", invitationNote: "(Earn points)" },
+      { id: "starryblu", title: "Recommended card", description: "Starryblu Singapore Mastercard debit card · 10-currency account", emphasizeDescriptionLines: true, descriptionLines: [
         "Supports linking to WeChat and Alipay, with monthly coupons to reduce spending costs",
         "Online virtual cards are available (requires joining a queue), as are physical cards for offline use by mail (requires a passport)",
       ], linkText: "www.starryblu.com" },
