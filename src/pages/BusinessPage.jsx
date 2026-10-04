@@ -93,7 +93,6 @@ export default function BusinessPage({ language }) {
       <div className="business-disclaimer-body" id="business-disclaimer-body">
         <p>{text.disclaimerIntro}</p>
         <p>{text.responsibilityBefore}<strong>{text.responsibility}</strong>{text.responsibilityAfter}<strong>{text.noLiability}</strong></p>
-        <p className="business-disclaimer-sales"><strong>{text.refundPolicy}</strong>{text.supportBefore}<strong>{text.support}</strong>{language === "zh" || language === "ja" ? "。" : "."}</p>
       </div>
       <button ref={continueRef} type="button" className="business-disclaimer-continue" onClick={() => dialogRef.current.close()}>{text.continueBrowsing}</button>
     </dialog>
