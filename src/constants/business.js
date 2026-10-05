@@ -1,4 +1,5 @@
 export const businessLinks = {
+  "x-telegram": "https://ronvip.pages.dev/?ref=RP0P13306W5H31014J",
   sailing: "https://my.sailingnet.pro/zh/auth/signup?referrer=tCvO65Sn",
   clash: "https://github.com/chen08209/FlClash",
   gal: "https://www.touchgal.ink/",
@@ -32,6 +33,7 @@ export const businessCopy = {
       { id: "muse", title: "Muse ai", description: "Meta下的Muse ai注册" },
       { id: "gate", title: "Gate", description: "虚拟卡" },
       { id: "ai", title: "AI会员", description: "ChatGPT Claude Grok Gemini会员" },
+      { id: "x-telegram", title: "X Telegram", description: "X TG会员代送" },
     ],
   },
   ja: {
@@ -57,6 +59,7 @@ export const businessCopy = {
       { id: "muse", title: "Muse ai", description: "MetaのMuse ai登録" },
       { id: "gate", title: "Gate", description: "バーチャルカード" },
       { id: "ai", title: "AIメンバーシップ", description: "ChatGPT・Claude・Grok・Geminiのメンバーシップ" },
+      { id: "x-telegram", title: "X Telegram", description: "X・TGメンバーシップのギフト代行" },
     ],
   },
   en: {
@@ -82,6 +85,7 @@ export const businessCopy = {
       { id: "muse", title: "Muse ai", description: "Registration for Meta's Muse ai" },
       { id: "gate", title: "Gate", description: "Virtual card" },
       { id: "ai", title: "AI memberships", description: "ChatGPT, Claude, Grok and Gemini memberships" },
+      { id: "x-telegram", title: "X Telegram", description: "X and TG membership gifting service" },
     ],
   },
 };
