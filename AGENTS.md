@@ -10,6 +10,8 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 
 ## Selected design and wording
 
+- 2026-10-07 Contact Telegram removal: Remove the Telegram contact entry in all languages. This supersedes the earlier instruction to preserve the Contact Telegram link. Preserve the other contact methods and the separate Business X Telegram card.
+
 - 2026-10-05 Business addition: Append X Telegram with the exact Chinese description X TG会员代送 and https://ronvip.pages.dev/?ref=RP0P13306W5H31014J. Provide matching Japanese and English copy and preserve the existing cards. This supersedes the earlier removal of the X Telegram membership-gifting card.
 
 - 2026-10-04 Business title, disclaimer and order: Rename ChatGPT desktop to ChatGPT in Chinese, Japanese and English. Remove the entire no-refund and after-sales-support sentence from the disclaimer in all three languages. Swap the Antigravity and AI memberships cards while preserving the remaining cards and links. This supersedes the earlier desktop title and sales-disclaimer instructions. The user authorized immediate deployment through GitHub master to Vercel production and requested no tests or additional checks.

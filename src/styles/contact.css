@@ -17,7 +17,6 @@
   100% { opacity: 1; transform: scale(1) rotate(-10deg); }
 }
 .contact-tile.line .contact-icon svg { background: #08b535; }
-.contact-tile.telegram .contact-icon svg { background: #268fc9; }
 .contact-tile.wechat .contact-icon svg { background: #10bf36; }
 .contact-tile.qq .contact-icon svg { background: #fff; color: #151d2d; }
 .contact-tile.email .contact-icon svg { background: #248fdd; }
