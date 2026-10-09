@@ -17,6 +17,5 @@
 | `public/assets/contact-sky-letter-v2-clean.png` | 当前联系页压缩图的原件 |
 | `public/assets/contact-dove-motion.png` | 已被 `contact-sky-dove-v2.png` 替代的鸽子图层 |
 | `public/assets/site-favicon.png` | 已被 `site-favicon-2026-09-29.png` 替代的 favicon |
-| `public/qa-source.png` | 与根目录 `design-reference.png` 内容相同的 QA 副本；继续由 `.gitignore` 排除 |
 
 如需重新导出场景图，可使用这里的原件。要让某个文件重新上线，应将所需版本放回 `public/assets/`，并检查页面引用与加载体积。
