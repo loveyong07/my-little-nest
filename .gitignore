@@ -14,3 +14,8 @@ backup-*/
 /archive/assets-raw/qa-source.png
 
 .vercel/
+
+# Generated tool caches and temporary QA output.
+.astro/
+.wrangler/
+/qa/
