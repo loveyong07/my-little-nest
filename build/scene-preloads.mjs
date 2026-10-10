@@ -10,6 +10,19 @@ export function withScenePreloads(html, page) {
     .replace("</head>", `    ${links}\n  </head>`);
 }
 
+// Fonts used by the first paint are referenced from CSS, so the browser would
+// otherwise wait for the stylesheet before requesting them. Preloading them in
+// HTML lets the download start alongside the stylesheet.
+// Quicksand's file name is hashed at build time, so it is looked up in the bundle.
+export function withFontPreloads(html, bundle = {}) {
+  const quicksand = Object.keys(bundle).find((name) => /^assets\/quicksand-latin-700-normal-[\w-]+\.woff2$/.test(name));
+  const hrefs = [quicksand && `/${quicksand}`, "/assets/fonts/nest-ui-2026-09-30.woff"].filter(Boolean);
+  const links = hrefs.map((href) =>
+    `<link data-font-preload rel="preload" as="font" type="${href.endsWith(".woff2") ? "font/woff2" : "font/woff"}" href="${href}" crossorigin />`).join("\n    ");
+  return html.replace(/\s*<link\b[^>]*data-font-preload[^>]*>/g, "")
+    .replace("</head>", `    ${links}\n  </head>`);
+}
+
 // Separate shells discover only the current scene before JavaScript starts.
 // The React entry and routing remain shared across all pages.
 export function scenePreloadPlugin() {
@@ -20,7 +33,7 @@ export function scenePreloadPlugin() {
     configResolved(config) { outputDirectory = path.resolve(config.root, config.build.outDir); building = config.command === "build"; },
     transformIndexHtml(html, context) {
       const pathname = new URL(context.originalUrl ?? context.path, "http://localhost").pathname;
-      return withScenePreloads(html, resolvePage(pathname));
+      return withFontPreloads(withScenePreloads(html, resolvePage(pathname)), context.bundle);
     },
     closeBundle() {
       if (!building) return;

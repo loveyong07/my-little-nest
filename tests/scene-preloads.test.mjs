@@ -1,7 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { withScenePreloads } from "../build/scene-preloads.mjs";
+import { withScenePreloads, withFontPreloads } from "../build/scene-preloads.mjs";
+
+test("first-paint fonts are preloaded with the hashed Quicksand bundle name", () => {
+  const bundle = { "assets/quicksand-latin-700-normal-DNRMnynu.woff2": {}, "assets/quicksand-latin-500-normal-BKohNur2.woff2": {} };
+  const html = withFontPreloads("<html><head></head><body></body></html>", bundle);
+  assert.match(html, /href="\/assets\/quicksand-latin-700-normal-DNRMnynu\.woff2" crossorigin/);
+  assert.doesNotMatch(html, /quicksand-latin-500/);
+  assert.match(html, /href="\/assets\/fonts\/nest-ui-2026-09-30\.woff"/);
+  assert.equal((withFontPreloads(html, bundle).match(/data-font-preload/g) ?? []).length, 2);
+});
 
 test("direct route shells replace home preloads rather than fetching unrelated scenes", () => {
   const home = withScenePreloads("<html><head></head><body></body></html>", "home");
