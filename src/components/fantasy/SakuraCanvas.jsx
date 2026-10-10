@@ -20,7 +20,7 @@ export function SakuraCanvas({ snow = false }) {
       petalSprite.getContext("2d").drawImage(petal, 0, 0, 64, 64);
       petalReady = true;
     };
-    petal.src = "/assets/home-floating-petal.png";
+    petal.src = "/assets/home-floating-petal.webp";
     const snowSprite = document.createElement("canvas");
     snowSprite.width = snowSprite.height = 80;
     if (snow) {

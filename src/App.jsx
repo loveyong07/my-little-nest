@@ -41,7 +41,7 @@ export function App() {
     onClick={handleClick} onPointerOver={preparePosts} onFocus={preparePosts} onTouchStart={preparePosts}>
     {page === "posts" && <div className="route-floating-elements" aria-hidden="true" />}
     {page === "contact" && <div className="route-floating-elements" aria-hidden="true">
-      <img className="route-floating-dove" src={ASSETS + "/contact-sky-dove-v2.png"} alt="" draggable="false" />
+      <img className="route-floating-dove" src={ASSETS + "/contact-sky-dove-v2.webp"} alt="" draggable="false" />
     </div>}
     {page === "home" ? <HeroSection header={header} language={language} t={t} profile={profile} /> : <>
       <RouteHero page={page} t={t} header={header} />
