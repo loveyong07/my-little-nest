@@ -107,7 +107,7 @@ export function PostCard({ post, feedSource, language, t, label, profile, priori
         </>}
     </div>}
     {isSnapshot && <figure className="post-illustration">
-      <img src={`${ASSETS}/post-seaside.png`} alt={t.imageAlt} loading="lazy" decoding="async" />
+      <img src={`${ASSETS}/post-seaside.webp`} alt={t.imageAlt} loading="lazy" decoding="async" />
       <figcaption>{t.artLabel}</figcaption>
     </figure>}
     <div className="post-bottomline">

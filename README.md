@@ -1,6 +1,8 @@
 # 初咏的小窝
 
-React / Vite 个人网站，提供首页、动态、商务、联系四个页面，支持中文、日文、英文。
+React / Vite 个人网站，提供首页、动态、联系三个页面，支持中文、日文、英文。联系页唯一邮箱为 `fyh20071004@gmail.com`。
+
+2026-10-11：商务页及其入口已移除，联系页已精简为上述唯一邮箱。自定义右键菜单已移除，补充了分享预览（OG）标签。本轮修改保留在本地，尚未发布。
 
 ## 仓库与发布
 
@@ -30,8 +32,8 @@ git diff --check
 
 ## 维护入口
 
-- `src/constants/locales.js`：三语通用文案；`src/constants/business.js`：商务卡片、顺序和链接。
-- `src/components/HeroSection.jsx`：首页；`src/pages/`：动态、商务和联系页。
+- `src/constants/locales.js`：三语通用文案；`src/constants/site.js`：站点与联系方式配置。
+- `src/components/HeroSection.jsx`：首页；`src/pages/PostsPage.jsx`：动态页；`src/pages/ContactPage.jsx`：联系页。
 - `src/hooks/`、`src/routes/`：动态、资料、语言和站内导航。
 - `src/styles.css`、`src/styles/`：样式；`server/`、`api/`：X 服务与 Vercel 接口。
 - `build/scene-preloads.mjs`：场景预载插件；`build/` 是源码目录。

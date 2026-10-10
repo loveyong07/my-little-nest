@@ -2,7 +2,7 @@ import { FaEnvelope, FaLine, FaQq, FaTelegram, FaWeixin, FaXTwitter } from "reac
 import { HiOutlineSparkles } from "react-icons/hi2";
 import { PiFlowerLight } from "react-icons/pi";
 import { ContactTile } from "../components/ContactTile.jsx";
-import { mailboxes, HANDLE } from "../constants/site.js";
+import { mailboxes, HANDLE, QQ_NUMBER } from "../constants/site.js";
 import { useClipboard } from "../hooks/useClipboard.js";
 
 export default function ContactPage({ language, t, profile }) {
@@ -13,8 +13,8 @@ export default function ContactPage({ language, t, profile }) {
     { icon: FaLine, className: "line", title: "LINE", sub: t.lineSub, href: "https://line.me/ti/p/LSaMZQcRLu", action: t.actionOpen },
     { icon: FaTelegram, className: "telegram", title: "Telegram", sub: t.telegramSub, href: "https://t.me/loveyong07", action: t.actionOpen },
     { icon: FaWeixin, className: "wechat", title: language === "zh" ? "微信" : "WeChat", sub: t.wechatSub, onClick: () => copyId(HANDLE), copyLabel: t.copy + ": " + HANDLE, copied: copiedId === HANDLE ? t.copied : undefined, action: t.actionCopy, failedId: copyFailedId === HANDLE ? HANDLE : undefined },
-    { icon: FaQq, className: "qq", title: "QQ", sub: t.qqSub, onClick: () => copyId("3077928326"), copyLabel: t.copy + ": 3077928326", copied: copiedId === "3077928326" ? t.copied : undefined, action: t.actionCopy, failedId: copyFailedId === "3077928326" ? "3077928326" : undefined },
-    { icon: FaEnvelope, className: "email", title: language === "zh" ? "邮箱" : language === "ja" ? "メール" : "Email", sub: t.emailSub, href: "#email-options", action: t.actionWrite },
+    { icon: FaQq, className: "qq", title: "QQ", sub: t.qqSub, onClick: () => copyId(QQ_NUMBER), copyLabel: t.copy + ": " + QQ_NUMBER, copied: copiedId === QQ_NUMBER ? t.copied : undefined, action: t.actionCopy, failedId: copyFailedId === QQ_NUMBER ? QQ_NUMBER : undefined },
+    { icon: FaEnvelope, className: "email", title: language === "zh" ? "邮箱" : language === "ja" ? "メール" : "Email", sub: t.emailSub, href: `mailto:${mailboxes[0].address}`, action: t.actionWrite },
   ];
 
   return <div className="contacts-section" id="contact">

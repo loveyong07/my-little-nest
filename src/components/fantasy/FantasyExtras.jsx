@@ -2,7 +2,6 @@ import { FaWandMagicSparkles } from "react-icons/fa6";
 import { fantasyCopy } from "../../constants/fantasy.js";
 import { SakuraCanvas } from "./SakuraCanvas.jsx";
 import { MiniPlayer } from "./MiniPlayer.jsx";
-import { NestContextMenu } from "./NestContextMenu.jsx";
 import "../../styles/fantasy-extras.css";
 
 export default function FantasyExtras({ language, page, preferences }) {
@@ -15,6 +14,5 @@ export default function FantasyExtras({ language, page, preferences }) {
       <button className="dock-toggle" type="button" aria-label={effects ? f.effectsOn : f.effectsOff}
         title={effects ? f.effectsOn : f.effectsOff} aria-pressed={effects} onClick={() => setEffects(!effects)}><FaWandMagicSparkles aria-hidden="true" /></button>
     </aside>
-    <NestContextMenu f={f} page={page} effects={effects} onToggleEffects={() => setEffects(!effects)} />
   </>;
 }
