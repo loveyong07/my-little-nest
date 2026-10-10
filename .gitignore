@@ -19,3 +19,7 @@ backup-*/
 .astro/
 .wrangler/
 /qa/
+
+# Local-only raw sources.
+/archive/assets-raw/business-sky-studio*.png
+/archive/fonts/

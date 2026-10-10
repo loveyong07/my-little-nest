@@ -1,10 +1,9 @@
-export const pagePaths = { home: "/", posts: "/posts", contact: "/contact", business: "/business" };
+export const pagePaths = { home: "/", posts: "/posts", contact: "/contact" };
 
 export function resolvePage(pathname) {
   const path = pathname.replace(/\/+$/, "") || "/";
   if (path === pagePaths.posts) return "posts";
   if (path === pagePaths.contact) return "contact";
-  if (path === pagePaths.business) return "business";
   return "home";
 }
 

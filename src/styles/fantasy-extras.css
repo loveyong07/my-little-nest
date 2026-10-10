@@ -18,12 +18,6 @@
 .mini-player button { width: 36px; height: 36px; background: #e3ecf4; border-color: #d3e1ed; }
 .mini-player button svg { width: 12px; height: 12px; }
 .mini-player input { width: 52px; min-height: 36px; accent-color: #7e9cb7; margin: 0; }
-.nest-context-menu { position: fixed; z-index: 100; width: min(246px, calc(100vw - 16px)); max-height: calc(100dvh - 16px); overflow-y: auto; padding: 12px; background: #f9fbfdfc; border: 1px solid #cee0ef; border-radius: 22px; box-shadow: 0 15px 45px #39546c29; }
-.nest-context-menu p { margin: 3px 8px 9px; color: #6c8eac; font-size: 12px; }
-.nest-context-menu a, .nest-context-menu button { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 43px; padding: 8px 12px; border: 0; border-radius: 12px; background: transparent; color: #486681; font-size: 14px; text-decoration: none; text-align: left; }
-.nest-context-menu a:hover, .nest-context-menu button:hover { background: #e9f2fa; }
-.nest-context-menu svg { width: 15px; height: 15px; }
-.nest-context-menu small { display: block; margin: 8px 8px 3px; color: #6287a7; font-size: 10px; line-height: 1.6; }
 @keyframes record-turn { to { transform: rotate(360deg); } }
 @media (max-width: 700px) {
   .nest-dock { bottom: max(12px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); width: max-content; gap: 6px; max-width: calc(100vw - 20px); padding: 6px; }
@@ -43,6 +37,3 @@
 .mini-player button { background: #eee5fa; color: #654c83; border-color: #d2c0e8; }
 .player-disc { border-color: #d9adc2; background: #fff0f6; color: #743e59; }
 .mini-player input { accent-color: #8b70b0; }
-.nest-context-menu a:nth-of-type(2) { background: #fbe1eb; color: #743e59; }
-.nest-context-menu a[href="/contact"] { background: #e0f2e9; color: #315f53; }
-.nest-context-menu a:hover, .nest-context-menu button:hover { background: #eee5fa; color: #654c83; }

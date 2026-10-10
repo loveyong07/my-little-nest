@@ -1,98 +1,56 @@
-# Prototype Instructions
+# Current Project Instructions
 
-Run the local server yourself and open the preview in the browser available to this environment. Do not give the user server-start instructions when you can run it.
+## Scope and current content
 
-Before making substantial visual changes, use the Product Design plugin's `get-context` skill when the visual source is unclear or no longer matches the current goal. When the user gives durable prototype-specific design feedback, preferences, or decisions, record them in `AGENTS.md`.
+- The site is a personal social calling card with three routes in this order: Home, Posts, Contact. Keep desktop and mobile navigation consistent in Chinese, Japanese and English. Do not hijack the browser's right-click menu.
+- The Business page, its navigation entry, cards and disclaimer have been removed. Do not restore them from historical instructions or design assets.
+- The Contact page has one email address: `fyh20071004@gmail.com`. Preserve the other social contact methods unless the user requests a change.
+- Keep this file limited to current effective conventions. Record durable decisions by updating the relevant rule, rather than appending a dated change log or conflicting superseding instructions.
 
-When implementing from a selected generated mock, treat that image as the source of truth for layout, component anatomy, density, spacing, color, typography, visible content, and hierarchy.
+## Local development and hosting
 
-Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts/prepare-sites-build.mjs`, and `tests/sites-worker.test.mjs` intact so the same local prototype can be handed to Sites. Before a Sites handoff, run `npm run build` and `npm run test:sites`; the build must leave `dist/client/index.html`, `dist/server/index.js`, and `dist/.openai/hosting.json`.
+- Run the local server yourself and open the preview in the browser available to this environment. Do not give the user server-start instructions when you can run it.
+- Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts/prepare-sites-build.mjs`, and `tests/sites-worker.test.mjs` intact so the same local prototype can be handed to Sites.
+- Before a Sites handoff, run `npm run build` and `npm run test:sites`; the build must leave `dist/client/index.html`, `dist/server/index.js`, and `dist/.openai/hosting.json`.
+- The user owns `loveyong07.top` through Tencent Cloud and selected GitHub plus Vercel for hosting. The production branch is `master`. Do not use Cloudflare or change DNS records; inspect Vercel's exact requirements and tell the user when DNS changes are needed. The user handles domain purchases and payments personally.
+- Preserve original assets and the Sites compatibility files. Do not remove unrelated untracked files or archived originals during focused changes.
 
-## Selected design and wording
+## Design and wording
 
-- 2026-10-05 Business addition: Append X Telegram with the exact Chinese description X TG会员代送 and https://ronvip.pages.dev/?ref=RP0P13306W5H31014J. Provide matching Japanese and English copy and preserve the existing cards. This supersedes the earlier removal of the X Telegram membership-gifting card.
-
-- 2026-10-04 Business title, disclaimer and order: Rename ChatGPT desktop to ChatGPT in Chinese, Japanese and English. Remove the entire no-refund and after-sales-support sentence from the disclaimer in all three languages. Swap the Antigravity and AI memberships cards while preserving the remaining cards and links. This supersedes the earlier desktop title and sales-disclaimer instructions. The user authorized immediate deployment through GitHub master to Vercel production and requested no tests or additional checks.
-
-- 2026-10-04 Business price removal: Remove all displayed monetary prices (33CNY, 11CNY, 22CNY and 9.9CNY) from the Business cards in Chinese, Japanese and English. Preserve the service cards, descriptions, order and links. This supersedes earlier price-display instructions. The user authorized immediate deployment through GitHub master to Vercel production without additional checks.
-
-- 2026-10-04 Contact QQ update: Set the QQ contact number to 3077928326 in all languages, including the copy action, accessible label, success state and manual-copy fallback. The separate QQ Mail address is outside this number-only change. The user subsequently authorized direct deployment of this QQ update and the Business copy refinement through GitHub master to Vercel production, with no additional checks.
-
-- 2026-10-04 Business copy refinement: Add 一站式 Galgame 文化社区 to the GAL recommendation and 集动漫与社区一体的动漫小站 to the anime recommendation, with matching Japanese and English copy. Replace the Starryblu introduction with Starryblu新加坡万事达借记卡 10币种账户, then show 支持绑定微信 支付宝 每个月会有卷进行消费减免 and 支持线上虚拟卡（需要排队） 线下实体卡邮寄（需要Passport） as two bold paragraphs in all three languages. Preserve the supplied Chinese wording, including 卷 and Passport, plus card order, URLs and the anime invitation code. This supersedes the previous Starryblu wording below.
-
-- 2026-10-04 Business card replacement: Remove the X Telegram membership-gifting card and its referral link, icon mapping and dedicated style in all three languages. Place 站内推荐卡 (Starryblu, https://www.starryblu.com/, displayed as www.starryblu.com) sixth, immediately after the anime recommendation. Preserve the user's exact three Chinese paragraphs, including 卷 and Passport, and provide matching Japanese and English copy. Keep the remaining cards in their existing order. This supersedes the 2026-10-02 instruction to preserve X Telegram. The user explicitly authorized direct deployment through GitHub master to Vercel production without another confirmation.
-
-- 2026-10-02 Telegram removal: Remove the standalone Telegram phone-number verification card (11CNY) from Business in Chinese, Japanese and English, together with its icon mapping and dedicated style. This supersedes its earlier inclusion. Preserve the X Telegram membership-gifting card, Contact Telegram link and other cards. The user authorized deploying this focused removal through GitHub master to Vercel production.
-
-- 2026-10-01 Business recommendations: Insert 站内推荐GAL (https://www.touchgal.ink/, displayed as www.touchgal.ink) and 站内推荐动漫站 (https://omoo.app/, 邀请码：CAH6F2192295（可获得积分）) as the fourth and fifth glass cards in all three languages. Shift the existing later cards in their original order and preserve the mobile blur fix. The user explicitly authorized direct deployment through GitHub master to Vercel production and requested no further online checks after deployment succeeds.
-
-- 2026-10-01 mobile Business rendering: Preserve separate translucent glass cards while scrolling. Disable both backdrop-filter properties for Business cards at widths up to 900px and on coarse-pointer devices to avoid stale filtered card layers in mobile browsers; keep the existing artwork, card gradients, copy, links and desktop blur.
-
-- 2026-10-01 Telegram and Antigravity: Change Internet access to 33CNY in all three languages. Append separate Telegram (过TG电话号码认证（首次）, 11CNY) and Antigravity (进入谷歌反重力, 9.9CNY) glass cards with matching Japanese and English copy and the existing Contact action. Preserve all eight existing cards and referral URLs. The user explicitly authorized direct deployment through GitHub master to Vercel production. This supersedes the earlier 66CNY price.
-
-- 2026-10-01 business release: The user authorized deploying the reviewed eight-card Business page through GitHub master to Vercel production, including 站内推荐机场, Muse ai (22CNY) and Gate (虚拟卡) with the original referral URL.
-
-- 2026-10-01 Gate description: Shorten Gate's description to 虚拟卡 / バーチャルカード / Virtual card, removing the fiat and cryptocurrency support wording. Preserve the existing referral URL. This supersedes the earlier Gate description below.
-
-- 2026-10-01 business titles: Rename the second (Sailing) card to 站内推荐机场 with matching Japanese and English proxy-service wording; shorten the Muse and Gate titles to Muse ai and Gate in all three languages. Keep descriptions, prices and referral URLs unchanged. This supersedes the earlier titles below.
-
-- 2026-10-01 business additions: Append separate Muse ai注册 and Gate卡 glass cards in all three languages. Muse uses Meta下的Muse ai注册 and 22CNY with the existing Contact action; this supersedes the previous Muse removal. Gate uses 虚拟卡，支持法币与虚拟货币 and preserves the exact supplied referral URL with all query parameters. Keep this addition local until release is authorized.
-
-- 2026-10-01 remote PC removal: Remove the remote PC optimization (UU Remote) business card in all three languages. This supersedes its earlier inclusion; retain the other six cards.
-
-- 2026-09-30 navigation order: Swap Business and Contact so desktop navigation, mobile navigation and the custom context menu read Home, Posts, Business, Contact in all three languages. Keep Business yellow and Contact green, with colors bound to route identity. Continue the directly authorized release workflow for this focused follow-up.
-
-- 2026-09-30 background clarity: The user wants Home, Posts and Contact artwork as clear and vivid as Business. Render scene images at full opacity and remove broad white haze overlays; retain readable glass cards and use subtle blue shading with white text for exposed route titles and branding. The user explicitly authorized modifying and deploying this focused change through the existing GitHub master to Vercel production path.
-
-- 2026-09-30 Muse removal: The user explicitly requested removing the Muse registration card in all three languages and deploying directly through the existing GitHub master to Vercel production path. This supersedes the earlier inclusion of Muse; retain the other seven business cards.
-
-- 2026-09-30 additional business services: Append two separate glass cards: ChatGPT桌面端 / 过号码验证 / 11CNY and 远程优化电脑（UU远程） / 能力范围内按需优化电脑（激活，换Windows版本，环境等） / 价格按需求. Localize both in Japanese and English and use the existing Contact action. The user subsequently authorized deploying these two cards through the existing GitHub master to Vercel production path.
-
-- 2026-09-30 business release: The user explicitly authorized deploying the reviewed Business page, including the latest 66CNY price and separate non-iOS/iOS Clash guidance, through the existing GitHub master to Vercel production path.
-
-- 2026-09-30 business content: Supersedes the earlier title-and-background-only preference. Show six separate transparent glass cards for internet/registration help (66CNY), Sailingnet with promo code touchgal, FlClash, Meta Muse registration (22CNY), X/Telegram membership gifting and AI memberships; preserve the exact supplied referral URLs. The recommended Clash card distinguishes platforms: 非ios：https://github.com/chen08209/FlClash; ios：自行查看风帆sailing帮助文档. Show the supplied disclaimer on each entry to Business, highlighting user responsibility, site liability exclusion, no refunds and after-sales support in red. Keep the existing illustration, responsive navigation and three languages. Keep this change local until release is authorized.
-
-- 2026-09-30 business page: Add a fourth navigation item 商务 with Japanese and English labels. The user explicitly chose only the page title and a new background matching the existing blue-white anime illustrations; leave body content and business contact details absent. Preserve the original three backgrounds and keep this change local until release is authorized.
-
-- 2026-09-30 business expression: Match the warm, bright, gently open-mouth smile in the Home and Posts illustrations. The user dislikes the Business girl's narrow slanted grin; preserve the existing character, scene and composition when adjusting her expression.
-
-- 2026-09-30 mobile navigation: Keep all four navigation items visible and clickable above page panels when the menu is open. On short viewports the menu may scroll; preserve at least 44px tap targets and verify the fourth item's actual click, including on Contact and Posts.
-
-- 2026-09-30 blue refinement: Use clean blue-and-white UI colors to match the existing sky illustrations. This supersedes the pink-and-cream palette below; retain the scrapbook layout and sakura/cursor animation effects, with the companion still removed. Keep changes local until release is authorized.
-
-- 2026-09-30: Remove the floating Live2D companion and its show/hide control from all pages. Keep the other kawaii features. This local change is not authorized for deployment.
-
-- 2026-09-30 Kawaii redesign: user explicitly approved sakura pink and cream scrapbook styling while retaining existing illustrations, all content, three languages and constrained X media routes. This supersedes earlier blue-only styling instructions. Implement the supplied Desktop brief in the current React/Vite app and deliver a local preview before release. Keep the recently removed sticky Posts navigation removed. New welcome/quote copy must not invent personal interests or life events.
-
-- On the Posts page, omit the sticky previous/next bar above the daily post card (the bar with text labels and a centered post count); keep the lower post navigation and date index.
-
-- The user selected the first blue anime sky mock. `design-reference.png` is the visual source of truth. Recreate its open blue sky, right-side character artwork, large blue serif greeting, and white rounded social panel.
-- For the 2026-09-27 design audit upgrade, the user selected route A (refine the existing design). Keep the established artwork and welcome mood while improving responsive composition, Posts readability, and Contact hierarchy. The user chose to leave new personal-interest or recent-status copy blank; do not invent it.
+- Before making substantial visual changes, use the Product Design plugin's `get-context` skill when the visual source is unclear or no longer matches the current goal.
+- `design-reference.png` is the visual reference for the open blue sky, right-side character artwork, large blue serif greeting, and white rounded social panel. Current explicit wording and contact rules in this file take precedence over text in the reference image.
+- Keep the established illustrations, welcome mood and scrapbook layout. Use clean blue-and-white scene and reading surfaces, with distinct soft pink, blue, mint, lavender and yellow fills for buttons, navigation, language selectors and small controls.
 - The browser tab title is exactly `初咏的小窝`; keep the visible homepage heading as `Welcome to my little nest！`.
-- This is a social calling card, not a job-search portfolio. Provide Chinese, Japanese, and English UI. Keep the user's own original X posts in cards, and label any decorative art separately from actual post media.
-- Render X video attachments inline in Posts cards and load MP4 files through the same-origin `/api/x-video` route with byte-range support, so playback does not depend on direct access to X's video host.
-- When a synced X post displays its photo, hide the short URL that X adds for that photo from the card text. Preserve unrelated links in the post.
-- On the Posts page, place a stationary card for the account's current X pinned post above the daily-post carousel. Use the same post-card presentation; update the pinned card when the X pin changes, and keep it out of the daily carousel. Never present the dated fallback snapshot as a pinned post.
-- Show previous/next photo buttons on both pinned and daily cards whenever a post has a photo, including a single-photo post where pressing either button leaves that photo in place. Keep photo navigation distinct from daily-post navigation. Show all original posts available from the X user timeline rather than limiting the daily carousel to six.
-- Keep scrolling the Posts page smooth while viewing photo posts. Avoid paint-heavy background animation and backdrop blur across the full post panel.
-- Use the supplied pink-haired anime portrait in `public/assets/site-favicon-2026-09-29.png` as the browser favicon. Keep the Posts page panel and both post cards translucent like the Contact page panel.
-- On the Contact page, show each service name and its short localized description without a separate account/ID row. Use “期待你的来信” for the Chinese email heading, with matching localized wording in Japanese and English.
+- Provide Chinese, Japanese and English UI. Preserve supplied wording and translations. Leave personal-interest or recent-status copy blank unless the user supplies it; do not invent personal interests or life events.
+- Render scene images at full opacity without broad white haze overlays. Keep readable translucent cards, with subtle blue shading and white text for exposed route titles and branding.
+- Keep the Home illustration fixed to the viewport. On fine-pointer viewports wider than 900px, fit the entire homepage, including journal cards, into one viewport. Retain scrolling on mobile and other routes.
+- Keep all three mobile navigation items visible and clickable above page panels when open. On short viewports the menu may scroll; preserve at least 44px tap targets and verify the Contact item's click.
+- Use `public/assets/site-favicon-2026-09-29.png` as the browser favicon. Keep Open Graph / Twitter card tags in `index.html` (preview image `public/assets/og-cover.jpg`, 1200x630) and the `theme-color` blue-and-white.
+- `/business` permanently redirects to `/` in `vercel.json`; keep it for old links.
+- Contact artwork should match the blue-and-white Home and Posts backgrounds. Keep hands anatomically natural and hair fixed in all three illustrations; preserve independent background, dove and petal motion without deforming hair.
+- Keep the floating Live2D companion and its show/hide control removed. Retired model assets remain in archive only.
+- Label the music player `AIR` in all languages and use Uno's piano arrangement of 鳥の詩 as a same-origin audio asset with source attribution.
+- When implementing a newly selected generated mock, use that image as the source of truth for layout, anatomy, density, spacing, color, typography, content and hierarchy, subject to the user's current explicit decisions.
 - For iterative visual changes, return a screenshot of the updated page so the user can mark areas for the next revision.
-- Contact-page illustration should match the first two blue-and-white anime backgrounds. Keep hands anatomically natural, with no extra fingers, and favor separable scene elements that can move independently. The user prefers hair to stay fixed within all three illustrations; preserve the background, dove, and petal motion without deforming hair.
-- The user owns `loveyong07.top` through Tencent Cloud and selected GitHub plus Vercel for hosting, with the domain connected to Vercel. Do not use Cloudflare or change DNS records; inspect Vercel's exact requirements and tell the user when DNS changes are needed. The user handles domain purchases and payments personally.
-- Most visitors in mainland China use the site without a network proxy. New scene images and other display assets must load from this site's `/assets/` or constrained `/api/` paths, with the active scene prioritized and cold-load size checked. Keep the 2026-09-28 upgrade local for the user's review before pushing to the production branch.
-- The homepage X avatar, display name, and username should follow the current X account profile automatically. Identify the account by its stable X user ID so a username change still syncs; retain local fallback content during API outages. Wait for the user's confirmation before deploying this change.
-- Use the higher-resolution X avatar on Home and Posts when it exists. On Posts, clicking a post photo or video opens an enlarged on-site preview with a close X below the media; the bottom-right “View original post on X” link is the way to open X. Keep the same behavior for pinned and daily posts in all three languages.
-- On live Posts cards, omit the “automatically synced” source label from both the pinned card and daily card. Keep the source notice when data is stale or when the dated public snapshot is shown, and keep the original-post link on the right.
 
-- 2026-09-29 performance scope: improve direct access without adding a proxy. Preserve the original post-photo URLs and quality in both cards and enlarged previews; do not introduce reduced-size card images. Prioritize scene loading, cached feed rendering, and bounded adjacent-photo prefetch.
+## Home, Posts and Contact behavior
 
-- 2026-09-30 control accents: Keep the blue scene and blue-white reading surfaces, but use distinct soft pink, blue, mint, lavender and yellow fills for buttons, navigation, language selectors and small controls. The user explicitly prefers colorful clickable regions over uniformly blue controls.
+- The homepage X avatar, display name and username follow the current X profile using the account's stable X user ID. Retain local fallback content during API outages and prefer the higher-resolution avatar on Home and Posts when available.
+- Show the user's own original X posts in cards, and label decorative art separately from actual post media.
+- On Posts, keep a stationary card for the account's current X pinned post above the daily carousel. Update it when the pin changes and keep it out of the daily carousel. Never present a dated fallback snapshot as a pinned post.
+- Show all original posts available from the X user timeline rather than limiting the daily carousel to six.
+- Omit the sticky previous/next bar above the daily card. Keep the lower daily-post navigation and date index.
+- Show previous/next photo buttons on pinned and daily cards whenever a post has a photo, including a single-photo post where either button leaves it in place. Keep photo and daily-post navigation distinct.
+- When a post displays its photo, hide the short URL X adds for that photo from the card text. Preserve unrelated links.
+- Render X video attachments inline through same-origin `/api/x-video` with byte-range support. Clicking a photo or video opens an enlarged on-site preview with a close X below the media; the bottom-right original-post link opens X. Use the same behavior for pinned and daily posts in all three languages.
+- On live Posts cards, omit the automatically synced source label. Keep the source notice for stale data or the dated public snapshot, and keep the original-post link on the right.
+- Keep the Posts panel and both post cards translucent like the Contact panel.
+- On Contact, show each service name and its short localized description without a separate account/ID row. Use `期待你的来信` as the Chinese email heading with matching Japanese and English wording.
 
-- 2026-09-30 home scrolling: Keep the homepage illustration fixed to the viewport on desktop and mobile; scroll the content over it and retain the scene while reading lower sections.
+## Performance and media
 
-- 2026-09-30 music: Label the player AIR in all languages and use Uno's piano arrangement of 鳥の詩 as a same-origin audio asset with source attribution. Remove unused companion components, styles, dependencies and model preparation; retired model assets stay in archive only.
-
-- 2026-09-30 desktop scrolling: Keep the fixed artwork and translucent cards, but avoid large live backdrop blur. Reuse prerendered particle sprites and bound decorative canvas resolution on high-DPI displays; keep original photo resolution.
-
-- 2026-09-30 desktop home: Supersedes desktop home scrolling above. On fine-pointer viewports wider than 900px, fit the entire homepage into one fixed viewport, including journal cards. Keep mobile scrolling and other routes unchanged.
+- Most mainland-China visitors use the site without a network proxy. Serve new scene images and display assets from this site's `/assets/` or constrained `/api/` paths, prioritize the active scene and check cold-load size.
+- Improve direct access without adding a proxy. Preserve original post-photo URLs and quality in cards and enlarged previews; do not introduce reduced-size card images.
+- Prioritize scene loading, cached feed rendering and bounded adjacent-photo prefetch.
+- Keep scrolling smooth on photo posts. Avoid paint-heavy background animation and large live backdrop blur, especially across the full Posts panel. Reuse prerendered particle sprites and bound decorative canvas resolution on high-DPI displays.
+- Keep the signed same-origin X media restrictions, video Range behavior, cache lifetime limits and server-only secret handling described in `README.md`.
