@@ -51,12 +51,12 @@ export function HeroSection({ header, language, t, profile }) {
   return <section className="hero" ref={heroRef} aria-label={t.homeLabel}>
       <div className="home-floating-elements" aria-hidden="true">
         {mobileScene ? <>
-          <img className="home-floating-element home-floating-dove-mobile" src={ASSETS + "/home-mobile-dove-motion.png"} alt="" draggable="false" fetchPriority="low" decoding="async" />
-          <img className="home-mobile-petal home-mobile-petal-one" src={ASSETS + "/home-floating-petal.png"} alt="" draggable="false" fetchPriority="low" decoding="async" />
-          <img className="home-mobile-petal home-mobile-petal-two" src={ASSETS + "/home-floating-petal.png"} alt="" draggable="false" fetchPriority="low" decoding="async" />
+          <img className="home-floating-element home-floating-dove-mobile" src={ASSETS + "/home-mobile-dove-motion.webp"} alt="" draggable="false" fetchPriority="low" decoding="async" />
+          <img className="home-mobile-petal home-mobile-petal-one" src={ASSETS + "/home-floating-petal.webp"} alt="" draggable="false" fetchPriority="low" decoding="async" />
+          <img className="home-mobile-petal home-mobile-petal-two" src={ASSETS + "/home-floating-petal.webp"} alt="" draggable="false" fetchPriority="low" decoding="async" />
         </> : <>
-          <img className="home-floating-element home-floating-dove" src={ASSETS + "/home-dove-motion.png"} alt="" draggable="false" fetchPriority="low" decoding="async" />
-          <img className="home-floating-element home-floating-petal" src={ASSETS + "/home-petal-motion.png"} alt="" draggable="false" fetchPriority="low" decoding="async" />
+          <img className="home-floating-element home-floating-dove" src={ASSETS + "/home-dove-motion.webp"} alt="" draggable="false" fetchPriority="low" decoding="async" />
+          <img className="home-floating-element home-floating-petal" src={ASSETS + "/home-petal-motion.webp"} alt="" draggable="false" fetchPriority="low" decoding="async" />
         </>}
       </div>
       {header}
