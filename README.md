@@ -2,7 +2,7 @@
 
 React / Vite 个人网站，提供首页、动态、联系三个页面，支持中文、日文、英文。联系页唯一邮箱为 `fyh20071004@gmail.com`。
 
-2026-10-11：商务页及其入口已移除，联系页已精简为上述唯一邮箱。自定义右键菜单已移除，补充了分享预览（OG）标签。同日完成依赖安全更新、测试与构建分层、灯箱横屏修复、站内动效开关统一和媒体重试收紧；本轮修改仍保留在本地，尚未发布。
+当前重构已统一三语与联系方式配置、按组件整理样式并集中颜色变量；Vercel、Vite 和 Sites 共用 API 路由与媒体规则。卡片和灯箱共用媒体请求状态，保留独立重试、图片切换与键盘焦点。完整检查包含 lint、格式、逻辑测试和构建兼容性。本轮已通过本地验收，后续由生产分支 `master` 触发 Vercel 发布；当前线上版本以该分支最新成功的 Production 部署为准。
 
 ## 仓库与发布
 
@@ -11,6 +11,7 @@ React / Vite 个人网站，提供首页、动态、联系三个页面，支持�
 - Vercel：[my-little-nest](https://vercel.com/fyh2026s-projects/my-little-nest)，推送 `master` 后自动构建并部署。
 - 2026-10-09 已通过提交 `7579e82` 实测改名后的自动部署成功，Vercel 仓库绑定已更新为 `loveyong07`。
 - Vercel 空间地址仍为 `fyh2026s-projects`，属于有效地址。
+- 修复前生产基线（2026-10-11 23:43，北京时间）：远端 `master` 与当时最新成功的 Vercel Production 部署均为 `8c58c67de3dcadd6dfd22ff51bb29423594debe3`，正式域名 HTTP 200。该版本已包含商务页删除、邮箱精简与此前维护修复；当时本地 `8a322eb` 比该版本多 12 个提交，另有未提交的收尾与本次修复。这是修复和视觉比较的历史基线，不代表后续发布后的当前线上提交。
 
 ## 本地开发与检查
 
@@ -23,15 +24,28 @@ npm run dev:proxy -- --host 127.0.0.1 --port 4173 --strictPort
 
 ```powershell
 npm test              # 逻辑测试，不需要 dist
+npm run lint          # JavaScript、React Hooks 与 CSS 检查，警告也会失败
+npm run lint:css      # Biome 结构检查与 CSS 语法约定检查
+npm run format:check  # 格式检查
 npm run build         # 生成 dist/client、dist/server、dist/.openai
 npm run test:build    # 构建产物检查，必须在上一步之后运行
 npm run test:sites    # Sites/Worker 兼容检查
-npm run check         # 上述四项按顺序一次跑完，CI 与交付使用
+npm run check         # lint → 格式 → 逻辑 → 构建 → 构建产物 → Sites，CI 与交付使用
 git diff --check
-npm audit
+npm audit --audit-level=high
 ```
 
-`npm test` 只跑不依赖构建产物的逻辑测试，因此干净检出后可直接运行；`test:build` 读取 `dist/`，缺产物时会明确报错而不是静默跳过。发布门禁是 `npm run check`（见 `.github/workflows/check.yml`）。`vercel.json` 的构建命令保持 `npm run build`：`.vercelignore` 只上传构建输入，测试在 CI 中执行。
+`npm test` 只跑不依赖构建产物的逻辑测试，因此干净检出后可直接运行；`test:build` 读取 `dist/`，缺产物时会明确报错而不是静默跳过。CI 门禁包含 `npm run check` 和 `npm audit --audit-level=high`（见 `.github/workflows/check.yml`），审计同时覆盖开发与生产依赖。`vercel.json` 的构建命令保持 `npm run build`：`.vercelignore` 只上传构建输入，测试在 CI 中执行。
+
+CSS 检查已迁移到固定版本的 Biome 2.5.15，移除了 Stylelint 引入的 `micromatch → braces` 漏洞链。`biome.json` 检查重复选择器、重复属性、简写覆盖、空规则和关键帧错误；`scripts/check-css-syntax.mjs` 使用 CSS AST 补充数学运算空格与双冒号伪元素检查。图片格式回退使用 `@supports`，保留 JPEG 回退与 WebP 优先选择，无需关闭重复属性规则。`tests/css-lint.test.mjs` 验证门禁能拦截错误并放行合法的响应式覆盖和图片回退。
+
+2026-10-11 发布前修复实测：`npm run check` 的 lint、格式、210 项逻辑测试、7 项构建产物检查和 6 项 Sites 检查全部通过，`npm audit --audit-level=high` 为 **0 项漏洞**，`git diff --check` 通过。使用已有依赖安装。以上记录本地验证；线上 CI 和部署须按发布提交单独确认。
+
+CSS、布局或组件结构修改必须另做视觉比较；`npm run check` 不包含浏览器截图，不能用其全绿证明外观一致。保留外观的重构可使用 `npm run qa:styles -- capture qa/styles/before` 在构建后采集，再修改、构建并采集 `qa/styles/after`，最后用 `npm run qa:styles -- compare qa/styles/before qa/styles/after` 比较。保留原有 66 个固定场景，另加 4 个短横屏关闭按钮、短屏菜单 Contact 点击与桌面/手机照片键盘焦点场景。模拟的网络失败不会掩盖真实页面错误，采集遇到真实错误会返回失败。
+
+采集清单保存源提交、工作区状态、源码与构建摘要、采集脚本与固定数据摘要、浏览器版本和时区。可用 `QA_ROOT` 指向隔离检出的源码，以同一脚本和固定数据采集基线；用 `QA_SOURCE_REVISION` 和 `QA_SOURCE_STATE` 标注该源码来源，采集前分别构建两个版本。比较会校验浏览器和采集条件，并保存 `comparison.json`；未知来源的旧截图不能代表生产基线。视频场景使用失败响应，不能代替真实视频播放和真实网络 Range 验收。
+
+本次以生产提交 `8c58c67` 为源码基线，两个版本各采集 70 个场景和 32 张截图；无元素位置、尺寸或文案变化。严格比较仍保留颜色归并、无效样式删除和置顶重试按钮退避状态等预期差异；一张截图的 38 个文字差异像素经同版本重采确认是采集噪声，不将严格比较记为完全一致。详细文件和证据见 [重构修复验收-2026-10-11.md](重构修复验收-2026-10-11.md)。
 
 页面构建产物位于 `dist/client`，Sites 兼容产物位于 `dist/server` 和 `dist/.openai`。
 
@@ -39,16 +53,30 @@ npm audit
 
 - `src/constants/locales.js`：三语通用文案；`src/constants/site.js`：站点与联系方式配置。
 - `src/components/HeroSection.jsx`：首页；`src/pages/PostsPage.jsx`：动态页；`src/pages/ContactPage.jsx`：联系页。
-- `src/hooks/`、`src/routes/`：动态、资料、语言和站内导航。
-- `src/styles.css`、`src/styles/`：样式；`server/`、`api/`：X 服务与 Vercel 接口。
+- `src/hooks/`、`src/routes/`：动态、资料、语言、站内导航与共享媒体请求状态。
+- `src/styles.css`、`src/styles/`：按组件组织样式，颜色变量位于 `globals.css`。
+- `biome.json`、`scripts/check-css-syntax.mjs`：CSS 结构和语法检查，JavaScript/React Hooks 仍由 ESLint 检查，格式仍由 Prettier 检查。
+- `server/api-handler.mjs`：四个 API 的共享入口；`server/x-feed-service.mjs`：X 资料和动态服务。
+- `api/`、`server/vite-api-plugin.mjs`、`worker/index.js`：Vercel、Vite 与 Sites 的运行环境适配。
+- `shared/`：浏览器和服务端共用的 X 账号与媒体来源规则。
 - `build/scene-preloads.mjs`：场景预载插件；`build/` 是源码目录。
 - `public/assets/`：在线资源；`archive/`、`design-reference.png`：保留的原始素材及设计参考。
 - `public/assets/audio/SOURCES.md`：音乐来源与使用说明。
 - `AGENTS.md`：项目约定；`网站设计进度交接.md`：当前维护交接。
 
+脚本媒体查询见 `src/constants/media-queries.js`；CSS 的 700px、900px / 901px 与 `(pointer: fine)` 条件保持同步。700px 及以下使用手机场景与紧凑布局，900px 及以下使用折叠菜单，901px 及以上且精细指针才启用首页一屏适配。修改断点时同时检查脚本与 CSS，避免引入额外的生成工具。ESLint 负责 JavaScript/React Hooks，Biome 负责 CSS 结构，CSS AST 检查器补充语法约定，Prettier 负责格式；新增 CSS 检查规则必须覆盖合法语法，保留现有门禁。
+
 ## X 动态、媒体与密钥
 
 `/api/x-profile` 通过稳定用户 ID 查询账号资料；`/api/x-posts` 获取置顶和日常原创帖。前端定期刷新，接口失败时使用已有缓存或明确标注的快照，不代表秒级同步。
+
+资料和动态响应对浏览器使用 `Cache-Control: no-store`，但浏览器应用层仍有内存和 localStorage 缓存。保留当前偏向复用、减少重复查询的策略：Vercel CDN 对完整成功响应使用 `s-maxage=300, stale-while-revalidate=600`；整体过期/不可用，或置顶过期/不可用/状态缺失及异常时使用 `s-maxage=60`。动态只有整体 `ok` 且置顶 `ok` / `none` 才算完整成功，`none` 表示已确认无置顶；资料只判断自身状态。异常响应也用短缓存。
+
+服务端时间线和用户资料成功缓存为 15 分钟，时间线每 24 小时完整核对；前端完整成功数据的刷新窗口也为 15 分钟，页面可见时每分钟检查一次。因此单层 CDN 的 5 分钟不是端到端同步时限，缓存窗口可能叠加。`stale-while-revalidate` 允许过期缓存被使用并在后台更新，不表示每次请求固定再等待 10 分钟。尚无线上命中、费用或冷启动数据证明延长缓存有显著收益，接受其可能增加同步等待的取舍。
+
+置顶部分失败保留可用日常动态：服务端从该次失败完成起退避 60 秒，到期后的下一次请求只重查同一置顶详情，不重抓用户或时间线，并合并并发；继续失败则再退避 60 秒。置顶恢复不会重置时间线缓存时钟。浏览器保存可用动态，但部分失败不进入 15 分钟完整成功窗口，沿用 30 秒失败退避及可见页面每分钟检查。恢复为 `ok` / `none` 后回到正常缓存。上述均按请求触发，CDN、页面可见性、函数实例和上游响应还会影响用户看到恢复的时间，不保证一分钟内端到端恢复。
+
+共享 handler 表示源码规则相同。四个 Vercel 函数分别创建 handler，内存缓存仅限各自实例；不能假定跨函数、实例或运行环境共享内存。当前不额外引入数据库或外部缓存服务。
 
 `/api/x-media`、`/api/x-video` 为同源媒体接口。服务端为本站媒体生成签名并校验源地址、类型、有效期和签名；精确旧媒体名单提供缓存兼容。保留原图画质、视频 Range 和缓存寿命限制。
 
@@ -56,4 +84,4 @@ npm audit
 
 ## 项目约定
 
-遵循 `AGENTS.md`，保留三语内容、原始素材与既有交互。当前使用 GitHub / Vercel 发布，不使用 Cloudflare；Sites 兼容文件按约定保留。旧实施记录与 QA 过程文件已清理，已提交的历史可从 Git 历史查看。
+遵循 `AGENTS.md`，保留三语内容、原始素材与既有交互。当前使用 GitHub / Vercel 发布，不使用 Cloudflare；Sites 兼容文件按约定保留。`qa/` 是不提交的本地验证输出；已提交的旧实施记录可从 Git 历史查看。

@@ -169,6 +169,45 @@ test("expired or future snapshots cannot seed freshness", () => {
   assert.equal(resource.getSnapshot().value.version, 2);
 });
 
+test("usable partial successes retain a snapshot but recover after cooldown, including restored snapshots", async () => {
+  const clock = fakeClock();
+  let calls = 0;
+  let saves = 0;
+  const partial = { status: "ok", posts: [1], pinnedStatus: "unavailable" };
+  const complete = { ...partial, pinnedStatus: "ok" };
+  const resource = createSharedRequest({
+    url: "/api/example",
+    isSuccess,
+    isFresh: (value) => value.pinnedStatus === "ok",
+    ...clock,
+    fetchImpl: async () => {
+      calls++;
+      return response(calls < 3 ? partial : complete);
+    },
+    onSuccess: () => {
+      saves++;
+    },
+  });
+  resource.prime(partial, clock.now());
+  assert.deepEqual(await resource.load(), partial);
+  assert.equal(calls, 1, "restored partial data must not suppress the first recovery request");
+  assert.deepEqual(resource.getSnapshot().value, partial);
+  assert.equal(saves, 1);
+  clock.advance(REQUEST_RETRY_MS - 1);
+  assert.deepEqual(await resource.load({ force: true }), partial);
+  assert.equal(calls, 1);
+  clock.advance(1);
+  await Promise.all(Array.from({ length: 8 }, () => resource.load()));
+  assert.equal(calls, 2, "concurrent recovery shares a request");
+  clock.advance(REQUEST_RETRY_MS);
+  assert.deepEqual(await resource.load(), complete);
+  assert.equal(calls, 3);
+  assert.equal(resource.getRetryAfter(), 0);
+  clock.advance(REQUEST_FRESH_MS - 1);
+  assert.deepEqual(await resource.load(), complete);
+  assert.equal(calls, 3, "complete results retain the normal freshness window");
+});
+
 test("hidden pages pause refresh checks and leaving a consumer does not abort shared work", async () => {
   const clock = fakeClock();
   let finish;

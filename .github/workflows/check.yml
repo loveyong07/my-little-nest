@@ -17,7 +17,7 @@ jobs:
           cache: npm
       - name: Install locked dependencies
         run: npm ci
-      - name: Logic tests, build, build-artifact checks, Sites worker tests
+      - name: Lint, formatting, logic tests, build and runtime compatibility
         run: npm run check
       - name: Fail on high or critical dependency advisories
         run: npm audit --audit-level=high

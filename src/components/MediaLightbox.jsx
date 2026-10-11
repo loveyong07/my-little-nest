@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { FiChevronLeft, FiChevronRight, FiX } from "react-icons/fi";
-import { mediaRetrySrc, xMediaSrc } from "../media-urls.js";
+import { xMediaSrc } from "../media-urls.js";
+import { useMediaRequest } from "../hooks/useMediaRequest.js";
 
 export function MediaLightbox({
   kind,
@@ -17,27 +18,21 @@ export function MediaLightbox({
 }) {
   const dialogRef = useRef(null);
   const closeRef = useRef(null);
-  const [photoUnavailable, setPhotoUnavailable] = useState(false);
-  const [photoRetryCount, setPhotoRetryCount] = useState(0);
-  const [videoUnavailable, setVideoUnavailable] = useState(false);
-  const [videoRetryCount, setVideoRetryCount] = useState(0);
-  const photoLightboxSrc = mediaRetrySrc(photo?.src, photoRetryCount, "lightboxRetry");
-  const videoLightboxSrc = mediaRetrySrc(videoSrc, videoRetryCount, "lightboxRetry");
+  const photoRequest = useMediaRequest(photo?.src, "lightboxRetry");
+  const videoRequest = useMediaRequest(videoSrc, "lightboxRetry");
 
   useEffect(() => {
-    setPhotoUnavailable(false);
-    setPhotoRetryCount(0);
-  }, [photo?.src]);
-
-  useEffect(() => {
-    setVideoUnavailable(false);
-    setVideoRetryCount(0);
-  }, [videoSrc]);
-
-  useEffect(() => {
+    const returnFocus = returnFocusRef.current;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     closeRef.current?.focus();
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      returnFocus?.focus();
+    };
+  }, [returnFocusRef]);
+
+  useEffect(() => {
     function handleKeyDown(event) {
       if (event.key === "Escape") {
         onClose(null);
@@ -65,10 +60,8 @@ export function MediaLightbox({
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = previousOverflow;
-      returnFocusRef.current?.focus();
     };
-  }, [kind, onClose, onPhotoChange, photoCount, returnFocusRef]);
+  }, [kind, onClose, onPhotoChange, photoCount]);
 
   return createPortal(
     <div
@@ -87,12 +80,12 @@ export function MediaLightbox({
       >
         {kind === "photo" ? (
           <>
-            {photoLightboxSrc && !photoUnavailable ? (
+            {photoRequest.src && !photoRequest.unavailable ? (
               <img
-                key={photoLightboxSrc}
-                src={photoLightboxSrc}
+                key={photoRequest.src}
+                src={photoRequest.src}
                 alt={photo.alt || photoAlt}
-                onError={() => setPhotoUnavailable(true)}
+                onError={photoRequest.onError}
               />
             ) : (
               <div className="media-lightbox-unavailable" role="status">
@@ -101,8 +94,7 @@ export function MediaLightbox({
                   <button
                     type="button"
                     onClick={() => {
-                      setPhotoRetryCount((count) => count + 1);
-                      setPhotoUnavailable(false);
+                      photoRequest.retry();
                       closeRef.current?.focus();
                     }}
                   >
@@ -133,18 +125,18 @@ export function MediaLightbox({
               </button>
             </div>
           </>
-        ) : videoLightboxSrc && !videoUnavailable ? (
+        ) : videoRequest.src && !videoRequest.unavailable ? (
           <video
-            key={videoLightboxSrc}
+            key={videoRequest.src}
             controls
             playsInline
             preload="metadata"
             poster={xMediaSrc(video.poster, false, video.posterProxyUrl) || undefined}
             aria-label={video.alt || t.postVideoAlt}
             tabIndex="0"
-            onError={() => setVideoUnavailable(true)}
+            onError={videoRequest.onError}
           >
-            <source src={videoLightboxSrc} type="video/mp4" />
+            <source src={videoRequest.src} type="video/mp4" />
           </video>
         ) : (
           <div className="media-lightbox-unavailable" role="status">
@@ -153,8 +145,7 @@ export function MediaLightbox({
               <button
                 type="button"
                 onClick={() => {
-                  setVideoRetryCount((count) => count + 1);
-                  setVideoUnavailable(false);
+                  videoRequest.retry();
                   closeRef.current?.focus();
                 }}
               >

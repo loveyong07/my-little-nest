@@ -1,0 +1,19 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
+  "files": { "includes": ["src/**/*.css"] },
+  "formatter": { "enabled": false },
+  "assist": { "enabled": false },
+  "linter": {
+    "rules": {
+      "recommended": false,
+      "nursery": { "noDuplicateSelectors": "error" },
+      "suspicious": {
+        "noDuplicateProperties": "error",
+        "noDuplicateCustomProperties": "error",
+        "noShorthandPropertyOverrides": "error",
+        "noEmptyBlock": "error",
+        "noImportantInKeyframe": "error"
+      }
+    }
+  }
+}

@@ -41,6 +41,7 @@ export function writeFeedCache(storage, feed, now = Date.now()) {
 const request = createSharedRequest({
   url: "/api/x-posts",
   isSuccess: (feed) => feed?.status === "ok" && Array.isArray(feed.posts),
+  isFresh: (feed) => ["ok", "none"].includes(feed?.pinnedStatus),
   onSuccess: (feed, savedAt) => {
     if (typeof window !== "undefined") writeFeedCache(window.localStorage, feed, savedAt);
   },
