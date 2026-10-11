@@ -18,7 +18,10 @@ function preloadScene(page) {
   const scenes = scenePreloads(page);
   const { href } = scenes.find((scene) => !scene.media || window.matchMedia(scene.media).matches) ?? scenes.at(-1);
   // The DOM is the record of what is already preloaded, including the server-rendered link.
-  if ([...document.querySelectorAll('link[rel="preload"][as="image"]')].some((link) => link.getAttribute("href") === href)) return;
+  if (
+    [...document.querySelectorAll('link[rel="preload"][as="image"]')].some((link) => link.getAttribute("href") === href)
+  )
+    return;
   const link = document.createElement("link");
   link.rel = "preload";
   link.as = "image";
@@ -41,8 +44,10 @@ if (typeof window !== "undefined") activateScene(currentPage());
 
 // A direct /posts visit starts loading before React mounts. fetchFeed coalesces
 // any later request until this one settles.
-let earlyFeed = typeof window !== "undefined" && currentPage() === "posts"
-  ? import("../feed-cache.js").then(({ fetchFeed }) => fetchFeed()) : null;
+let earlyFeed =
+  typeof window !== "undefined" && currentPage() === "posts"
+    ? import("../feed-cache.js").then(({ fetchFeed }) => fetchFeed())
+    : null;
 earlyFeed?.catch(() => {});
 
 export function takeEarlyFeed() {
@@ -58,7 +63,9 @@ export function useSiteRoute() {
   useEffect(() => {
     if (previousPage.current === page) return;
     previousPage.current = page;
-    const frame = window.requestAnimationFrame(() => document.getElementById("page-heading")?.focus({ preventScroll: true }));
+    const frame = window.requestAnimationFrame(() =>
+      document.getElementById("page-heading")?.focus({ preventScroll: true }),
+    );
     return () => window.cancelAnimationFrame(frame);
   }, [page]);
 
@@ -82,8 +89,18 @@ export function useSiteRoute() {
 
   function handleRouteClick(event) {
     const link = event.target.closest("a[href]");
-    if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey
-      || (link.target && link.target !== "_self") || link.hasAttribute("download")) return;
+    if (
+      !link ||
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey ||
+      (link.target && link.target !== "_self") ||
+      link.hasAttribute("download")
+    )
+      return;
     const destination = siteNavigation(link.href, window.location.href);
     if (!destination) return;
 

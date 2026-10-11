@@ -7,7 +7,7 @@ export default defineConfig(({ mode }) => ({
   build: {
     outDir: "dist/client",
     // Production font-src is self-only: even tiny segmented fonts need local files.
-    assetsInlineLimit: (filePath) => /\.(?:woff2?|ttf|otf)$/i.test(filePath) ? false : undefined,
+    assetsInlineLimit: (filePath) => (/\.(?:woff2?|ttf|otf)$/i.test(filePath) ? false : undefined),
   },
   optimizeDeps: {
     include: ["react", "react-dom/client"],
@@ -19,8 +19,12 @@ export default defineConfig(({ mode }) => ({
       clientFiles: ["./src/main.jsx"],
     },
   },
-  plugins: [scenePreloadPlugin(), react(), xFeedPlugin({
-    token: loadEnv(mode, process.cwd(), "X_BEARER_TOKEN").X_BEARER_TOKEN,
-    mediaSigningSecret: loadEnv(mode, process.cwd(), "X_MEDIA_SIGNING_SECRET").X_MEDIA_SIGNING_SECRET,
-  })],
+  plugins: [
+    scenePreloadPlugin(),
+    react(),
+    xFeedPlugin({
+      token: loadEnv(mode, process.cwd(), "X_BEARER_TOKEN").X_BEARER_TOKEN,
+      mediaSigningSecret: loadEnv(mode, process.cwd(), "X_MEDIA_SIGNING_SECRET").X_MEDIA_SIGNING_SECRET,
+    }),
+  ],
 }));

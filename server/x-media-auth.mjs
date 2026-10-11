@@ -23,11 +23,21 @@ export function parseMediaSource(value, kind) {
     const url = new URL(value);
     const host = kind === "image" ? "pbs.twimg.com" : "video.twimg.com";
     const paths = kind === "image" ? IMAGE_PATHS : VIDEO_PATHS;
-    if (url.protocol !== "https:" || url.hostname !== host || url.username || url.password || url.port
-      || url.hash || !paths.some((prefix) => url.pathname.startsWith(prefix))) return null;
+    if (
+      url.protocol !== "https:" ||
+      url.hostname !== host ||
+      url.username ||
+      url.password ||
+      url.port ||
+      url.hash ||
+      !paths.some((prefix) => url.pathname.startsWith(prefix))
+    )
+      return null;
     // Signed and legacy permissions bind the complete URL, including the original size/format query.
     return url;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 export function validMediaQuery(request) {
@@ -49,8 +59,13 @@ async function signingKey(secret) {
   if (secret !== cachedSecret) {
     cachedSecret = secret;
     cachedKey = (async () => {
-      const rootKey = await crypto.subtle.importKey("raw", encoder.encode(secret),
-        { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+      const rootKey = await crypto.subtle.importKey(
+        "raw",
+        encoder.encode(secret),
+        { name: "HMAC", hash: "SHA-256" },
+        false,
+        ["sign"],
+      );
       const derived = await crypto.subtle.sign("HMAC", rootKey, encoder.encode("little-nest/media-signing-key/v1"));
       return crypto.subtle.importKey("raw", derived, { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
     })();
@@ -73,9 +88,12 @@ export async function signedMediaUrl(value, kind, { secret = mediaSigningSecret(
   return `/api/x-${kind === "image" ? "media" : "video"}?url=${encodeURIComponent(source.href)}&expires=${expires}&signature=${signature}`;
 }
 
-export async function authorizedMediaRequest(request, source, kind, {
-  secret = mediaSigningSecret(), now = Date.now(),
-} = {}) {
+export async function authorizedMediaRequest(
+  request,
+  source,
+  kind,
+  { secret = mediaSigningSecret(), now = Date.now() } = {},
+) {
   if (!source || !validMediaQuery(request)) return false;
   // This is an early browser hotlink check, not a substitute for cryptographic authorization.
   if (request.headers.get("sec-fetch-site") === "cross-site") return false;
@@ -99,8 +117,12 @@ export function boundedMediaCache(request, policy, now = Date.now()) {
   const remaining = Math.max(0, Number(expires) - Math.floor(now / 1000) - 1);
   const ages = [...policy.matchAll(/(?:^|,\s*)(?:s-maxage|max-age)=(\d+)/g)].map((match) => Number(match[1]));
   const fresh = Math.min(remaining, Math.max(0, ...ages));
-  return policy.replace(/((?:s-maxage|max-age)=)(\d+)/g, (_, directive, age) => directive + Math.min(Number(age), remaining))
-    .replace(/(stale-while-revalidate=)(\d+)/g, (_, directive, age) => directive + Math.min(Number(age), Math.max(0, remaining - fresh)));
+  return policy
+    .replace(/((?:s-maxage|max-age)=)(\d+)/g, (_, directive, age) => directive + Math.min(Number(age), remaining))
+    .replace(
+      /(stale-while-revalidate=)(\d+)/g,
+      (_, directive, age) => directive + Math.min(Number(age), Math.max(0, remaining - fresh)),
+    );
 }
 
 async function avatarProxy(value, options) {
@@ -122,11 +144,15 @@ export async function authorizeFeed(result, options) {
   async function postWithMedia(post) {
     if (!post) return post;
     const proxy = await avatarProxy(post.avatar, options);
-    const media = Array.isArray(post.media) ? await Promise.all(post.media.map(async (item) => {
-      const proxyUrl = await signedMediaUrl(item.url, item.type === "video" ? "video" : "image", options);
-      const posterProxyUrl = item.poster ? await signedMediaUrl(item.poster, "image", options) : null;
-      return { ...item, ...(proxyUrl ? { proxyUrl } : {}), ...(posterProxyUrl ? { posterProxyUrl } : {}) };
-    })) : undefined;
+    const media = Array.isArray(post.media)
+      ? await Promise.all(
+          post.media.map(async (item) => {
+            const proxyUrl = await signedMediaUrl(item.url, item.type === "video" ? "video" : "image", options);
+            const posterProxyUrl = item.poster ? await signedMediaUrl(item.poster, "image", options) : null;
+            return { ...item, ...(proxyUrl ? { proxyUrl } : {}), ...(posterProxyUrl ? { posterProxyUrl } : {}) };
+          }),
+        )
+      : undefined;
     return { ...post, ...(proxy ? { avatarProxy: proxy } : {}), ...(media ? { media } : {}) };
   }
   return {

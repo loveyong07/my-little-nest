@@ -4,7 +4,12 @@ import { readProfileCache, writeProfileCache, fetchProfile, getProfileSnapshot }
 
 function storage() {
   let value = null;
-  return { getItem: () => value, setItem: (_, next) => { value = next; } };
+  return {
+    getItem: () => value,
+    setItem: (_, next) => {
+      value = next;
+    },
+  };
 }
 
 test("profile fallback expires after 24 hours and a failure cannot renew it", () => {
@@ -24,7 +29,14 @@ test("invalid profiles and blocked storage do not replace a valid fallback", () 
   writeProfileCache(store, { status: "ok", profile: { name: "Name", username: 123 } }, 1000);
   assert.equal(readProfileCache(store, 1001), null);
   assert.equal(readProfileCache({ getItem: () => "{broken" }), null);
-  const blocked = { getItem() { throw Error(); }, setItem() { throw Error(); } };
+  const blocked = {
+    getItem() {
+      throw Error();
+    },
+    setItem() {
+      throw Error();
+    },
+  };
   assert.equal(readProfileCache(blocked), null);
   assert.doesNotThrow(() => writeProfileCache(blocked, { status: "ok", profile: { name: "Name", username: "valid" } }));
 });
@@ -36,7 +48,10 @@ test("profile route and foreground consumers share the same successful request a
     calls++;
     assert.equal(url, "/api/x-profile");
     assert.equal(options.cache, "no-store");
-    return { ok: true, json: async () => ({ status: "ok", profile: { name: "初咏", username: "loveyong07", avatar: null } }) };
+    return {
+      ok: true,
+      json: async () => ({ status: "ok", profile: { name: "初咏", username: "loveyong07", avatar: null } }),
+    };
   };
   try {
     const first = fetchProfile();
@@ -46,5 +61,7 @@ test("profile route and foreground consumers share the same successful request a
     await fetchProfile();
     assert.equal(calls, 1);
     assert.equal(getProfileSnapshot().savedAt, savedAt);
-  } finally { globalThis.fetch = original; }
+  } finally {
+    globalThis.fetch = original;
+  }
 });

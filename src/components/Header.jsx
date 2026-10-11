@@ -10,7 +10,9 @@ export function Header({ page, t, language, changeLanguage }) {
   const menuToggleRef = useRef(null);
   const menuOpenedByKeyboardRef = useRef(false);
 
-  useEffect(() => { setMenuOpen(false); }, [page]);
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [page]);
 
   useEffect(() => {
     if (!menuOpen) return undefined;
@@ -37,20 +39,60 @@ export function Header({ page, t, language, changeLanguage }) {
     }
   }
 
-  return <header className="site-header" ref={headerRef}>
-    <a className="brand" href={pagePaths.home} aria-label={t.homeLinkLabel} onClick={closeMenuOnNavigation}>
-      <span className="brand-script">Nest<PiFlowerLight aria-hidden="true" /></span>
-      <span className="brand-caption">{t.homePlaceLabel}</span>
-    </a>
-    <nav className={"site-nav " + (menuOpen ? "is-open" : "")} id="site-navigation" aria-label={t.navLabel}>
-      {navIds.map((id, index) => <a key={id} data-page={id} className={page === id ? "active" : ""} href={pagePaths[id]} onClick={closeMenuOnNavigation} aria-current={page === id ? "page" : undefined}><PiFlowerLight className="nav-active-flower" aria-hidden="true" />{t.nav[index]}</a>)}
-    </nav>
-    <div className="language-picker" role="group" aria-label={t.languageLabel}>
-      {[["zh", "中文"], ["ja", "日本語"], ["en", "EN"]].map(([code, label]) => <button key={code} className={language === code ? "active" : ""} onClick={() => changeLanguage(code)} aria-pressed={language === code}>{label}</button>)}
-    </div>
-    <button className="menu-toggle" ref={menuToggleRef} type="button" onClick={(event) => {
-      menuOpenedByKeyboardRef.current = event.detail === 0;
-      setMenuOpen((current) => !current);
-    }} aria-label={menuOpen ? t.closeMenu : t.openMenu} aria-expanded={menuOpen} aria-controls="site-navigation">{menuOpen ? <FiX /> : <FiMenu />}</button>
-  </header>;
+  return (
+    <header className="site-header" ref={headerRef}>
+      <a className="brand" href={pagePaths.home} aria-label={t.homeLinkLabel} onClick={closeMenuOnNavigation}>
+        <span className="brand-script">
+          Nest
+          <PiFlowerLight aria-hidden="true" />
+        </span>
+        <span className="brand-caption">{t.homePlaceLabel}</span>
+      </a>
+      <nav className={"site-nav " + (menuOpen ? "is-open" : "")} id="site-navigation" aria-label={t.navLabel}>
+        {navIds.map((id, index) => (
+          <a
+            key={id}
+            data-page={id}
+            className={page === id ? "active" : ""}
+            href={pagePaths[id]}
+            onClick={closeMenuOnNavigation}
+            aria-current={page === id ? "page" : undefined}
+          >
+            <PiFlowerLight className="nav-active-flower" aria-hidden="true" />
+            {t.nav[index]}
+          </a>
+        ))}
+      </nav>
+      <div className="language-picker" role="group" aria-label={t.languageLabel}>
+        {[
+          ["zh", "中文"],
+          ["ja", "日本語"],
+          ["en", "EN"],
+        ].map(([code, label]) => (
+          <button
+            key={code}
+            className={language === code ? "active" : ""}
+            onClick={() => changeLanguage(code)}
+            aria-pressed={language === code}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <button
+        className="menu-toggle"
+        ref={menuToggleRef}
+        type="button"
+        onClick={(event) => {
+          menuOpenedByKeyboardRef.current = event.detail === 0;
+          setMenuOpen((current) => !current);
+        }}
+        aria-label={menuOpen ? t.closeMenu : t.openMenu}
+        aria-expanded={menuOpen}
+        aria-controls="site-navigation"
+      >
+        {menuOpen ? <FiX /> : <FiMenu />}
+      </button>
+    </header>
+  );
 }

@@ -6,7 +6,9 @@ function readStoredLanguage() {
   try {
     const saved = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
     return Object.hasOwn(copy, saved) ? saved : "zh";
-  } catch { return "zh"; }
+  } catch {
+    return "zh";
+  }
 }
 
 export function useI18n() {
@@ -18,7 +20,11 @@ export function useI18n() {
 
   function changeLanguage(nextLanguage) {
     setLanguage(nextLanguage);
-    try { window.localStorage.setItem(LANGUAGE_STORAGE_KEY, nextLanguage); } catch { /* Storage is optional. */ }
+    try {
+      window.localStorage.setItem(LANGUAGE_STORAGE_KEY, nextLanguage);
+    } catch {
+      /* Storage is optional. */
+    }
   }
 
   return { language, t: copy[language], changeLanguage };

@@ -3,7 +3,18 @@ import { createPortal } from "react-dom";
 import { FiChevronLeft, FiChevronRight, FiX } from "react-icons/fi";
 import { mediaRetrySrc, xMediaSrc } from "../media-urls.js";
 
-export function MediaLightbox({ kind, photo, photoAlt, photoCount, onPhotoChange, video, videoSrc, t, onClose, returnFocusRef }) {
+export function MediaLightbox({
+  kind,
+  photo,
+  photoAlt,
+  photoCount,
+  onPhotoChange,
+  video,
+  videoSrc,
+  t,
+  onClose,
+  returnFocusRef,
+}) {
   const dialogRef = useRef(null);
   const closeRef = useRef(null);
   const [photoUnavailable, setPhotoUnavailable] = useState(false);
@@ -59,28 +70,110 @@ export function MediaLightbox({ kind, photo, photoAlt, photoCount, onPhotoChange
     };
   }, [kind, onClose, onPhotoChange, photoCount, returnFocusRef]);
 
-  return createPortal(<div className="media-lightbox" role="presentation"
-    onClick={(event) => { if (event.target === event.currentTarget) onClose(null); }}>
-    <div className={`media-lightbox-content media-lightbox-content-${kind}`} role="dialog" aria-modal="true"
-      aria-label={kind === "photo" ? t.enlargePhoto : t.enlargeVideo} ref={dialogRef}>
-      {kind === "photo"
-        ? <>{photoLightboxSrc && !photoUnavailable ? <img key={photoLightboxSrc} src={photoLightboxSrc} alt={photo.alt || photoAlt} onError={() => setPhotoUnavailable(true)} />
-          : <div className="media-lightbox-unavailable" role="status"><span>{t.photoUnavailable}</span>
-            {photo?.src && <button type="button" onClick={() => { setPhotoRetryCount((count) => count + 1); setPhotoUnavailable(false); closeRef.current?.focus(); }}>{t.retry}</button>}</div>}
-          <div className="media-lightbox-navigation">
-            <button className="media-lightbox-prev" type="button" aria-label={t.prevPhoto}
-              onClick={() => onPhotoChange((index) => (index - 1 + photoCount) % photoCount)}><FiChevronLeft aria-hidden="true" /></button>
-            <span className="media-lightbox-count" aria-live="polite">{t.postNumber(photo.number, photoCount)}</span>
-            <button className="media-lightbox-next" type="button" aria-label={t.nextPhoto}
-              onClick={() => onPhotoChange((index) => (index + 1) % photoCount)}><FiChevronRight aria-hidden="true" /></button>
-          </div></>
-        : videoLightboxSrc && !videoUnavailable ? <video key={videoLightboxSrc} controls playsInline preload="metadata" poster={xMediaSrc(video.poster, false, video.posterProxyUrl) || undefined}
-          aria-label={video.alt || t.postVideoAlt} tabIndex="0" onError={() => setVideoUnavailable(true)}>
-          <source src={videoLightboxSrc} type="video/mp4" />
-        </video> : <div className="media-lightbox-unavailable" role="status"><span>{t.videoUnavailable}</span>
-          {videoSrc && <button type="button" onClick={() => { setVideoRetryCount((count) => count + 1); setVideoUnavailable(false); closeRef.current?.focus(); }}>{t.retry}</button>}</div>}
-      <button ref={closeRef} className="media-lightbox-close" type="button"
-        aria-label={t.closePreview} onClick={() => onClose(null)}><FiX aria-hidden="true" /></button>
-    </div>
-  </div>, document.body);
+  return createPortal(
+    <div
+      className="media-lightbox"
+      role="presentation"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose(null);
+      }}
+    >
+      <div
+        className={`media-lightbox-content media-lightbox-content-${kind}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label={kind === "photo" ? t.enlargePhoto : t.enlargeVideo}
+        ref={dialogRef}
+      >
+        {kind === "photo" ? (
+          <>
+            {photoLightboxSrc && !photoUnavailable ? (
+              <img
+                key={photoLightboxSrc}
+                src={photoLightboxSrc}
+                alt={photo.alt || photoAlt}
+                onError={() => setPhotoUnavailable(true)}
+              />
+            ) : (
+              <div className="media-lightbox-unavailable" role="status">
+                <span>{t.photoUnavailable}</span>
+                {photo?.src && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPhotoRetryCount((count) => count + 1);
+                      setPhotoUnavailable(false);
+                      closeRef.current?.focus();
+                    }}
+                  >
+                    {t.retry}
+                  </button>
+                )}
+              </div>
+            )}
+            <div className="media-lightbox-navigation">
+              <button
+                className="media-lightbox-prev"
+                type="button"
+                aria-label={t.prevPhoto}
+                onClick={() => onPhotoChange((index) => (index - 1 + photoCount) % photoCount)}
+              >
+                <FiChevronLeft aria-hidden="true" />
+              </button>
+              <span className="media-lightbox-count" aria-live="polite">
+                {t.postNumber(photo.number, photoCount)}
+              </span>
+              <button
+                className="media-lightbox-next"
+                type="button"
+                aria-label={t.nextPhoto}
+                onClick={() => onPhotoChange((index) => (index + 1) % photoCount)}
+              >
+                <FiChevronRight aria-hidden="true" />
+              </button>
+            </div>
+          </>
+        ) : videoLightboxSrc && !videoUnavailable ? (
+          <video
+            key={videoLightboxSrc}
+            controls
+            playsInline
+            preload="metadata"
+            poster={xMediaSrc(video.poster, false, video.posterProxyUrl) || undefined}
+            aria-label={video.alt || t.postVideoAlt}
+            tabIndex="0"
+            onError={() => setVideoUnavailable(true)}
+          >
+            <source src={videoLightboxSrc} type="video/mp4" />
+          </video>
+        ) : (
+          <div className="media-lightbox-unavailable" role="status">
+            <span>{t.videoUnavailable}</span>
+            {videoSrc && (
+              <button
+                type="button"
+                onClick={() => {
+                  setVideoRetryCount((count) => count + 1);
+                  setVideoUnavailable(false);
+                  closeRef.current?.focus();
+                }}
+              >
+                {t.retry}
+              </button>
+            )}
+          </div>
+        )}
+        <button
+          ref={closeRef}
+          className="media-lightbox-close"
+          type="button"
+          aria-label={t.closePreview}
+          onClick={() => onClose(null)}
+        >
+          <FiX aria-hidden="true" />
+        </button>
+      </div>
+    </div>,
+    document.body,
+  );
 }

@@ -34,18 +34,25 @@ test("proxies authorized X image paths with the requested cache headers and orig
       let requestedUrl;
       let fetchOptions;
       const signedUrl = await signedMediaUrl(source, "image", AUTH);
-      const response = await proxyXMedia(new Request(new URL(signedUrl, "https://site.test")), async (url, options) => {
-        requestedUrl = url;
-        fetchOptions = options;
-        return imageResponse();
-      }, AUTH);
+      const response = await proxyXMedia(
+        new Request(new URL(signedUrl, "https://site.test")),
+        async (url, options) => {
+          requestedUrl = url;
+          fetchOptions = options;
+          return imageResponse();
+        },
+        AUTH,
+      );
 
       assert.equal(response.status, 200);
       assert.equal(requestedUrl, source);
       assert.equal(fetchOptions.redirect, "error");
       assert.equal(response.headers.get("content-type"), "image/jpeg");
       const remaining = Number(new URL(signedUrl, "https://site.test").searchParams.get("expires")) - AUTH.now / 1000;
-      for (const [header, freshDirective] of [["cache-control", "max-age"], ["vercel-cdn-cache-control", "s-maxage"]]) {
+      for (const [header, freshDirective] of [
+        ["cache-control", "max-age"],
+        ["vercel-cdn-cache-control", "s-maxage"],
+      ]) {
         const policy = response.headers.get(header);
         const fresh = Number(policy.match(new RegExp(`${freshDirective}=(\\d+)`))[1]);
         const stale = Number(policy.match(/stale-while-revalidate=(\d+)/)[1]);
@@ -68,16 +75,22 @@ test("streams known-length images before the upstream body finishes", async () =
       controller.enqueue(IMAGE_BYTES);
     },
   });
-  const pendingResponse = proxyXMedia(mediaRequest(LEGACY_IMAGE_URL), async () => new Response(upstreamBody, {
-    headers: {
-      "Content-Type": "image/jpeg",
-      "Content-Length": "4",
-    },
-  }));
+  const pendingResponse = proxyXMedia(
+    mediaRequest(LEGACY_IMAGE_URL),
+    async () =>
+      new Response(upstreamBody, {
+        headers: {
+          "Content-Type": "image/jpeg",
+          "Content-Length": "4",
+        },
+      }),
+  );
   let timeoutId;
   const result = await Promise.race([
     pendingResponse,
-    new Promise((resolve) => { timeoutId = setTimeout(() => resolve(null), 100); }),
+    new Promise((resolve) => {
+      timeoutId = setTimeout(() => resolve(null), 100);
+    }),
   ]);
   clearTimeout(timeoutId);
   upstreamController.close();
@@ -94,13 +107,23 @@ test("a visitor that disconnects aborts the upstream image request", async () =>
   const clientAbort = new AbortController();
   let upstreamSignal = null;
   let upstreamController = null;
-  const pending = proxyXMedia(new Request(mediaRequest(LEGACY_IMAGE_URL).url, { signal: clientAbort.signal }),
+  const pending = proxyXMedia(
+    new Request(mediaRequest(LEGACY_IMAGE_URL).url, { signal: clientAbort.signal }),
     async (url, options) => {
       upstreamSignal = options.signal;
-      options.signal.addEventListener("abort", () => upstreamController.error(new DOMException("Aborted", "AbortError")));
-      return new Response(new ReadableStream({ start(controller) { upstreamController = controller; } }),
-        { headers: { "Content-Type": "image/jpeg" } });
-    });
+      options.signal.addEventListener("abort", () =>
+        upstreamController.error(new DOMException("Aborted", "AbortError")),
+      );
+      return new Response(
+        new ReadableStream({
+          start(controller) {
+            upstreamController = controller;
+          },
+        }),
+        { headers: { "Content-Type": "image/jpeg" } },
+      );
+    },
+  );
   // Let the upstream fetch and the buffered read start before the visitor leaves.
   await new Promise((resolve) => setTimeout(resolve, 10));
   assert.equal(upstreamSignal.aborted, false);
@@ -161,10 +184,14 @@ test("keeps GET-only and image-only behavior for authorized resources", async ()
 
 test("rejects unsigned images from another X account without requesting upstream", async () => {
   let fetchCalls = 0;
-  const response = await proxyXMedia(mediaRequest("https://pbs.twimg.com/media/another-account.jpg"), async () => {
-    fetchCalls += 1;
-    return imageResponse();
-  }, AUTH);
+  const response = await proxyXMedia(
+    mediaRequest("https://pbs.twimg.com/media/another-account.jpg"),
+    async () => {
+      fetchCalls += 1;
+      return imageResponse();
+    },
+    AUTH,
+  );
   assert.equal(response.status, 403);
   assert.equal(response.headers.get("cache-control"), "no-store");
   assert.equal(fetchCalls, 0);
@@ -177,20 +204,32 @@ test("keeps already-published unsigned images accessible with bounded retry para
   const response = await proxyXMedia(new Request(requestUrl), async () => imageResponse(), AUTH);
   assert.equal(response.status, 200);
   assert.equal(response.headers.get("cache-control"), "public, max-age=86400, stale-while-revalidate=604800");
-  assert.equal(response.headers.get("vercel-cdn-cache-control"), "public, s-maxage=86400, stale-while-revalidate=604800");
+  assert.equal(
+    response.headers.get("vercel-cdn-cache-control"),
+    "public, s-maxage=86400, stale-while-revalidate=604800",
+  );
   assert.deepEqual(new Uint8Array(await response.arrayBuffer()), IMAGE_BYTES);
 });
 
 test("rejects cross-site image hotlinking even with a valid signed URL", async () => {
   const signedUrl = await signedMediaUrl("https://pbs.twimg.com/media/site-image.jpg", "image", AUTH);
-  const response = await proxyXMedia(new Request(new URL(signedUrl, "https://site.test"), {
-    headers: { "Sec-Fetch-Site": "cross-site" },
-  }), () => { throw new Error("Cross-site image reached upstream"); }, AUTH);
+  const response = await proxyXMedia(
+    new Request(new URL(signedUrl, "https://site.test"), {
+      headers: { "Sec-Fetch-Site": "cross-site" },
+    }),
+    () => {
+      throw new Error("Cross-site image reached upstream");
+    },
+    AUTH,
+  );
   assert.equal(response.status, 403);
 });
 
 test("rejects tampered signatures and ambiguous image queries without upstream traffic", async (t) => {
-  const signedUrl = new URL(await signedMediaUrl("https://pbs.twimg.com/media/site-image.jpg", "image", AUTH), "https://site.test");
+  const signedUrl = new URL(
+    await signedMediaUrl("https://pbs.twimg.com/media/site-image.jpg", "image", AUTH),
+    "https://site.test",
+  );
   for (const [name, mutate, status] of [
     ["signature", (url) => url.searchParams.set("signature", "0".repeat(64)), 403],
     ["different source", (url) => url.searchParams.set("url", "https://pbs.twimg.com/media/other-account.jpg"), 403],
@@ -200,23 +239,40 @@ test("rejects tampered signatures and ambiguous image queries without upstream t
     await t.test(name, async () => {
       const url = new URL(signedUrl);
       mutate(url);
-      const response = await proxyXMedia(new Request(url), () => { throw new Error("Invalid request reached upstream"); }, AUTH);
+      const response = await proxyXMedia(
+        new Request(url),
+        () => {
+          throw new Error("Invalid request reached upstream");
+        },
+        AUTH,
+      );
       assert.equal(response.status, status);
       assert.equal(response.headers.get("cache-control"), "no-store");
     });
   }
   const expires = Number(signedUrl.searchParams.get("expires"));
-  const expired = await proxyXMedia(new Request(signedUrl), () => { throw new Error("Expired request reached upstream"); }, {
-    ...AUTH, now: expires * 1000,
-  });
+  const expired = await proxyXMedia(
+    new Request(signedUrl),
+    () => {
+      throw new Error("Expired request reached upstream");
+    },
+    {
+      ...AUTH,
+      now: expires * 1000,
+    },
+  );
   assert.equal(expired.status, 403);
 });
 
 test("signed image caching shrinks as authorization approaches expiry", async () => {
-  const signedUrl = new URL(await signedMediaUrl("https://pbs.twimg.com/media/site-image.jpg", "image", AUTH), "https://site.test");
+  const signedUrl = new URL(
+    await signedMediaUrl("https://pbs.twimg.com/media/site-image.jpg", "image", AUTH),
+    "https://site.test",
+  );
   const expires = Number(signedUrl.searchParams.get("expires"));
   const response = await proxyXMedia(new Request(signedUrl), async () => imageResponse(), {
-    ...AUTH, now: (expires - 30) * 1000,
+    ...AUTH,
+    now: (expires - 30) * 1000,
   });
   assert.equal(response.status, 200);
   assert.equal(response.headers.get("cache-control"), "public, max-age=29, stale-while-revalidate=0");

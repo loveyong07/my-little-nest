@@ -1,42 +1,214 @@
-.nest-atmosphere { position: fixed; inset: 0; z-index: 15; pointer-events: none; overflow: hidden; contain: strict; }
-.sakura-canvas { width: 100%; height: 100%; display: block; }
-.cursor-trail { position: absolute; inset: 0; }
-.cursor-trail > span { position: absolute; left: -8px; top: -8px; width: 16px; height: 16px; opacity: 0; color: #d895ad; }
-.cursor-trail > span:nth-child(2n) { color: #c196cb; }
-.cursor-trail > span svg { width: 100%; height: 100%; }
-.nest-dock { position: fixed; z-index: 40; left: 24px; bottom: 20px; display: flex; align-items: center; gap: 9px; padding: 7px; max-width: calc(100vw - 32px); border: 1px solid #fff; border-radius: 999px; background: #f8fbfdf2; box-shadow: 0 6px 28px #51728f24; }
-.dock-toggle, .mini-player button { display: grid; place-items: center; flex: 0 0 auto; width: 42px; height: 42px; padding: 0; border: 1px solid #d6e2ec; border-radius: 50%; background: #f6fafd; color: #597e9f; }
-.dock-toggle[aria-pressed="true"] { background: #e1eef8; color: #496883; }
-.dock-toggle:hover, .mini-player button:hover { background: #e6f0f9; }
-.mini-player { display: flex; gap: 10px; align-items: center; min-width: 0; }
-.player-disc { display: grid; width: 41px; height: 41px; flex: 0 0 auto; place-items: center; border: 7px solid #abbfcf; border-radius: 50%; background: #f1f7fb; color: #5b81a3; animation: record-turn 12s linear infinite; animation-play-state: paused; }
-.is-playing .player-disc { animation-play-state: running; }
-.player-disc svg { width: 14px; height: 14px; }
-.player-copy { display: grid; min-width: 0; gap: 1px; max-width: 170px; }
-.player-copy strong { color: #50728f; font-size: 12px; font-weight: 500; }
-/* Small print must stay legible: 11px at >=4.5:1 on the near-white dock. */
-.player-copy small { color: #4a6b8a; font-size: 11px; }
-.mini-player button { width: 42px; height: 42px; background: #e3ecf4; border-color: #d3e1ed; }
-.mini-player button svg { width: 13px; height: 13px; }
-.mini-player input { width: 52px; min-height: 36px; accent-color: #7e9cb7; margin: 0; }
-@keyframes record-turn { to { transform: rotate(360deg); } }
-@media (max-width: 700px) {
-  .nest-dock { bottom: max(12px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); width: max-content; gap: 6px; max-width: calc(100vw - 20px); padding: 6px; }
-  .mini-player { gap: 7px; }
-  .player-disc { width: 35px; height: 35px; border-width: 6px; }
-  .player-copy { max-width: 114px; }
-  .player-copy strong { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .player-copy small { display: none; }
-  /* A failed mobile playback still needs a visible reason. */
-  .player-copy small.player-error { display: block; color: #8a3f57; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .mini-player input { display: none; }
-  .dock-toggle { width: 44px; height: 44px; }
+.nest-atmosphere {
+  position: fixed;
+  inset: 0;
+  z-index: 15;
+  pointer-events: none;
+  overflow: hidden;
+  contain: strict;
 }
-@media (max-width: 360px) { .player-copy { max-width: 90px; } .nest-dock { gap: 5px; } }
-@media (prefers-reduced-motion: reduce) { .player-disc { animation: none; } }
+.sakura-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.cursor-trail {
+  position: absolute;
+  inset: 0;
+}
+.cursor-trail > span {
+  position: absolute;
+  left: -8px;
+  top: -8px;
+  width: 16px;
+  height: 16px;
+  opacity: 0;
+  color: #d895ad;
+}
+.cursor-trail > span:nth-child(2n) {
+  color: #c196cb;
+}
+.cursor-trail > span svg {
+  width: 100%;
+  height: 100%;
+}
+.nest-dock {
+  position: fixed;
+  z-index: 40;
+  left: 24px;
+  bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px;
+  max-width: calc(100vw - 32px);
+  border: 1px solid #fff;
+  border-radius: 999px;
+  background: #f8fbfdf2;
+  box-shadow: 0 6px 28px #51728f24;
+}
+.dock-toggle,
+.mini-player button {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 1px solid #d6e2ec;
+  border-radius: 50%;
+  background: #f6fafd;
+  color: #597e9f;
+}
+.dock-toggle[aria-pressed="true"] {
+  background: #e1eef8;
+  color: #496883;
+}
+.dock-toggle:hover,
+.mini-player button:hover {
+  background: #e6f0f9;
+}
+.mini-player {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+}
+.player-disc {
+  display: grid;
+  width: 41px;
+  height: 41px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 7px solid #abbfcf;
+  border-radius: 50%;
+  background: #f1f7fb;
+  color: #5b81a3;
+  animation: record-turn 12s linear infinite;
+  animation-play-state: paused;
+}
+.is-playing .player-disc {
+  animation-play-state: running;
+}
+.player-disc svg {
+  width: 14px;
+  height: 14px;
+}
+.player-copy {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+  max-width: 170px;
+}
+.player-copy strong {
+  color: #50728f;
+  font-size: 12px;
+  font-weight: 500;
+}
+/* Small print must stay legible: 11px at >=4.5:1 on the near-white dock. */
+.player-copy small {
+  color: #4a6b8a;
+  font-size: 11px;
+}
+.mini-player button {
+  width: 42px;
+  height: 42px;
+  background: #e3ecf4;
+  border-color: #d3e1ed;
+}
+.mini-player button svg {
+  width: 13px;
+  height: 13px;
+}
+.mini-player input {
+  width: 52px;
+  min-height: 36px;
+  accent-color: #7e9cb7;
+  margin: 0;
+}
+@keyframes record-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (max-width: 700px) {
+  .nest-dock {
+    bottom: max(12px, env(safe-area-inset-bottom));
+    left: 50%;
+    transform: translateX(-50%);
+    width: max-content;
+    gap: 6px;
+    max-width: calc(100vw - 20px);
+    padding: 6px;
+  }
+  .mini-player {
+    gap: 7px;
+  }
+  .player-disc {
+    width: 35px;
+    height: 35px;
+    border-width: 6px;
+  }
+  .player-copy {
+    max-width: 114px;
+  }
+  .player-copy strong {
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .player-copy small {
+    display: none;
+  }
+  /* A failed mobile playback still needs a visible reason. */
+  .player-copy small.player-error {
+    display: block;
+    color: #8a3f57;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .mini-player input {
+    display: none;
+  }
+  .dock-toggle {
+    width: 44px;
+    height: 44px;
+  }
+}
+@media (max-width: 360px) {
+  .player-copy {
+    max-width: 90px;
+  }
+  .nest-dock {
+    gap: 5px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .player-disc {
+    animation: none;
+  }
+}
 /* Small colorful controls on the blue-white dock. */
-.dock-toggle { background: #e0f2e9; color: #315f53; border-color: #b6d9c8; }
-.dock-toggle[aria-pressed="true"] { background: #cdebdc; color: #315f53; }
-.mini-player button { background: #eee5fa; color: #654c83; border-color: #d2c0e8; }
-.player-disc { border-color: #d9adc2; background: #fff0f6; color: #743e59; }
-.mini-player input { accent-color: #8b70b0; }
+.dock-toggle {
+  background: #e0f2e9;
+  color: #315f53;
+  border-color: #b6d9c8;
+}
+.dock-toggle[aria-pressed="true"] {
+  background: #cdebdc;
+  color: #315f53;
+}
+.mini-player button {
+  background: #eee5fa;
+  color: #654c83;
+  border-color: #d2c0e8;
+}
+.player-disc {
+  border-color: #d9adc2;
+  background: #fff0f6;
+  color: #743e59;
+}
+.mini-player input {
+  accent-color: #8b70b0;
+}

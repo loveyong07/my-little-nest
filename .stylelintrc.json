@@ -1,7 +1,10 @@
 {
   "rules": {
     "no-duplicate-selectors": true,
-    "declaration-block-no-duplicate-properties": [true, { "ignore": ["consecutive-duplicates-with-different-syntaxes"] }],
+    "declaration-block-no-duplicate-properties": [
+      true,
+      { "ignore": ["consecutive-duplicates-with-different-syntaxes"] }
+    ],
     "declaration-block-no-shorthand-property-overrides": true,
     "block-no-empty": true,
     "color-no-invalid-hex": true,

@@ -16,7 +16,8 @@ export default {
       const headers = { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" };
       if (request.method !== "GET") {
         return new Response(JSON.stringify({ status: "method_not_allowed", posts: [] }), {
-          status: 405, headers: { ...headers, Allow: "GET" },
+          status: 405,
+          headers: { ...headers, Allow: "GET" },
         });
       }
       const token = env.X_BEARER_TOKEN || "";
@@ -24,9 +25,10 @@ export default {
         feedToken = token;
         getFeed = createXFeedService({ token });
       }
-      const result = url.pathname === "/api/x-profile"
-        ? await authorizeProfile(await getFeed.getProfile(), { secret })
-        : await authorizeFeed(await getFeed(), { secret });
+      const result =
+        url.pathname === "/api/x-profile"
+          ? await authorizeProfile(await getFeed.getProfile(), { secret })
+          : await authorizeFeed(await getFeed(), { secret });
       return new Response(JSON.stringify(result), { headers });
     }
 

@@ -17,20 +17,23 @@ function videoRequest(source, options) {
 test("forwards a single byte range and streams the MP4 partial response", async () => {
   let requestedUrl;
   let fetchOptions;
-  const response = await proxyXVideo(videoRequest(VIDEO_URL, {
-    headers: { Range: "bytes=0-3" },
-  }), async (url, options) => {
-    requestedUrl = url;
-    fetchOptions = options;
-    return new Response(VIDEO_BYTES, {
-      status: 206,
-      headers: {
-        "Content-Type": "video/mp4; charset=binary",
-        "Content-Length": "4",
-        "Content-Range": "bytes 0-3/8",
-      },
-    });
-  });
+  const response = await proxyXVideo(
+    videoRequest(VIDEO_URL, {
+      headers: { Range: "bytes=0-3" },
+    }),
+    async (url, options) => {
+      requestedUrl = url;
+      fetchOptions = options;
+      return new Response(VIDEO_BYTES, {
+        status: 206,
+        headers: {
+          "Content-Type": "video/mp4; charset=binary",
+          "Content-Length": "4",
+          "Content-Range": "bytes 0-3/8",
+        },
+      });
+    },
+  );
 
   assert.equal(requestedUrl, VIDEO_URL);
   assert.equal(fetchOptions.redirect, "error");
@@ -65,11 +68,14 @@ test("rejects invalid video URLs before requesting upstream", async (t) => {
 test("rejects invalid or multiple byte ranges before requesting upstream", async (t) => {
   for (const range of ["bytes=0-1,3-4", "bytes=10-3", "items=0-3", "bytes=9007199254740992-"]) {
     await t.test(range, async () => {
-      const response = await proxyXVideo(videoRequest(VIDEO_URL, {
-        headers: { Range: range },
-      }), () => {
-        throw new Error("Rejected range reached upstream fetch");
-      });
+      const response = await proxyXVideo(
+        videoRequest(VIDEO_URL, {
+          headers: { Range: range },
+        }),
+        () => {
+          throw new Error("Rejected range reached upstream fetch");
+        },
+      );
       assert.equal(response.status, 416);
       assert.equal(response.headers.get("content-range"), "bytes */*");
       assert.equal(response.headers.get("accept-ranges"), "bytes");
@@ -82,15 +88,25 @@ test("accepts signed video URLs while preserving seeking and conditional range r
   const source = "https://video.twimg.com/ext_tw_video/123/pu/vid/720x720/clip.mp4";
   const signedUrl = await signedMediaUrl(source, "video", AUTH);
   let fetchOptions;
-  const response = await proxyXVideo(new Request(new URL(signedUrl, "https://site.test"), {
-    headers: { Range: "bytes=4-", "If-Range": '"video-etag"' },
-  }), async (url, options) => {
-    assert.equal(url, source);
-    fetchOptions = options;
-    return new Response(VIDEO_BYTES, { status: 206, headers: {
-      "Content-Type": "video/mp4", "Content-Length": "4", "Content-Range": "bytes 4-7/8", ETag: '"video-etag"',
-    } });
-  }, AUTH);
+  const response = await proxyXVideo(
+    new Request(new URL(signedUrl, "https://site.test"), {
+      headers: { Range: "bytes=4-", "If-Range": '"video-etag"' },
+    }),
+    async (url, options) => {
+      assert.equal(url, source);
+      fetchOptions = options;
+      return new Response(VIDEO_BYTES, {
+        status: 206,
+        headers: {
+          "Content-Type": "video/mp4",
+          "Content-Length": "4",
+          "Content-Range": "bytes 4-7/8",
+          ETag: '"video-etag"',
+        },
+      });
+    },
+    AUTH,
+  );
   assert.equal(response.status, 206);
   assert.equal(fetchOptions.headers.get("range"), "bytes=4-");
   assert.equal(fetchOptions.headers.get("if-range"), '"video-etag"');
@@ -101,51 +117,89 @@ test("accepts signed video URLs while preserving seeking and conditional range r
 
 test("rejects unsigned videos from another X account without requesting upstream", async () => {
   let fetchCalls = 0;
-  const response = await proxyXVideo(videoRequest("https://video.twimg.com/ext_tw_video/987/pu/vid/clip.mp4"), async () => {
-    fetchCalls += 1;
-    return new Response(VIDEO_BYTES, { headers: { "Content-Type": "video/mp4" } });
-  }, AUTH);
+  const response = await proxyXVideo(
+    videoRequest("https://video.twimg.com/ext_tw_video/987/pu/vid/clip.mp4"),
+    async () => {
+      fetchCalls += 1;
+      return new Response(VIDEO_BYTES, { headers: { "Content-Type": "video/mp4" } });
+    },
+    AUTH,
+  );
   assert.equal(response.status, 403);
   assert.equal(response.headers.get("cache-control"), "no-store");
   assert.equal(fetchCalls, 0);
 });
 
 test("rejects cross-site video hotlinking before requesting upstream", async () => {
-  const response = await proxyXVideo(videoRequest(VIDEO_URL, {
-    headers: { "Sec-Fetch-Site": "cross-site", Range: "bytes=0-3" },
-  }), () => { throw new Error("Cross-site video reached upstream"); }, AUTH);
+  const response = await proxyXVideo(
+    videoRequest(VIDEO_URL, {
+      headers: { "Sec-Fetch-Site": "cross-site", Range: "bytes=0-3" },
+    }),
+    () => {
+      throw new Error("Cross-site video reached upstream");
+    },
+    AUTH,
+  );
   assert.equal(response.status, 403);
 });
 
 test("rejects tampered or expired video signatures and ambiguous queries before fetching", async (t) => {
-  const signedUrl = new URL(await signedMediaUrl("https://video.twimg.com/ext_tw_video/123/pu/vid/site-video.mp4", "video", AUTH), "https://site.test");
+  const signedUrl = new URL(
+    await signedMediaUrl("https://video.twimg.com/ext_tw_video/123/pu/vid/site-video.mp4", "video", AUTH),
+    "https://site.test",
+  );
   for (const [name, mutate, status] of [
     ["signature", (url) => url.searchParams.set("signature", "0".repeat(64)), 403],
-    ["source", (url) => url.searchParams.set("url", "https://video.twimg.com/ext_tw_video/456/pu/vid/other-video.mp4"), 403],
+    [
+      "source",
+      (url) => url.searchParams.set("url", "https://video.twimg.com/ext_tw_video/456/pu/vid/other-video.mp4"),
+      403,
+    ],
     ["unknown parameter", (url) => url.searchParams.set("extra", "1"), 400],
     ["duplicate signature", (url) => url.searchParams.append("signature", url.searchParams.get("signature")), 400],
   ]) {
     await t.test(name, async () => {
       const url = new URL(signedUrl);
       mutate(url);
-      const response = await proxyXVideo(new Request(url), () => { throw new Error("Invalid video request reached upstream"); }, AUTH);
+      const response = await proxyXVideo(
+        new Request(url),
+        () => {
+          throw new Error("Invalid video request reached upstream");
+        },
+        AUTH,
+      );
       assert.equal(response.status, status);
       assert.equal(response.headers.get("cache-control"), "no-store");
     });
   }
   const expires = Number(signedUrl.searchParams.get("expires"));
-  const expired = await proxyXVideo(new Request(signedUrl), () => { throw new Error("Expired video request reached upstream"); }, {
-    ...AUTH, now: expires * 1000,
-  });
+  const expired = await proxyXVideo(
+    new Request(signedUrl),
+    () => {
+      throw new Error("Expired video request reached upstream");
+    },
+    {
+      ...AUTH,
+      now: expires * 1000,
+    },
+  );
   assert.equal(expired.status, 403);
 });
 
 test("signed video freshness is bounded by authorization expiry without changing the content", async () => {
-  const signedUrl = new URL(await signedMediaUrl("https://video.twimg.com/ext_tw_video/123/pu/vid/site-video.mp4", "video", AUTH), "https://site.test");
+  const signedUrl = new URL(
+    await signedMediaUrl("https://video.twimg.com/ext_tw_video/123/pu/vid/site-video.mp4", "video", AUTH),
+    "https://site.test",
+  );
   const expires = Number(signedUrl.searchParams.get("expires"));
-  const response = await proxyXVideo(new Request(signedUrl), async () => new Response(VIDEO_BYTES, {
-    headers: { "Content-Type": "video/mp4" },
-  }), { ...AUTH, now: (expires - 30) * 1000 });
+  const response = await proxyXVideo(
+    new Request(signedUrl),
+    async () =>
+      new Response(VIDEO_BYTES, {
+        headers: { "Content-Type": "video/mp4" },
+      }),
+    { ...AUTH, now: (expires - 30) * 1000 },
+  );
   assert.equal(response.status, 200);
   assert.equal(response.headers.get("cache-control"), "public, max-age=29, s-maxage=29");
   assert.deepEqual(new Uint8Array(await response.arrayBuffer()), VIDEO_BYTES);
@@ -155,13 +209,23 @@ test("a visitor that disconnects aborts the upstream video download", async () =
   const clientAbort = new AbortController();
   let upstreamSignal = null;
   let upstreamCancelled = false;
-  const upstreamBody = new ReadableStream({ pull() {}, cancel() { upstreamCancelled = true; } });
-  const response = await proxyXVideo(new Request(new URL(`/api/x-video?url=${encodeURIComponent(VIDEO_URL)}`, "https://site.test"), {
-    signal: clientAbort.signal,
-  }), async (url, options) => {
-    upstreamSignal = options.signal;
-    return new Response(upstreamBody, { headers: { "Content-Type": "video/mp4" } });
-  }, undefined, { stallTimeoutMs: 30_000 });
+  const upstreamBody = new ReadableStream({
+    pull() {},
+    cancel() {
+      upstreamCancelled = true;
+    },
+  });
+  const response = await proxyXVideo(
+    new Request(new URL(`/api/x-video?url=${encodeURIComponent(VIDEO_URL)}`, "https://site.test"), {
+      signal: clientAbort.signal,
+    }),
+    async (url, options) => {
+      upstreamSignal = options.signal;
+      return new Response(upstreamBody, { headers: { "Content-Type": "video/mp4" } });
+    },
+    undefined,
+    { stallTimeoutMs: 30_000 },
+  );
   assert.equal(upstreamSignal.aborted, false);
   clientAbort.abort();
   assert.equal(upstreamSignal.aborted, true, "the upstream request must not outlive the visitor");
@@ -173,12 +237,17 @@ test("a stalled upstream stream is released while normal slow chunks keep playin
   // A silent upstream while the visitor is waiting must be cut off.
   const stalledClient = new AbortController();
   let stalledUpstreamSignal = null;
-  const stalled = await proxyXVideo(new Request(new URL(`/api/x-video?url=${encodeURIComponent(VIDEO_URL)}`, "https://site.test"), {
-    signal: stalledClient.signal,
-  }), async (url, options) => {
-    stalledUpstreamSignal = options.signal;
-    return new Response(new ReadableStream({ pull() {} }), { headers: { "Content-Type": "video/mp4" } });
-  }, undefined, { stallTimeoutMs: 60 });
+  const stalled = await proxyXVideo(
+    new Request(new URL(`/api/x-video?url=${encodeURIComponent(VIDEO_URL)}`, "https://site.test"), {
+      signal: stalledClient.signal,
+    }),
+    async (url, options) => {
+      stalledUpstreamSignal = options.signal;
+      return new Response(new ReadableStream({ pull() {} }), { headers: { "Content-Type": "video/mp4" } });
+    },
+    undefined,
+    { stallTimeoutMs: 60 },
+  );
   const stalledReader = stalled.body.getReader();
   const pendingRead = stalledReader.read().catch(() => null);
   await new Promise((resolve) => setTimeout(resolve, 250));
@@ -190,21 +259,34 @@ test("a stalled upstream stream is released while normal slow chunks keep playin
   const flowingClient = new AbortController();
   let flowingUpstreamSignal = null;
   let chunks = 0;
-  const flowing = await proxyXVideo(new Request(new URL(`/api/x-video?url=${encodeURIComponent(VIDEO_URL)}`, "https://site.test"), {
-    signal: flowingClient.signal,
-  }), async (url, options) => {
-    flowingUpstreamSignal = options.signal;
-    return new Response(new ReadableStream({
-      async pull(streamController) {
-        await new Promise((resolve) => setTimeout(resolve, 25));
-        if (options.signal.aborted) return;
-        chunks += 1;
-        streamController.enqueue(new Uint8Array([1]));
-      },
-    }), { headers: { "Content-Type": "video/mp4" } });
-  }, undefined, { stallTimeoutMs: 400 });
+  const flowing = await proxyXVideo(
+    new Request(new URL(`/api/x-video?url=${encodeURIComponent(VIDEO_URL)}`, "https://site.test"), {
+      signal: flowingClient.signal,
+    }),
+    async (url, options) => {
+      flowingUpstreamSignal = options.signal;
+      return new Response(
+        new ReadableStream({
+          async pull(streamController) {
+            await new Promise((resolve) => setTimeout(resolve, 25));
+            if (options.signal.aborted) return;
+            chunks += 1;
+            streamController.enqueue(new Uint8Array([1]));
+          },
+        }),
+        { headers: { "Content-Type": "video/mp4" } },
+      );
+    },
+    undefined,
+    { stallTimeoutMs: 400 },
+  );
   const flowingReader = flowing.body.getReader();
-  const drain = (async () => { while (true) { const { done } = await flowingReader.read(); if (done) break; } })().catch(() => {});
+  const drain = (async () => {
+    while (true) {
+      const { done } = await flowingReader.read();
+      if (done) break;
+    }
+  })().catch(() => {});
   await new Promise((resolve) => setTimeout(resolve, 600));
   assert.equal(flowingUpstreamSignal.aborted, false, "a slow but flowing stream must not be cut off");
   assert.ok(chunks >= 8, `Flowing stream should keep delivering chunks: ${chunks}`);
@@ -216,16 +298,26 @@ test("a stalled upstream stream is released while normal slow chunks keep playin
 test("a visitor that stops reading is not treated as a stalled upstream", async () => {
   let upstreamSignal = null;
   let upstreamCancelled = false;
-  const response = await proxyXVideo(new Request(new URL(`/api/x-video?url=${encodeURIComponent(VIDEO_URL)}`, "https://site.test")), async (url, options) => {
-    upstreamSignal = options.signal;
-    return new Response(new ReadableStream({
-      async pull(streamController) {
-        await new Promise((resolve) => setTimeout(resolve, 20));
-        if (!options.signal.aborted) streamController.enqueue(new Uint8Array([1]));
-      },
-      cancel() { upstreamCancelled = true; },
-    }), { headers: { "Content-Type": "video/mp4" } });
-  }, undefined, { stallTimeoutMs: 80 });
+  const response = await proxyXVideo(
+    new Request(new URL(`/api/x-video?url=${encodeURIComponent(VIDEO_URL)}`, "https://site.test")),
+    async (url, options) => {
+      upstreamSignal = options.signal;
+      return new Response(
+        new ReadableStream({
+          async pull(streamController) {
+            await new Promise((resolve) => setTimeout(resolve, 20));
+            if (!options.signal.aborted) streamController.enqueue(new Uint8Array([1]));
+          },
+          cancel() {
+            upstreamCancelled = true;
+          },
+        }),
+        { headers: { "Content-Type": "video/mp4" } },
+      );
+    },
+    undefined,
+    { stallTimeoutMs: 80 },
+  );
   // Read one chunk, then leave the stream idle for longer than the idle limit.
   const reader = response.body.getReader();
   await reader.read();

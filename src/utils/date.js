@@ -8,7 +8,10 @@ export function formatLocalDate(value) {
 export function formatVisitDate(value, language) {
   const locale = language === "zh" ? "zh-CN" : language === "ja" ? "ja-JP-u-ca-gregory" : "en-US";
   return new Intl.DateTimeFormat(locale, {
-    calendar: "gregory", year: "numeric", month: "long", day: "numeric",
+    calendar: "gregory",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   }).format(value);
 }
 

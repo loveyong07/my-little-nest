@@ -4,7 +4,10 @@ import { readFileSync } from "node:fs";
 import { withScenePreloads, withFontPreloads } from "../build/scene-preloads.mjs";
 
 test("first-paint fonts are preloaded with the hashed Quicksand bundle name", () => {
-  const bundle = { "assets/quicksand-latin-700-normal-DNRMnynu.woff2": {}, "assets/quicksand-latin-500-normal-BKohNur2.woff2": {} };
+  const bundle = {
+    "assets/quicksand-latin-700-normal-DNRMnynu.woff2": {},
+    "assets/quicksand-latin-500-normal-BKohNur2.woff2": {},
+  };
   const html = withFontPreloads("<html><head></head><body></body></html>", bundle);
   assert.match(html, /href="\/assets\/quicksand-latin-700-normal-DNRMnynu\.woff2" crossorigin/);
   assert.doesNotMatch(html, /quicksand-latin-500/);
@@ -16,7 +19,10 @@ test("direct route shells replace home preloads rather than fetching unrelated s
   const home = withScenePreloads("<html><head></head><body></body></html>", "home");
   assert.match(home, /media="\(max-width: 700px\)"/);
   assert.match(home, /media="not all and \(max-width: 700px\)"/);
-  for (const [page, scene] of [["posts", "posts-winter"], ["contact", "contact-sky"]]) {
+  for (const [page, scene] of [
+    ["posts", "posts-winter"],
+    ["contact", "contact-sky"],
+  ]) {
     const html = withScenePreloads(home, page);
     assert.equal((html.match(/data-scene-preload/g) ?? []).length, 1);
     assert.match(html, new RegExp(scene));
@@ -33,5 +39,11 @@ test("long immutable caching matches hashed build files while excluding fixed sc
   const pattern = new RegExp("^/assets/" + rule.source.slice("/assets/:file(".length, -1) + "$");
   assert.equal(pattern.test("/assets/index-1234a_Bc.js"), true);
   assert.equal(pattern.test("/assets/cormorant-garamond-latin-700-italic-1ifP4r4a.woff2"), true);
-  for (const name of ["hero-sky-alt-motion-q90.webp", "contact-sky-letter-v2-clean-q90.webp", "x-avatar.jpg", "site-favicon-2026-09-29.png"]) assert.equal(pattern.test(`/assets/${name}`), false);
+  for (const name of [
+    "hero-sky-alt-motion-q90.webp",
+    "contact-sky-letter-v2-clean-q90.webp",
+    "x-avatar.jpg",
+    "site-favicon-2026-09-29.png",
+  ])
+    assert.equal(pattern.test(`/assets/${name}`), false);
 });

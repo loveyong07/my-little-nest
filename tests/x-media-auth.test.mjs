@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  parseMediaSource, signedMediaUrl, authorizedMediaRequest, boundedMediaCache, authorizeFeed, authorizeProfile,
+  parseMediaSource,
+  signedMediaUrl,
+  authorizedMediaRequest,
+  boundedMediaCache,
+  authorizeFeed,
+  authorizeProfile,
   MEDIA_RETRY_LIMIT,
 } from "../server/x-media-auth.mjs";
 import { MAX_MEDIA_RETRY, mediaRetrySrc } from "../src/media-urls.js";
@@ -55,7 +60,10 @@ test("a secret is necessary to sign or accept new resources", async () => {
 });
 
 test("signatures stay stable within a day, change the next day, and survive a 24-hour cached feed", async () => {
-  for (const [kind, source] of [["image", IMAGE_URL], ["video", VIDEO_URL]]) {
+  for (const [kind, source] of [
+    ["image", IMAGE_URL],
+    ["video", VIDEO_URL],
+  ]) {
     const morningUrl = await signedMediaUrl(source, kind, { ...AUTH, now: NOW - 11 * 3600 * 1000 });
     const eveningUrl = await signedMediaUrl(source, kind, { ...AUTH, now: NOW + 11 * 3600 * 1000 });
     const nextDayUrl = await signedMediaUrl(source, kind, { ...AUTH, now: NOW + DAY_MS });
@@ -101,10 +109,13 @@ test("source, query, expiry, signature, and signing secret are bound together", 
     ["noninteger expiry", (url) => url.searchParams.set("expires", "123.5")],
     ["missing expiry", (url) => url.searchParams.delete("expires")],
     ["missing signature", (url) => url.searchParams.delete("signature")],
-    ["changed signature", (url) => {
-      const value = url.searchParams.get("signature");
-      url.searchParams.set("signature", `${value[0] === "0" ? "1" : "0"}${value.slice(1)}`);
-    }],
+    [
+      "changed signature",
+      (url) => {
+        const value = url.searchParams.get("signature");
+        url.searchParams.set("signature", `${value[0] === "0" ? "1" : "0"}${value.slice(1)}`);
+      },
+    ],
     ["short signature", (url) => url.searchParams.set("signature", "a")],
   ]) {
     await t.test(name, async () => {
@@ -125,7 +136,17 @@ test("duplicate and unexpected proxy parameters cannot bypass authorization", as
       assert.equal(await isAuthorized(url, "image"), false);
     });
   }
-  for (const [name, value] of [["cacheBust", "1"], ["retry", "4"], ["retry", "101"], ["retry", "0"], ["retry", "00"], ["retry", "-1"], ["retry", "abc"], ["lightboxRetry", "1000"], ["lightboxRetry", "10"]]) {
+  for (const [name, value] of [
+    ["cacheBust", "1"],
+    ["retry", "4"],
+    ["retry", "101"],
+    ["retry", "0"],
+    ["retry", "00"],
+    ["retry", "-1"],
+    ["retry", "abc"],
+    ["lightboxRetry", "1000"],
+    ["lightboxRetry", "10"],
+  ]) {
     await t.test(`${name}=${value}`, async () => {
       const url = new URL(signedUrl);
       url.searchParams.set(name, value);
@@ -151,7 +172,11 @@ test("the accepted retry variants are canonical, bounded, and identical on both 
       const url = new URL(signedUrl, "https://site.test");
       url.searchParams.set(kind, String(value));
       assert.equal(await isAuthorized(url, "image"), true, `${kind}=${value}`);
-      assert.equal(mediaRetrySrc(signedUrl, value, kind), `${signedUrl}&${kind}=${value}`, `${kind}=${value} client URL`);
+      assert.equal(
+        mediaRetrySrc(signedUrl, value, kind),
+        `${signedUrl}&${kind}=${value}`,
+        `${kind}=${value} client URL`,
+      );
     }
     for (const value of ["0", "00", "01", String(MEDIA_RETRY_LIMIT + 1), "10", "100", " "]) {
       const url = new URL(signedUrl, "https://site.test");
@@ -162,20 +187,30 @@ test("the accepted retry variants are canonical, bounded, and identical on both 
   // Repeated failures vary the URL over the same bounded set instead of growing it.
   const variants = new Set();
   for (let attempt = 1; attempt <= 12; attempt += 1) variants.add(mediaRetrySrc(signedUrl, attempt));
-  assert.deepEqual([...variants].sort(), [1, 2, 3].map((value) => `${signedUrl}&retry=${value}`));
+  assert.deepEqual(
+    [...variants].sort(),
+    [1, 2, 3].map((value) => `${signedUrl}&retry=${value}`),
+  );
   assert.equal(mediaRetrySrc(signedUrl, 0), signedUrl);
   assert.equal(mediaRetrySrc(null, 2), null);
 });
 
 test("unsigned compatibility permissions cover exactly previously published resources", async () => {
-  for (const [kind, sources] of [["image", LEGACY_IMAGE_URLS], ["video", LEGACY_VIDEO_URLS]]) {
+  for (const [kind, sources] of [
+    ["image", LEGACY_IMAGE_URLS],
+    ["video", LEGACY_VIDEO_URLS],
+  ]) {
     for (const source of sources) {
       const url = `/api/x-${kind === "image" ? "media" : "video"}?url=${encodeURIComponent(source)}`;
       assert.equal(await isAuthorized(url, kind, { ...AUTH, secret: "" }), true, source);
       assert.equal(await isAuthorized(`${url}&retry=1&lightboxRetry=2`, kind), true, source);
       assert.equal(await isAuthorized(url, kind, AUTH, { headers: { "Sec-Fetch-Site": "cross-site" } }), false, source);
       const changed = `${source}?name=small`;
-      assert.equal(await isAuthorized(`/api/x-${kind === "image" ? "media" : "video"}?url=${encodeURIComponent(changed)}`, kind), false, changed);
+      assert.equal(
+        await isAuthorized(`/api/x-${kind === "image" ? "media" : "video"}?url=${encodeURIComponent(changed)}`, kind),
+        false,
+        changed,
+      );
     }
   }
 });
@@ -188,7 +223,10 @@ test("profile signatures cover normal and high resolution avatars without mutati
   assert.equal(output.profile.avatar, AVATAR_URL);
   assert.equal(output.profile.description, input.profile.description);
   assert.equal(new URL(output.profile.avatarProxy.normal, "https://site.test").searchParams.get("url"), AVATAR_URL);
-  assert.equal(new URL(output.profile.avatarProxy.highRes, "https://site.test").searchParams.get("url"), AVATAR_URL.replace("_normal", "_400x400"));
+  assert.equal(
+    new URL(output.profile.avatarProxy.highRes, "https://site.test").searchParams.get("url"),
+    AVATAR_URL.replace("_normal", "_400x400"),
+  );
   assert.equal(await isAuthorized(output.profile.avatarProxy.normal, "image"), true);
   assert.equal(await isAuthorized(output.profile.avatarProxy.highRes, "image"), true);
   assert.equal(JSON.stringify(output).includes(AUTH.secret), false);
@@ -197,21 +235,39 @@ test("profile signatures cover normal and high resolution avatars without mutati
 });
 
 test("feed adds valid media permissions while preserving content, order, pinned data, and original source URLs", async () => {
-  const post = { id: "post-1", text: "Original post", url: "https://x.com/owner/status/1", avatar: AVATAR_URL,
-    metrics: { likes: 4 }, media: [
+  const post = {
+    id: "post-1",
+    text: "Original post",
+    url: "https://x.com/owner/status/1",
+    avatar: AVATAR_URL,
+    metrics: { likes: 4 },
+    media: [
       { type: "photo", url: IMAGE_URL, width: 1280, height: 720 },
       { type: "video", url: VIDEO_URL, poster: POSTER_URL, duration: 1200 },
-    ] };
-  const input = { status: "ok", fetchedAt: "2026-09-30T12:00:00Z", posts: [post, { ...post, id: "post-2", text: "Second post" }],
-    pinnedPost: { ...post, id: "pinned-1" }, pinnedStatus: "ok" };
+    ],
+  };
+  const input = {
+    status: "ok",
+    fetchedAt: "2026-09-30T12:00:00Z",
+    posts: [post, { ...post, id: "post-2", text: "Second post" }],
+    pinnedPost: { ...post, id: "pinned-1" },
+    pinnedStatus: "ok",
+  };
   const original = structuredClone(input);
   const output = await authorizeFeed(input, AUTH);
   assert.deepEqual(input, original);
   assert.equal(output.status, input.status);
   assert.equal(output.fetchedAt, input.fetchedAt);
   assert.equal(output.pinnedStatus, input.pinnedStatus);
-  assert.deepEqual(output.posts.map(({ id }) => id), ["post-1", "post-2"]);
-  for (const [signedPost, originalPost] of [[output.posts[0], input.posts[0]], [output.posts[1], input.posts[1]], [output.pinnedPost, input.pinnedPost]]) {
+  assert.deepEqual(
+    output.posts.map(({ id }) => id),
+    ["post-1", "post-2"],
+  );
+  for (const [signedPost, originalPost] of [
+    [output.posts[0], input.posts[0]],
+    [output.posts[1], input.posts[1]],
+    [output.pinnedPost, input.pinnedPost],
+  ]) {
     const { avatarProxy, media, ...content } = signedPost;
     const { media: originalMedia, ...originalContent } = originalPost;
     assert.deepEqual(content, originalContent);

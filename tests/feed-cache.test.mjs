@@ -4,7 +4,12 @@ import { readFeedCache, writeFeedCache, canPrefetch, fetchFeed, getFeedSnapshot 
 
 function storage() {
   let value = null;
-  return { getItem: () => value, setItem: (_, next) => { value = next; } };
+  return {
+    getItem: () => value,
+    setItem: (_, next) => {
+      value = next;
+    },
+  };
 }
 
 test("saved feed expires and failed refreshes cannot renew stale data", () => {
@@ -20,7 +25,14 @@ test("saved feed expires and failed refreshes cannot renew stale data", () => {
 
 test("corrupt or unavailable browser storage cannot break rendering", () => {
   assert.equal(readFeedCache({ getItem: () => "{broken" }), null);
-  const blocked = { getItem() { throw Error(); }, setItem() { throw Error(); } };
+  const blocked = {
+    getItem() {
+      throw Error();
+    },
+    setItem() {
+      throw Error();
+    },
+  };
   assert.equal(readFeedCache(blocked), null);
   assert.doesNotThrow(() => writeFeedCache(blocked, { status: "ok", posts: [] }));
 });
@@ -49,7 +61,10 @@ test("speculative images are disabled on slow or metered connections", () => {
 test("concurrent feed consumers share a request and fresh reads retain its success timestamp", async () => {
   const original = globalThis.fetch;
   let calls = 0;
-  globalThis.fetch = async () => { calls++; return { ok: true, json: async () => ({ status: "ok", posts: [], pinnedStatus: "none" }) }; };
+  globalThis.fetch = async () => {
+    calls++;
+    return { ok: true, json: async () => ({ status: "ok", posts: [], pinnedStatus: "none" }) };
+  };
   try {
     const first = fetchFeed();
     assert.equal(fetchFeed(), first);
@@ -58,5 +73,7 @@ test("concurrent feed consumers share a request and fresh reads retain its succe
     assert.equal((await fetchFeed()).status, "ok");
     assert.equal(calls, 1);
     assert.equal(getFeedSnapshot().savedAt, savedAt);
-  } finally { globalThis.fetch = original; }
+  } finally {
+    globalThis.fetch = original;
+  }
 });

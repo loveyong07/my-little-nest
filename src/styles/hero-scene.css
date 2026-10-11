@@ -12,51 +12,189 @@
   content: "";
   pointer-events: none;
   background: url("/assets/hero-sky-alt-motion-q90.jpg") center top / cover no-repeat;
-  background-image: image-set("/assets/hero-sky-alt-motion-q90.webp" type("image/webp"), "/assets/hero-sky-alt-motion-q90.jpg" type("image/jpeg"));
+  background-image: image-set(
+    "/assets/hero-sky-alt-motion-q90.webp" type("image/webp"),
+    "/assets/hero-sky-alt-motion-q90.jpg" type("image/jpeg")
+  );
   animation: home-background-breeze 12s ease-in-out infinite alternate;
 }
-.hero::after { position: absolute; z-index: -1; inset: 0; content: ""; pointer-events: none; background: linear-gradient(90deg, #f4faff65, #f4faff20 34%, transparent 54%); }
-.home-floating-elements { position: absolute; z-index: 1; inset: 0; overflow: hidden; pointer-events: none; }
-.home-floating-element { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; object-position: center top; }
-.home-floating-dove { transform-origin: 29% 15%; animation: home-scene-wind 12s ease-in-out infinite alternate, home-dove-flight 10s ease-in-out infinite alternate; }
-.home-floating-petal { transform-origin: 17% 72%; animation: home-scene-wind 12s ease-in-out infinite alternate, home-petal-fall 8s linear infinite; }
-.home-floating-dove-mobile { transform-origin: 52% 10%; animation: home-mobile-dove-flight 9s ease-in-out infinite alternate; }
-.home-mobile-petal { position: absolute; display: block; width: 34px; height: auto; pointer-events: none; animation: home-mobile-petal-fall 7s linear infinite; }
-.home-mobile-petal-one { top: 96px; left: 15%; }
-.home-mobile-petal-two { top: 45px; left: 62%; animation-delay: -3.4s; }
-@keyframes home-background-breeze { from { transform: translate3d(-8px, -3px, 0); } to { transform: translate3d(8px, 3px, 0); } }
-@keyframes home-scene-wind { from { translate: -12px -3px; } to { translate: 12px 3px; } }
+.hero::after {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  background: linear-gradient(90deg, #f4faff65, #f4faff20 34%, transparent 54%);
+}
+.home-floating-elements {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.home-floating-element {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+}
+.home-floating-dove {
+  transform-origin: 29% 15%;
+  animation:
+    home-scene-wind 12s ease-in-out infinite alternate,
+    home-dove-flight 10s ease-in-out infinite alternate;
+}
+.home-floating-petal {
+  transform-origin: 17% 72%;
+  animation:
+    home-scene-wind 12s ease-in-out infinite alternate,
+    home-petal-fall 8s linear infinite;
+}
+.home-floating-dove-mobile {
+  transform-origin: 52% 10%;
+  animation: home-mobile-dove-flight 9s ease-in-out infinite alternate;
+}
+.home-mobile-petal {
+  position: absolute;
+  display: block;
+  width: 34px;
+  height: auto;
+  pointer-events: none;
+  animation: home-mobile-petal-fall 7s linear infinite;
+}
+.home-mobile-petal-one {
+  top: 96px;
+  left: 15%;
+}
+.home-mobile-petal-two {
+  top: 45px;
+  left: 62%;
+  animation-delay: -3.4s;
+}
+@keyframes home-background-breeze {
+  from {
+    transform: translate3d(-8px, -3px, 0);
+  }
+  to {
+    transform: translate3d(8px, 3px, 0);
+  }
+}
+@keyframes home-scene-wind {
+  from {
+    translate: -12px -3px;
+  }
+  to {
+    translate: 12px 3px;
+  }
+}
 @keyframes home-dove-flight {
-  from { transform: translate3d(0, -6vh, 0) scale(1); rotate: -2deg; }
-  to { transform: translate3d(24vw, -11vh, 0) scale(.82); rotate: 3deg; }
+  from {
+    transform: translate3d(0, -6vh, 0) scale(1);
+    rotate: -2deg;
+  }
+  to {
+    transform: translate3d(24vw, -11vh, 0) scale(0.82);
+    rotate: 3deg;
+  }
 }
 @keyframes home-petal-fall {
-  0%, 8% { opacity: 0; transform: translate3d(0, 0, 0); rotate: 0deg; }
-  16% { opacity: .92; transform: translate3d(0, 1vh, 0); rotate: 8deg; }
-  90% { opacity: .82; transform: translate3d(3vw, 21vh, 0); rotate: 72deg; }
-  100% { opacity: 0; transform: translate3d(4vw, 24vh, 0); rotate: 88deg; }
+  0%,
+  8% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0);
+    rotate: 0deg;
+  }
+  16% {
+    opacity: 0.92;
+    transform: translate3d(0, 1vh, 0);
+    rotate: 8deg;
+  }
+  90% {
+    opacity: 0.82;
+    transform: translate3d(3vw, 21vh, 0);
+    rotate: 72deg;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(4vw, 24vh, 0);
+    rotate: 88deg;
+  }
 }
 @keyframes home-mobile-dove-flight {
-  from { transform: translate3d(0, 0, 0) scale(1); rotate: -2deg; }
-  to { transform: translate3d(34vw, -15px, 0) scale(.84); rotate: 3deg; }
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+    rotate: -2deg;
+  }
+  to {
+    transform: translate3d(34vw, -15px, 0) scale(0.84);
+    rotate: 3deg;
+  }
 }
 @keyframes home-mobile-petal-fall {
-  0%, 7% { opacity: 0; transform: translate3d(0, 0, 0) rotate(-12deg); }
-  18% { opacity: .9; }
-  88% { opacity: .8; }
-  100% { opacity: 0; transform: translate3d(42px, 220px, 0) rotate(110deg); }
+  0%,
+  7% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) rotate(-12deg);
+  }
+  18% {
+    opacity: 0.9;
+  }
+  88% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(42px, 220px, 0) rotate(110deg);
+  }
 }
 
 @media (max-width: 900px) {
-  .hero { min-height: 100svh; background-color: #eaf5ff; --home-scene-height: 600px; --home-scene-position: 50%; }
-  .hero::before { background-size: auto var(--home-scene-height); background-position: var(--home-scene-position) top; }
-  .hero::after { display: none; }
-  .home-floating-element { top: 0; right: auto; bottom: auto; left: var(--home-scene-position); width: auto; height: var(--home-scene-height); max-width: none; object-fit: fill; translate: calc(-1 * var(--home-scene-position)) 0; }
-  .home-floating-dove { animation: home-dove-flight 10s ease-in-out infinite alternate; }
-  .home-floating-petal { animation: home-petal-fall 8s linear infinite; }
+  .hero {
+    min-height: 100svh;
+    background-color: #eaf5ff;
+    --home-scene-height: 600px;
+    --home-scene-position: 50%;
+  }
+  .hero::before {
+    background-size: auto var(--home-scene-height);
+    background-position: var(--home-scene-position) top;
+  }
+  .hero::after {
+    display: none;
+  }
+  .home-floating-element {
+    top: 0;
+    right: auto;
+    bottom: auto;
+    left: var(--home-scene-position);
+    width: auto;
+    height: var(--home-scene-height);
+    max-width: none;
+    object-fit: fill;
+    translate: calc(-1 * var(--home-scene-position)) 0;
+  }
+  .home-floating-dove {
+    animation: home-dove-flight 10s ease-in-out infinite alternate;
+  }
+  .home-floating-petal {
+    animation: home-petal-fall 8s linear infinite;
+  }
 }
 
 @media (max-width: 700px) {
-  .hero { --home-scene-height: clamp(440px, 115vw, 510px); --home-scene-position: 62%; }
-  .hero::before { background-image: url("/assets/hero-sky-mobile-motion-q90.jpg"); background-image: image-set("/assets/hero-sky-mobile-motion-q90.webp" type("image/webp"), "/assets/hero-sky-mobile-motion-q90.jpg" type("image/jpeg")); }
+  .hero {
+    --home-scene-height: clamp(440px, 115vw, 510px);
+    --home-scene-position: 62%;
+  }
+  .hero::before {
+    background-image: url("/assets/hero-sky-mobile-motion-q90.jpg");
+    background-image: image-set(
+      "/assets/hero-sky-mobile-motion-q90.webp" type("image/webp"),
+      "/assets/hero-sky-mobile-motion-q90.jpg" type("image/jpeg")
+    );
+  }
 }

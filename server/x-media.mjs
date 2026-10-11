@@ -22,7 +22,10 @@ async function readLimitedImage(body, signal) {
   let size = 0;
   try {
     while (true) {
-      if (signal?.aborted) { await reader.cancel(); return {}; }
+      if (signal?.aborted) {
+        await reader.cancel();
+        return {};
+      }
       const { done, value } = await reader.read();
       if (done) break;
       size += value.byteLength;
@@ -52,7 +55,11 @@ function streamLimitedImage(body, onDone) {
   function finish() {
     if (finished) return;
     finished = true;
-    try { reader.releaseLock(); } catch { /* The stream may already be unlocked. */ }
+    try {
+      reader.releaseLock();
+    } catch {
+      /* The stream may already be unlocked. */
+    }
     onDone?.();
   }
   return new ReadableStream({
@@ -78,8 +85,11 @@ function streamLimitedImage(body, onDone) {
       }
     },
     async cancel(reason) {
-      try { await reader.cancel(reason); }
-      finally { finish(); }
+      try {
+        await reader.cancel(reason);
+      } finally {
+        finish();
+      }
     },
   });
 }
@@ -102,7 +112,7 @@ export async function proxyXMedia(request, fetchImpl = globalThis.fetch, authOpt
     return errorResponse(400, "Unsupported image URL");
   }
   source = parseMediaSource(source.href, "image");
-  if (!source || !await authorizedMediaRequest(request, source, "image", authOptions)) {
+  if (!source || !(await authorizedMediaRequest(request, source, "image", authOptions))) {
     return errorResponse(403, "Unsupported image URL");
   }
 
