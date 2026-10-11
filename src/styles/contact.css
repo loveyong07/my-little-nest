@@ -25,7 +25,7 @@
   min-width: 0;
   min-height: 172px;
   padding: var(--space-4) var(--space-2) var(--space-3);
-  border: 1px solid #d8e5ef;
+  border: 1px solid var(--color-border-soft);
   border-radius: var(--radius-md);
   background: var(--surface-card);
   box-shadow: var(--shadow-card);
@@ -76,7 +76,7 @@
 .contact-action {
   margin-top: auto;
   padding-top: var(--space-3);
-  color: #587c9c;
+  color: #597e9e;
   font-size: var(--font-xs);
   font-weight: 700;
   line-height: 1.4;
@@ -91,7 +91,7 @@
   margin-bottom: var(--space-2);
   border: 0;
   border-radius: 50%;
-  background: #e6f0f9;
+  background: var(--surface-blue-strong);
   transition: box-shadow 0.18s;
 }
 .contact-icon svg {
@@ -100,13 +100,13 @@
   height: 48px;
   padding: 10px;
   border-radius: 50%;
-  color: #517391;
+  color: var(--color-muted);
 }
 .contact-tile.x .contact-icon {
   background: #111111;
 }
 .contact-tile.x .contact-icon svg {
-  color: #ffffff;
+  color: #fff;
 }
 .contact-tile.line .contact-icon,
 .contact-tile.wechat .contact-icon {
@@ -117,22 +117,22 @@
   color: #5a8c73;
 }
 .contact-tile.telegram .contact-icon {
-  background: #e0edfb;
+  background: var(--pastel-blue);
 }
 .contact-tile.telegram .contact-icon svg {
   color: #5f8caf;
 }
 .contact-tile.qq .contact-icon {
-  background: #eee5fa;
+  background: var(--pastel-lavender);
 }
 .contact-tile.qq .contact-icon svg {
-  color: #654c83;
+  color: var(--pastel-lavender-ink);
 }
 .contact-tile.email .contact-icon {
-  background: #fff0ce;
+  background: var(--pastel-yellow);
 }
 .contact-tile.email .contact-icon svg {
-  color: #79602e;
+  color: var(--pastel-yellow-ink);
   transform-origin: 50% 16%;
   transition: transform 0.22s ease;
 }
@@ -209,7 +209,7 @@
   width: 100%;
   min-height: 44px;
   padding: var(--space-2);
-  border: 1px solid #bad8ee;
+  border: 1px solid #b8d6eb;
   border-radius: 7px;
   background: #fff;
   color: var(--color-text);
@@ -227,10 +227,10 @@
   gap: var(--space-4);
   margin-top: var(--space-5);
   padding: var(--space-4) 52px var(--space-4) var(--space-4);
-  border: 1px solid #d2dfe9;
+  border: 1px solid #d0dce6;
   border-radius: var(--radius-md);
   background: linear-gradient(125deg, #edf4faed, #f9fcfef2);
-  box-shadow: inset 3px 0 #a6c4dc;
+  box-shadow: inset 3px 0 #a4c3dc;
   scroll-margin-top: var(--space-5);
 }
 .email-row h3 {
@@ -238,7 +238,7 @@
   align-items: center;
   gap: var(--space-2);
   margin: 0;
-  color: #547796;
+  color: var(--color-ink-soft);
   font-size: var(--font-sm);
   line-height: 1.6;
 }
@@ -262,7 +262,7 @@
   padding: var(--space-2) var(--space-3);
   border-left: 1px solid var(--color-border);
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-  color: #547796;
+  color: var(--color-ink-soft);
   font:
     700 var(--font-sm) / 1.4 "Quicksand",
     sans-serif;
@@ -272,7 +272,7 @@
     background 0.18s;
 }
 .email-row a span {
-  color: #547796;
+  color: var(--color-ink-soft);
   font-size: var(--font-xs);
   font-weight: 400;
   line-height: 1.5;

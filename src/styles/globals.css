@@ -7,11 +7,32 @@
 }
 
 :root {
-  --color-primary: #507596;
-  --color-background: #f7fafd;
+  /* Ink: body text, then softer blue-grey levels. */
   --color-text: #384f63;
-  --color-muted: #50718d;
+  --color-ink: #47647e;
+  --color-muted: #517391;
+  --color-ink-soft: #547796;
+  --color-primary: #507596;
+  /* Blue-white surfaces and lines. */
+  --surface-tint: #f7fafd;
+  --surface-blue: #ecf4fa;
+  --surface-blue-strong: #e6f0f9;
   --color-border: #d6e1ea;
+  --color-border-soft: #d8e5ef;
+  /* Pastel controls: fill, ink and outline of each colour. */
+  --pastel-pink: #fbe1eb;
+  --pastel-pink-ink: #743e59;
+  --pastel-lavender: #eee5fa;
+  --pastel-lavender-ink: #654c83;
+  --pastel-lavender-line: #d2c0e8;
+  --pastel-mint: #e0f2e9;
+  --pastel-mint-ink: #315f53;
+  --pastel-mint-line: #b6d9c8;
+  --pastel-yellow: #fff0ce;
+  --pastel-yellow-ink: #79602e;
+  --pastel-yellow-line: #ebd7a5;
+  --pastel-blue: #e3effc;
+  --pastel-blue-ink: #345d83;
   --surface-panel: #f9fbfde6;
   --surface-card: #ffffffeb;
   --shadow-card: 0 5px 18px #567a9a10;
@@ -31,7 +52,7 @@
   --font-title: clamp(1.25rem, 2vw, 1.5rem);
   --nest-font: "Quicksand", "Nest Kuaile", "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
   color: var(--color-text);
-  background: var(--color-background);
+  background: var(--surface-tint);
   font-family: var(--nest-font);
   font-weight: 500;
   font-synthesis: none;
@@ -76,7 +97,7 @@ a:focus-visible,
 select:focus-visible,
 input:focus-visible,
 [tabindex]:focus-visible {
-  outline: 3px solid #4d769a;
+  outline: 3px solid var(--color-primary);
   outline-offset: 4px;
 }
 ::selection {

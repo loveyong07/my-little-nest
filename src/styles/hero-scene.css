@@ -5,7 +5,7 @@
   overflow: hidden;
   min-height: max(100svh, 900px);
   padding-bottom: 24px;
-  background: #f7fafd;
+  background: var(--surface-tint);
 }
 .hero::before {
   position: fixed;
