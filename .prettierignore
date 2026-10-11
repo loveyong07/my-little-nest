@@ -1,0 +1,8 @@
+dist/
+.vercel/
+archive/
+qa/
+public/
+node_modules/
+package-lock.json
+*.md

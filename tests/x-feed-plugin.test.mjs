@@ -45,7 +45,7 @@ test("coalesces concurrent profile lookups instead of one upstream request each"
   let calls = 0;
   const feed = createXFeedService({
     token: "private-test-token",
-    fetchImpl: async (url) => {
+    fetchImpl: async () => {
       calls += 1;
       await new Promise((resolve) => setTimeout(resolve, 5));
       return new Response(JSON.stringify({ data: {
