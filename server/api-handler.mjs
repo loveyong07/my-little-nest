@@ -6,9 +6,13 @@ import { createXFeedService } from "./x-feed-service.mjs";
 import { proxyXMedia } from "./x-media.mjs";
 import { proxyXVideo } from "./x-video.mjs";
 
-// Responses are never cached by browsers; the Vercel CDN may share a fresh answer briefly.
+// Browsers never cache these answers. The Vercel CDN shares a successful answer for five
+// minutes, which keeps cold function starts (each one rebuilds the in-memory X cache) rare;
+// the service already refreshes at most every 15 minutes. A failed or stale answer is shared
+// for one minute only, matching the service's retry backoff, so recovery shows up quickly.
 export const JSON_CACHE_CONTROL = "no-store";
-export const JSON_CDN_CACHE_CONTROL = "public, s-maxage=60, stale-while-revalidate=300";
+export const JSON_CDN_CACHE_CONTROL = "public, s-maxage=300, stale-while-revalidate=600";
+export const JSON_CDN_CACHE_CONTROL_RETRY = "public, s-maxage=60";
 
 function json(body, { status = 200, headers = {} } = {}) {
   return new Response(JSON.stringify(body), {
@@ -43,7 +47,8 @@ export function createApiHandler(env = {}, { fetchImpl = (...args) => globalThis
         route === "posts"
           ? await authorizeFeed(await feedService()(), authOptions)
           : await authorizeProfile(await feedService().getProfile(), authOptions);
-      return json(result, { headers: { "Vercel-CDN-Cache-Control": JSON_CDN_CACHE_CONTROL } });
+      const cdn = result?.status === "ok" ? JSON_CDN_CACHE_CONTROL : JSON_CDN_CACHE_CONTROL_RETRY;
+      return json(result, { headers: { "Vercel-CDN-Cache-Control": cdn } });
     } catch {
       // A failed lookup still answers, so no runtime is left with a hanging request.
       return json(empty, { status: 503 });

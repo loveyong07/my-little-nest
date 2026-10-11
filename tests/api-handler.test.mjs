@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { JSON_CDN_CACHE_CONTROL, createApiHandler } from "../server/api-handler.mjs";
+import { JSON_CDN_CACHE_CONTROL, JSON_CDN_CACHE_CONTROL_RETRY, createApiHandler } from "../server/api-handler.mjs";
 import { signingSecret } from "../server/x-media-auth.mjs";
 
 const request = (path, init) => new Request(`https://example.test${path}`, init);
@@ -18,7 +18,11 @@ test("feed routes answer without a credential and keep browsers from caching", a
   assert.equal(posts.status, 200);
   assert.deepEqual(await posts.json(), { status: "unavailable", posts: [] });
   assert.equal(posts.headers.get("cache-control"), "no-store");
-  assert.equal(posts.headers.get("vercel-cdn-cache-control"), JSON_CDN_CACHE_CONTROL);
+  assert.equal(
+    posts.headers.get("vercel-cdn-cache-control"),
+    JSON_CDN_CACHE_CONTROL_RETRY,
+    "unavailable is retried soon",
+  );
   assert.match(posts.headers.get("content-type"), /^application\/json/);
 
   const profile = await handleApi(request("/api/x-profile"));
@@ -79,7 +83,13 @@ test("the X credential stays on the server", async () => {
       },
     },
   );
-  const text = await (await handleApi(request("/api/x-posts"))).text();
+  const response = await handleApi(request("/api/x-posts"));
+  assert.equal(
+    response.headers.get("vercel-cdn-cache-control"),
+    JSON_CDN_CACHE_CONTROL,
+    "a live feed is shared longer",
+  );
+  const text = await response.text();
   assert.ok(!text.includes("private-test-token"));
   assert.deepEqual(
     JSON.parse(text).posts.map((post) => post.id),
