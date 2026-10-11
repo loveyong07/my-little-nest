@@ -19,6 +19,7 @@ export function useXFeed() {
       ? cachedFeed.feed.posts.filter((post) => isOriginalPost(post) && post.id !== cachedPin?.id)
       : [SNAPSHOT],
     index: 0,
+    hasSelectedPost: false,
   }));
   const { posts, index: postIndex } = reading;
   const [feedSource, setFeedSource] = useState(cachedFeed ? "stale" : "snapshot");
@@ -34,7 +35,11 @@ export function useXFeed() {
   const retryTimerRef = useRef(null);
 
   const setPostIndex = useCallback((value) => {
-    setReading((current) => ({ ...current, index: typeof value === "function" ? value(current.index) : value }));
+    setReading((current) => ({
+      ...current,
+      index: typeof value === "function" ? value(current.index) : value,
+      hasSelectedPost: true,
+    }));
   }, []);
 
   function alignRetryCooldown() {
@@ -95,8 +100,11 @@ export function useXFeed() {
             setFeedUpdatedAt(getFeedSnapshot()?.savedAt ?? null);
           }
           setReading((current) => ({
+            ...current,
             posts: originals,
-            index: retainedPostIndex(current.posts, current.index, originals),
+            // A default snapshot/cache selection follows the latest feed item.
+            // Preserve identity only after the reader deliberately picks a post.
+            index: current.hasSelectedPost ? retainedPostIndex(current.posts, current.index, originals) : 0,
           }));
           setFeedSource(feed.status === "stale" ? "stale" : "live");
         } else {
