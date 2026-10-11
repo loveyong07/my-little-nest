@@ -1,4 +1,5 @@
 // Browser media must use the site's constrained same-origin X routes.
+import { parseMediaSource } from "../shared/media-sources.mjs";
 
 // Retry counters are the only unsigned part of a media URL, so each accepted value is a
 // separate CDN cache key for the same source. Keep the set small and canonical; the proxy
@@ -39,52 +40,20 @@ function authorizedProxySrc(value, route, source) {
 }
 
 export function xMediaSrc(value, highResAvatar = false, authorizedSrc = null) {
-  if (typeof value !== "string") return null;
-  try {
-    const url = new URL(value);
-    const allowedPath = ["/media/", "/profile_images/", "/ext_tw_video_thumb/"].some((prefix) =>
-      url.pathname.startsWith(prefix),
-    );
-    if (
-      url.protocol !== "https:" ||
-      url.hostname !== "pbs.twimg.com" ||
-      url.username ||
-      url.password ||
-      url.port ||
-      !allowedPath
-    )
-      return null;
-    if (highResAvatar && url.pathname.startsWith("/profile_images/")) {
-      url.pathname = url.pathname.replace(/_normal(?=\.[^/.]+$)/, "_400x400");
-    }
-    if (authorizedSrc !== null && authorizedSrc !== undefined)
-      return authorizedProxySrc(authorizedSrc, "/api/x-media", url.href);
-    return `/api/x-media?url=${encodeURIComponent(url.href)}`;
-  } catch {
-    return null;
+  const url = parseMediaSource(value, "image");
+  if (!url) return null;
+  if (highResAvatar && url.pathname.startsWith("/profile_images/")) {
+    url.pathname = url.pathname.replace(/_normal(?=\.[^/.]+$)/, "_400x400");
   }
+  if (authorizedSrc !== null && authorizedSrc !== undefined)
+    return authorizedProxySrc(authorizedSrc, "/api/x-media", url.href);
+  return `/api/x-media?url=${encodeURIComponent(url.href)}`;
 }
 
 export function xVideoSrc(value, authorizedSrc = null) {
-  if (typeof value !== "string") return null;
-  try {
-    const url = new URL(value);
-    const allowedPath = ["/ext_tw_video/", "/amplify_video/", "/tweet_video/"].some((prefix) =>
-      url.pathname.startsWith(prefix),
-    );
-    if (
-      url.protocol !== "https:" ||
-      url.hostname !== "video.twimg.com" ||
-      url.username ||
-      url.password ||
-      url.port ||
-      !allowedPath
-    )
-      return null;
-    if (authorizedSrc !== null && authorizedSrc !== undefined)
-      return authorizedProxySrc(authorizedSrc, "/api/x-video", url.href);
-    return `/api/x-video?url=${encodeURIComponent(url.href)}`;
-  } catch {
-    return null;
-  }
+  const url = parseMediaSource(value, "video");
+  if (!url) return null;
+  if (authorizedSrc !== null && authorizedSrc !== undefined)
+    return authorizedProxySrc(authorizedSrc, "/api/x-video", url.href);
+  return `/api/x-video?url=${encodeURIComponent(url.href)}`;
 }

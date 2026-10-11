@@ -1,9 +1,9 @@
-import { proxyXMedia } from "./x-media.mjs";
-import { proxyXVideo } from "./x-video.mjs";
-import { authorizeFeed, authorizeProfile, mediaSigningSecret } from "./x-media-auth.mjs";
+// Reads the account's profile, pinned post and original posts from the X API, with an
+// in-memory cache, incremental refreshes and a failure backoff. Shared by every runtime
+// through server/api-handler.mjs.
+import { mediaDimensions, parseMediaSource } from "../shared/media-sources.mjs";
+import { X_USER_ID as USER_ID, X_USERNAME as USERNAME } from "../shared/x-account.mjs";
 
-const USERNAME = "loveyong07";
-const USER_ID = "2061726102180311040";
 const X_API = "https://api.x.com/2";
 const CACHE_TTL_MS = 15 * 60 * 1000;
 const FULL_REFRESH_TTL_MS = 24 * 60 * 60 * 1000;
@@ -25,18 +25,14 @@ function safeAvatar(value) {
   }
 }
 
+// Post photos and video posters; avatars come only from the user lookup.
 function safePhotoUrl(value) {
-  if (typeof value !== "string") return null;
-  try {
-    const url = new URL(value);
-    return url.protocol === "https:" &&
-      url.hostname === "pbs.twimg.com" &&
-      (url.pathname.startsWith("/media/") || url.pathname.startsWith("/ext_tw_video_thumb/"))
-      ? url.href
-      : null;
-  } catch {
-    return null;
-  }
+  const url = parseMediaSource(value, "image");
+  return url && !url.pathname.startsWith("/profile_images/") ? url.href : null;
+}
+
+function safeVideoUrl(value) {
+  return parseMediaSource(value, "video")?.href ?? null;
 }
 
 function isMediaLinkForPost(entity, postId, media, username) {
@@ -105,18 +101,6 @@ async function getXJson(url, token, fetchImpl, { allowPartialErrors = false } = 
   }
 }
 
-function mediaDimensions(media) {
-  const { width, height } = media ?? {};
-  return Number.isSafeInteger(width) &&
-    Number.isSafeInteger(height) &&
-    width > 0 &&
-    height > 0 &&
-    width <= 20_000 &&
-    height <= 20_000
-    ? { width, height }
-    : {};
-}
-
 function normalizedPost(post, user, mediaByKey, { allowReferences = false } = {}) {
   if (!isId(post?.id) || typeof post.text !== "string") return null;
   if (post.author_id && post.author_id !== user.id) return null;
@@ -132,7 +116,7 @@ function normalizedPost(post, user, mediaByKey, { allowReferences = false } = {}
     const alt = typeof media?.alt_text === "string" ? media.alt_text.trim() : "";
     if (media?.type === "photo") {
       const url = safePhotoUrl(media.url);
-      if (url) mediaItems.push({ url, alt, ...mediaDimensions(media) });
+      if (url) mediaItems.push({ url, alt, ...(mediaDimensions(media) ?? {}) });
     } else if (media?.type === "video") {
       const variants = Array.isArray(media.variants) ? media.variants : [];
       const videoVariants = variants.filter(
@@ -141,7 +125,8 @@ function normalizedPost(post, user, mediaByKey, { allowReferences = false } = {}
       videoVariants.sort((left, right) => (Number(right.bit_rate) || 0) - (Number(left.bit_rate) || 0));
       const url = videoVariants[0] ? safeVideoUrl(videoVariants[0].url) : null;
       const poster = safePhotoUrl(media.preview_image_url);
-      if (url) mediaItems.push({ type: "video", url, ...(poster ? { poster } : {}), alt, ...mediaDimensions(media) });
+      if (url)
+        mediaItems.push({ type: "video", url, ...(poster ? { poster } : {}), alt, ...(mediaDimensions(media) ?? {}) });
     }
   }
   const text = withoutMediaLinks(
@@ -160,26 +145,6 @@ function normalizedPost(post, user, mediaByKey, { allowReferences = false } = {}
     permalink: `https://x.com/${user.username}/status/${post.id}`,
     ...(mediaItems.length ? { media: mediaItems } : {}),
   };
-}
-
-function safeVideoUrl(value) {
-  if (typeof value !== "string") return null;
-  try {
-    const url = new URL(value);
-    const allowedPath = ["/ext_tw_video/", "/amplify_video/", "/tweet_video/"].some((prefix) =>
-      url.pathname.startsWith(prefix),
-    );
-    return url.protocol === "https:" &&
-      url.hostname === "video.twimg.com" &&
-      !url.username &&
-      !url.password &&
-      !url.port &&
-      allowedPath
-      ? url.href
-      : null;
-  } catch {
-    return null;
-  }
 }
 
 export function createXFeedService({
@@ -442,124 +407,4 @@ export function createXFeedService({
   }
   getFeed.getProfile = getProfile;
   return getFeed;
-}
-
-export function xFeedPlugin(options = {}) {
-  const getFeed = createXFeedService(options);
-  const authOptions = {
-    secret:
-      options.mediaSigningSecret ||
-      globalThis.process?.env?.X_MEDIA_SIGNING_SECRET ||
-      options.token ||
-      mediaSigningSecret(),
-  };
-  function installMiddleware(server) {
-    server.middlewares.use("/api/x-media", async (request, response) => {
-      if (request.url?.split("?")[0] !== "/") {
-        response.statusCode = 404;
-        response.end("Not found");
-        return;
-      }
-      const proxyResponse = await proxyXMedia(
-        new Request(new URL(request.url ?? "/", "http://localhost"), {
-          method: request.method,
-          headers: request.headers,
-        }),
-        globalThis.fetch,
-        authOptions,
-      );
-      response.statusCode = proxyResponse.status;
-      for (const [name, value] of proxyResponse.headers) response.setHeader(name, value);
-      response.end(Buffer.from(await proxyResponse.arrayBuffer()));
-    });
-
-    server.middlewares.use("/api/x-video", async (request, response) => {
-      if (request.url?.split("?")[0] !== "/") {
-        response.statusCode = 404;
-        response.end("Not found");
-        return;
-      }
-      const headers = new Headers();
-      if (request.headers.range) headers.set("Range", request.headers.range);
-      if (request.headers["if-range"]) headers.set("If-Range", request.headers["if-range"]);
-      if (request.headers["sec-fetch-site"]) headers.set("Sec-Fetch-Site", request.headers["sec-fetch-site"]);
-      const proxyResponse = await proxyXVideo(
-        new Request(new URL(request.url ?? "/", "http://localhost"), {
-          method: request.method,
-          headers,
-        }),
-        globalThis.fetch,
-        authOptions,
-      );
-      response.statusCode = proxyResponse.status;
-      for (const [name, value] of proxyResponse.headers) response.setHeader(name, value);
-      if (!proxyResponse.body) {
-        response.end();
-        return;
-      }
-      const reader = proxyResponse.body.getReader();
-      let disconnected = false;
-      const onClose = () => {
-        disconnected = true;
-        void reader.cancel().catch(() => {});
-      };
-      response.once("close", onClose);
-      try {
-        while (!disconnected) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          if (!response.write(value)) {
-            await new Promise((resolve) => {
-              const finish = () => {
-                response.off("drain", finish);
-                response.off("close", finish);
-                resolve();
-              };
-              response.once("drain", finish);
-              response.once("close", finish);
-            });
-          }
-        }
-        if (!disconnected) response.end();
-      } catch {
-        if (!disconnected) response.destroy();
-      } finally {
-        response.off("close", onClose);
-        if (!disconnected) reader.releaseLock();
-      }
-    });
-
-    for (const route of ["/api/x-posts", "/api/x-profile"])
-      server.middlewares.use(route, async (request, response) => {
-        response.setHeader("Content-Type", "application/json; charset=utf-8");
-        response.setHeader("Cache-Control", "no-store");
-        if (request.method !== "GET") {
-          response.statusCode = 405;
-          response.setHeader("Allow", "GET");
-          response.end(JSON.stringify({ status: "method_not_allowed", posts: [] }));
-          return;
-        }
-        if (request.url?.split("?")[0] !== "/") {
-          response.statusCode = 404;
-          response.end(JSON.stringify(unavailable()));
-          return;
-        }
-        try {
-          const result =
-            route === "/api/x-profile"
-              ? await authorizeProfile(await getFeed.getProfile(), authOptions)
-              : await authorizeFeed(await getFeed(), authOptions);
-          response.end(JSON.stringify(result));
-        } catch {
-          // A failed lookup must answer the request, not leave the dev server hanging.
-          if (!response.headersSent) response.statusCode = 503;
-          response.end(JSON.stringify(unavailable()));
-        }
-      });
-  }
-  return {
-    name: "local-x-original-posts",
-    configureServer: installMiddleware,
-    configurePreviewServer: installMiddleware,
-  };
 }

@@ -27,6 +27,11 @@ export default [
     languageOptions: { globals: globals.node },
   },
   {
+    // Shared by the browser bundle and the server runtimes.
+    files: ["shared/**"],
+    languageOptions: { globals: { URL: "readonly" } },
+  },
+  {
     // Functions in these files are serialized into the browser page.
     files: ["scripts/qa/**"],
     languageOptions: { globals: { ...globals.node, ...globals.browser } },

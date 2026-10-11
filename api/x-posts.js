@@ -1,27 +1,10 @@
-import { createXFeedService } from "../server/x-feed-plugin.mjs";
-import { authorizeFeed } from "../server/x-media-auth.mjs";
+// Vercel function: every API route shares server/api-handler.mjs.
+import { createApiHandler } from "../server/api-handler.mjs";
 
-const getFeed = createXFeedService({ token: process.env.X_BEARER_TOKEN ?? "" });
+const handleApi = createApiHandler(process.env);
 
 export default {
   async fetch(request) {
-    const headers = {
-      "Content-Type": "application/json; charset=utf-8",
-      "Cache-Control": "no-store",
-    };
-
-    if (request.method !== "GET") {
-      return new Response(JSON.stringify({ status: "method_not_allowed", posts: [] }), {
-        status: 405,
-        headers: { ...headers, Allow: "GET" },
-      });
-    }
-
-    return new Response(JSON.stringify(await authorizeFeed(await getFeed())), {
-      headers: {
-        ...headers,
-        "Vercel-CDN-Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
-      },
-    });
+    return (await handleApi(request)) ?? new Response("Not found", { status: 404 });
   },
 };

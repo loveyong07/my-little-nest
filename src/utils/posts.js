@@ -1,4 +1,7 @@
+import { mediaDimensions } from "../../shared/media-sources.mjs";
 import { intlLocale } from "../constants/languages.js";
+
+export { mediaDimensions };
 
 export function isOwnPost(post) {
   if (!post || !/^\d+$/.test(String(post.id ?? "")) || typeof post.text !== "string") return false;
@@ -29,18 +32,6 @@ export function postExcerpt(post, t) {
   return Array.isArray(post.media) && post.media.some((media) => media?.type === "video")
     ? t.postVideoAlt
     : t.postPhotoAlt(1);
-}
-
-export function mediaDimensions(media) {
-  const { width, height } = media ?? {};
-  return Number.isSafeInteger(width) &&
-    Number.isSafeInteger(height) &&
-    width > 0 &&
-    height > 0 &&
-    width <= 20_000 &&
-    height <= 20_000
-    ? { width, height }
-    : null;
 }
 
 export function mediaFrameRatio(media, fallback = 4 / 3) {
