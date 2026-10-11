@@ -163,6 +163,8 @@ export function createXFeedService({
   let userFieldMode = "tweet";
   let postFieldMode = "tweet";
   let cachedPinnedId = null;
+  let cachedAuthor = null;
+  let pinnedRetryAt = 0;
   let fullRefreshAt = null;
   let cachedProfile = null;
   let profileRetryAt = 0;
@@ -337,6 +339,7 @@ export function createXFeedService({
       result: { status: "ok", posts, pinnedPost: pinned.post, pinnedStatus: pinned.status },
       latestId,
       pinnedId,
+      author,
       fullRefresh,
     };
   }
@@ -377,19 +380,34 @@ export function createXFeedService({
 
   async function getFeed() {
     if (!token?.trim()) return unavailable();
-    if (cached && now() - cachedAt < CACHE_TTL_MS) return cached;
+    if (inFlight) return inFlight;
+    if (cached && now() - cachedAt < CACHE_TTL_MS) {
+      if (["ok", "none"].includes(cached.pinnedStatus) || now() < pinnedRetryAt) return cached;
+      // Retry only the failed pin. Keep the timeline's original freshness timestamp
+      // and author/pin pair, even if the standalone profile lookup has since changed.
+      inFlight = fetchPinnedPost(cachedAuthor, cachedPinnedId)
+        .then((pinned) => {
+          cached = { ...cached, pinnedPost: pinned.post, pinnedStatus: pinned.status };
+          pinnedRetryAt = ["ok", "none"].includes(pinned.status) ? 0 : now() + ERROR_RETRY_MS;
+          return cached;
+        })
+        .finally(() => {
+          inFlight = null;
+        });
+      return inFlight;
+    }
     if (now() < retryAt)
       return cached
         ? { ...cached, status: "stale", pinnedStatus: cached.pinnedPost ? "stale" : cached.pinnedStatus }
         : unavailable();
-    if (inFlight) return inFlight;
-
     inFlight = fetchFeed()
-      .then(({ result, latestId, pinnedId, fullRefresh }) => {
+      .then(({ result, latestId, pinnedId, author, fullRefresh }) => {
         cached = result;
         cachedAt = now();
         newestSeenId = latestId;
         cachedPinnedId = pinnedId;
+        cachedAuthor = author;
+        pinnedRetryAt = ["ok", "none"].includes(result.pinnedStatus) ? 0 : cachedAt + ERROR_RETRY_MS;
         if (fullRefresh) fullRefreshAt = cachedAt;
         retryAt = 0;
         return result;

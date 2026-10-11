@@ -43,6 +43,7 @@ const server = await createServer({
 const [
   { Header },
   { MediaLightbox },
+  { PostCard },
   { default: ContactPage },
   { default: PostsPage },
   { copy },
@@ -50,9 +51,11 @@ const [
   { pagePaths },
   { postMonths },
   { useFantasyPreferences },
+  { useMediaRequest },
 ] = await Promise.all([
   server.ssrLoadModule("/src/components/Header.jsx"),
   server.ssrLoadModule("/src/components/MediaLightbox.jsx"),
+  server.ssrLoadModule("/src/components/PostCard.jsx"),
   server.ssrLoadModule("/src/pages/ContactPage.jsx"),
   server.ssrLoadModule("/src/pages/PostsPage.jsx"),
   server.ssrLoadModule("/src/constants/locales.js"),
@@ -60,6 +63,7 @@ const [
   server.ssrLoadModule("/src/routes/site-route.js"),
   server.ssrLoadModule("/src/utils/posts.js"),
   server.ssrLoadModule("/src/hooks/useFantasyPreferences.js"),
+  server.ssrLoadModule("/src/hooks/useMediaRequest.js"),
 ]);
 
 function resetDom() {
@@ -76,6 +80,9 @@ async function mount(element) {
   await React.act(async () => root.render(element));
   return {
     container,
+    async render(nextElement) {
+      await React.act(async () => root.render(nextElement));
+    },
     async unmount() {
       await React.act(async () => root.unmount());
       container.remove();
@@ -117,6 +124,21 @@ test("mobile navigation opens and Escape closes it with focus returned", async (
   assert.equal(toggle.getAttribute("aria-expanded"), "false");
   assert.equal(document.activeElement, toggle);
   await unmount();
+});
+
+test("route changes close the mobile menu and do not reopen it on browser return", async () => {
+  resetDom();
+  const header = (page) => React.createElement(Header, { page, t: copy.zh, language: "zh", changeLanguage() {} });
+  const view = await mount(header("home"));
+  await React.act(async () => view.container.querySelector(".menu-toggle").click());
+  assert.equal(view.container.querySelector(".menu-toggle").getAttribute("aria-expanded"), "true");
+
+  for (const page of ["posts", "home"]) {
+    await view.render(header(page));
+    assert.equal(view.container.querySelector(".menu-toggle").getAttribute("aria-expanded"), "false");
+    assert.equal(view.container.querySelector(".site-nav.is-open"), null);
+  }
+  await view.unmount();
 });
 
 test("navigation copy has matching keys and three items in every language", () => {
@@ -221,6 +243,132 @@ test("lightbox Escape closes the dialog and restores body scroll and launcher fo
   assert.equal(document.body.style.overflow, "");
   assert.equal(document.activeElement, container.querySelector("button"));
   await unmount();
+});
+
+test("lightbox photo retries reset on navigation while keyboard focus stays in place", async () => {
+  resetDom();
+  const returnFocusRef = { current: null };
+  const sources = ["/api/x-media?url=first", "/api/x-media?url=second"];
+  function Harness() {
+    const [index, setIndex] = React.useState(0);
+    return React.createElement(MediaLightbox, {
+      kind: "photo",
+      photo: { src: sources[index], number: index + 1 },
+      photoAlt: "Example",
+      photoCount: 2,
+      // Callback identity changes on render; it must not reset dialog focus.
+      onPhotoChange: (value) => setIndex(value),
+      t: copy.en,
+      onClose() {},
+      returnFocusRef,
+    });
+  }
+  const view = await mount(React.createElement(Harness));
+  await React.act(async () => document.querySelector(".media-lightbox img").dispatchEvent(new Event("error")));
+  assert.ok(document.querySelector(".media-lightbox-unavailable"));
+  await React.act(async () => document.querySelector(".media-lightbox-unavailable button").click());
+  assert.equal(document.querySelector(".media-lightbox img").getAttribute("src"), `${sources[0]}&lightboxRetry=1`);
+
+  const next = document.querySelector(".media-lightbox-next");
+  next.focus();
+  await React.act(async () => next.click());
+  assert.equal(document.querySelector(".media-lightbox img").getAttribute("src"), sources[1]);
+  assert.equal(document.activeElement, next);
+  assert.equal(document.body.style.overflow, "hidden");
+  await React.act(async () => window.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft" })));
+  assert.equal(document.querySelector(".media-lightbox img").getAttribute("src"), sources[0]);
+  assert.equal(document.activeElement, next);
+  await view.unmount();
+  assert.equal(document.body.style.overflow, "");
+});
+
+test("post photo failures and retries stay separate from a failed video", async () => {
+  resetDom();
+  const photos = ["One", "Two"].map((name) => ({ type: "photo", url: `https://pbs.twimg.com/media/Test${name}.jpg` }));
+  const view = await mount(
+    React.createElement(PostCard, {
+      post: {
+        ...SNAPSHOT,
+        text: "Media test",
+        media: [
+          ...photos,
+          { type: "video", url: "https://video.twimg.com/amplify_video/123/vid/avc1/1280x720/test.mp4" },
+        ],
+      },
+      feedSource: "live",
+      language: "en",
+      t: copy.en,
+      profile: { username: "loveyong07", name: "Example" },
+    }),
+  );
+  await React.act(async () => view.container.querySelector("video").dispatchEvent(new Event("error")));
+  await React.act(async () => view.container.querySelector(".post-media img").dispatchEvent(new Event("error")));
+  assert.ok(view.container.querySelector(".post-media .post-media-unavailable"));
+  await React.act(async () => view.container.querySelector(".post-media-unavailable button").click());
+  let image = view.container.querySelector(".post-media img");
+  assert.equal(new URL(image.src).searchParams.get("retry"), "1");
+  assert.equal(document.activeElement, view.container.querySelector(".post-media-open"));
+  await React.act(async () => image.dispatchEvent(new Event("error")));
+  assert.equal(document.activeElement, view.container.querySelector(".post-media-unavailable button"));
+
+  await React.act(async () => view.container.querySelector(".post-media-next").click());
+  image = view.container.querySelector(".post-media img");
+  assert.equal(new URL(image.src).searchParams.get("url"), photos[1].url);
+  assert.equal(new URL(image.src).searchParams.has("retry"), false);
+  assert.ok(view.container.querySelector(".post-video .post-media-unavailable"), "photo navigation keeps video error");
+  await React.act(async () => view.container.querySelector(".post-media-prev").click());
+  image = view.container.querySelector(".post-media img");
+  assert.equal(new URL(image.src).searchParams.get("url"), photos[0].url);
+  assert.equal(new URL(image.src).searchParams.has("retry"), false);
+
+  await React.act(async () => view.container.querySelector(".post-video .post-media-unavailable button").click());
+  assert.equal(new URL(view.container.querySelector("video source").src).searchParams.get("retry"), "1");
+  assert.equal(document.activeElement, view.container.querySelector("video"));
+  await view.unmount();
+});
+
+test("late media events cannot change a newer source or retry attempt", async () => {
+  resetDom();
+  let request;
+  function Harness({ source }) {
+    request = useMediaRequest(source);
+    return null;
+  }
+  const view = await mount(React.createElement(Harness, { source: "/api/x-media?url=first" }));
+  const first = request;
+  await view.render(React.createElement(Harness, { source: "/api/x-media?url=second" }));
+  await React.act(async () => first.onError());
+  assert.equal(request.unavailable, false);
+  await React.act(async () => request.onError());
+  const failed = request;
+  await React.act(async () => request.retry());
+  await React.act(async () => failed.onError());
+  assert.equal(request.unavailable, false);
+  assert.equal(request.retryCount, 1);
+  await React.act(async () => request.onLoad());
+  assert.equal(request.loaded, true);
+  await view.unmount();
+});
+
+test("single-photo navigation preserves its loaded image and usable preview", async () => {
+  resetDom();
+  const view = await mount(
+    React.createElement(PostCard, {
+      post: { ...SNAPSHOT, media: [{ type: "photo", url: "https://pbs.twimg.com/media/Single.jpg" }] },
+      feedSource: "live",
+      language: "en",
+      t: copy.en,
+      profile: { username: "loveyong07" },
+    }),
+  );
+  await React.act(async () => view.container.querySelector(".post-media img").dispatchEvent(new Event("load")));
+  const image = view.container.querySelector(".post-media img");
+  await React.act(async () => view.container.querySelector(".post-media-next").click());
+  assert.equal(view.container.querySelector(".post-media-loading"), null);
+  assert.equal(view.container.querySelector(".post-media img"), image);
+  await React.act(async () => view.container.querySelector(".post-media-open").click());
+  assert.ok(document.querySelector('[role="dialog"]'));
+  await view.unmount();
 });
 
 test("contact copy action reports success and exposes a manual fallback on failure", async () => {

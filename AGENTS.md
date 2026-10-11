@@ -11,7 +11,8 @@
 
 - Run the local server yourself and open the preview in the browser available to this environment. Do not give the user server-start instructions when you can run it.
 - Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts/prepare-sites-build.mjs`, and `tests/sites-worker.test.mjs` intact so the same local prototype can be handed to Sites.
-- Before a Sites handoff, run `npm run check` (logic tests, build, build-artifact checks, Sites worker tests); the build must leave `dist/client/index.html`, `dist/server/index.js`, and `dist/.openai/hosting.json`. Keep the logic tests independent of `dist/` and let the build-artifact checks fail, never skip, when the build is missing.
+- Before a Sites handoff, run `npm run check` (lint with zero warnings, formatting, logic tests, build, build-artifact checks, Sites worker tests); the build must leave `dist/client/index.html`, `dist/server/index.js`, and `dist/.openai/hosting.json`. Keep the logic tests independent of `dist/` and let the build-artifact checks fail, never skip, when the build is missing.
+- CSS, layout or component-structure changes also require a visual comparison. Build a traceable commit/workspace baseline and the final source separately; use the same `qa:styles` collector, fixtures and browser conditions. Preserve and explain differences instead of overwriting the baseline. `npm run check` does not include visual QA; mock video failures do not verify real playback.
 - The user owns `loveyong07.top` through Tencent Cloud and selected GitHub plus Vercel for hosting. The production branch is `master`. Do not use Cloudflare or change DNS records; inspect Vercel's exact requirements and tell the user when DNS changes are needed. The user handles domain purchases and payments personally.
 - Preserve original assets and the Sites compatibility files. Do not remove unrelated untracked files or archived originals during focused changes.
 
@@ -24,6 +25,7 @@
 - Provide Chinese, Japanese and English UI. Preserve supplied wording and translations. Leave personal-interest or recent-status copy blank unless the user supplies it; do not invent personal interests or life events.
 - Render scene images at full opacity without broad white haze overlays. Keep readable translucent cards, with subtle blue shading and white text for exposed route titles and branding.
 - Keep the Home illustration fixed to the viewport. On fine-pointer viewports wider than 900px, fit the entire homepage, including journal cards, into one viewport. Retain scrolling on mobile and other routes.
+- Keep `src/constants/media-queries.js` and CSS aligned at 700px, 900px / 901px and the fine-pointer condition; update both sides when changing a breakpoint.
 - Keep all three mobile navigation items visible and clickable above page panels when open. On short viewports the menu may scroll; preserve at least 44px tap targets and verify the Contact item's click.
 - Use `public/assets/site-favicon-2026-09-29.png` as the browser favicon. Keep Open Graph / Twitter card tags in `index.html` (preview image `public/assets/og-cover.jpg`, 1200x630) and the `theme-color` blue-and-white.
 - `/business` permanently redirects to `/` in `vercel.json`; keep it for old links.

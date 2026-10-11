@@ -29,19 +29,26 @@
 }
 .site-route-posts::before {
   background-image: url("/assets/posts-winter-hero-q90.jpg");
-  background-image: image-set(
-    "/assets/posts-winter-hero-q90.webp" type("image/webp"),
-    "/assets/posts-winter-hero-q90.jpg" type("image/jpeg")
-  );
   background-position: 60% 55%;
 }
 .site-route-contact::before {
   background-image: url("/assets/contact-sky-letter-v2-clean-q90.jpg");
-  background-image: image-set(
-    "/assets/contact-sky-letter-v2-clean-q90.webp" type("image/webp"),
-    "/assets/contact-sky-letter-v2-clean-q90.jpg" type("image/jpeg")
-  );
   background-position: 60% 60%;
+}
+/* Keep JPEG fallbacks; supported browsers select the preferred image format. */
+@supports (background-image: image-set(url("") type("image/webp"))) {
+  .site-route-posts::before {
+    background-image: image-set(
+      "/assets/posts-winter-hero-q90.webp" type("image/webp"),
+      "/assets/posts-winter-hero-q90.jpg" type("image/jpeg")
+    );
+  }
+  .site-route-contact::before {
+    background-image: image-set(
+      "/assets/contact-sky-letter-v2-clean-q90.webp" type("image/webp"),
+      "/assets/contact-sky-letter-v2-clean-q90.jpg" type("image/jpeg")
+    );
+  }
 }
 @keyframes route-background-drift {
   from {

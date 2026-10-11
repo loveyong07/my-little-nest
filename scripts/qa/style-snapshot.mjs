@@ -11,7 +11,9 @@
 // so two captures of the same build are identical. Animations are paused at their
 // start and transitions finished before reading styles. A local Chrome or Edge is
 // used through playwright-core (QA_BROWSER=chrome|msedge); nothing is downloaded.
-import { spawn } from "node:child_process";
+import assert from "node:assert/strict";
+import { spawn, execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -20,8 +22,11 @@ import pixelmatch from "pixelmatch";
 import { chromium } from "playwright-core";
 import { PNG } from "pngjs";
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const fixtures = path.join(root, "scripts/qa/fixtures");
+const scriptPath = fileURLToPath(import.meta.url);
+const scriptRoot = path.resolve(path.dirname(scriptPath), "../..");
+const root = process.env.QA_ROOT ? path.resolve(process.env.QA_ROOT) : scriptRoot;
+// An isolated source baseline uses this same collector and these same fixtures.
+const fixtures = path.join(scriptRoot, "scripts/qa/fixtures");
 const PORT = Number(process.env.QA_PORT || 4317);
 const ORIGIN = `http://127.0.0.1:${PORT}`;
 const FIXED_TIME = new Date("2026-10-11T10:00:00+08:00");
@@ -35,12 +40,15 @@ const viewports = {
   phone: { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true },
   narrow: { viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true },
 };
+const baseViewports = Object.keys(viewports);
+viewports.landscape = { viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true };
+viewports["short-phone"] = { viewport: { width: 390, height: 320 }, isMobile: true, hasTouch: true };
 const pages = { home: "/", posts: "/posts", contact: "/contact" };
 
 function scenarios() {
   const list = [];
   const add = (scenario) => list.push({ lang: "zh", ...scenario });
-  for (const vp of Object.keys(viewports)) for (const page of Object.keys(pages)) add({ vp, page, shot: true });
+  for (const vp of baseViewports) for (const page of Object.keys(pages)) add({ vp, page, shot: true });
   for (const vp of ["desktop", "phone"]) for (const lang of ["ja", "en"]) for (const page of Object.keys(pages)) add({ vp, page, lang });
   for (const vp of ["desktop", "phone"]) for (const page of Object.keys(pages)) add({ vp, page, effects: false });
   for (const page of Object.keys(pages)) add({ vp: "phone", page, reducedMotion: true });
@@ -57,6 +65,9 @@ function scenarios() {
     add({ vp: "desktop", page, action: "hover" });
     add({ vp: "desktop", page, action: "focus" });
   }
+  add({ vp: "landscape", page: "posts", action: "photo", shot: true });
+  add({ vp: "short-phone", page: "home", action: "menu-contact", shot: true });
+  for (const vp of ["desktop", "phone"]) add({ vp, page: "posts", action: "photo-keyboard", shot: true });
   return list.map((scenario) => ({
     ...scenario,
     name: [scenario.page, scenario.vp, scenario.lang, scenario.effects === false && "effects-off",
@@ -165,7 +176,7 @@ async function prepareContext(browser, scenario) {
   });
   const feed = readFileSync(path.join(fixtures, "feed.json"), "utf8");
   const profile = readFileSync(path.join(fixtures, "profile.json"), "utf8");
-  const image = readFileSync(path.join(root, "public/assets/og-cover.jpg"));
+  const image = readFileSync(path.join(scriptRoot, "public/assets/og-cover.jpg"));
   const feedResponses = {
     offline: { status: 503, body: { status: "unavailable", posts: [] } },
     empty: { status: 200, body: { status: "ok", posts: [], pinnedPost: null, pinnedStatus: "none" } },
@@ -230,10 +241,41 @@ async function load(page, scenario) {
 
 async function act(page, scenario) {
   if (scenario.action === "menu") await page.click(".menu-toggle");
-  if (scenario.action === "photo") {
+  if (scenario.action === "menu-contact") {
+    await page.click(".menu-toggle");
+    const contact = page.locator(".site-nav a[href='/contact']");
+    await contact.scrollIntoViewIfNeeded();
+    const hit = await contact.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return rect.height >= 44 && element.contains(document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2));
+    });
+    assert.ok(hit, "Contact must have a visible, clickable 44px menu target");
+    await contact.click();
+    await page.waitForURL(ORIGIN + "/contact");
+    assert.equal(await page.locator(".menu-toggle").getAttribute("aria-expanded"), "false");
+  }
+  if (scenario.action === "photo" || scenario.action === "photo-keyboard") {
     await page.click(".post-media-open");
     await page.waitForSelector(".media-lightbox img");
     await page.evaluate(() => document.querySelector(".media-lightbox img").decode().catch(() => {}));
+    const closeVisible = await page.locator(".media-lightbox-close").evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return rect.top >= 0 && rect.bottom <= innerHeight && rect.left >= 0 && rect.right <= innerWidth
+        && element.contains(document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2));
+    });
+    assert.ok(closeVisible, "lightbox close button must be fully visible and clickable");
+    if (scenario.action === "photo-keyboard") {
+      const before = await page.locator(".media-lightbox img").getAttribute("src");
+      await page.locator(".media-lightbox-close").focus();
+      await page.keyboard.press("ArrowRight");
+      await page.waitForFunction((src) => document.querySelector(".media-lightbox img")?.getAttribute("src") !== src, before);
+      assert.ok(await page.locator(".media-lightbox-close").evaluate((element) => element === document.activeElement),
+        "photo switch must preserve keyboard focus");
+      await page.keyboard.press("Escape");
+      await page.waitForSelector(".media-lightbox", { state: "detached" });
+      assert.ok(await page.locator(".post-media-open").first().evaluate((element) => element === document.activeElement),
+        "closing must return focus to the opener");
+    }
   }
   if (scenario.action === "video") {
     await page.click(".post-index-button:nth-child(2)");
@@ -300,8 +342,19 @@ async function runScenario(browser, scenario, outDir) {
   const errors = [];
   page.on("pageerror", (error) => errors.push(`pageerror: ${error.message}`));
   page.on("console", (message) => {
-    // The music request is aborted on purpose; anything else is a real page error.
-    if (message.type() === "error" && !/\.mp3(?:\?|$)/.test(message.location().url)) errors.push(`console: ${message.text()} (${message.location().url})`);
+    if (message.type() !== "error") return;
+    const url = message.location().url;
+    const text = message.text();
+    // Only suppress the exact network failures deliberately supplied by fixtures.
+    // Runtime errors from the app remain failures, even in the recovery scenarios.
+    const networkFailure = text.startsWith("Failed to load resource:");
+    const expected = networkFailure && (
+      /\.mp3(?:\?|$)/.test(url) ||
+      (text.includes("status of 404") && /\/api\/x-video\?/.test(url)) ||
+      (scenario.feed === "offline" && text.includes("status of 503") && /\/api\/x-posts(?:\?|$)/.test(url)) ||
+      (scenario.feed === "media-error" && text.includes("status of 404") && /\/api\/x-media\?/.test(url))
+    );
+    if (!expected) errors.push(`console: ${text} (${url})`);
   });
   try {
     await load(page, scenario);
@@ -315,7 +368,9 @@ async function runScenario(browser, scenario, outDir) {
     writeFileSync(path.join(outDir, `${scenario.name}.json.gz`), gzipSync(JSON.stringify({ scenario, errors, captures })));
     if (scenario.shot) {
       await finishAnimationsForScreenshot(page);
-      await page.screenshot({ path: path.join(outDir, `${scenario.name}.png`), fullPage: true, mask: [page.locator(".sakura-canvas")] });
+      // The atmosphere spans the viewport: masking its box would hide the whole page.
+      // Hide particles and cursor sparkles, leaving the scene and controls visible.
+      await page.screenshot({ path: path.join(outDir, `${scenario.name}.png`), fullPage: true, style: ".nest-atmosphere { visibility: hidden !important; }" });
     }
     return { name: scenario.name, errors };
   } finally {
@@ -334,6 +389,47 @@ async function waitForServer() {
     await new Promise((resolve) => setTimeout(resolve, 200));
   }
   throw new Error(`Preview server did not start on ${ORIGIN}`);
+}
+
+function hashInputs(base, inputs) {
+  const hash = createHash("sha256");
+  function add(relative) {
+    const absolute = path.join(base, relative);
+    if (!existsSync(absolute)) return;
+    const entries = readdirSafe(absolute);
+    if (entries) {
+      for (const entry of entries.sort()) add(path.join(relative, entry));
+    } else {
+      hash.update(relative.replaceAll("\\", "/") + "\0");
+      hash.update(readFileSync(absolute));
+    }
+  }
+  for (const input of inputs) add(input);
+  return hash.digest("hex");
+}
+
+function readdirSafe(absolute) {
+  try { return readdirSync(absolute); } catch (error) {
+    if (error.code === "ENOTDIR") return null;
+    throw error;
+  }
+}
+
+function provenance(browser) {
+  const git = (...args) => execFileSync("git", ["-C", root, ...args], { encoding: "utf8" }).trim();
+  return {
+    sourceRevision: process.env.QA_SOURCE_REVISION || git("rev-parse", "HEAD"),
+    sourceState: process.env.QA_SOURCE_STATE || git("status", "--short"),
+    sourceHash: hashInputs(root, ["src", "shared", "server", "api", "worker", "build", "public", "index.html", "vite.config.mjs", "package.json", "package-lock.json", ".openai"]),
+    buildHash: hashInputs(root, ["dist/client"]),
+    collectorHash: createHash("sha256").update(readFileSync(scriptPath)).digest("hex"),
+    fixtureHash: hashInputs(fixtures, readdirSync(fixtures).sort()),
+    imageFixtureHash: createHash("sha256").update(readFileSync(path.join(scriptRoot, "public/assets/og-cover.jpg"))).digest("hex"),
+    browser: browser.version(),
+    channel: process.env.QA_BROWSER || "chrome",
+    fixedTime: FIXED_TIME.toISOString(),
+    locale: "zh-CN", timezoneId: "Asia/Shanghai", deviceScaleFactor: 1,
+  };
 }
 
 async function capture(outDir) {
@@ -355,10 +451,11 @@ async function capture(outDir) {
       }
     };
     await Promise.all(Array.from({ length: CONCURRENCY }, worker));
-    writeFileSync(path.join(outDir, "manifest.json"), JSON.stringify({ capturedAt: new Date().toISOString(), scenarios: results.map((result) => result.name).sort() }, null, 2));
+    writeFileSync(path.join(outDir, "manifest.json"), JSON.stringify({ capturedAt: new Date().toISOString(), ...provenance(browser), scenarios: results.map((result) => result.name).sort() }, null, 2));
     const failing = results.filter((result) => result.errors.length);
     for (const result of failing) console.log(`\n${result.name}:\n  ${result.errors.join("\n  ")}`);
     console.log(`\nCaptured ${results.length} scenarios into ${path.relative(root, outDir)}${failing.length ? ` (${failing.length} with page errors)` : ""}.`);
+    if (failing.length) process.exitCode = 1;
   } finally {
     await browser?.close();
     server.kill();
@@ -398,6 +495,12 @@ function diffCapture(label, before, after, report) {
 }
 
 function compare(beforeDir, afterDir) {
+  const beforeManifest = JSON.parse(readFileSync(path.join(beforeDir, "manifest.json"), "utf8"));
+  const afterManifest = JSON.parse(readFileSync(path.join(afterDir, "manifest.json"), "utf8"));
+  for (const field of ["collectorHash", "fixtureHash", "imageFixtureHash", "browser", "channel", "fixedTime", "locale", "timezoneId", "deviceScaleFactor"]) {
+    assert.ok(beforeManifest[field] !== undefined, `baseline is missing ${field}; recapture with provenance`);
+    assert.deepEqual(afterManifest[field], beforeManifest[field], `capture conditions differ: ${field}`);
+  }
   const names = readdirSync(beforeDir).filter((name) => name.endsWith(".json.gz"));
   const afterNames = new Set(readdirSync(afterDir).filter((name) => name.endsWith(".json.gz")));
   const report = [];
@@ -440,6 +543,10 @@ function compare(beforeDir, afterDir) {
     for (const line of pixelReport) console.log("  " + line);
   }
   if (!report.length && !pixelReport.length) console.log("No differences: computed styles, layout, DOM and screenshots match.");
+  writeFileSync(path.join(afterDir, "comparison.json"), JSON.stringify({
+    before: beforeManifest, after: afterManifest, comparedScenarios: names.length,
+    styleDifferences: report, screenshotDifferences: pixelReport,
+  }, null, 2));
   process.exitCode = report.length || pixelReport.length ? 1 : 0;
 }
 

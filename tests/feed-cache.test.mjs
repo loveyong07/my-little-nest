@@ -77,3 +77,37 @@ test("concurrent feed consumers share a request and fresh reads retain its succe
     globalThis.fetch = original;
   }
 });
+
+for (const pinnedStatus of ["unavailable", "stale", undefined, "unexpected"]) {
+  test(`real feed cache recovers a partial response (${String(pinnedStatus)}) without waiting 15 minutes`, async () => {
+    const originalFetch = globalThis.fetch;
+    const originalNow = Date.now;
+    let time = 1000;
+    let calls = 0;
+    const partial = { status: "ok", posts: [], ...(pinnedStatus === undefined ? {} : { pinnedStatus }) };
+    globalThis.fetch = async () => {
+      calls++;
+      return { ok: true, json: async () => (calls === 1 ? partial : { ...partial, pinnedStatus: "none" }) };
+    };
+    Date.now = () => time;
+    try {
+      const feed = await import(`../src/feed-cache.js?recovery=${String(pinnedStatus)}`);
+      assert.deepEqual(await feed.fetchFeed(), partial);
+      assert.deepEqual(feed.getFeedSnapshot().feed, partial);
+      assert.equal(feed.getFeedRetryAfter(), 30_000);
+      time += 29_999;
+      await feed.fetchFeed({ force: true });
+      assert.equal(calls, 1);
+      time++;
+      const recovered = await Promise.all(Array.from({ length: 8 }, () => feed.fetchFeed()));
+      assert.ok(recovered.every((value) => value.pinnedStatus === "none"));
+      assert.equal(calls, 2);
+      time += 15 * 60 * 1000 - 1;
+      await feed.fetchFeed();
+      assert.equal(calls, 2);
+    } finally {
+      globalThis.fetch = originalFetch;
+      Date.now = originalNow;
+    }
+  });
+}

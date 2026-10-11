@@ -10,6 +10,69 @@ const post = (id, text, extra = {}) => ({
   ...extra,
 });
 
+for (const hadPin of [false, true]) {
+  for (const errorStatus of [503, 404]) {
+    test(`pin-only recovery preserves timeline TTL and coalesces retries (saved=${hadPin}, HTTP=${errorStatus})`, async () => {
+      let time = 0;
+      let fail = !hadPin;
+      const calls = { user: 0, timeline: 0, pin: 0 };
+      const feed = createXFeedService({
+        token: "test-token",
+        now: () => time,
+        fetchImpl: async (url) => {
+          const pathname = new URL(url).pathname;
+          if (pathname === "/2/users/2061726102180311040") {
+            calls.user++;
+            return Response.json({ data: { id: "2061726102180311040", username: "loveyong07", pinned_tweet_id: "8" } });
+          }
+          if (pathname === "/2/tweets/8") {
+            calls.pin++;
+            await Promise.resolve();
+            return fail ? new Response("failed", { status: errorStatus }) : Response.json({ data: post("8", "Pin") });
+          }
+          assert.equal(pathname, "/2/users/2061726102180311040/tweets");
+          calls.timeline++;
+          return Response.json({ data: [post("9", "Daily")], meta: { newest_id: "9" } });
+        },
+      });
+      assert.equal((await feed()).pinnedStatus, hadPin ? "ok" : "unavailable");
+      if (hadPin) {
+        fail = true;
+        time = 15 * 60 * 1000;
+      }
+      const partial = await feed();
+      const failedAt = time;
+      const expectedStatus = hadPin && errorStatus !== 404 ? "stale" : "unavailable";
+      assert.equal(partial.status, "ok");
+      assert.equal(partial.pinnedStatus, expectedStatus);
+      assert.equal(partial.pinnedPost?.id ?? null, expectedStatus === "stale" ? "8" : null);
+      const counts = { ...calls };
+      time = failedAt + 60_000 - 1;
+      for (let i = 0; i < 8; i++) assert.deepEqual(await feed(), partial);
+      assert.deepEqual(calls, counts, "no request before the 60-second boundary");
+
+      time++;
+      const stillFailed = await Promise.all(Array.from({ length: 8 }, () => feed()));
+      assert.ok(stillFailed.every((result) => result.pinnedStatus === expectedStatus));
+      assert.deepEqual(calls, { ...counts, pin: counts.pin + 1 }, "one pin-only lookup at the boundary");
+      fail = false;
+      time += 60_000 - 1;
+      assert.equal((await feed()).pinnedStatus, expectedStatus);
+      assert.equal(calls.pin, counts.pin + 1);
+      time++;
+      const recovered = await Promise.all(Array.from({ length: 8 }, () => feed()));
+      assert.ok(recovered.every((result) => result.pinnedStatus === "ok" && result.pinnedPost.id === "8"));
+      assert.deepEqual(calls, { ...counts, pin: counts.pin + 2 }, "recovery does not re-fetch user or timeline");
+      time = failedAt + 15 * 60 * 1000 - 1;
+      assert.equal((await feed()).pinnedStatus, "ok");
+      assert.equal(calls.timeline, counts.timeline);
+      time++;
+      await feed();
+      assert.equal(calls.timeline, counts.timeline + 1, "pin retries do not renew the timeline's freshness");
+    });
+  }
+}
+
 test("returns unavailable without requesting X when no token is configured", async () => {
   const feed = createXFeedService({
     token: "",

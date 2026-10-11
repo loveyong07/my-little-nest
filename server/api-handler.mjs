@@ -6,10 +6,9 @@ import { createXFeedService } from "./x-feed-service.mjs";
 import { proxyXMedia } from "./x-media.mjs";
 import { proxyXVideo } from "./x-video.mjs";
 
-// Browsers never cache these answers. The Vercel CDN shares a successful answer for five
-// minutes, which keeps cold function starts (each one rebuilds the in-memory X cache) rare;
-// the service already refreshes at most every 15 minutes. A failed or stale answer is shared
-// for one minute only, matching the service's retry backoff, so recovery shows up quickly.
+// Browsers do not HTTP-cache these answers. Complete successes use the retained five-minute
+// CDN policy; partial, stale and unknown results use the one-minute retry policy. These
+// windows trade freshness for cache reuse; they are not measured cold-start/cost savings.
 export const JSON_CACHE_CONTROL = "no-store";
 export const JSON_CDN_CACHE_CONTROL = "public, s-maxage=300, stale-while-revalidate=600";
 export const JSON_CDN_CACHE_CONTROL_RETRY = "public, s-maxage=60";
@@ -29,10 +28,13 @@ function json(body, { status = 200, headers = {} } = {}) {
  * @param {Record<string, string | undefined>} env X_BEARER_TOKEN and optional X_MEDIA_SIGNING_SECRET.
  * @returns {(request: Request) => Promise<Response | null>} null for paths outside the API.
  */
-export function createApiHandler(env = {}, { fetchImpl = (...args) => globalThis.fetch(...args) } = {}) {
+export function createApiHandler(
+  env = {},
+  { fetchImpl = (...args) => globalThis.fetch(...args), serviceFactory = createXFeedService } = {},
+) {
   const authOptions = { secret: signingSecret(env) };
   let service = null;
-  const feedService = () => (service ??= createXFeedService({ token: env.X_BEARER_TOKEN ?? "", fetchImpl }));
+  const feedService = () => (service ??= serviceFactory({ token: env.X_BEARER_TOKEN ?? "", fetchImpl }));
 
   async function feedRoute(request, route) {
     const empty = route === "posts" ? { status: "unavailable", posts: [] } : { status: "unavailable" };
@@ -47,11 +49,12 @@ export function createApiHandler(env = {}, { fetchImpl = (...args) => globalThis
         route === "posts"
           ? await authorizeFeed(await feedService()(), authOptions)
           : await authorizeProfile(await feedService().getProfile(), authOptions);
-      const cdn = result?.status === "ok" ? JSON_CDN_CACHE_CONTROL : JSON_CDN_CACHE_CONTROL_RETRY;
+      const complete = result?.status === "ok" && (route === "profile" || ["ok", "none"].includes(result.pinnedStatus));
+      const cdn = complete ? JSON_CDN_CACHE_CONTROL : JSON_CDN_CACHE_CONTROL_RETRY;
       return json(result, { headers: { "Vercel-CDN-Cache-Control": cdn } });
     } catch {
       // A failed lookup still answers, so no runtime is left with a hanging request.
-      return json(empty, { status: 503 });
+      return json(empty, { status: 503, headers: { "Vercel-CDN-Cache-Control": JSON_CDN_CACHE_CONTROL_RETRY } });
     }
   }
 

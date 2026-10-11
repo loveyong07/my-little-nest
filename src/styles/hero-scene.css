@@ -186,10 +186,14 @@
   }
   .hero::before {
     background-image: url("/assets/hero-sky-mobile-motion-q90.jpg");
-    background-image: image-set(
-      "/assets/hero-sky-mobile-motion-q90.webp" type("image/webp"),
-      "/assets/hero-sky-mobile-motion-q90.jpg" type("image/jpeg")
-    );
+  }
+  @supports (background-image: image-set(url("") type("image/webp"))) {
+    .hero::before {
+      background-image: image-set(
+        "/assets/hero-sky-mobile-motion-q90.webp" type("image/webp"),
+        "/assets/hero-sky-mobile-motion-q90.jpg" type("image/jpeg")
+      );
+    }
   }
 }
 

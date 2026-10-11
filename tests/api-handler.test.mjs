@@ -96,3 +96,57 @@ test("the X credential stays on the server", async () => {
     ["456"],
   );
 });
+
+for (const [status, pinnedStatus, complete] of [
+  ["ok", "ok", true],
+  ["ok", "none", true],
+  ["ok", "unavailable", false],
+  ["ok", "stale", false],
+  ["stale", "ok", false],
+  ["unavailable", "none", false],
+  ["ok", undefined, false],
+  ["ok", "unexpected", false],
+  ["ok", null, false],
+]) {
+  test(`posts response headers: ${status}/${String(pinnedStatus)}`, async () => {
+    const body = { status, posts: [], ...(pinnedStatus === undefined ? {} : { pinnedStatus }) };
+    const handleApi = createApiHandler({}, { serviceFactory: () => async () => body });
+    const result = await handleApi(request("/api/x-posts"));
+    assert.equal(result.status, 200);
+    assert.equal(result.headers.get("cache-control"), "no-store");
+    assert.equal(
+      result.headers.get("vercel-cdn-cache-control"),
+      complete ? "public, s-maxage=300, stale-while-revalidate=600" : "public, s-maxage=60",
+    );
+    assert.deepEqual(await result.json(), body);
+  });
+}
+
+for (const status of ["ok", "stale", "unavailable", "unexpected"]) {
+  test(`profile response headers remain independent of pin state: ${status}`, async () => {
+    const body = { status };
+    const service = Object.assign(async () => ({}), { getProfile: async () => body });
+    const handleApi = createApiHandler({}, { serviceFactory: () => service });
+    const result = await handleApi(request("/api/x-profile"));
+    assert.equal(result.headers.get("cache-control"), "no-store");
+    assert.equal(
+      result.headers.get("vercel-cdn-cache-control"),
+      status === "ok" ? "public, s-maxage=300, stale-while-revalidate=600" : "public, s-maxage=60",
+    );
+    assert.deepEqual(await result.json(), body);
+  });
+}
+
+test("unexpected service exceptions use the retry response headers on both routes", async () => {
+  const fail = async () => {
+    throw new Error("upstream failed");
+  };
+  const handleApi = createApiHandler({}, { serviceFactory: () => Object.assign(fail, { getProfile: fail }) });
+  for (const path of ["/api/x-posts", "/api/x-profile"]) {
+    const result = await handleApi(request(path));
+    assert.equal(result.status, 503);
+    assert.equal(result.headers.get("cache-control"), "no-store");
+    assert.equal(result.headers.get("vercel-cdn-cache-control"), "public, s-maxage=60");
+    assert.equal((await result.json()).status, "unavailable");
+  }
+});

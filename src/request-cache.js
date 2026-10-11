@@ -9,6 +9,7 @@ const REFRESH_CHECK_MS = 60_000;
 export function createSharedRequest({
   url,
   isSuccess,
+  isFresh = isSuccess,
   onSuccess,
   fetchImpl = (...args) => globalThis.fetch(...args),
   now = () => Date.now(),
@@ -48,7 +49,8 @@ export function createSharedRequest({
     if (time < retryAt && failure)
       return failure.error ? Promise.reject(failure.error) : Promise.resolve(failure.value);
     const current = getSnapshot();
-    if (!force && !failure && current && time - current.savedAt < freshMs) return Promise.resolve(current.value);
+    if (!force && !failure && current && isFresh(current.value) && time - current.savedAt < freshMs)
+      return Promise.resolve(current.value);
 
     const controller = new AbortController();
     let timer;
@@ -69,13 +71,17 @@ export function createSharedRequest({
       .then((value) => {
         if (isSuccess(value)) {
           snapshot = { value, savedAt: now() };
-          failure = null;
-          retryAt = 0;
           try {
             onSuccess?.(value, snapshot.savedAt);
           } catch {
             /* Persistence is optional. */
           }
+        }
+        // A usable partial success can seed the UI without blocking recovery for
+        // the full freshness window. The same cooldown also limits manual retries.
+        if (isSuccess(value) && isFresh(value)) {
+          failure = null;
+          retryAt = 0;
         } else {
           failure = { value };
           retryAt = now() + retryMs;

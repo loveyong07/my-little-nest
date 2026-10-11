@@ -6,25 +6,24 @@ import { navIds } from "../constants/site.js";
 import { pagePaths } from "../routes/site-route.js";
 
 export function Header({ page, t, language, changeLanguage }) {
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPage, setMenuPage] = useState(null);
+  const menuOpen = menuPage === page;
+  // A route change closes the menu before paint, including browser back/forward.
+  if (menuPage !== null && menuPage !== page) setMenuPage(null);
   const headerRef = useRef(null);
   const menuToggleRef = useRef(null);
   const menuOpenedByKeyboardRef = useRef(false);
-
-  useEffect(() => {
-    setMenuOpen(false);
-  }, [page]);
 
   useEffect(() => {
     if (!menuOpen) return undefined;
     if (menuOpenedByKeyboardRef.current) headerRef.current?.querySelector(".site-nav a")?.focus();
     function closeMenuOnEscape(event) {
       if (event.key !== "Escape") return;
-      setMenuOpen(false);
+      setMenuPage(null);
       menuToggleRef.current?.focus();
     }
     function closeMenuOutside(event) {
-      if (!headerRef.current?.contains(event.target)) setMenuOpen(false);
+      if (!headerRef.current?.contains(event.target)) setMenuPage(null);
     }
     document.addEventListener("keydown", closeMenuOnEscape);
     document.addEventListener("pointerdown", closeMenuOutside);
@@ -36,7 +35,7 @@ export function Header({ page, t, language, changeLanguage }) {
 
   function closeMenuOnNavigation(event) {
     if (event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
-      setMenuOpen(false);
+      setMenuPage(null);
     }
   }
 
@@ -82,7 +81,7 @@ export function Header({ page, t, language, changeLanguage }) {
         type="button"
         onClick={(event) => {
           menuOpenedByKeyboardRef.current = event.detail === 0;
-          setMenuOpen((current) => !current);
+          setMenuPage((current) => (current === page ? null : page));
         }}
         aria-label={menuOpen ? t.closeMenu : t.openMenu}
         aria-expanded={menuOpen}

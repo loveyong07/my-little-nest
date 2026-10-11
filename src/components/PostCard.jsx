@@ -5,7 +5,8 @@ import { FALLBACK_AVATAR, ASSETS } from "../constants/site.js";
 import { handleAvatarError } from "../utils/profile.js";
 import { formatPostDate } from "../utils/date.js";
 import { mediaDimensions, mediaFrameRatio } from "../utils/posts.js";
-import { mediaRetrySrc, xMediaSrc, xVideoSrc } from "../media-urls.js";
+import { xMediaSrc, xVideoSrc } from "../media-urls.js";
+import { useMediaRequest } from "../hooks/useMediaRequest.js";
 import { prefetchImage } from "../feed-cache.js";
 import { MediaLightbox } from "./MediaLightbox.jsx";
 
@@ -27,11 +28,6 @@ export function PostCard({ post, feedSource, language, t, label, profile, priori
   const video = Array.isArray(post.media) ? post.media.find((media) => media?.type === "video") : null;
   const videoSrc = video ? xVideoSrc(video.url, video.proxyUrl) : null;
   const [photoIndex, setPhotoIndex] = useState(0);
-  const [imageUnavailable, setImageUnavailable] = useState(false);
-  const [loadedImageSrc, setLoadedImageSrc] = useState(null);
-  const [videoUnavailable, setVideoUnavailable] = useState(false);
-  const [imageRetryCount, setImageRetryCount] = useState(0);
-  const [videoRetryCount, setVideoRetryCount] = useState(0);
   const [expandedMedia, setExpandedMedia] = useState(null);
   const returnFocusRef = useRef(null);
   const photoOpenRef = useRef(null);
@@ -42,28 +38,27 @@ export function PostCard({ post, feedSource, language, t, label, profile, priori
   const currentPhoto = photos[currentPhotoIndex];
   const photoDimensions = mediaDimensions(currentPhoto);
   const videoDimensions = mediaDimensions(video);
-  const photoRequestSrc = mediaRetrySrc(currentPhoto?.src, imageRetryCount);
-  const videoRequestSrc = mediaRetrySrc(videoSrc, videoRetryCount);
+  const photoRequest = useMediaRequest(currentPhoto?.src);
+  const videoRequest = useMediaRequest(videoSrc);
+  const resetPhotoRequest = photoRequest.reset;
   useEffect(() => {
-    setImageUnavailable(false);
-    setVideoUnavailable(false);
-  }, [currentPhoto?.url, videoSrc]);
+    if (photoRequest.retryCount > 0) (photoRequest.unavailable ? photoRetryRef : photoOpenRef).current?.focus();
+  }, [photoRequest.retryCount, photoRequest.unavailable]);
   useEffect(() => {
-    if (imageRetryCount > 0) (imageUnavailable ? photoRetryRef : photoOpenRef).current?.focus();
-  }, [imageRetryCount, imageUnavailable]);
-  useEffect(() => {
-    if (videoRetryCount > 0) (videoUnavailable ? videoRetryRef : videoPlayerRef).current?.focus();
-  }, [videoRetryCount, videoUnavailable]);
+    if (videoRequest.retryCount > 0) (videoRequest.unavailable ? videoRetryRef : videoPlayerRef).current?.focus();
+  }, [videoRequest.retryCount, videoRequest.unavailable]);
   function openMedia(kind, event) {
     if (kind === "video") event.currentTarget.parentElement.querySelector("video")?.pause();
     returnFocusRef.current = event.currentTarget;
     setExpandedMedia(kind);
   }
-  const changePhotoIndex = useCallback((updater) => {
-    setImageUnavailable(false);
-    setImageRetryCount(0);
-    setPhotoIndex(updater);
-  }, []);
+  const changePhotoIndex = useCallback(
+    (updater) => {
+      resetPhotoRequest();
+      setPhotoIndex(updater);
+    },
+    [resetPhotoRequest],
+  );
   return (
     <>
       <article className="post-card">
@@ -96,18 +91,11 @@ export function PostCard({ post, feedSource, language, t, label, profile, priori
             className={`post-media post-media-frame${photos.length === 1 ? " post-media-single" : ""}`}
             style={{ aspectRatio: mediaFrameRatio(photos) }}
           >
-            {imageUnavailable || !photoRequestSrc ? (
+            {photoRequest.unavailable || !photoRequest.src ? (
               <div className="post-media-unavailable" role="status">
                 <span>{t.photoUnavailable}</span>
-                {photoRequestSrc && (
-                  <button
-                    ref={photoRetryRef}
-                    type="button"
-                    onClick={() => {
-                      setImageRetryCount((count) => count + 1);
-                      setImageUnavailable(false);
-                    }}
-                  >
+                {photoRequest.src && (
+                  <button ref={photoRetryRef} type="button" onClick={photoRequest.retry}>
                     {t.retry}
                   </button>
                 )}
@@ -121,8 +109,8 @@ export function PostCard({ post, feedSource, language, t, label, profile, priori
                 aria-label={`${t.enlargePhoto} · ${t.postPhotoAlt(currentPhotoIndex + 1)}`}
               >
                 <img
-                  key={photoRequestSrc}
-                  src={photoRequestSrc}
+                  key={photoRequest.src}
+                  src={photoRequest.src}
                   alt={currentPhoto.alt || t.postPhotoAlt(currentPhotoIndex + 1)}
                   width={photoDimensions?.width}
                   height={photoDimensions?.height}
@@ -131,15 +119,15 @@ export function PostCard({ post, feedSource, language, t, label, profile, priori
                   decoding="async"
                   referrerPolicy="no-referrer"
                   onLoad={() => {
-                    setLoadedImageSrc(photoRequestSrc);
+                    photoRequest.onLoad();
                     const nextPhoto = photos.length > 1 ? photos[(currentPhotoIndex + 1) % photos.length]?.src : null;
                     prefetchImage(nextPhoto);
                     const nextPostPhoto = nextPost?.media?.find((media) => (media.type ?? "photo") === "photo");
                     prefetchImage(xMediaSrc(nextPostPhoto?.url, false, nextPostPhoto?.proxyUrl));
                   }}
-                  onError={() => setImageUnavailable(true)}
+                  onError={photoRequest.onError}
                 />
-                {loadedImageSrc !== photoRequestSrc && (
+                {!photoRequest.loaded && (
                   <span className="post-media-loading" role="status">
                     {t.photoLoading}
                   </span>
@@ -171,18 +159,11 @@ export function PostCard({ post, feedSource, language, t, label, profile, priori
         )}
         {video && (
           <div className="post-video post-video-frame" style={{ aspectRatio: mediaFrameRatio(video, 16 / 9) }}>
-            {videoUnavailable || !videoSrc ? (
+            {videoRequest.unavailable || !videoSrc ? (
               <div className="post-media-unavailable" role="status">
                 <span>{t.videoUnavailable}</span>
                 {videoSrc && (
-                  <button
-                    ref={videoRetryRef}
-                    type="button"
-                    onClick={() => {
-                      setVideoRetryCount((count) => count + 1);
-                      setVideoUnavailable(false);
-                    }}
-                  >
+                  <button ref={videoRetryRef} type="button" onClick={videoRequest.retry}>
                     {t.retry}
                   </button>
                 )}
@@ -191,7 +172,7 @@ export function PostCard({ post, feedSource, language, t, label, profile, priori
               <>
                 <video
                   ref={videoPlayerRef}
-                  key={videoRequestSrc}
+                  key={videoRequest.src}
                   controls
                   playsInline
                   preload="none"
@@ -200,9 +181,9 @@ export function PostCard({ post, feedSource, language, t, label, profile, priori
                   width={videoDimensions?.width}
                   height={videoDimensions?.height}
                   aria-label={video.alt || t.postVideoAlt}
-                  onError={() => setVideoUnavailable(true)}
+                  onError={videoRequest.onError}
                 >
-                  <source src={videoRequestSrc} type="video/mp4" />
+                  <source src={videoRequest.src} type="video/mp4" />
                 </video>
                 <button
                   className="post-video-open"
@@ -236,12 +217,12 @@ export function PostCard({ post, feedSource, language, t, label, profile, priori
       {expandedMedia && (expandedMedia === "photo" ? currentPhoto : video) && (
         <MediaLightbox
           kind={expandedMedia}
-          photo={currentPhoto ? { ...currentPhoto, src: photoRequestSrc, number: currentPhotoIndex + 1 } : null}
+          photo={currentPhoto ? { ...currentPhoto, src: photoRequest.src, number: currentPhotoIndex + 1 } : null}
           photoCount={photos.length}
           onPhotoChange={changePhotoIndex}
           photoAlt={t.postPhotoAlt(currentPhotoIndex + 1)}
           video={video}
-          videoSrc={videoRequestSrc}
+          videoSrc={videoRequest.src}
           t={t}
           onClose={setExpandedMedia}
           returnFocusRef={returnFocusRef}
