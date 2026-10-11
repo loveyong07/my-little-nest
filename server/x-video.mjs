@@ -58,7 +58,12 @@ function responseBody(upstreamBody, controller, cleanup, idle) {
   });
 }
 
-export async function proxyXVideo(request, fetchImpl = globalThis.fetch, authOptions, { stallTimeoutMs = STALL_TIMEOUT_MS } = {}) {
+export async function proxyXVideo(
+  request,
+  fetchImpl = globalThis.fetch,
+  authOptions,
+  { stallTimeoutMs = STALL_TIMEOUT_MS } = {},
+) {
   if (request.method !== "GET") {
     return errorResponse(405, "Method not allowed", { Allow: "GET" });
   }
@@ -67,7 +72,8 @@ export async function proxyXVideo(request, fetchImpl = globalThis.fetch, authOpt
   const sourceValues = requestUrl.searchParams.getAll("url");
   const source = sourceValues.length === 1 && validMediaQuery(request) ? parseXVideoUrl(sourceValues[0]) : null;
   if (!source) return errorResponse(400, "Unsupported video URL");
-  if (!await authorizedMediaRequest(request, source, "video", authOptions)) return errorResponse(403, "Unsupported video URL");
+  if (!(await authorizedMediaRequest(request, source, "video", authOptions)))
+    return errorResponse(403, "Unsupported video URL");
 
   const range = request.headers.get("range");
   if (!validSingleByteRange(range)) {
@@ -82,8 +88,14 @@ export async function proxyXVideo(request, fetchImpl = globalThis.fetch, authOpt
   let idleTimeout = null;
   // Re-armed around each upstream read, so this is an idle limit and not a total limit.
   const idle = {
-    arm() { clearTimeout(idleTimeout); idleTimeout = setTimeout(() => controller.abort(), stallTimeoutMs); },
-    clear() { clearTimeout(idleTimeout); idleTimeout = null; },
+    arm() {
+      clearTimeout(idleTimeout);
+      idleTimeout = setTimeout(() => controller.abort(), stallTimeoutMs);
+    },
+    clear() {
+      clearTimeout(idleTimeout);
+      idleTimeout = null;
+    },
   };
   const cleanup = () => {
     request.signal.removeEventListener("abort", abortFromClient);
@@ -108,8 +120,11 @@ export async function proxyXVideo(request, fetchImpl = globalThis.fetch, authOpt
       const contentRange = upstream.headers.get("content-range");
       await upstream.body?.cancel();
       cleanup();
-      return errorResponse(upstream.status === 404 ? 404 : upstream.status === 416 ? 416 : 502,
-        "Video source unavailable", contentRange ? { "Content-Range": contentRange, "Accept-Ranges": "bytes" } : {});
+      return errorResponse(
+        upstream.status === 404 ? 404 : upstream.status === 416 ? 416 : 502,
+        "Video source unavailable",
+        contentRange ? { "Content-Range": contentRange, "Accept-Ranges": "bytes" } : {},
+      );
     }
 
     const contentType = upstream.headers.get("content-type")?.split(";")[0].trim().toLowerCase();

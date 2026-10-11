@@ -3,8 +3,15 @@ export function isOwnPost(post) {
   if (!post.text.trim() && !post.media?.length) return false;
   try {
     const url = new URL(post.permalink);
-    return url.protocol === "https:" && url.hostname === "x.com" && /^\/[A-Za-z0-9_]{1,15}\/status\/\d+$/.test(url.pathname) && url.pathname.endsWith(`/status/${post.id}`);
-  } catch { return false; }
+    return (
+      url.protocol === "https:" &&
+      url.hostname === "x.com" &&
+      /^\/[A-Za-z0-9_]{1,15}\/status\/\d+$/.test(url.pathname) &&
+      url.pathname.endsWith(`/status/${post.id}`)
+    );
+  } catch {
+    return false;
+  }
 }
 
 export function isOriginalPost(post) {
@@ -17,22 +24,33 @@ export function postExcerpt(post, t) {
     const characters = Array.from(text);
     return characters.length > 38 ? `${characters.slice(0, 38).join("")}…` : text;
   }
-  return Array.isArray(post.media) && post.media.some((media) => media?.type === "video") ? t.postVideoAlt : t.postPhotoAlt(1);
+  return Array.isArray(post.media) && post.media.some((media) => media?.type === "video")
+    ? t.postVideoAlt
+    : t.postPhotoAlt(1);
 }
 
 export function mediaDimensions(media) {
   const { width, height } = media ?? {};
-  return Number.isSafeInteger(width) && Number.isSafeInteger(height)
-    && width > 0 && height > 0 && width <= 20_000 && height <= 20_000
-    ? { width, height } : null;
+  return Number.isSafeInteger(width) &&
+    Number.isSafeInteger(height) &&
+    width > 0 &&
+    height > 0 &&
+    width <= 20_000 &&
+    height <= 20_000
+    ? { width, height }
+    : null;
 }
 
 export function mediaFrameRatio(media, fallback = 4 / 3) {
   const items = Array.isArray(media) ? media : [media];
-  return items.length ? Math.min(...items.map((item) => {
-    const size = mediaDimensions(item);
-    return size ? size.width / size.height : fallback;
-  })) : fallback;
+  return items.length
+    ? Math.min(
+        ...items.map((item) => {
+          const size = mediaDimensions(item);
+          return size ? size.width / size.height : fallback;
+        }),
+      )
+    : fallback;
 }
 
 export function postMonthKey(post) {

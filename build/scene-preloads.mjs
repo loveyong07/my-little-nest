@@ -4,10 +4,13 @@ import { pagePaths, resolvePage } from "../src/routes/site-route.js";
 import { scenePreloads } from "../src/routes/scene-assets.js";
 
 export function withScenePreloads(html, page) {
-  const links = scenePreloads(page).map(({ href, media }) =>
-    `<link data-scene-preload rel="preload" as="image" type="image/webp" href="${href}" fetchpriority="high"${media ? ` media="${media}"` : ""} />`).join("\n    ");
-  return html.replace(/\s*<link\b[^>]*data-scene-preload[^>]*>/g, "")
-    .replace("</head>", `    ${links}\n  </head>`);
+  const links = scenePreloads(page)
+    .map(
+      ({ href, media }) =>
+        `<link data-scene-preload rel="preload" as="image" type="image/webp" href="${href}" fetchpriority="high"${media ? ` media="${media}"` : ""} />`,
+    )
+    .join("\n    ");
+  return html.replace(/\s*<link\b[^>]*data-scene-preload[^>]*>/g, "").replace("</head>", `    ${links}\n  </head>`);
 }
 
 // Fonts used by the first paint are referenced from CSS, so the browser would
@@ -17,10 +20,13 @@ export function withScenePreloads(html, page) {
 export function withFontPreloads(html, bundle = {}) {
   const quicksand = Object.keys(bundle).find((name) => /^assets\/quicksand-latin-700-normal-[\w-]+\.woff2$/.test(name));
   const hrefs = [quicksand && `/${quicksand}`, "/assets/fonts/nest-ui-2026-09-30.woff"].filter(Boolean);
-  const links = hrefs.map((href) =>
-    `<link data-font-preload rel="preload" as="font" type="${href.endsWith(".woff2") ? "font/woff2" : "font/woff"}" href="${href}" crossorigin />`).join("\n    ");
-  return html.replace(/\s*<link\b[^>]*data-font-preload[^>]*>/g, "")
-    .replace("</head>", `    ${links}\n  </head>`);
+  const links = hrefs
+    .map(
+      (href) =>
+        `<link data-font-preload rel="preload" as="font" type="${href.endsWith(".woff2") ? "font/woff2" : "font/woff"}" href="${href}" crossorigin />`,
+    )
+    .join("\n    ");
+  return html.replace(/\s*<link\b[^>]*data-font-preload[^>]*>/g, "").replace("</head>", `    ${links}\n  </head>`);
 }
 
 // Separate shells discover only the current scene before JavaScript starts.
@@ -30,7 +36,10 @@ export function scenePreloadPlugin() {
   let building = false;
   return {
     name: "little-nest-scene-preloads",
-    configResolved(config) { outputDirectory = path.resolve(config.root, config.build.outDir); building = config.command === "build"; },
+    configResolved(config) {
+      outputDirectory = path.resolve(config.root, config.build.outDir);
+      building = config.command === "build";
+    },
     transformIndexHtml(html, context) {
       const pathname = new URL(context.originalUrl ?? context.path, "http://localhost").pathname;
       return withFontPreloads(withScenePreloads(html, resolvePage(pathname)), context.bundle);

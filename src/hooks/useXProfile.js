@@ -4,7 +4,12 @@ import { fetchProfile, getProfileSnapshot } from "../profile-cache.js";
 import { startVisibleRefresh } from "../request-cache.js";
 
 function displayProfile(profile) {
-  return { name: profile.name || profile.username, username: profile.username, avatar: profile.avatar || `${ASSETS}/x-avatar.jpg`, avatarProxy: profile.avatarProxy };
+  return {
+    name: profile.name || profile.username,
+    username: profile.username,
+    avatar: profile.avatar || `${ASSETS}/x-avatar.jpg`,
+    avatarProxy: profile.avatarProxy,
+  };
 }
 
 function initialProfile() {
@@ -23,14 +28,24 @@ export function useXProfile(page, ready = true) {
       try {
         const result = await fetchProfile();
         // "stale" is the service's last known profile after a failed refresh: usable, not fresh.
-        if (mounted && (result?.status === "ok" || result?.status === "stale") && typeof result.profile?.name === "string"
-          && typeof result.profile?.username === "string" && /^[A-Za-z0-9_]{1,15}$/.test(result.profile.username)) {
+        if (
+          mounted &&
+          (result?.status === "ok" || result?.status === "stale") &&
+          typeof result.profile?.name === "string" &&
+          typeof result.profile?.username === "string" &&
+          /^[A-Za-z0-9_]{1,15}$/.test(result.profile.username)
+        ) {
           setProfile(displayProfile(result.profile));
         }
-      } catch { /* Keep the last known profile. */ }
+      } catch {
+        /* Keep the last known profile. */
+      }
     }
     const stop = startVisibleRefresh(refreshProfile);
-    return () => { mounted = false; stop(); };
+    return () => {
+      mounted = false;
+      stop();
+    };
   }, [page, ready]);
 
   return profile;

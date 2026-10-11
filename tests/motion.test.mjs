@@ -1,11 +1,20 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { MOTION_OFF_CLASS, applySiteMotion, preferredScrollBehavior, siteMotionOff, systemPrefersReducedMotion } from "../src/utils/motion.js";
+import {
+  MOTION_OFF_CLASS,
+  applySiteMotion,
+  preferredScrollBehavior,
+  siteMotionOff,
+  systemPrefersReducedMotion,
+} from "../src/utils/motion.js";
 
 function fakeClassList() {
   const applied = new Set();
   return {
-    toggle: (name, force) => { if (force) applied.add(name); else applied.delete(name); },
+    toggle: (name, force) => {
+      if (force) applied.add(name);
+      else applied.delete(name);
+    },
     contains: (name) => applied.has(name),
     has: (name) => applied.has(name),
     size: () => applied.size,
@@ -15,7 +24,9 @@ function fakeClassList() {
 function stubEnvironment({ reduced }) {
   const classList = fakeClassList();
   globalThis.document = { documentElement: { classList } };
-  globalThis.window = { matchMedia: (query) => ({ matches: query.includes("prefers-reduced-motion") ? reduced : false, query }) };
+  globalThis.window = {
+    matchMedia: (query) => ({ matches: query.includes("prefers-reduced-motion") ? reduced : false, query }),
+  };
   return classList;
 }
 

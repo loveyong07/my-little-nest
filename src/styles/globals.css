@@ -1,4 +1,3 @@
-
 :root {
   --color-primary: #236fb2;
   --color-secondary: #4d759f;
@@ -17,8 +16,8 @@
   --space-6: 32px;
   --space-7: 48px;
   --space-8: 64px;
-  --font-xs: .75rem;
-  --font-sm: .875rem;
+  --font-xs: 0.75rem;
+  --font-sm: 0.875rem;
   --font-body: 1rem;
   --font-lead: 1.125rem;
   --font-title: clamp(1.25rem, 2vw, 1.5rem);
@@ -37,14 +36,54 @@
   line-height: 1.6;
   text-rendering: optimizeLegibility;
 }
-.language-ja { font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, system-ui, sans-serif; line-break: strict; }
+.language-ja {
+  font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, system-ui, sans-serif;
+  line-break: strict;
+}
 
-* { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
-body { margin: 0; min-width: 0; min-height: 100vh; -webkit-font-smoothing: antialiased; }
-button, a { -webkit-tap-highlight-color: transparent; }
-button, input, select { font: inherit; }
-button { cursor: pointer; }
-a { color: inherit; }
-button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline: 3px solid #bf4675; outline-offset: 4px; }
-.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+* {
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+}
+body {
+  margin: 0;
+  min-width: 0;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+button,
+input,
+select {
+  font: inherit;
+}
+button {
+  cursor: pointer;
+}
+a {
+  color: inherit;
+}
+button:focus-visible,
+a:focus-visible,
+select:focus-visible,
+input:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid #bf4675;
+  outline-offset: 4px;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

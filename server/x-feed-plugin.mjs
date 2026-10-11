@@ -29,9 +29,11 @@ function safePhotoUrl(value) {
   if (typeof value !== "string") return null;
   try {
     const url = new URL(value);
-    return url.protocol === "https:" && url.hostname === "pbs.twimg.com"
-      && (url.pathname.startsWith("/media/") || url.pathname.startsWith("/ext_tw_video_thumb/"))
-      ? url.href : null;
+    return url.protocol === "https:" &&
+      url.hostname === "pbs.twimg.com" &&
+      (url.pathname.startsWith("/media/") || url.pathname.startsWith("/ext_tw_video_thumb/"))
+      ? url.href
+      : null;
   } catch {
     return null;
   }
@@ -41,10 +43,20 @@ function isMediaLinkForPost(entity, postId, media, username) {
   if (!/^https:\/\/t\.co\/[A-Za-z0-9]+$/.test(entity?.url ?? "")) return false;
   try {
     const expanded = new URL(entity.expanded_url);
-    if (expanded.protocol !== "https:" || !["x.com", "www.x.com", "twitter.com", "www.twitter.com"].includes(expanded.hostname)) return false;
+    if (
+      expanded.protocol !== "https:" ||
+      !["x.com", "www.x.com", "twitter.com", "www.twitter.com"].includes(expanded.hostname)
+    )
+      return false;
     const parts = expanded.pathname.split("/").filter(Boolean);
-    if (parts.length !== 5 || parts[0].toLowerCase() !== username.toLowerCase() || parts[1] !== "status"
-      || parts[2] !== postId || !/^\d+$/.test(parts[4])) return false;
+    if (
+      parts.length !== 5 ||
+      parts[0].toLowerCase() !== username.toLowerCase() ||
+      parts[1] !== "status" ||
+      parts[2] !== postId ||
+      !/^\d+$/.test(parts[4])
+    )
+      return false;
     const type = parts[3] === "photo" ? "photo" : parts[3] === "video" ? "video" : null;
     return type !== null && Number(parts[4]) <= media.filter((item) => (item.type ?? "photo") === type).length;
   } catch {
@@ -59,7 +71,9 @@ function withoutMediaLinks(text, post, media, username) {
     ...(Array.isArray(post.note_tweet?.entities?.urls) ? post.note_tweet.entities.urls : []),
     ...(Array.isArray(post.note_post?.entities?.urls) ? post.note_post.entities.urls : []),
   ];
-  const mediaLinks = new Set(entities.filter((entity) => isMediaLinkForPost(entity, post.id, media, username)).map((entity) => entity.url));
+  const mediaLinks = new Set(
+    entities.filter((entity) => isMediaLinkForPost(entity, post.id, media, username)).map((entity) => entity.url),
+  );
   for (const link of mediaLinks) text = text.replaceAll(link, "");
   return text.trimEnd();
 }
@@ -93,15 +107,22 @@ async function getXJson(url, token, fetchImpl, { allowPartialErrors = false } = 
 
 function mediaDimensions(media) {
   const { width, height } = media ?? {};
-  return Number.isSafeInteger(width) && Number.isSafeInteger(height)
-    && width > 0 && height > 0 && width <= 20_000 && height <= 20_000 ? { width, height } : {};
+  return Number.isSafeInteger(width) &&
+    Number.isSafeInteger(height) &&
+    width > 0 &&
+    height > 0 &&
+    width <= 20_000 &&
+    height <= 20_000
+    ? { width, height }
+    : {};
 }
 
 function normalizedPost(post, user, mediaByKey, { allowReferences = false } = {}) {
   if (!isId(post?.id) || typeof post.text !== "string") return null;
   if (post.author_id && post.author_id !== user.id) return null;
   if (allowReferences && post.author_id !== user.id) return null;
-  if (!allowReferences && (post.in_reply_to_user_id || post.referenced_tweets?.length || post.referenced_posts?.length)) return null;
+  if (!allowReferences && (post.in_reply_to_user_id || post.referenced_tweets?.length || post.referenced_posts?.length))
+    return null;
   const mediaItems = [];
   const usedKeys = new Set();
   for (const key of Array.isArray(post.attachments?.media_keys) ? post.attachments.media_keys : []) {
@@ -114,14 +135,21 @@ function normalizedPost(post, user, mediaByKey, { allowReferences = false } = {}
       if (url) mediaItems.push({ url, alt, ...mediaDimensions(media) });
     } else if (media?.type === "video") {
       const variants = Array.isArray(media.variants) ? media.variants : [];
-      const videoVariants = variants.filter((variant) => variant?.content_type === "video/mp4" && safeVideoUrl(variant.url));
+      const videoVariants = variants.filter(
+        (variant) => variant?.content_type === "video/mp4" && safeVideoUrl(variant.url),
+      );
       videoVariants.sort((left, right) => (Number(right.bit_rate) || 0) - (Number(left.bit_rate) || 0));
       const url = videoVariants[0] ? safeVideoUrl(videoVariants[0].url) : null;
       const poster = safePhotoUrl(media.preview_image_url);
       if (url) mediaItems.push({ type: "video", url, ...(poster ? { poster } : {}), alt, ...mediaDimensions(media) });
     }
   }
-  const text = withoutMediaLinks(post.note_tweet?.text || post.note_post?.text || post.text, post, mediaItems, user.username);
+  const text = withoutMediaLinks(
+    post.note_tweet?.text || post.note_post?.text || post.text,
+    post,
+    mediaItems,
+    user.username,
+  );
   if (!text.trim() && mediaItems.length === 0) return null;
   return {
     id: post.id,
@@ -138,9 +166,17 @@ function safeVideoUrl(value) {
   if (typeof value !== "string") return null;
   try {
     const url = new URL(value);
-    const allowedPath = ["/ext_tw_video/", "/amplify_video/", "/tweet_video/"].some((prefix) => url.pathname.startsWith(prefix));
-    return url.protocol === "https:" && url.hostname === "video.twimg.com" && !url.username && !url.password
-      && !url.port && allowedPath ? url.href : null;
+    const allowedPath = ["/ext_tw_video/", "/amplify_video/", "/tweet_video/"].some((prefix) =>
+      url.pathname.startsWith(prefix),
+    );
+    return url.protocol === "https:" &&
+      url.hostname === "video.twimg.com" &&
+      !url.username &&
+      !url.password &&
+      !url.port &&
+      allowedPath
+      ? url.href
+      : null;
   } catch {
     return null;
   }
@@ -170,9 +206,10 @@ export function createXFeedService({
   async function lookupUser() {
     async function lookup(mode) {
       const url = new URL(`${X_API}/users/${USER_ID}`);
-      url.searchParams.set("user.fields", mode === "tweet"
-        ? "name,username,profile_image_url,pinned_tweet_id"
-        : "name,username,profile_image_url");
+      url.searchParams.set(
+        "user.fields",
+        mode === "tweet" ? "name,username,profile_image_url,pinned_tweet_id" : "name,username,profile_image_url",
+      );
       if (mode === "post") url.searchParams.set("expansions", "pinned_post_id");
       return getXJson(url, token, fetchImpl, { allowPartialErrors: true });
     }
@@ -202,7 +239,10 @@ export function createXFeedService({
   async function getUser() {
     if (user && now() - userAt < USER_CACHE_TTL_MS) return user;
     // The feed and the standalone profile route share one account lookup.
-    if (!userInFlight) userInFlight = lookupUser().finally(() => { userInFlight = null; });
+    if (!userInFlight)
+      userInFlight = lookupUser().finally(() => {
+        userInFlight = null;
+      });
     return userInFlight;
   }
 
@@ -211,7 +251,10 @@ export function createXFeedService({
     function lookup(mode) {
       const url = new URL(`${X_API}/tweets/${pinnedId}`);
       if (mode === "tweet") {
-        url.searchParams.set("tweet.fields", "created_at,referenced_tweets,author_id,in_reply_to_user_id,note_tweet,attachments,entities");
+        url.searchParams.set(
+          "tweet.fields",
+          "created_at,referenced_tweets,author_id,in_reply_to_user_id,note_tweet,attachments,entities",
+        );
         url.searchParams.set("expansions", "attachments.media_keys");
       } else {
         url.searchParams.set("post.fields", "created_at,note_post,attachments,entities");
@@ -250,15 +293,22 @@ export function createXFeedService({
     const found = [];
     const seen = new Set();
     let nextToken = null;
-    const fullRefresh = !cached || cachedPinnedId !== pinnedId || fullRefreshAt === null
-      || now() - fullRefreshAt >= FULL_REFRESH_TTL_MS || !newestSeenId;
+    const fullRefresh =
+      !cached ||
+      cachedPinnedId !== pinnedId ||
+      fullRefreshAt === null ||
+      now() - fullRefreshAt >= FULL_REFRESH_TTL_MS ||
+      !newestSeenId;
     let latestId = fullRefresh ? null : newestSeenId;
 
     for (let page = 0; page < MAX_PAGES; page += 1) {
       const url = new URL(`${X_API}/users/${author.id}/tweets`);
       url.searchParams.set("exclude", "replies,retweets");
       // The live X API accepted tweet.fields for this endpoint on 2026-09-26.
-      url.searchParams.set("tweet.fields", "created_at,referenced_tweets,author_id,in_reply_to_user_id,note_tweet,attachments,entities");
+      url.searchParams.set(
+        "tweet.fields",
+        "created_at,referenced_tweets,author_id,in_reply_to_user_id,note_tweet,attachments,entities",
+      );
       url.searchParams.set("expansions", "attachments.media_keys");
       url.searchParams.set("media.fields", "media_key,type,url,alt_text,width,height,preview_image_url,variants");
       url.searchParams.set("max_results", String(PAGE_SIZE));
@@ -301,7 +351,7 @@ export function createXFeedService({
 
     const unique = [];
     const ids = new Set();
-    for (const post of [...found, ...(fullRefresh ? [] : cached?.posts ?? [])]) {
+    for (const post of [...found, ...(fullRefresh ? [] : (cached?.posts ?? []))]) {
       if (post.id === pinnedId) continue;
       if (!ids.has(post.id)) {
         ids.add(post.id);
@@ -338,11 +388,14 @@ export function createXFeedService({
       profileInFlight = (async () => {
         try {
           const current = await getUser();
-          cachedProfile = { status: "ok", profile: {
-            name: current.name || current.username,
-            username: current.username,
-            avatar: safeAvatar(current.profile_image_url),
-          } };
+          cachedProfile = {
+            status: "ok",
+            profile: {
+              name: current.name || current.username,
+              username: current.username,
+              avatar: safeAvatar(current.profile_image_url),
+            },
+          };
           profileRetryAt = 0;
           return cachedProfile;
         } catch {
@@ -360,7 +413,10 @@ export function createXFeedService({
   async function getFeed() {
     if (!token?.trim()) return unavailable();
     if (cached && now() - cachedAt < CACHE_TTL_MS) return cached;
-    if (now() < retryAt) return cached ? { ...cached, status: "stale", pinnedStatus: cached.pinnedPost ? "stale" : cached.pinnedStatus } : unavailable();
+    if (now() < retryAt)
+      return cached
+        ? { ...cached, status: "stale", pinnedStatus: cached.pinnedPost ? "stale" : cached.pinnedStatus }
+        : unavailable();
     if (inFlight) return inFlight;
 
     inFlight = fetchFeed()
@@ -375,7 +431,9 @@ export function createXFeedService({
       })
       .catch(() => {
         retryAt = now() + ERROR_RETRY_MS;
-        return cached ? { ...cached, status: "stale", pinnedStatus: cached.pinnedPost ? "stale" : cached.pinnedStatus } : unavailable();
+        return cached
+          ? { ...cached, status: "stale", pinnedStatus: cached.pinnedPost ? "stale" : cached.pinnedStatus }
+          : unavailable();
       })
       .finally(() => {
         inFlight = null;
@@ -388,7 +446,13 @@ export function createXFeedService({
 
 export function xFeedPlugin(options = {}) {
   const getFeed = createXFeedService(options);
-  const authOptions = { secret: options.mediaSigningSecret || globalThis.process?.env?.X_MEDIA_SIGNING_SECRET || options.token || mediaSigningSecret() };
+  const authOptions = {
+    secret:
+      options.mediaSigningSecret ||
+      globalThis.process?.env?.X_MEDIA_SIGNING_SECRET ||
+      options.token ||
+      mediaSigningSecret(),
+  };
   function installMiddleware(server) {
     server.middlewares.use("/api/x-media", async (request, response) => {
       if (request.url?.split("?")[0] !== "/") {
@@ -396,10 +460,14 @@ export function xFeedPlugin(options = {}) {
         response.end("Not found");
         return;
       }
-      const proxyResponse = await proxyXMedia(new Request(new URL(request.url ?? "/", "http://localhost"), {
-        method: request.method,
-        headers: request.headers,
-      }), globalThis.fetch, authOptions);
+      const proxyResponse = await proxyXMedia(
+        new Request(new URL(request.url ?? "/", "http://localhost"), {
+          method: request.method,
+          headers: request.headers,
+        }),
+        globalThis.fetch,
+        authOptions,
+      );
       response.statusCode = proxyResponse.status;
       for (const [name, value] of proxyResponse.headers) response.setHeader(name, value);
       response.end(Buffer.from(await proxyResponse.arrayBuffer()));
@@ -415,10 +483,14 @@ export function xFeedPlugin(options = {}) {
       if (request.headers.range) headers.set("Range", request.headers.range);
       if (request.headers["if-range"]) headers.set("If-Range", request.headers["if-range"]);
       if (request.headers["sec-fetch-site"]) headers.set("Sec-Fetch-Site", request.headers["sec-fetch-site"]);
-      const proxyResponse = await proxyXVideo(new Request(new URL(request.url ?? "/", "http://localhost"), {
-        method: request.method,
-        headers,
-      }), globalThis.fetch, authOptions);
+      const proxyResponse = await proxyXVideo(
+        new Request(new URL(request.url ?? "/", "http://localhost"), {
+          method: request.method,
+          headers,
+        }),
+        globalThis.fetch,
+        authOptions,
+      );
       response.statusCode = proxyResponse.status;
       for (const [name, value] of proxyResponse.headers) response.setHeader(name, value);
       if (!proxyResponse.body) {
@@ -457,7 +529,8 @@ export function xFeedPlugin(options = {}) {
       }
     });
 
-    for (const route of ["/api/x-posts", "/api/x-profile"]) server.middlewares.use(route, async (request, response) => {
+    for (const route of ["/api/x-posts", "/api/x-profile"])
+      server.middlewares.use(route, async (request, response) => {
         response.setHeader("Content-Type", "application/json; charset=utf-8");
         response.setHeader("Cache-Control", "no-store");
         if (request.method !== "GET") {
@@ -472,16 +545,17 @@ export function xFeedPlugin(options = {}) {
           return;
         }
         try {
-          const result = route === "/api/x-profile"
-            ? await authorizeProfile(await getFeed.getProfile(), authOptions)
-            : await authorizeFeed(await getFeed(), authOptions);
+          const result =
+            route === "/api/x-profile"
+              ? await authorizeProfile(await getFeed.getProfile(), authOptions)
+              : await authorizeFeed(await getFeed(), authOptions);
           response.end(JSON.stringify(result));
         } catch {
           // A failed lookup must answer the request, not leave the dev server hanging.
           if (!response.headersSent) response.statusCode = 503;
           response.end(JSON.stringify(unavailable()));
         }
-    });
+      });
   }
   return {
     name: "local-x-original-posts",

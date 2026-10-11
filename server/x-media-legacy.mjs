@@ -42,8 +42,8 @@ export const LEGACY_IMAGE_URLS = [
   "https://pbs.twimg.com/media/HTTVlqIbgAAcHFP.jpg",
   "https://pbs.twimg.com/media/HTcjY4oaIAAKwII.jpg",
   "https://pbs.twimg.com/profile_images/2092428521943781376/bGSnw0n2_400x400.jpg",
-  "https://pbs.twimg.com/profile_images/2092428521943781376/bGSnw0n2_normal.jpg"
+  "https://pbs.twimg.com/profile_images/2092428521943781376/bGSnw0n2_normal.jpg",
 ];
 export const LEGACY_VIDEO_URLS = [
-  "https://video.twimg.com/amplify_video/2094640687765757952/vid/avc1/1024x576/qPkZUMv6blsVyHxE.mp4"
+  "https://video.twimg.com/amplify_video/2094640687765757952/vid/avc1/1024x576/qPkZUMv6blsVyHxE.mp4",
 ];

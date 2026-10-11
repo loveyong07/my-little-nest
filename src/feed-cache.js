@@ -9,10 +9,19 @@ const MAX_AGE = SUCCESS_MAX_AGE_MS;
 export function readFeedCache(storage, now = Date.now()) {
   try {
     const cached = JSON.parse(storage.getItem(KEY));
-    if (!cached || !Number.isFinite(cached.savedAt) || now < cached.savedAt || now - cached.savedAt > MAX_AGE
-      || cached.feed?.status !== "ok" || !Array.isArray(cached.feed.posts)) return null;
+    if (
+      !cached ||
+      !Number.isFinite(cached.savedAt) ||
+      now < cached.savedAt ||
+      now - cached.savedAt > MAX_AGE ||
+      cached.feed?.status !== "ok" ||
+      !Array.isArray(cached.feed.posts)
+    )
+      return null;
     return cached;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 export function writeFeedCache(storage, feed, now = Date.now()) {
@@ -20,8 +29,13 @@ export function writeFeedCache(storage, feed, now = Date.now()) {
   if (feed?.status !== "ok" || !Array.isArray(feed.posts)) return;
   // A successful timeline must not keep renewing an old/unverified pin.
   const savedFeed = ["ok", "none"].includes(feed.pinnedStatus)
-    ? feed : { ...feed, pinnedPost: null, pinnedStatus: "unavailable" };
-  try { storage.setItem(KEY, JSON.stringify({ savedAt: now, feed: savedFeed })); } catch { /* Storage is optional. */ }
+    ? feed
+    : { ...feed, pinnedPost: null, pinnedStatus: "unavailable" };
+  try {
+    storage.setItem(KEY, JSON.stringify({ savedAt: now, feed: savedFeed }));
+  } catch {
+    /* Storage is optional. */
+  }
 }
 
 const request = createSharedRequest({
@@ -37,7 +51,9 @@ export function getFeedSnapshot() {
     try {
       const cached = readFeedCache(window.localStorage);
       if (cached) request.prime(cached.feed, cached.savedAt);
-    } catch { /* Storage is optional. */ }
+    } catch {
+      /* Storage is optional. */
+    }
   }
   const snapshot = request.getSnapshot();
   return snapshot ? { savedAt: snapshot.savedAt, feed: snapshot.value } : null;

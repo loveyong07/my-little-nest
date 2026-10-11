@@ -8,11 +8,16 @@ import { takeEarlyFeed } from "./useSiteRoute.js";
 
 export function useXFeed() {
   const [cachedFeed] = useState(getFeedSnapshot);
-  const cachedPin = cachedFeed && ["ok", "stale"].includes(cachedFeed.feed.pinnedStatus) && isOwnPost(cachedFeed.feed.pinnedPost) ? cachedFeed.feed.pinnedPost : null;
+  const cachedPin =
+    cachedFeed && ["ok", "stale"].includes(cachedFeed.feed.pinnedStatus) && isOwnPost(cachedFeed.feed.pinnedPost)
+      ? cachedFeed.feed.pinnedPost
+      : null;
   // Posts and the reading index move together: one state keeps them consistent for
   // a background refresh that reads the committed values between renders.
   const [reading, setReading] = useState(() => ({
-    posts: cachedFeed ? cachedFeed.feed.posts.filter((post) => isOriginalPost(post) && post.id !== cachedPin?.id) : [SNAPSHOT],
+    posts: cachedFeed
+      ? cachedFeed.feed.posts.filter((post) => isOriginalPost(post) && post.id !== cachedPin?.id)
+      : [SNAPSHOT],
     index: 0,
   }));
   const { posts, index: postIndex } = reading;
@@ -22,7 +27,9 @@ export function useXFeed() {
   const [feedRefreshToken, setFeedRefreshToken] = useState(0);
   const [retryDisabled, setRetryDisabled] = useState(false);
   const [pinnedPost, setPinnedPost] = useState(cachedPin);
-  const [pinState, setPinState] = useState(cachedPin ? "stale" : cachedFeed?.feed.pinnedStatus === "none" ? "none" : "loading");
+  const [pinState, setPinState] = useState(
+    cachedPin ? "stale" : cachedFeed?.feed.pinnedStatus === "none" ? "none" : "loading",
+  );
   const pinnedPostRef = useRef(cachedPin);
   const retryTimerRef = useRef(null);
 
@@ -49,11 +56,15 @@ export function useXFeed() {
         const feed = await request;
         if (!mounted) return;
         const hasPinStatus = ["ok", "stale", "none", "unavailable"].includes(feed.pinnedStatus);
-        const nextPinned = isOwnPost(feed.pinnedPost) && (!hasPinStatus || ["ok", "stale"].includes(feed.pinnedStatus)) ? feed.pinnedPost : null;
+        const nextPinned =
+          isOwnPost(feed.pinnedPost) && (!hasPinStatus || ["ok", "stale"].includes(feed.pinnedStatus))
+            ? feed.pinnedPost
+            : null;
         if (hasPinStatus) {
           if (feed.pinnedStatus === "none") {
             pinnedPostRef.current = null;
-            setPinnedPost(null); setPinState("none");
+            setPinnedPost(null);
+            setPinState("none");
           } else if (feed.pinnedStatus === "unavailable") {
             setPinState(pinnedPostRef.current ? "stale" : "unavailable");
           } else {
@@ -64,25 +75,38 @@ export function useXFeed() {
         } else if ((feed.status === "ok" || feed.status === "stale") && Array.isArray(feed.posts)) {
           pinnedPostRef.current = nextPinned;
           setPinnedPost(nextPinned);
-          setPinState(nextPinned ? (feed.status === "stale" ? "stale" : "live") : (feed.status === "stale" ? "unavailable" : "none"));
+          setPinState(
+            nextPinned
+              ? feed.status === "stale"
+                ? "stale"
+                : "live"
+              : feed.status === "stale"
+                ? "unavailable"
+                : "none",
+          );
         } else {
           setPinState(pinnedPostRef.current ? "stale" : "unavailable");
         }
-        const originals = Array.isArray(feed.posts) ? feed.posts.filter((post) => isOriginalPost(post) && post.id !== pinnedPostRef.current?.id) : [];
+        const originals = Array.isArray(feed.posts)
+          ? feed.posts.filter((post) => isOriginalPost(post) && post.id !== pinnedPostRef.current?.id)
+          : [];
         if ((feed.status === "ok" || feed.status === "stale") && Array.isArray(feed.posts)) {
           if (feed.status === "ok") {
             setFeedUpdatedAt(getFeedSnapshot()?.savedAt ?? null);
           }
-          setReading((current) => ({ posts: originals, index: retainedPostIndex(current.posts, current.index, originals) }));
+          setReading((current) => ({
+            posts: originals,
+            index: retainedPostIndex(current.posts, current.index, originals),
+          }));
           setFeedSource(feed.status === "stale" ? "stale" : "live");
         } else {
-          setFeedSource((current) => current === "live" ? "stale" : current);
+          setFeedSource((current) => (current === "live" ? "stale" : current));
         }
         alignRetryCooldown();
         setFeedLoading(false);
       } catch {
         if (mounted) {
-          setFeedSource((current) => current === "live" ? "stale" : current);
+          setFeedSource((current) => (current === "live" ? "stale" : current));
           setPinState(pinnedPostRef.current ? "stale" : "unavailable");
           alignRetryCooldown();
           setFeedLoading(false);
@@ -90,7 +114,10 @@ export function useXFeed() {
       }
     }
     const stop = startVisibleRefresh(refreshFeed);
-    return () => { mounted = false; stop(); };
+    return () => {
+      mounted = false;
+      stop();
+    };
   }, [feedRefreshToken]);
 
   function retryFeed() {
@@ -103,5 +130,16 @@ export function useXFeed() {
 
   useEffect(() => () => window.clearTimeout(retryTimerRef.current), []);
 
-  return { posts, feedSource, feedLoading, feedUpdatedAt, retryDisabled, pinnedPost, pinState, postIndex, setPostIndex, retryFeed };
+  return {
+    posts,
+    feedSource,
+    feedLoading,
+    feedUpdatedAt,
+    retryDisabled,
+    pinnedPost,
+    pinState,
+    postIndex,
+    setPostIndex,
+    retryFeed,
+  };
 }

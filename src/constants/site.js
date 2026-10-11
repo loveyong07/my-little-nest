@@ -14,6 +14,4 @@ export const SNAPSHOT = {
 export const navIds = ["home", "posts", "contact"];
 export const LANGUAGE_STORAGE_KEY = "hello-nice-site-language";
 
-export const mailboxes = [
-  { label: "Gmail", address: "fyh20071004@gmail.com" },
-];
+export const mailboxes = [{ label: "Gmail", address: "fyh20071004@gmail.com" }];

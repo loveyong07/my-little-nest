@@ -19,7 +19,10 @@ export function HeroSection({ header, language, t, profile }) {
     const hero = heroRef.current;
     const intro = introRef.current;
     const fit = () => {
-      if (!desktop.matches) { hero.style.removeProperty("--home-fit"); return; }
+      if (!desktop.matches) {
+        hero.style.removeProperty("--home-fit");
+        return;
+      }
       const headerHeight = hero.querySelector(".site-header").offsetHeight;
       const available = Math.max(1, innerHeight - headerHeight - 110);
       hero.style.setProperty("--home-fit", String(Math.min(1, available / intro.offsetHeight)));
@@ -31,7 +34,8 @@ export function HeroSection({ header, language, t, profile }) {
     desktop.addEventListener("change", fit);
     fit();
     return () => {
-      observer.disconnect(); window.removeEventListener("resize", fit);
+      observer.disconnect();
+      window.removeEventListener("resize", fit);
       desktop.removeEventListener("change", fit);
     };
   }, []);
@@ -48,50 +52,134 @@ export function HeroSection({ header, language, t, profile }) {
     return () => query.removeEventListener("change", updateScene);
   }, []);
 
-  return <section className="hero" ref={heroRef} aria-label={t.homeLabel}>
+  return (
+    <section className="hero" ref={heroRef} aria-label={t.homeLabel}>
       <div className="home-floating-elements" aria-hidden="true">
-        {mobileScene ? <>
-          <img className="home-floating-element home-floating-dove-mobile" src={ASSETS + "/home-mobile-dove-motion.webp"} alt="" draggable="false" fetchPriority="low" decoding="async" />
-          <img className="home-mobile-petal home-mobile-petal-one" src={ASSETS + "/home-floating-petal.webp"} alt="" draggable="false" fetchPriority="low" decoding="async" />
-          <img className="home-mobile-petal home-mobile-petal-two" src={ASSETS + "/home-floating-petal.webp"} alt="" draggable="false" fetchPriority="low" decoding="async" />
-        </> : <>
-          <img className="home-floating-element home-floating-dove" src={ASSETS + "/home-dove-motion.webp"} alt="" draggable="false" fetchPriority="low" decoding="async" />
-          <img className="home-floating-element home-floating-petal" src={ASSETS + "/home-petal-motion.webp"} alt="" draggable="false" fetchPriority="low" decoding="async" />
-        </>}
+        {mobileScene ? (
+          <>
+            <img
+              className="home-floating-element home-floating-dove-mobile"
+              src={ASSETS + "/home-mobile-dove-motion.webp"}
+              alt=""
+              draggable="false"
+              fetchPriority="low"
+              decoding="async"
+            />
+            <img
+              className="home-mobile-petal home-mobile-petal-one"
+              src={ASSETS + "/home-floating-petal.webp"}
+              alt=""
+              draggable="false"
+              fetchPriority="low"
+              decoding="async"
+            />
+            <img
+              className="home-mobile-petal home-mobile-petal-two"
+              src={ASSETS + "/home-floating-petal.webp"}
+              alt=""
+              draggable="false"
+              fetchPriority="low"
+              decoding="async"
+            />
+          </>
+        ) : (
+          <>
+            <img
+              className="home-floating-element home-floating-dove"
+              src={ASSETS + "/home-dove-motion.webp"}
+              alt=""
+              draggable="false"
+              fetchPriority="low"
+              decoding="async"
+            />
+            <img
+              className="home-floating-element home-floating-petal"
+              src={ASSETS + "/home-petal-motion.webp"}
+              alt=""
+              draggable="false"
+              fetchPriority="low"
+              decoding="async"
+            />
+          </>
+        )}
       </div>
       {header}
       <div className="hero-layout">
-      <div className="hero-intro-stack" ref={introRef}>
-      <div className="hero-copy">
-        <GiBowTieRibbon className="hero-bow" aria-hidden="true" />
-        <p className="home-place-badge">
-          <span className="home-place-seal" aria-hidden="true">
-            <svg viewBox="0 0 24 24" focusable="false">
-              <path d="M9 20V9l3-4 3 4v11M8 9h8M10 13h1m2 0h1M7.5 20h9M12 2v1.5M3.9 6.8l1.4.7m14.8-.7-1.4.7" />
-            </svg>
-          </span>
-          {t.homePlaceLabel}
-        </p>
-        <p className="hero-chapter">{fantasyCopy[language].chapter}</p>
-        <h1 id="page-heading" tabIndex={-1} aria-label="Welcome to my little nest！"><span aria-hidden="true">{"Welcome".split("").map((letter, i) => <b className="greeting-letter" style={{ "--letter": i }} key={i}>{letter}</b>)}</span><span className="greeting-line" aria-hidden="true">to my little nest<em>!</em></span></h1>
-        <div className="ornament" aria-hidden="true"><span /><PiFlowerLight /><span /></div>
-        <div className="profile">
-          <img src={xMediaSrc(profile.avatar, true, profile.avatarProxy?.highRes) || FALLBACK_AVATAR}
-            data-avatar-low-res={xMediaSrc(profile.avatar, false, profile.avatarProxy?.normal) || undefined} alt={t.profileAlt} onError={handleAvatarError} />
-          <div><strong>{profile.name}</strong><a href={`https://x.com/${profile.username}`} target="_blank" rel="noopener noreferrer">@{profile.username}</a></div>
+        <div className="hero-intro-stack" ref={introRef}>
+          <div className="hero-copy">
+            <GiBowTieRibbon className="hero-bow" aria-hidden="true" />
+            <p className="home-place-badge">
+              <span className="home-place-seal" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false">
+                  <path d="M9 20V9l3-4 3 4v11M8 9h8M10 13h1m2 0h1M7.5 20h9M12 2v1.5M3.9 6.8l1.4.7m14.8-.7-1.4.7" />
+                </svg>
+              </span>
+              {t.homePlaceLabel}
+            </p>
+            <p className="hero-chapter">{fantasyCopy[language].chapter}</p>
+            <h1 id="page-heading" tabIndex={-1} aria-label="Welcome to my little nest！">
+              <span aria-hidden="true">
+                {"Welcome".split("").map((letter, i) => (
+                  <b className="greeting-letter" style={{ "--letter": i }} key={i}>
+                    {letter}
+                  </b>
+                ))}
+              </span>
+              <span className="greeting-line" aria-hidden="true">
+                to my little nest<em>!</em>
+              </span>
+            </h1>
+            <div className="ornament" aria-hidden="true">
+              <span />
+              <PiFlowerLight />
+              <span />
+            </div>
+            <div className="profile">
+              <img
+                src={xMediaSrc(profile.avatar, true, profile.avatarProxy?.highRes) || FALLBACK_AVATAR}
+                data-avatar-low-res={xMediaSrc(profile.avatar, false, profile.avatarProxy?.normal) || undefined}
+                alt={t.profileAlt}
+                onError={handleAvatarError}
+              />
+              <div>
+                <strong>{profile.name}</strong>
+                <a href={`https://x.com/${profile.username}`} target="_blank" rel="noopener noreferrer">
+                  @{profile.username}
+                </a>
+              </div>
+            </div>
+            <p className="bio">{t.bio}</p>
+            <p className="motto">{t.motto}</p>
+            <div className="hero-actions">
+              <a className="primary-cta" href={pagePaths.posts}>
+                <FaXTwitter aria-hidden="true" />
+                {t.postsCta}
+                <FaArrowRight aria-hidden="true" />
+              </a>
+              <a className="secondary-cta" href={pagePaths.contact}>
+                <FaEnvelope aria-hidden="true" />
+                {t.contactCta}
+              </a>
+            </div>
+          </div>
+          <HomeJournal language={language} />
         </div>
-        <p className="bio">{t.bio}</p>
-        <p className="motto">{t.motto}</p>
-        <div className="hero-actions">
-          <a className="primary-cta" href={pagePaths.posts}><FaXTwitter aria-hidden="true" />{t.postsCta}<FaArrowRight aria-hidden="true" /></a>
-          <a className="secondary-cta" href={pagePaths.contact}><FaEnvelope aria-hidden="true" />{t.contactCta}</a>
-        </div>
+        <div className="hero-character-space" aria-hidden="true" />
       </div>
-      <HomeJournal language={language} />
+      <p className="sky-quote">
+        {t.heroScript}
+        <HiOutlineSparkles aria-hidden="true" />
+      </p>
+      <div className="handwritten-note">
+        <p>{t.note}</p>
+        <span>
+          Nice people
+          <br />
+          Brighter tomorrow
+          <br />
+          <time dateTime={formatLocalDate(visitDate)}>— {formatVisitDate(visitDate, language)} ✧</time>
+        </span>
       </div>
-      <div className="hero-character-space" aria-hidden="true" />
-      </div>
-      <p className="sky-quote">{t.heroScript}<HiOutlineSparkles aria-hidden="true" /></p>
-      <div className="handwritten-note"><p>{t.note}</p><span>Nice people<br />Brighter tomorrow<br /><time dateTime={formatLocalDate(visitDate)}>— {formatVisitDate(visitDate, language)} ✧</time></span></div>
-  </section>;
+    </section>
+  );
 }

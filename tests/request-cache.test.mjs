@@ -1,6 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createSharedRequest, startVisibleRefresh, REQUEST_TIMEOUT_MS, REQUEST_RETRY_MS, REQUEST_FRESH_MS } from "../src/request-cache.js";
+import {
+  createSharedRequest,
+  startVisibleRefresh,
+  REQUEST_TIMEOUT_MS,
+  REQUEST_RETRY_MS,
+  REQUEST_FRESH_MS,
+} from "../src/request-cache.js";
 
 function fakeClock(start = 1000) {
   let time = start;
@@ -8,27 +14,48 @@ function fakeClock(start = 1000) {
   const timers = new Map();
   return {
     now: () => time,
-    setTimer: (callback, delay) => { const id = ++nextId; timers.set(id, { callback, at: time + delay }); return id; },
+    setTimer: (callback, delay) => {
+      const id = ++nextId;
+      timers.set(id, { callback, at: time + delay });
+      return id;
+    },
     clearTimer: (id) => timers.delete(id),
     advance: (delay) => {
       time += delay;
-      for (const [id, timer] of [...timers]) if (timer.at <= time) { timers.delete(id); timer.callback(); }
+      for (const [id, timer] of [...timers])
+        if (timer.at <= time) {
+          timers.delete(id);
+          timer.callback();
+        }
     },
   };
 }
 
 const response = (value) => ({ ok: true, json: async () => value });
 const isSuccess = (value) => value?.status === "ok";
-const flush = async () => { await Promise.resolve(); await Promise.resolve(); };
+const flush = async () => {
+  await Promise.resolve();
+  await Promise.resolve();
+};
 
 test("concurrent consumers share one request; fresh reads preserve the success timestamp", async () => {
   const clock = fakeClock();
   let finish;
   let calls = 0;
   let saves = 0;
-  const resource = createSharedRequest({ url: "/api/example", isSuccess, ...clock,
-    fetchImpl: async () => { calls++; return new Promise((resolve) => { finish = resolve; }); },
-    onSuccess: () => { saves++; },
+  const resource = createSharedRequest({
+    url: "/api/example",
+    isSuccess,
+    ...clock,
+    fetchImpl: async () => {
+      calls++;
+      return new Promise((resolve) => {
+        finish = resolve;
+      });
+    },
+    onSuccess: () => {
+      saves++;
+    },
   });
   const first = resource.load();
   assert.equal(resource.load({ force: true }), first);
@@ -57,10 +84,19 @@ test("the waiting deadline includes a stalled response body and ignores late suc
   const clock = fakeClock();
   let finishBody;
   let signal;
-  const resource = createSharedRequest({ url: "/api/example", isSuccess, ...clock,
+  const resource = createSharedRequest({
+    url: "/api/example",
+    isSuccess,
+    ...clock,
     fetchImpl: async (_, options) => {
       signal = options.signal;
-      return { ok: true, json: () => new Promise((resolve) => { finishBody = resolve; }) };
+      return {
+        ok: true,
+        json: () =>
+          new Promise((resolve) => {
+            finishBody = resolve;
+          }),
+      };
     },
   });
   const pending = resource.load();
@@ -79,8 +115,14 @@ test("the waiting deadline includes a stalled response body and ignores late suc
 test("failure cooldown suppresses foreground and manual request storms, then permits recovery", async () => {
   const clock = fakeClock();
   let calls = 0;
-  const resource = createSharedRequest({ url: "/api/example", isSuccess, ...clock,
-    fetchImpl: async () => { calls++; return calls === 1 ? { ok: false } : response({ status: "ok" }); },
+  const resource = createSharedRequest({
+    url: "/api/example",
+    isSuccess,
+    ...clock,
+    fetchImpl: async () => {
+      calls++;
+      return calls === 1 ? { ok: false } : response({ status: "ok" });
+    },
   });
   await assert.rejects(resource.load());
   await assert.rejects(resource.load());
@@ -94,8 +136,14 @@ test("failure cooldown suppresses foreground and manual request storms, then per
 test("unavailable responses do not renew a successful snapshot; force skips only freshness", async () => {
   const clock = fakeClock();
   let calls = 0;
-  const resource = createSharedRequest({ url: "/api/example", isSuccess, ...clock,
-    fetchImpl: async () => { calls++; return response(calls === 1 ? { status: "unavailable" } : { status: "ok", version: 2 }); },
+  const resource = createSharedRequest({
+    url: "/api/example",
+    isSuccess,
+    ...clock,
+    fetchImpl: async () => {
+      calls++;
+      return response(calls === 1 ? { status: "unavailable" } : { status: "ok", version: 2 });
+    },
   });
   resource.prime({ status: "ok", version: 1 }, 500);
   assert.equal((await resource.load()).version, 1);
@@ -125,16 +173,42 @@ test("hidden pages pause refresh checks and leaving a consumer does not abort sh
   const clock = fakeClock();
   let finish;
   let signal;
-  const resource = createSharedRequest({ url: "/api/example", isSuccess, ...clock,
-    fetchImpl: async (_, options) => { signal = options.signal; return new Promise((resolve) => { finish = resolve; }); },
+  const resource = createSharedRequest({
+    url: "/api/example",
+    isSuccess,
+    ...clock,
+    fetchImpl: async (_, options) => {
+      signal = options.signal;
+      return new Promise((resolve) => {
+        finish = resolve;
+      });
+    },
   });
   const listeners = new Set();
-  const documentImpl = { hidden: true, addEventListener: (_, callback) => listeners.add(callback), removeEventListener: (_, callback) => listeners.delete(callback) };
+  const documentImpl = {
+    hidden: true,
+    addEventListener: (_, callback) => listeners.add(callback),
+    removeEventListener: (_, callback) => listeners.delete(callback),
+  };
   let tick;
   let cleared = false;
-  const windowImpl = { setInterval: (callback) => { tick = callback; return 1; }, clearInterval: () => { cleared = true; } };
+  const windowImpl = {
+    setInterval: (callback) => {
+      tick = callback;
+      return 1;
+    },
+    clearInterval: () => {
+      cleared = true;
+    },
+  };
   let refreshes = 0;
-  const stop = startVisibleRefresh(() => { refreshes++; return resource.load(); }, { windowImpl, documentImpl });
+  const stop = startVisibleRefresh(
+    () => {
+      refreshes++;
+      return resource.load();
+    },
+    { windowImpl, documentImpl },
+  );
   tick();
   assert.equal(refreshes, 0);
   documentImpl.hidden = false;

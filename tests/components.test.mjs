@@ -20,9 +20,15 @@ let systemReducedMotion = false;
 const mediaListeners = new Set();
 window.matchMedia = globalThis.matchMedia = (media) => ({
   media,
-  get matches() { return media === "(prefers-reduced-motion: reduce)" && systemReducedMotion; },
-  addEventListener(type, listener) { if (type === "change" && media === "(prefers-reduced-motion: reduce)") mediaListeners.add(listener); },
-  removeEventListener(type, listener) { if (type === "change") mediaListeners.delete(listener); },
+  get matches() {
+    return media === "(prefers-reduced-motion: reduce)" && systemReducedMotion;
+  },
+  addEventListener(type, listener) {
+    if (type === "change" && media === "(prefers-reduced-motion: reduce)") mediaListeners.add(listener);
+  },
+  removeEventListener(type, listener) {
+    if (type === "change") mediaListeners.delete(listener);
+  },
 });
 
 const React = await import("react");
@@ -34,7 +40,17 @@ const server = await createServer({
   logLevel: "silent",
   server: { middlewareMode: true },
 });
-const [{ Header }, { MediaLightbox }, { default: ContactPage }, { default: PostsPage }, { copy }, { SNAPSHOT }, { pagePaths }, { postMonths }, { useFantasyPreferences }] = await Promise.all([
+const [
+  { Header },
+  { MediaLightbox },
+  { default: ContactPage },
+  { default: PostsPage },
+  { copy },
+  { SNAPSHOT },
+  { pagePaths },
+  { postMonths },
+  { useFantasyPreferences },
+] = await Promise.all([
   server.ssrLoadModule("/src/components/Header.jsx"),
   server.ssrLoadModule("/src/components/MediaLightbox.jsx"),
   server.ssrLoadModule("/src/pages/ContactPage.jsx"),
@@ -74,14 +90,24 @@ after(async () => {
 
 test("mobile navigation opens and Escape closes it with focus returned", async () => {
   resetDom();
-  const { container, unmount } = await mount(React.createElement(Header, {
-    page: "home", t: copy.zh, language: "zh", changeLanguage() {},
-  }));
+  const { container, unmount } = await mount(
+    React.createElement(Header, {
+      page: "home",
+      t: copy.zh,
+      language: "zh",
+      changeLanguage() {},
+    }),
+  );
   const toggle = container.querySelector(".menu-toggle");
   const nav = container.querySelector(".site-nav");
-  assert.deepEqual([...nav.querySelectorAll("a")].map((link) => [link.dataset.page, link.getAttribute("href")]), [
-    ["home", pagePaths.home], ["posts", pagePaths.posts], ["contact", pagePaths.contact],
-  ]);
+  assert.deepEqual(
+    [...nav.querySelectorAll("a")].map((link) => [link.dataset.page, link.getAttribute("href")]),
+    [
+      ["home", pagePaths.home],
+      ["posts", pagePaths.posts],
+      ["contact", pagePaths.contact],
+    ],
+  );
 
   await React.act(async () => toggle.click());
   assert.equal(toggle.getAttribute("aria-expanded"), "true");
@@ -105,7 +131,9 @@ test("navigation copy has matching keys and three items in every language", () =
 test("date index labels use the selected language in all three locales", () => {
   const post = { created_at: SNAPSHOT.created_at };
   const labels = ["zh", "ja", "en"].map((language) => postMonths([post], language)[0]?.label);
-  const expected = ["zh-CN", "ja-JP", "en-US"].map((locale) => new Intl.DateTimeFormat(locale, { year: "numeric", month: "long" }).format(new Date(post.created_at)));
+  const expected = ["zh-CN", "ja-JP", "en-US"].map((locale) =>
+    new Intl.DateTimeFormat(locale, { year: "numeric", month: "long" }).format(new Date(post.created_at)),
+  );
   assert.deepEqual(labels, expected);
   for (const locale of [copy.zh, copy.ja, copy.en]) assert.ok(locale.postsIndexLabel);
 });
@@ -116,8 +144,15 @@ test("site motion switch and system reduce preference resolve all motion combina
   window.localStorage.setItem("nest-effects", "true");
   function Harness() {
     const preference = useFantasyPreferences();
-    return React.createElement("section", { className: preference.motion ? "motion-on" : "motion-off" },
-      React.createElement("button", { type: "button", "aria-pressed": preference.effects, onClick: () => preference.setEffects((value) => !value) }, "Effects"));
+    return React.createElement(
+      "section",
+      { className: preference.motion ? "motion-on" : "motion-off" },
+      React.createElement(
+        "button",
+        { type: "button", "aria-pressed": preference.effects, onClick: () => preference.setEffects((value) => !value) },
+        "Effects",
+      ),
+    );
   }
   const { container, unmount } = await mount(React.createElement(Harness));
   const toggle = container.querySelector("button");
@@ -151,18 +186,30 @@ test("lightbox Escape closes the dialog and restores body scroll and launcher fo
   const returnFocusRef = { current: null };
   function Harness() {
     const [open, setOpen] = React.useState(true);
-    return React.createElement(React.Fragment, null,
-      React.createElement("button", { ref: (node) => { returnFocusRef.current = node; } }, "Open preview"),
-      open && React.createElement(MediaLightbox, {
-        kind: "photo",
-        photo: { src: "/assets/example.webp", alt: "Example", number: 1 },
-        photoAlt: "Example",
-        photoCount: 1,
-        onPhotoChange() {},
-        t: copy.en,
-        onClose: () => setOpen(false),
-        returnFocusRef,
-      }));
+    return React.createElement(
+      React.Fragment,
+      null,
+      React.createElement(
+        "button",
+        {
+          ref: (node) => {
+            returnFocusRef.current = node;
+          },
+        },
+        "Open preview",
+      ),
+      open &&
+        React.createElement(MediaLightbox, {
+          kind: "photo",
+          photo: { src: "/assets/example.webp", alt: "Example", number: 1 },
+          photoAlt: "Example",
+          photoCount: 1,
+          onPhotoChange() {},
+          t: copy.en,
+          onClose: () => setOpen(false),
+          returnFocusRef,
+        }),
+    );
   }
 
   const { container, unmount } = await mount(React.createElement(Harness));
@@ -181,13 +228,24 @@ test("contact copy action reports success and exposes a manual fallback on failu
   const copied = [];
   Object.defineProperty(window.navigator, "clipboard", {
     configurable: true,
-    value: { writeText: async (value) => { copied.push(value); } },
+    value: {
+      writeText: async (value) => {
+        copied.push(value);
+      },
+    },
   });
-  let view = await mount(React.createElement(ContactPage, {
-    language: "zh", t: copy.zh, profile: { username: "loveyong07" },
-  }));
+  let view = await mount(
+    React.createElement(ContactPage, {
+      language: "zh",
+      t: copy.zh,
+      profile: { username: "loveyong07" },
+    }),
+  );
   let wechat = view.container.querySelector(".contact-tile.wechat");
-  await React.act(async () => { wechat.click(); await Promise.resolve(); });
+  await React.act(async () => {
+    wechat.click();
+    await Promise.resolve();
+  });
   assert.deepEqual(copied, ["loveyong07"]);
   assert.match(wechat.textContent, /已复制/);
   await view.unmount();
@@ -195,14 +253,25 @@ test("contact copy action reports success and exposes a manual fallback on failu
   resetDom();
   Object.defineProperty(window.navigator, "clipboard", {
     configurable: true,
-    value: { writeText: async () => { throw new Error("clipboard unavailable"); } },
+    value: {
+      writeText: async () => {
+        throw new Error("clipboard unavailable");
+      },
+    },
   });
-  view = await mount(React.createElement(ContactPage, {
-    language: "zh", t: copy.zh, profile: { username: "loveyong07" },
-  }));
+  view = await mount(
+    React.createElement(ContactPage, {
+      language: "zh",
+      t: copy.zh,
+      profile: { username: "loveyong07" },
+    }),
+  );
   wechat = view.container.querySelector(".contact-tile.wechat");
-  await React.act(async () => { wechat.click(); await Promise.resolve(); });
-  assert.equal(view.container.querySelector('.contact-copy-fallback input')?.value, "loveyong07");
+  await React.act(async () => {
+    wechat.click();
+    await Promise.resolve();
+  });
+  assert.equal(view.container.querySelector(".contact-copy-fallback input")?.value, "loveyong07");
   assert.ok(view.container.querySelector('.contact-copy-fallback[role="status"]'));
   await view.unmount();
 });
@@ -212,9 +281,14 @@ test("Posts page keeps the dated snapshot visible and offers recovery after a fe
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () => ({ ok: false, status: 503 });
   const ready = [];
-  const view = await mount(React.createElement(PostsPage, {
-    language: "en", t: copy.en, profile: { username: "loveyong07" }, onFeedReady: (value) => ready.push(value),
-  }));
+  const view = await mount(
+    React.createElement(PostsPage, {
+      language: "en",
+      t: copy.en,
+      profile: { username: "loveyong07" },
+      onFeedReady: (value) => ready.push(value),
+    }),
+  );
 
   for (let attempt = 0; attempt < 10 && view.container.querySelector(".feed-status.is-loading"); attempt++) {
     await React.act(async () => new Promise((resolvePromise) => setTimeout(resolvePromise, 0)));

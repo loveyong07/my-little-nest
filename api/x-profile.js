@@ -8,7 +8,8 @@ export default {
     const headers = { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" };
     if (request.method !== "GET") {
       return new Response(JSON.stringify({ status: "method_not_allowed" }), {
-        status: 405, headers: { ...headers, Allow: "GET" },
+        status: 405,
+        headers: { ...headers, Allow: "GET" },
       });
     }
     return new Response(JSON.stringify(await authorizeProfile(await getProfile())), {

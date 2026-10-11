@@ -14,7 +14,17 @@ test("intercepts only same-origin links to the three plain routes", () => {
   const current = "https://example.test/";
   assert.deepEqual(siteNavigation("/posts/", current), { page: "posts", path: "/posts" });
   assert.deepEqual(siteNavigation("https://example.test/contact", current), { page: "contact", path: "/contact" });
-  for (const href of ["/posts?from=home", "/posts#latest-posts", "/posts/123", "https://x.com/posts", "/business", "/business/", "/business?from=home", "/business#details", "/business/services"]) {
+  for (const href of [
+    "/posts?from=home",
+    "/posts#latest-posts",
+    "/posts/123",
+    "https://x.com/posts",
+    "/business",
+    "/business/",
+    "/business?from=home",
+    "/business#details",
+    "/business/services",
+  ]) {
     assert.equal(siteNavigation(href, current), null);
   }
 });
