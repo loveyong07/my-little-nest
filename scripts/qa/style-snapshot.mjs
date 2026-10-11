@@ -48,8 +48,9 @@ function scenarios() {
   for (const vp of ["desktop", "phone"]) {
     add({ vp, page: "posts", action: "photo", shot: true });
     add({ vp, page: "posts", action: "video" });
-    add({ vp, page: "posts", feed: "offline", shot: true });
+    for (const feed of ["offline", "loading", "empty", "media-error"]) add({ vp, page: "posts", feed, shot: feed === "offline" });
   }
+  add({ vp: "desktop", page: "posts", feed: "pin-unavailable" });
   add({ vp: "desktop", page: "contact", action: "copy" });
   add({ vp: "phone", page: "contact", action: "copy-fail" });
   for (const page of Object.keys(pages)) {
@@ -165,11 +166,23 @@ async function prepareContext(browser, scenario) {
   const feed = readFileSync(path.join(fixtures, "feed.json"), "utf8");
   const profile = readFileSync(path.join(fixtures, "profile.json"), "utf8");
   const image = readFileSync(path.join(root, "public/assets/og-cover.jpg"));
-  await context.route(/\/api\/x-posts(?:\?|$)/, (route) => scenario.feed === "offline"
-    ? route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ status: "unavailable", posts: [] }) })
-    : route.fulfill({ status: 200, contentType: "application/json", body: feed }));
+  const feedResponses = {
+    offline: { status: 503, body: { status: "unavailable", posts: [] } },
+    empty: { status: 200, body: { status: "ok", posts: [], pinnedPost: null, pinnedStatus: "none" } },
+    "pin-unavailable": { status: 200, body: { ...JSON.parse(feed), pinnedPost: null, pinnedStatus: "unavailable" } },
+  };
+  await context.route(/\/api\/x-posts(?:\?|$)/, (route) => {
+    // "loading" leaves the request pending; captures finish well before the 12 s client timeout.
+    if (scenario.feed === "loading") return;
+    const response = feedResponses[scenario.feed];
+    return response
+      ? route.fulfill({ status: response.status, contentType: "application/json", body: JSON.stringify(response.body) })
+      : route.fulfill({ status: 200, contentType: "application/json", body: feed });
+  });
   await context.route(/\/api\/x-profile(?:\?|$)/, (route) => route.fulfill({ status: 200, contentType: "application/json", body: profile }));
-  await context.route(/\/api\/x-media\?/, (route) => route.fulfill({ status: 200, contentType: "image/jpeg", body: image }));
+  await context.route(/\/api\/x-media\?/, (route) => scenario.feed === "media-error"
+    ? route.fulfill({ status: 404, body: "" })
+    : route.fulfill({ status: 200, contentType: "image/jpeg", body: image }));
   await context.route(/\/api\/x-video\?/, (route) => route.fulfill({ status: 404, body: "" }));
   await context.route(/\.mp3(?:\?|$)/, (route) => route.abort());
   await context.addInitScript(({ lang, effects, copy }) => {
@@ -197,11 +210,12 @@ async function load(page, scenario) {
   await page.addInitScript(pageHelpers);
   await page.goto(ORIGIN + pages[scenario.page], { waitUntil: "load" });
   if (scenario.page === "posts") {
-    await page.waitForSelector(".post-reading .post-card", { timeout: 15000 });
+    await page.waitForSelector(scenario.feed === "loading" ? ".pinned-placeholder-loading" : ".post-reading .post-card, .feed-empty", { timeout: 15000 });
     // The timeline font stylesheet loads 3 seconds after load; it changes .post-text.
-    await page.waitForFunction(() => getComputedStyle(document.querySelector(".post-text") ?? document.body).fontFamily.includes("ZCOOL"), null, { timeout: 15000 });
+    await page.waitForFunction(() => [...document.fonts].some((font) => font.family.includes("ZCOOL")), null, { timeout: 15000 });
   }
-  await page.waitForSelector(".nest-dock", { timeout: 15000 });
+  // Extras wait for the feed, so a pending feed never shows the dock.
+  if (scenario.feed !== "loading") await page.waitForSelector(".nest-dock", { timeout: 15000 });
   // Bring lazy media into range once so every capture sees loaded images.
   await page.evaluate(async () => {
     window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" });
