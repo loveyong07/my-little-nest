@@ -2,72 +2,98 @@
   position: relative;
   z-index: 5;
   display: flex;
-  align-items: flex-start;
   width: 100%;
-  height: 104px;
-  padding: 20px 4vw 0 3.9vw;
-  gap: 3.1vw;
+  height: 112px;
+  padding: 26px max(4vw, calc((100vw - 1320px) / 2));
+  align-items: center;
+  gap: 32px;
 }
 .brand {
   flex: 0 0 178px;
   padding: 0;
   border: 0;
   background: none;
-  color: #22579b;
   text-align: left;
   line-height: 1;
+  color: #50718e;
+  text-shadow: 0 1px #fff;
+  text-decoration: none;
+  flex-basis: 180px;
 }
 .brand-script {
   display: flex;
   align-items: center;
   width: fit-content;
   height: 44px;
-  font-family: "Segoe Script", "Brush Script MT", cursive;
-  font-size: 43px;
-  font-weight: 400;
-  letter-spacing: -5px;
-  transform: rotate(-9deg);
+  font-family: "Quicksand", sans-serif;
+  font-weight: 700;
+  font-size: 37px;
+  letter-spacing: -3px;
+  transform: rotate(-5deg);
 }
 .brand-script svg {
   width: 28px;
   height: 28px;
   margin: 0 0 12px 9px;
   stroke-width: 1.8;
+  color: #709abf;
+  margin-left: 8px;
 }
 .brand-caption {
   display: block;
   margin: 3px 0 0 40px;
-  color: var(--color-text);
-  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.08em;
   white-space: nowrap;
+  color: #47647e;
+  font-size: 11px;
+  margin-left: 8px;
 }
 .site-nav {
   display: flex;
   align-items: center;
-  gap: var(--space-6);
-  padding-top: 11px;
+  gap: 6px;
+  padding: 5px;
+  border: 1px solid #fff;
+  border-radius: 999px;
+  background: #f9fcfede;
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(10px);
 }
 .site-nav a,
 .language-picker button {
   position: relative;
-  padding: 1px 0 11px;
   border: 0;
-  background: none;
-  color: #1c4f87;
-  font-size: 16px;
-  font-weight: 500;
   white-space: nowrap;
 }
 .site-nav a {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  color: #1c4f87;
   text-decoration: none;
+  padding: 8px 22px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 700;
+  background: var(--control-bg);
+  color: var(--control-ink);
 }
-.site-nav a::after,
+.site-nav a::after {
+  position: absolute;
+  right: 0;
+  bottom: 3px;
+  left: 0;
+  height: 2px;
+  border-radius: 8px;
+  background: currentColor;
+  content: "";
+  opacity: 0;
+  transform: scaleX(0.65);
+  transition:
+    transform 0.18s ease,
+    opacity 0.18s ease;
+  display: none;
+}
 .language-picker button::after {
   position: absolute;
   right: 0;
@@ -94,36 +120,33 @@
   display: none;
 }
 .site-nav a.active .nav-active-flower {
-  position: absolute;
   top: -7px;
   right: -11px;
   display: block;
-  width: 10px;
-  height: 10px;
-  color: var(--color-accent);
   stroke-width: 1.3;
+  position: static;
+  width: 15px;
+  height: 15px;
+  margin-right: 6px;
+  color: #5983a8;
 }
 .language-picker {
   display: flex;
   align-items: center;
-  gap: 3px;
   margin-left: auto;
   padding: 4px;
   border: 1px solid #ffffffa8;
   border-radius: 999px;
-  background: linear-gradient(135deg, #ffffff78, #dff1ff55);
-  box-shadow:
-    0 8px 24px #2864a42b,
-    inset 0 1px 1px #ffffffd9,
-    inset 0 -1px 1px #ffffff4a;
-  backdrop-filter: blur(18px) saturate(165%);
   -webkit-backdrop-filter: blur(18px) saturate(165%);
+  background: #f9fcfedd;
+  border-color: #fff;
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-card);
+  gap: 2px;
 }
 .language-picker button {
-  min-height: 36px;
   padding: 0 11px;
   border-radius: 999px;
-  color: #1c4f87;
   font-size: 14px;
   font-weight: 500;
   text-shadow: none;
@@ -131,6 +154,9 @@
     background 0.18s ease,
     box-shadow 0.18s ease,
     color 0.18s ease;
+  min-height: 38px;
+  background: var(--control-bg);
+  color: var(--control-ink);
 }
 .language-picker button::after {
   display: none;
@@ -139,34 +165,227 @@
   background: #ffffff78;
 }
 .language-picker button.active {
-  background: #ffffffb8;
-  box-shadow:
-    inset 0 1px 0 #fff,
-    0 2px 9px #2b70ad26;
-  color: #16477f;
   font-weight: 700;
+  background: var(--control-bg);
+  color: var(--control-ink);
+  box-shadow: inset 0 -3px currentColor;
 }
 .menu-toggle {
   display: none;
 }
+.site-route .brand {
+  text-decoration: none;
+  flex-basis: 180px;
+  color: #f9fcff;
+  text-shadow: 0 1px 8px #19426d;
+}
+.site-route .brand-caption {
+  font-size: 11px;
+  margin-left: 8px;
+  color: #f9fcff;
+  text-shadow: 0 1px 8px #19426d;
+}
+.site-route .site-nav {
+  gap: 6px;
+  padding: 5px;
+  border: 1px solid #fff;
+  border-radius: 999px;
+  background: #f9fcfede;
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(10px);
+}
+.site-route .site-nav a {
+  padding: 8px 22px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 700;
+}
+.site-nav a:hover {
+  background: #edf4fa;
+  filter: brightness(0.96);
+}
+.site-nav a:nth-child(1) {
+  --control-bg: #e3effc;
+  --control-ink: #345d83;
+}
+.site-nav a:nth-child(2) {
+  --control-bg: #fbe1eb;
+  --control-ink: #743e59;
+}
+.site-nav a[data-page="contact"] {
+  --control-bg: #e0f2e9;
+  --control-ink: #315f53;
+}
+.site-route .site-nav a {
+  background: var(--control-bg);
+  color: var(--control-ink);
+}
+.site-nav a.active {
+  background: var(--control-bg);
+  color: var(--control-ink);
+  box-shadow: inset 0 -3px currentColor;
+}
+.language-picker button:nth-child(1) {
+  --control-bg: #fbe1eb;
+  --control-ink: #743e59;
+}
+.language-picker button:nth-child(2) {
+  --control-bg: #e9e2fa;
+  --control-ink: #59457f;
+}
+.language-picker button:nth-child(3) {
+  --control-bg: #e0f2e9;
+  --control-ink: #315f53;
+}
+.site-header .menu-toggle {
+  color: #79602e;
+  background: #fff0ce;
+  border-color: #ebd7a5;
+}
 
-@media (min-width: 901px) {
-  .site-route .site-nav {
-    gap: var(--space-5);
-    padding: 3px 20px;
-    border: 1px solid #ffffff8c;
+@media (max-width: 1100px) {
+  .site-header {
+    gap: 20px;
+  }
+  .site-nav a,
+  .site-route .site-nav a {
+    padding-inline: 16px;
+  }
+}
+
+@media (max-width: 900px) {
+  .brand-script {
+    height: 34px;
+    font-size: 33px;
+  }
+  .brand-script svg {
+    width: 23px;
+    height: 23px;
+  }
+  .brand-caption {
+    letter-spacing: 0.03em;
+    font-size: 10px;
+  }
+  .language-picker {
+    margin: 0 8px 0 auto;
+    padding: 2px;
+  }
+  .language-picker button {
+    min-width: 42px;
+    padding: 0 4px;
     border-radius: 999px;
-    background: #fbfdffe6;
-    box-shadow: var(--shadow-card);
+    font-size: 12px;
+    font-weight: 600;
+    text-shadow: none;
+    min-height: 44px;
+  }
+  .language-picker button::after {
+    display: none;
+  }
+  .menu-toggle {
+    display: grid;
+    width: 44px;
+    height: 44px;
+    margin-top: 1px;
+    place-items: center;
+    border: 1px solid #fff8;
+    transition: transform 0.14s ease;
+    color: #557897;
+    background: #f6fafd;
+    border-color: #fff;
+    border-radius: 15px;
+  }
+  .menu-toggle:active {
+    transform: scale(0.94);
+  }
+  .menu-toggle svg {
+    width: 22px;
+    height: 22px;
+  }
+  .site-nav {
+    position: absolute;
+    flex-direction: column;
+    align-items: stretch;
+    min-width: 150px;
+    max-height: calc(100dvh - 88px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    display: none;
+    top: 72px;
+    right: 20px;
+    padding: 8px;
+    border-radius: 22px;
+    background: #f9fbfd;
+  }
+  .site-nav a {
+    min-height: 44px;
+    text-align: left;
+    display: flex;
+    padding: 10px 18px;
+  }
+  .site-nav a::after {
+    bottom: 4px;
+  }
+  .site-header {
+    height: 86px;
+    padding: 16px 20px;
+    align-items: center;
+    gap: 0;
+  }
+  .brand,
+  .site-route .brand {
+    flex-basis: 130px;
+  }
+  .site-route .site-nav {
+    display: none;
+    top: 72px;
+    right: 20px;
+    padding: 8px;
+    border-radius: 22px;
+    background: #f9fbfd;
+  }
+  .site-nav.is-open {
+    display: flex;
   }
   .site-route .site-nav a {
-    padding: 5px 0;
+    display: flex;
+    padding: 10px 18px;
   }
+}
+
+@media (max-width: 700px) {
+  .site-header {
+    padding: 12px 14px;
+    height: 78px;
+  }
+}
+
+@media (max-width: 360px) {
+  .brand-caption {
+    display: block;
+    font-size: 8px;
+    margin-left: 3px;
+  }
+  .language-picker {
+    margin-right: 5px;
+  }
+  .language-picker button {
+    padding-inline: 2px;
+    min-width: 33px;
+    font-size: 10px;
+  }
+  .site-header {
+    padding-inline: 10px;
+  }
+  .brand,
   .site-route .brand {
-    color: #ffffff;
-    text-shadow: 0 1px 5px #153d64;
+    flex-basis: 95px;
+  }
+  .brand-script {
+    font-size: 29px;
   }
   .site-route .brand-caption {
-    color: #ffffff;
+    font-size: 8px;
+    margin-left: 3px;
   }
 }

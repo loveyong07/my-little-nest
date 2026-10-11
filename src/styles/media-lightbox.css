@@ -9,7 +9,7 @@
   padding: 24px;
   overflow: auto;
   overscroll-behavior: contain;
-  background: #07182ee8;
+  background: #18232de8;
 }
 .media-lightbox-content {
   --lightbox-controls: 126px;
@@ -101,4 +101,18 @@
 .media-lightbox-prev:hover,
 .media-lightbox-next:hover {
   background: #eaf6ff;
+}
+
+@media (max-width: 425px) {
+  .media-lightbox {
+    padding: 12px;
+  }
+  .media-lightbox-content {
+    gap: 12px;
+  }
+  .media-lightbox-content img,
+  .media-lightbox-content video {
+    max-width: 96vw;
+    max-height: calc(100dvh - 105px);
+  }
 }

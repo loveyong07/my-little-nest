@@ -1,12 +1,12 @@
 .hero {
   position: relative;
-  min-height: max(100svh, 760px);
   isolation: isolate;
   overflow: hidden;
-  background: #b4dbfb;
+  min-height: max(100svh, 900px);
+  padding-bottom: 24px;
+  background: #f7fafd;
 }
 .hero::before {
-  position: absolute;
   z-index: -1;
   inset: -16px;
   content: "";
@@ -17,21 +17,25 @@
     "/assets/hero-sky-alt-motion-q90.jpg" type("image/jpeg")
   );
   animation: home-background-breeze 12s ease-in-out infinite alternate;
+  opacity: 1;
+  position: fixed;
+  background-size: cover;
 }
 .hero::after {
-  position: absolute;
   z-index: -1;
   inset: 0;
   content: "";
   pointer-events: none;
-  background: linear-gradient(90deg, #f4faff65, #f4faff20 34%, transparent 54%);
+  display: block;
+  position: fixed;
+  background: transparent;
 }
 .home-floating-elements {
-  position: absolute;
   z-index: 1;
   inset: 0;
   overflow: hidden;
   pointer-events: none;
+  position: fixed;
 }
 .home-floating-element {
   position: absolute;
@@ -154,17 +158,17 @@
 
 @media (max-width: 900px) {
   .hero {
-    min-height: 100svh;
-    background-color: #eaf5ff;
-    --home-scene-height: 600px;
     --home-scene-position: 50%;
+    min-height: 100svh;
+    --home-scene-height: 650px;
+    padding-bottom: 0;
   }
   .hero::before {
-    background-size: auto var(--home-scene-height);
+    background-size: cover;
     background-position: var(--home-scene-position) top;
   }
   .hero::after {
-    display: none;
+    background: transparent;
   }
   .home-floating-element {
     top: 0;
@@ -183,12 +187,15 @@
   .home-floating-petal {
     animation: home-petal-fall 8s linear infinite;
   }
+  .home-floating-elements {
+    --home-scene-height: 100lvh;
+  }
 }
 
 @media (max-width: 700px) {
   .hero {
-    --home-scene-height: clamp(440px, 115vw, 510px);
     --home-scene-position: 62%;
+    --home-scene-height: clamp(440px, 115vw, 510px);
   }
   .hero::before {
     background-image: url("/assets/hero-sky-mobile-motion-q90.jpg");
@@ -196,5 +203,21 @@
       "/assets/hero-sky-mobile-motion-q90.webp" type("image/webp"),
       "/assets/hero-sky-mobile-motion-q90.jpg" type("image/jpeg")
     );
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero::before,
+  .home-floating-element,
+  .home-mobile-petal {
+    animation: none !important;
+  }
+}
+
+@media (min-width: 901px) and (pointer: fine) {
+  .site:not(.site-route) .hero {
+    height: 100dvh;
+    min-height: 0;
+    padding-bottom: 0;
   }
 }
