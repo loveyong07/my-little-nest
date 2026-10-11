@@ -4,7 +4,6 @@
   isolation: isolate;
   height: 285px;
   overflow: hidden;
-  background: transparent;
 }
 .route-page-title {
   position: absolute;
@@ -45,7 +44,6 @@
   color: #fff;
   font-family: var(--nest-font);
   font-size: clamp(44px, 5vw, 62px);
-  font-style: normal;
   font-weight: 500;
   line-height: 1;
   text-shadow: 0 2px 14px #19426dc9;
@@ -53,8 +51,6 @@
 
 .route-panel {
   display: block;
-  grid-template-columns: 1fr;
-  gap: 0;
   width: calc(100% - 8vw);
   max-width: 1160px;
   margin: -28px auto 35px;
@@ -89,7 +85,6 @@
 
 @media (max-width: 1050px) {
   .route-panel {
-    gap: 24px;
     margin: 0 22px 35px;
   }
 }
@@ -106,7 +101,6 @@
     gap: 6px;
   }
   .route-panel {
-    gap: 23px;
     width: auto;
     margin: 0 18px 35px;
     padding: 24px 20px;
