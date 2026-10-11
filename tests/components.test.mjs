@@ -450,3 +450,76 @@ test("Posts page keeps the dated snapshot visible and offers recovery after a fe
   await view.unmount();
   globalThis.fetch = originalFetch;
 });
+
+test("Posts opens on the latest feed post and preserves only an explicitly selected reading position", async (context) => {
+  resetDom();
+  // Let the preceding outage's shared request cooldown expire.
+  let now = Date.now() + 31_000;
+  context.mock.method(Date, "now", () => now);
+  let respond;
+  context.mock.method(globalThis, "fetch", () => new Promise((resolveResponse) => (respond = resolveResponse)));
+  const post = (id, text) => ({
+    ...SNAPSHOT,
+    id,
+    text,
+    created_at: "2026-10-11T10:00:00.000Z",
+    permalink: `https://x.com/loveyong07/status/${id}`,
+  });
+  const first = post("2109234459266707736", "The latest post on first entry");
+  const second = post("2109234459266707737", "A newer post after refresh");
+  const third = post("2109234459266707738", "The latest post on return");
+  const fourth = post("2109234459266707739", "Newer than the cached latest post");
+  const element = () =>
+    React.createElement(PostsPage, {
+      language: "en",
+      t: copy.en,
+      profile: { username: "loveyong07" },
+      onFeedReady() {},
+    });
+  const deliver = async (posts) => {
+    assert.equal(typeof respond, "function");
+    const complete = respond;
+    respond = null;
+    await React.act(async () =>
+      complete({ ok: true, json: async () => ({ status: "ok", pinnedStatus: "none", posts }) }),
+    );
+  };
+  const refresh = async (posts) => {
+    now += 16 * 60_000;
+    await React.act(async () => document.dispatchEvent(new Event("visibilitychange")));
+    await deliver(posts);
+  };
+  let view = await mount(element());
+  const shownText = () => view.container.querySelector(".post-reading .post-text")?.textContent;
+  try {
+    assert.ok(shownText().includes("但愿人长久"));
+    // The real fallback post remains in the timeline, reproducing the original bug.
+    await deliver([first, SNAPSHOT]);
+    assert.equal(shownText(), first.text);
+
+    await refresh([second, first, SNAPSHOT]);
+    assert.equal(shownText(), second.text);
+
+    await React.act(async () => view.container.querySelectorAll(".post-index-button")[2].click());
+    assert.ok(shownText().includes("但愿人长久"));
+    await refresh([third, second, first, SNAPSHOT]);
+    assert.ok(shownText().includes("但愿人长久"));
+    assert.match(
+      view.container.querySelector('[aria-current="true"] .post-index-excerpt')?.textContent ?? "",
+      /但愿人长久/,
+    );
+
+    await view.unmount();
+    view = await mount(element());
+    assert.equal(shownText(), third.text);
+
+    await view.unmount();
+    now += 16 * 60_000;
+    view = await mount(element());
+    assert.equal(shownText(), third.text);
+    await deliver([fourth, third, second, first, SNAPSHOT]);
+    assert.equal(shownText(), fourth.text);
+  } finally {
+    await view.unmount();
+  }
+});
