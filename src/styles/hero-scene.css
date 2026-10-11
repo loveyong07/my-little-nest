@@ -1,3 +1,4 @@
+/* Home: the sky illustration stays fixed to the viewport while the content scrolls. */
 .hero {
   position: relative;
   isolation: isolate;
@@ -7,6 +8,7 @@
   background: #f7fafd;
 }
 .hero::before {
+  position: fixed;
   z-index: -1;
   inset: -16px;
   content: "";
@@ -17,25 +19,23 @@
     "/assets/hero-sky-alt-motion-q90.jpg" type("image/jpeg")
   );
   animation: home-background-breeze 12s ease-in-out infinite alternate;
-  opacity: 1;
-  position: fixed;
-  background-size: cover;
 }
 .hero::after {
+  position: fixed;
   z-index: -1;
   inset: 0;
+  display: block;
   content: "";
   pointer-events: none;
-  display: block;
-  position: fixed;
   background: transparent;
 }
+
 .home-floating-elements {
+  position: fixed;
   z-index: 1;
   inset: 0;
   overflow: hidden;
   pointer-events: none;
-  position: fixed;
 }
 .home-floating-element {
   position: absolute;
@@ -79,6 +79,7 @@
   left: 62%;
   animation-delay: -3.4s;
 }
+
 @keyframes home-background-breeze {
   from {
     transform: translate3d(-8px, -3px, 0);
@@ -160,15 +161,14 @@
   .hero {
     --home-scene-position: 50%;
     min-height: 100svh;
-    --home-scene-height: 650px;
     padding-bottom: 0;
   }
   .hero::before {
-    background-size: cover;
     background-position: var(--home-scene-position) top;
   }
-  .hero::after {
-    background: transparent;
+  /* Scene layers are sized to the large viewport so mobile toolbars do not rescale them. */
+  .home-floating-elements {
+    --home-scene-height: 100lvh;
   }
   .home-floating-element {
     top: 0;
@@ -187,15 +187,11 @@
   .home-floating-petal {
     animation: home-petal-fall 8s linear infinite;
   }
-  .home-floating-elements {
-    --home-scene-height: 100lvh;
-  }
 }
 
 @media (max-width: 700px) {
   .hero {
     --home-scene-position: 62%;
-    --home-scene-height: clamp(440px, 115vw, 510px);
   }
   .hero::before {
     background-image: url("/assets/hero-sky-mobile-motion-q90.jpg");
@@ -206,18 +202,18 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .hero::before,
-  .home-floating-element,
-  .home-mobile-petal {
-    animation: none !important;
-  }
-}
-
 @media (min-width: 901px) and (pointer: fine) {
   .site:not(.site-route) .hero {
     height: 100dvh;
     min-height: 0;
     padding-bottom: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero::before,
+  .home-floating-element,
+  .home-mobile-petal {
+    animation: none !important;
   }
 }

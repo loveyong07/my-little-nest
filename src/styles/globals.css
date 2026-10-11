@@ -1,28 +1,14 @@
+@font-face {
+  font-family: "Nest Kuaile";
+  src: url("/assets/fonts/nest-ui-2026-09-30.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  --content-width: 1320px;
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 24px;
-  --space-6: 32px;
-  --space-7: 48px;
-  --space-8: 64px;
-  --font-xs: 0.75rem;
-  --font-sm: 0.875rem;
-  --font-body: 1rem;
-  --font-lead: 1.125rem;
-  --font-title: clamp(1.25rem, 2vw, 1.5rem);
-  color: var(--color-text);
-  background: var(--color-background);
-  font-synthesis: none;
-  line-height: 1.6;
-  text-rendering: optimizeLegibility;
   --color-primary: #507596;
-  --color-secondary: #527492;
-  --color-accent: #75a8d5;
   --color-background: #f7fafd;
-  --color-surface: #f9fcfeed;
   --color-text: #384f63;
   --color-muted: #50718d;
   --color-border: #d6e1ea;
@@ -32,17 +18,32 @@
   --panel-shadow: 0 16px 48px #4967821c, inset 0 1px #fff;
   --radius-sm: 16px;
   --radius-md: 23px;
-  --radius-lg: 32px;
   --card-radius: 32px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --font-xs: 0.75rem;
+  --font-sm: 0.875rem;
+  --font-body: 1rem;
+  --font-title: clamp(1.25rem, 2vw, 1.5rem);
   --nest-font: "Quicksand", "Nest Kuaile", "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+  color: var(--color-text);
+  background: var(--color-background);
   font-family: var(--nest-font);
   font-weight: 500;
+  font-synthesis: none;
+  line-height: 1.6;
+  text-rendering: optimizeLegibility;
 }
 .language-ja {
-  line-break: strict;
   --nest-font: "Quicksand", "Hiragino Maru Gothic ProN", "Yu Gothic", "Nest Kuaile", sans-serif;
   font-family: var(--nest-font);
+  line-break: strict;
 }
+
 * {
   box-sizing: border-box;
 }
@@ -75,9 +76,12 @@ a:focus-visible,
 select:focus-visible,
 input:focus-visible,
 [tabindex]:focus-visible {
-  outline: 3px solid #bf4675;
+  outline: 3px solid #4d769a;
   outline-offset: 4px;
-  outline-color: #4d769a;
+}
+::selection {
+  background: #deecf7;
+  color: #3a546b;
 }
 .sr-only {
   position: absolute;
@@ -90,47 +94,8 @@ input:focus-visible,
   white-space: nowrap;
   border: 0;
 }
-/* The visual theme is kept in one layer; feed, media and routing stay shared. */
-@font-face {
-  font-family: "Nest Kuaile";
-  src: url("/assets/fonts/nest-ui-2026-09-30.woff") format("woff");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-::selection {
-  background: #deecf7;
-  color: #3a546b;
-}
-/* Applies to the element carrying the class as well: <html> owns scrolling and
-   <main> owns the route background drift. */
-.motion-off,
-.motion-off::before,
-.motion-off::after,
-.motion-off *,
-.motion-off *::before,
-.motion-off *::after {
-  animation: none !important;
-  scroll-behavior: auto !important;
-}
-@keyframes nest-letter-in {
-  from {
-    opacity: 0;
-    transform: translateY(10px) rotate(4deg);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-@keyframes nest-type-in {
-  from {
-    clip-path: inset(0 100% 0 0);
-  }
-  to {
-    clip-path: inset(0);
-  }
-}
+
+/* Card entrances shared by the home journal and the contact tiles. */
 @keyframes nest-card-in {
   from {
     opacity: 0;
@@ -140,6 +105,18 @@ input:focus-visible,
     opacity: 1;
     translate: 0 0;
   }
+}
+
+/* The in-site motion switch (src/utils/motion.js). It also applies to the element
+   carrying the class: <html> owns scrolling and <main> owns the route background drift. */
+.motion-off,
+.motion-off::before,
+.motion-off::after,
+.motion-off *,
+.motion-off *::before,
+.motion-off *::after {
+  animation: none !important;
+  scroll-behavior: auto !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -2,23 +2,20 @@
   position: relative;
   z-index: 5;
   display: flex;
+  align-items: center;
+  gap: 32px;
   width: 100%;
   height: 112px;
   padding: 26px max(4vw, calc((100vw - 1320px) / 2));
-  align-items: center;
-  gap: 32px;
 }
+
 .brand {
-  flex: 0 0 178px;
-  padding: 0;
-  border: 0;
-  background: none;
-  text-align: left;
-  line-height: 1;
+  flex: 0 0 180px;
   color: #50718e;
-  text-shadow: 0 1px #fff;
+  line-height: 1;
+  text-align: left;
   text-decoration: none;
-  flex-basis: 180px;
+  text-shadow: 0 1px #fff;
 }
 .brand-script {
   display: flex;
@@ -26,29 +23,41 @@
   width: fit-content;
   height: 44px;
   font-family: "Quicksand", sans-serif;
-  font-weight: 700;
   font-size: 37px;
+  font-weight: 700;
   letter-spacing: -3px;
   transform: rotate(-5deg);
 }
 .brand-script svg {
   width: 28px;
   height: 28px;
-  margin: 0 0 12px 9px;
-  stroke-width: 1.8;
+  margin: 0 0 12px 8px;
   color: #709abf;
-  margin-left: 8px;
+  stroke-width: 1.8;
 }
 .brand-caption {
   display: block;
-  margin: 3px 0 0 40px;
+  margin: 3px 0 0 8px;
+  color: #47647e;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.08em;
   white-space: nowrap;
-  color: #47647e;
-  font-size: 11px;
-  margin-left: 8px;
 }
+/* White branding over the Posts and Contact scenes. */
+.site-route .brand,
+.site-route .brand-caption {
+  color: #f9fcff;
+  text-shadow: 0 1px 8px #19426d;
+}
+.site-route .brand-caption {
+  /* Route pages keep the 11px caption below 900px, where Home uses 10px. */
+  font-size: 11px;
+}
+.site-route .brand-script svg {
+  color: #e5f0ff;
+}
+
 .site-nav {
   display: flex;
   align-items: center;
@@ -58,47 +67,43 @@
   border-radius: 999px;
   background: #f9fcfede;
   box-shadow: var(--shadow-card);
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
 }
-.site-nav a,
-.language-picker button {
-  position: relative;
-  border: 0;
-  white-space: nowrap;
-}
 .site-nav a {
+  position: relative;
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  text-decoration: none;
   padding: 8px 22px;
+  border: 0;
   border-radius: 999px;
-  font-size: 15px;
-  font-weight: 700;
   background: var(--control-bg);
   color: var(--control-ink);
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
 }
-.site-nav a::after {
-  position: absolute;
-  right: 0;
-  bottom: 3px;
-  left: 0;
-  height: 2px;
-  border-radius: 8px;
-  background: currentColor;
-  content: "";
-  opacity: 0;
-  transform: scaleX(0.65);
-  transition:
-    transform 0.18s ease,
-    opacity 0.18s ease;
-  display: none;
+.site-nav a[data-page="home"] {
+  --control-bg: #e3effc;
+  --control-ink: #345d83;
 }
+.site-nav a[data-page="posts"] {
+  --control-bg: #fbe1eb;
+  --control-ink: #743e59;
+}
+.site-nav a[data-page="contact"] {
+  --control-bg: #e0f2e9;
+  --control-ink: #315f53;
+}
+.site-nav a::after,
 .language-picker button::after {
   position: absolute;
   right: 0;
   bottom: 3px;
   left: 0;
+  display: none;
   height: 2px;
   border-radius: 8px;
   background: currentColor;
@@ -116,106 +121,11 @@
   opacity: 1;
   transform: scaleX(1);
 }
-.nav-active-flower {
-  display: none;
-}
-.site-nav a.active .nav-active-flower {
-  top: -7px;
-  right: -11px;
-  display: block;
-  stroke-width: 1.3;
-  position: static;
-  width: 15px;
-  height: 15px;
-  margin-right: 6px;
-  color: #5983a8;
-}
-.language-picker {
-  display: flex;
-  align-items: center;
-  margin-left: auto;
-  padding: 4px;
-  border: 1px solid #ffffffa8;
-  border-radius: 999px;
-  -webkit-backdrop-filter: blur(18px) saturate(165%);
-  background: #f9fcfedd;
-  border-color: #fff;
-  backdrop-filter: blur(10px);
-  box-shadow: var(--shadow-card);
-  gap: 2px;
-}
-.language-picker button {
-  padding: 0 11px;
-  border-radius: 999px;
-  font-size: 14px;
-  font-weight: 500;
-  text-shadow: none;
-  transition:
-    background 0.18s ease,
-    box-shadow 0.18s ease,
-    color 0.18s ease;
-  min-height: 38px;
-  background: var(--control-bg);
-  color: var(--control-ink);
-}
-.language-picker button::after {
-  display: none;
-}
-.language-picker button:hover {
-  background: #ffffff78;
-}
-.language-picker button.active {
-  font-weight: 700;
-  background: var(--control-bg);
-  color: var(--control-ink);
-  box-shadow: inset 0 -3px currentColor;
-}
-.menu-toggle {
-  display: none;
-}
-.site-route .brand {
-  text-decoration: none;
-  flex-basis: 180px;
-  color: #f9fcff;
-  text-shadow: 0 1px 8px #19426d;
-}
-.site-route .brand-caption {
-  font-size: 11px;
-  margin-left: 8px;
-  color: #f9fcff;
-  text-shadow: 0 1px 8px #19426d;
-}
-.site-route .site-nav {
-  gap: 6px;
-  padding: 5px;
-  border: 1px solid #fff;
-  border-radius: 999px;
-  background: #f9fcfede;
-  box-shadow: var(--shadow-card);
-  backdrop-filter: blur(10px);
-}
-.site-route .site-nav a {
-  padding: 8px 22px;
-  border-radius: 999px;
-  font-size: 15px;
-  font-weight: 700;
-}
 .site-nav a:hover {
   background: #edf4fa;
   filter: brightness(0.96);
 }
-.site-nav a:nth-child(1) {
-  --control-bg: #e3effc;
-  --control-ink: #345d83;
-}
-.site-nav a:nth-child(2) {
-  --control-bg: #fbe1eb;
-  --control-ink: #743e59;
-}
-.site-nav a[data-page="contact"] {
-  --control-bg: #e0f2e9;
-  --control-ink: #315f53;
-}
+/* Route pages keep the pastel fill on hover; Home shows the pale hover fill. */
 .site-route .site-nav a {
   background: var(--control-bg);
   color: var(--control-ink);
@@ -224,6 +134,50 @@
   background: var(--control-bg);
   color: var(--control-ink);
   box-shadow: inset 0 -3px currentColor;
+}
+.nav-active-flower {
+  display: none;
+}
+.site-nav a.active .nav-active-flower {
+  position: static;
+  top: -7px;
+  right: -11px;
+  display: block;
+  width: 15px;
+  height: 15px;
+  margin-right: 6px;
+  color: #5983a8;
+  stroke-width: 1.3;
+}
+
+.language-picker {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+  padding: 4px;
+  border: 1px solid #fff;
+  border-radius: 999px;
+  background: #f9fcfedd;
+  box-shadow: var(--shadow-card);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+.language-picker button {
+  position: relative;
+  min-height: 38px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--control-bg);
+  color: var(--control-ink);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition:
+    background 0.18s ease,
+    box-shadow 0.18s ease,
+    color 0.18s ease;
 }
 .language-picker button:nth-child(1) {
   --control-bg: #fbe1eb;
@@ -237,23 +191,41 @@
   --control-bg: #e0f2e9;
   --control-ink: #315f53;
 }
-.site-header .menu-toggle {
-  color: #79602e;
-  background: #fff0ce;
+.language-picker button:hover {
+  background: #ffffff78;
+}
+.language-picker button.active {
+  background: var(--control-bg);
+  color: var(--control-ink);
+  font-weight: 700;
+  box-shadow: inset 0 -3px currentColor;
+}
+
+.menu-toggle {
+  display: none;
   border-color: #ebd7a5;
+  background: #fff0ce;
+  color: #79602e;
 }
 
 @media (max-width: 1100px) {
   .site-header {
     gap: 20px;
   }
-  .site-nav a,
-  .site-route .site-nav a {
+  .site-nav a {
     padding-inline: 16px;
   }
 }
 
 @media (max-width: 900px) {
+  .site-header {
+    gap: 0;
+    height: 86px;
+    padding: 16px 20px;
+  }
+  .brand {
+    flex-basis: 130px;
+  }
   .brand-script {
     height: 34px;
     font-size: 33px;
@@ -263,8 +235,35 @@
     height: 23px;
   }
   .brand-caption {
-    letter-spacing: 0.03em;
     font-size: 10px;
+    letter-spacing: 0.03em;
+  }
+  /* The navigation becomes a dropdown under the menu button. */
+  .site-nav {
+    position: absolute;
+    top: 72px;
+    right: 20px;
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    min-width: 150px;
+    max-height: calc(100dvh - 88px);
+    padding: 8px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-radius: 22px;
+    background: #f9fbfd;
+  }
+  .site-nav.is-open {
+    display: flex;
+  }
+  .site-nav a {
+    display: flex;
+    padding: 10px 18px;
+    text-align: left;
+  }
+  .site-nav a::after {
+    bottom: 4px;
   }
   .language-picker {
     margin: 0 8px 0 auto;
@@ -272,28 +271,20 @@
   }
   .language-picker button {
     min-width: 42px;
+    min-height: 44px;
     padding: 0 4px;
-    border-radius: 999px;
     font-size: 12px;
     font-weight: 600;
-    text-shadow: none;
-    min-height: 44px;
-  }
-  .language-picker button::after {
-    display: none;
   }
   .menu-toggle {
     display: grid;
+    place-items: center;
     width: 44px;
     height: 44px;
     margin-top: 1px;
-    place-items: center;
-    border: 1px solid #fff8;
-    transition: transform 0.14s ease;
-    color: #557897;
-    background: #f6fafd;
-    border-color: #fff;
+    border: 1px solid #ebd7a5;
     border-radius: 15px;
+    transition: transform 0.14s ease;
   }
   .menu-toggle:active {
     transform: scale(0.94);
@@ -302,90 +293,36 @@
     width: 22px;
     height: 22px;
   }
-  .site-nav {
-    position: absolute;
-    flex-direction: column;
-    align-items: stretch;
-    min-width: 150px;
-    max-height: calc(100dvh - 88px);
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    display: none;
-    top: 72px;
-    right: 20px;
-    padding: 8px;
-    border-radius: 22px;
-    background: #f9fbfd;
-  }
-  .site-nav a {
-    min-height: 44px;
-    text-align: left;
-    display: flex;
-    padding: 10px 18px;
-  }
-  .site-nav a::after {
-    bottom: 4px;
-  }
-  .site-header {
-    height: 86px;
-    padding: 16px 20px;
-    align-items: center;
-    gap: 0;
-  }
-  .brand,
-  .site-route .brand {
-    flex-basis: 130px;
-  }
-  .site-route .site-nav {
-    display: none;
-    top: 72px;
-    right: 20px;
-    padding: 8px;
-    border-radius: 22px;
-    background: #f9fbfd;
-  }
-  .site-nav.is-open {
-    display: flex;
-  }
-  .site-route .site-nav a {
-    display: flex;
-    padding: 10px 18px;
-  }
 }
 
 @media (max-width: 700px) {
   .site-header {
-    padding: 12px 14px;
     height: 78px;
+    padding: 12px 14px;
   }
 }
 
 @media (max-width: 360px) {
-  .brand-caption {
-    display: block;
-    font-size: 8px;
-    margin-left: 3px;
-  }
-  .language-picker {
-    margin-right: 5px;
-  }
-  .language-picker button {
-    padding-inline: 2px;
-    min-width: 33px;
-    font-size: 10px;
-  }
   .site-header {
     padding-inline: 10px;
   }
-  .brand,
-  .site-route .brand {
+  .brand {
     flex-basis: 95px;
   }
   .brand-script {
     font-size: 29px;
   }
+  .brand-caption,
   .site-route .brand-caption {
-    font-size: 8px;
     margin-left: 3px;
+    font-size: 8px;
+  }
+  .language-picker {
+    margin-right: 5px;
+  }
+  .language-picker button {
+    min-width: 33px;
+    padding-inline: 2px;
+    font-size: 10px;
   }
 }

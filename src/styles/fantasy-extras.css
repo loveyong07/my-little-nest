@@ -1,15 +1,17 @@
+/* Loaded with FantasyExtras after the first paint: falling petals, cursor sparkles,
+   the music player and the motion switch. */
 .nest-atmosphere {
   position: fixed;
   inset: 0;
   z-index: 15;
-  pointer-events: none;
   overflow: hidden;
+  pointer-events: none;
   contain: strict;
 }
 .sakura-canvas {
+  display: block;
   width: 100%;
   height: 100%;
-  display: block;
 }
 .cursor-trail {
   position: absolute;
@@ -17,12 +19,12 @@
 }
 .cursor-trail > span {
   position: absolute;
-  left: -8px;
   top: -8px;
+  left: -8px;
   width: 16px;
   height: 16px;
-  opacity: 0;
   color: #d895ad;
+  opacity: 0;
 }
 .cursor-trail > span:nth-child(2n) {
   color: #c196cb;
@@ -31,58 +33,38 @@
   width: 100%;
   height: 100%;
 }
+
 .nest-dock {
   position: fixed;
-  z-index: 40;
-  left: 24px;
   bottom: 20px;
+  left: 24px;
+  z-index: 40;
   display: flex;
   align-items: center;
   gap: 9px;
-  padding: 7px;
   max-width: calc(100vw - 32px);
+  padding: 7px;
   border: 1px solid #fff;
   border-radius: 999px;
   background: #f8fbfdf2;
   box-shadow: 0 6px 28px #51728f24;
 }
-.dock-toggle,
-.mini-player button {
-  display: grid;
-  place-items: center;
-  flex: 0 0 auto;
-  width: 42px;
-  height: 42px;
-  padding: 0;
-  border: 1px solid #d6e2ec;
-  border-radius: 50%;
-  background: #f6fafd;
-  color: #597e9f;
-}
-.dock-toggle[aria-pressed="true"] {
-  background: #e1eef8;
-  color: #496883;
-}
-.dock-toggle:hover,
-.mini-player button:hover {
-  background: #e6f0f9;
-}
 .mini-player {
   display: flex;
-  gap: 10px;
   align-items: center;
+  gap: 10px;
   min-width: 0;
 }
 .player-disc {
   display: grid;
-  width: 41px;
-  height: 41px;
   flex: 0 0 auto;
   place-items: center;
-  border: 7px solid #abbfcf;
+  width: 41px;
+  height: 41px;
+  border: 7px solid #d9adc2;
   border-radius: 50%;
-  background: #f1f7fb;
-  color: #5b81a3;
+  background: #fff0f6;
+  color: #743e59;
   animation: record-turn 12s linear infinite;
   animation-play-state: paused;
 }
@@ -93,10 +75,15 @@
   width: 14px;
   height: 14px;
 }
+@keyframes record-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
 .player-copy {
   display: grid;
-  min-width: 0;
   gap: 1px;
+  min-width: 0;
   max-width: 170px;
 }
 .player-copy strong {
@@ -109,36 +96,57 @@
   color: #4a6b8a;
   font-size: 11px;
 }
+
+/* Small colorful controls on the blue-white dock. */
+.dock-toggle,
 .mini-player button {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
   width: 42px;
   height: 42px;
-  background: #e3ecf4;
-  border-color: #d3e1ed;
+  padding: 0;
+  border: 1px solid;
+  border-radius: 50%;
+}
+.mini-player button {
+  border-color: #d2c0e8;
+  background: #eee5fa;
+  color: #654c83;
 }
 .mini-player button svg {
   width: 13px;
   height: 13px;
 }
+.dock-toggle {
+  border-color: #b6d9c8;
+  background: #e0f2e9;
+  color: #315f53;
+}
+.dock-toggle:hover,
+.mini-player button:hover {
+  background: #e6f0f9;
+}
+.dock-toggle[aria-pressed="true"] {
+  background: #cdebdc;
+  color: #315f53;
+}
 .mini-player input {
   width: 52px;
   min-height: 36px;
-  accent-color: #7e9cb7;
   margin: 0;
+  accent-color: #8b70b0;
 }
-@keyframes record-turn {
-  to {
-    transform: rotate(360deg);
-  }
-}
+
 @media (max-width: 700px) {
   .nest-dock {
     bottom: max(12px, env(safe-area-inset-bottom));
     left: 50%;
-    transform: translateX(-50%);
-    width: max-content;
     gap: 6px;
+    width: max-content;
     max-width: calc(100vw - 20px);
     padding: 6px;
+    transform: translateX(-50%);
   }
   .mini-player {
     gap: 7px;
@@ -152,10 +160,10 @@
     max-width: 114px;
   }
   .player-copy strong {
-    font-size: 11px;
-    white-space: nowrap;
     overflow: hidden;
+    font-size: 11px;
     text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .player-copy small {
     display: none;
@@ -163,10 +171,10 @@
   /* A failed mobile playback still needs a visible reason. */
   .player-copy small.player-error {
     display: block;
-    color: #8a3f57;
-    white-space: nowrap;
     overflow: hidden;
+    color: #8a3f57;
     text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .mini-player input {
     display: none;
@@ -176,39 +184,18 @@
     height: 44px;
   }
 }
+
 @media (max-width: 360px) {
-  .player-copy {
-    max-width: 90px;
-  }
   .nest-dock {
     gap: 5px;
   }
+  .player-copy {
+    max-width: 90px;
+  }
 }
+
 @media (prefers-reduced-motion: reduce) {
   .player-disc {
     animation: none;
   }
-}
-/* Small colorful controls on the blue-white dock. */
-.dock-toggle {
-  background: #e0f2e9;
-  color: #315f53;
-  border-color: #b6d9c8;
-}
-.dock-toggle[aria-pressed="true"] {
-  background: #cdebdc;
-  color: #315f53;
-}
-.mini-player button {
-  background: #eee5fa;
-  color: #654c83;
-  border-color: #d2c0e8;
-}
-.player-disc {
-  border-color: #d9adc2;
-  background: #fff0f6;
-  color: #743e59;
-}
-.mini-player input {
-  accent-color: #8b70b0;
 }
