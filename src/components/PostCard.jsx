@@ -5,13 +5,13 @@ import { FALLBACK_AVATAR, ASSETS } from "../constants/site.js";
 import { handleAvatarError } from "../utils/profile.js";
 import { formatPostDate } from "../utils/date.js";
 import { mediaDimensions, mediaFrameRatio } from "../utils/posts.js";
-import { xMediaSrc, xVideoSrc } from "../media-urls.js";
+import { mediaRetrySrc, xMediaSrc, xVideoSrc } from "../media-urls.js";
 import { prefetchImage } from "../feed-cache.js";
 import { MediaLightbox } from "./MediaLightbox.jsx";
 
 export function PostCard({ post, feedSource, language, t, label, profile, priorityMedia = false, nextPost }) {
   const isSnapshot = feedSource === "snapshot";
-  const sourceLabel = label ?? (isSnapshot ? t.feedSnapshot : feedSource === "stale" ? t.feedStale : null);
+  const sourceLabel = label ?? (isSnapshot ? t.feedSnapshot(String(post.created_at ?? "").slice(0, 10)) : feedSource === "stale" ? t.feedStale : null);
   const photos = Array.isArray(post.media)
     ? post.media.filter((media) => (media?.type ?? "photo") === "photo").slice(0, 4).map((media) => ({ ...media, src: xMediaSrc(media?.url, false, media?.proxyUrl) }))
     : [];
@@ -35,8 +35,8 @@ export function PostCard({ post, feedSource, language, t, label, profile, priori
   const currentPhoto = photos[currentPhotoIndex];
   const photoDimensions = mediaDimensions(currentPhoto);
   const videoDimensions = mediaDimensions(video);
-  const photoRequestSrc = currentPhoto?.src ? `${currentPhoto.src}${imageRetryCount ? `&retry=${imageRetryCount}` : ""}` : null;
-  const videoRequestSrc = videoSrc ? `${videoSrc}${videoRetryCount ? `&retry=${videoRetryCount}` : ""}` : null;
+  const photoRequestSrc = mediaRetrySrc(currentPhoto?.src, imageRetryCount);
+  const videoRequestSrc = mediaRetrySrc(videoSrc, videoRetryCount);
   useEffect(() => {
     setImageUnavailable(false);
     setVideoUnavailable(false);

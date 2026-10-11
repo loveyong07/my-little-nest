@@ -22,7 +22,8 @@ export function useXProfile(page, ready = true) {
     async function refreshProfile() {
       try {
         const result = await fetchProfile();
-        if (mounted && result?.status === "ok" && typeof result.profile?.name === "string"
+        // "stale" is the service's last known profile after a failed refresh: usable, not fresh.
+        if (mounted && (result?.status === "ok" || result?.status === "stale") && typeof result.profile?.name === "string"
           && typeof result.profile?.username === "string" && /^[A-Za-z0-9_]{1,15}$/.test(result.profile.username)) {
           setProfile(displayProfile(result.profile));
         }

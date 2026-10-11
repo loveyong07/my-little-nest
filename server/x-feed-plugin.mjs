@@ -153,6 +153,7 @@ export function createXFeedService({
 } = {}) {
   let user = null;
   let userAt = 0;
+  let userInFlight = null;
   let cached = null;
   let cachedAt = 0;
   let newestSeenId = null;
@@ -162,9 +163,11 @@ export function createXFeedService({
   let postFieldMode = "tweet";
   let cachedPinnedId = null;
   let fullRefreshAt = null;
+  let cachedProfile = null;
+  let profileRetryAt = 0;
+  let profileInFlight = null;
 
-  async function getUser() {
-    if (user && now() - userAt < USER_CACHE_TTL_MS) return user;
+  async function lookupUser() {
     async function lookup(mode) {
       const url = new URL(`${X_API}/users/${USER_ID}`);
       url.searchParams.set("user.fields", mode === "tweet"
@@ -194,6 +197,13 @@ export function createXFeedService({
     user = nextUser;
     userAt = now();
     return user;
+  }
+
+  async function getUser() {
+    if (user && now() - userAt < USER_CACHE_TTL_MS) return user;
+    // The feed and the standalone profile route share one account lookup.
+    if (!userInFlight) userInFlight = lookupUser().finally(() => { userInFlight = null; });
+    return userInFlight;
   }
 
   async function fetchPinnedPost(author, pinnedId) {
@@ -318,16 +328,33 @@ export function createXFeedService({
 
   async function getProfile() {
     if (!token?.trim()) return { status: "unavailable" };
-    try {
-      const current = await getUser();
-      return { status: "ok", profile: {
-        name: current.name || current.username,
-        username: current.username,
-        avatar: safeAvatar(current.profile_image_url),
-      } };
-    } catch {
-      return { status: "unavailable" };
+    function lastKnown() {
+      // Keep the last successful profile, but never report it as a fresh success.
+      return cachedProfile ? { ...cachedProfile, status: "stale" } : { status: "unavailable" };
     }
+    if (now() < profileRetryAt) return lastKnown();
+    // Concurrent profile calls share one lookup instead of one upstream request each.
+    if (!profileInFlight) {
+      profileInFlight = (async () => {
+        try {
+          const current = await getUser();
+          cachedProfile = { status: "ok", profile: {
+            name: current.name || current.username,
+            username: current.username,
+            avatar: safeAvatar(current.profile_image_url),
+          } };
+          profileRetryAt = 0;
+          return cachedProfile;
+        } catch {
+          // A short failure backoff stops a burst of failed lookups from repeating.
+          profileRetryAt = now() + ERROR_RETRY_MS;
+          return lastKnown();
+        } finally {
+          profileInFlight = null;
+        }
+      })();
+    }
+    return profileInFlight;
   }
 
   async function getFeed() {
@@ -444,10 +471,16 @@ export function xFeedPlugin(options = {}) {
           response.end(JSON.stringify(unavailable()));
           return;
         }
-        const result = route === "/api/x-profile"
-          ? await authorizeProfile(await getFeed.getProfile(), authOptions)
-          : await authorizeFeed(await getFeed(), authOptions);
-        response.end(JSON.stringify(result));
+        try {
+          const result = route === "/api/x-profile"
+            ? await authorizeProfile(await getFeed.getProfile(), authOptions)
+            : await authorizeFeed(await getFeed(), authOptions);
+          response.end(JSON.stringify(result));
+        } catch {
+          // A failed lookup must answer the request, not leave the dev server hanging.
+          if (!response.headersSent) response.statusCode = 503;
+          response.end(JSON.stringify(unavailable()));
+        }
     });
   }
   return {

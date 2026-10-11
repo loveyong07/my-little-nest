@@ -54,7 +54,7 @@ export function MiniPlayer({ f }) {
   }
   return <div className={`mini-player${playing ? " is-playing" : ""}`}>
     <span className="player-disc" aria-hidden="true"><FaMusic /></span>
-    <span className="player-copy"><strong>{f.music}</strong><small>{error ? f.audioError : f.musicNote}</small></span>
+    <span className="player-copy"><strong>{f.music}</strong><small className={error ? "player-error" : undefined} role={error ? "status" : undefined}>{error ? f.audioError : f.musicNote}</small></span>
     <button type="button" disabled={busy} onClick={toggle} aria-label={playing ? f.pause : f.play} title={playing ? f.pause : f.play}>{playing ? <FaPause /> : <FaPlay />}</button>
     <input type="range" min="0" max=".6" step=".02" value={volume} aria-label={f.volume} onChange={(event) => {
       const value = Number(event.target.value); setVolume(value); engine.current?.volume(value);

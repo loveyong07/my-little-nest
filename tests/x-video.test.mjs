@@ -150,3 +150,87 @@ test("signed video freshness is bounded by authorization expiry without changing
   assert.equal(response.headers.get("cache-control"), "public, max-age=29, s-maxage=29");
   assert.deepEqual(new Uint8Array(await response.arrayBuffer()), VIDEO_BYTES);
 });
+
+test("a visitor that disconnects aborts the upstream video download", async () => {
+  const clientAbort = new AbortController();
+  let upstreamSignal = null;
+  let upstreamCancelled = false;
+  const upstreamBody = new ReadableStream({ pull() {}, cancel() { upstreamCancelled = true; } });
+  const response = await proxyXVideo(new Request(new URL(`/api/x-video?url=${encodeURIComponent(VIDEO_URL)}`, "https://site.test"), {
+    signal: clientAbort.signal,
+  }), async (url, options) => {
+    upstreamSignal = options.signal;
+    return new Response(upstreamBody, { headers: { "Content-Type": "video/mp4" } });
+  }, undefined, { stallTimeoutMs: 30_000 });
+  assert.equal(upstreamSignal.aborted, false);
+  clientAbort.abort();
+  assert.equal(upstreamSignal.aborted, true, "the upstream request must not outlive the visitor");
+  await response.body.cancel();
+  assert.equal(upstreamCancelled, true);
+});
+
+test("a stalled upstream stream is released while normal slow chunks keep playing", async () => {
+  // A silent upstream while the visitor is waiting must be cut off.
+  const stalledClient = new AbortController();
+  let stalledUpstreamSignal = null;
+  const stalled = await proxyXVideo(new Request(new URL(`/api/x-video?url=${encodeURIComponent(VIDEO_URL)}`, "https://site.test"), {
+    signal: stalledClient.signal,
+  }), async (url, options) => {
+    stalledUpstreamSignal = options.signal;
+    return new Response(new ReadableStream({ pull() {} }), { headers: { "Content-Type": "video/mp4" } });
+  }, undefined, { stallTimeoutMs: 60 });
+  const stalledReader = stalled.body.getReader();
+  const pendingRead = stalledReader.read().catch(() => null);
+  await new Promise((resolve) => setTimeout(resolve, 250));
+  assert.equal(stalledUpstreamSignal.aborted, true, "a stalled upstream must be aborted");
+  await stalledReader.cancel().catch(() => {});
+  await pendingRead;
+
+  // Data that keeps arriving must not be cut off by a total time limit.
+  const flowingClient = new AbortController();
+  let flowingUpstreamSignal = null;
+  let chunks = 0;
+  const flowing = await proxyXVideo(new Request(new URL(`/api/x-video?url=${encodeURIComponent(VIDEO_URL)}`, "https://site.test"), {
+    signal: flowingClient.signal,
+  }), async (url, options) => {
+    flowingUpstreamSignal = options.signal;
+    return new Response(new ReadableStream({
+      async pull(streamController) {
+        await new Promise((resolve) => setTimeout(resolve, 25));
+        if (options.signal.aborted) return;
+        chunks += 1;
+        streamController.enqueue(new Uint8Array([1]));
+      },
+    }), { headers: { "Content-Type": "video/mp4" } });
+  }, undefined, { stallTimeoutMs: 400 });
+  const flowingReader = flowing.body.getReader();
+  const drain = (async () => { while (true) { const { done } = await flowingReader.read(); if (done) break; } })().catch(() => {});
+  await new Promise((resolve) => setTimeout(resolve, 600));
+  assert.equal(flowingUpstreamSignal.aborted, false, "a slow but flowing stream must not be cut off");
+  assert.ok(chunks >= 8, `Flowing stream should keep delivering chunks: ${chunks}`);
+  flowingClient.abort();
+  await flowingReader.cancel().catch(() => {});
+  await drain;
+});
+
+test("a visitor that stops reading is not treated as a stalled upstream", async () => {
+  let upstreamSignal = null;
+  let upstreamCancelled = false;
+  const response = await proxyXVideo(new Request(new URL(`/api/x-video?url=${encodeURIComponent(VIDEO_URL)}`, "https://site.test")), async (url, options) => {
+    upstreamSignal = options.signal;
+    return new Response(new ReadableStream({
+      async pull(streamController) {
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        if (!options.signal.aborted) streamController.enqueue(new Uint8Array([1]));
+      },
+      cancel() { upstreamCancelled = true; },
+    }), { headers: { "Content-Type": "video/mp4" } });
+  }, undefined, { stallTimeoutMs: 80 });
+  // Read one chunk, then leave the stream idle for longer than the idle limit.
+  const reader = response.body.getReader();
+  await reader.read();
+  await new Promise((resolve) => setTimeout(resolve, 260));
+  assert.equal(upstreamSignal.aborted, false, "a paused visitor must not abort the upstream download");
+  await reader.cancel();
+  assert.equal(upstreamCancelled, true, "cancelling the response must cancel the upstream reader");
+});

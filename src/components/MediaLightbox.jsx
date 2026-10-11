@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { FiChevronLeft, FiChevronRight, FiX } from "react-icons/fi";
-import { xMediaSrc } from "../media-urls.js";
+import { mediaRetrySrc, xMediaSrc } from "../media-urls.js";
 
 export function MediaLightbox({ kind, photo, photoAlt, photoCount, onPhotoChange, video, videoSrc, t, onClose, returnFocusRef }) {
   const dialogRef = useRef(null);
@@ -10,8 +10,8 @@ export function MediaLightbox({ kind, photo, photoAlt, photoCount, onPhotoChange
   const [photoRetryCount, setPhotoRetryCount] = useState(0);
   const [videoUnavailable, setVideoUnavailable] = useState(false);
   const [videoRetryCount, setVideoRetryCount] = useState(0);
-  const photoLightboxSrc = photo?.src ? `${photo.src}${photoRetryCount ? `&lightboxRetry=${photoRetryCount}` : ""}` : null;
-  const videoLightboxSrc = videoSrc ? `${videoSrc}${videoRetryCount ? `&lightboxRetry=${videoRetryCount}` : ""}` : null;
+  const photoLightboxSrc = mediaRetrySrc(photo?.src, photoRetryCount, "lightboxRetry");
+  const videoLightboxSrc = mediaRetrySrc(videoSrc, videoRetryCount, "lightboxRetry");
 
   useEffect(() => {
     setPhotoUnavailable(false);
@@ -61,7 +61,7 @@ export function MediaLightbox({ kind, photo, photoAlt, photoCount, onPhotoChange
 
   return createPortal(<div className="media-lightbox" role="presentation"
     onClick={(event) => { if (event.target === event.currentTarget) onClose(null); }}>
-    <div className="media-lightbox-content" role="dialog" aria-modal="true"
+    <div className={`media-lightbox-content media-lightbox-content-${kind}`} role="dialog" aria-modal="true"
       aria-label={kind === "photo" ? t.enlargePhoto : t.enlargeVideo} ref={dialogRef}>
       {kind === "photo"
         ? <>{photoLightboxSrc && !photoUnavailable ? <img key={photoLightboxSrc} src={photoLightboxSrc} alt={photo.alt || photoAlt} onError={() => setPhotoUnavailable(true)} />

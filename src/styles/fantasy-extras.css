@@ -14,9 +14,10 @@
 .player-disc svg { width: 14px; height: 14px; }
 .player-copy { display: grid; min-width: 0; gap: 1px; max-width: 170px; }
 .player-copy strong { color: #50728f; font-size: 12px; font-weight: 500; }
-.player-copy small { color: #6085a6; font-size: 9px; }
-.mini-player button { width: 36px; height: 36px; background: #e3ecf4; border-color: #d3e1ed; }
-.mini-player button svg { width: 12px; height: 12px; }
+/* Small print must stay legible: 11px at >=4.5:1 on the near-white dock. */
+.player-copy small { color: #4a6b8a; font-size: 11px; }
+.mini-player button { width: 42px; height: 42px; background: #e3ecf4; border-color: #d3e1ed; }
+.mini-player button svg { width: 13px; height: 13px; }
 .mini-player input { width: 52px; min-height: 36px; accent-color: #7e9cb7; margin: 0; }
 @keyframes record-turn { to { transform: rotate(360deg); } }
 @media (max-width: 700px) {
@@ -26,8 +27,10 @@
   .player-copy { max-width: 114px; }
   .player-copy strong { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .player-copy small { display: none; }
+  /* A failed mobile playback still needs a visible reason. */
+  .player-copy small.player-error { display: block; color: #8a3f57; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .mini-player input { display: none; }
-  .dock-toggle { width: 38px; height: 38px; }
+  .dock-toggle { width: 44px; height: 44px; }
 }
 @media (max-width: 360px) { .player-copy { max-width: 90px; } .nest-dock { gap: 5px; } }
 @media (prefers-reduced-motion: reduce) { .player-disc { animation: none; } }

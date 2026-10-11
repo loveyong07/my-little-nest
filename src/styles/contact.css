@@ -7,7 +7,9 @@
 .contact-icon { position: relative; display: grid; width: 58px; height: 58px; margin-bottom: var(--space-2); place-items: center; border: 1px solid var(--color-border); border-radius: 50%; background: #f5faff; box-shadow: inset 0 0 0 4px #ffffffc9; transition: box-shadow .18s; }
 .contact-icon svg { display: block; width: 48px; height: 48px; padding: 10px; border-radius: 50%; background: #111; color: white; }
 .contact-icon::after { position: absolute; top: -3px; right: -4px; display: grid; width: 20px; height: 20px; place-items: center; border: 1px solid #fff; border-radius: 50%; background: #b18b3f; box-shadow: var(--shadow-card); color: white; content: "✓"; font: 700 11px/1 Arial, sans-serif; opacity: 0; pointer-events: none; transform: scale(.65) rotate(-14deg); }
-.contact-tile.is-copied .contact-icon::after { animation: contact-stamp-drop .32s cubic-bezier(.2,.8,.25,1) both; }
+/* The copied tick is a static state; the stamp animation only decorates it, so
+   turning animations off must not hide the feedback. */
+.contact-tile.is-copied .contact-icon::after { opacity: 1; transform: scale(1) rotate(-10deg); animation: contact-stamp-drop .32s cubic-bezier(.2,.8,.25,1) both; }
 .contact-tile.is-copied .contact-icon { box-shadow: inset 0 0 0 4px #ffffffc9, 0 0 0 2px #e9d5a8; }
 .contact-tile.email .contact-icon svg { transform-origin: 50% 16%; transition: transform .22s ease; }
 .contact-tile.email:hover .contact-icon svg { transform: translateY(-2px) rotateX(-18deg); }

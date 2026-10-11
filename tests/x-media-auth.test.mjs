@@ -2,7 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   parseMediaSource, signedMediaUrl, authorizedMediaRequest, boundedMediaCache, authorizeFeed, authorizeProfile,
+  MEDIA_RETRY_LIMIT,
 } from "../server/x-media-auth.mjs";
+import { MAX_MEDIA_RETRY, mediaRetrySrc } from "../src/media-urls.js";
 import { LEGACY_IMAGE_URLS, LEGACY_VIDEO_URLS } from "../server/x-media-legacy.mjs";
 
 const NOW = Date.UTC(2026, 8, 30, 12);
@@ -123,7 +125,7 @@ test("duplicate and unexpected proxy parameters cannot bypass authorization", as
       assert.equal(await isAuthorized(url, "image"), false);
     });
   }
-  for (const [name, value] of [["cacheBust", "1"], ["retry", "101"], ["retry", "-1"], ["retry", "abc"], ["lightboxRetry", "1000"]]) {
+  for (const [name, value] of [["cacheBust", "1"], ["retry", "4"], ["retry", "101"], ["retry", "0"], ["retry", "00"], ["retry", "-1"], ["retry", "abc"], ["lightboxRetry", "1000"], ["lightboxRetry", "10"]]) {
     await t.test(`${name}=${value}`, async () => {
       const url = new URL(signedUrl);
       url.searchParams.set(name, value);
@@ -135,10 +137,34 @@ test("duplicate and unexpected proxy parameters cannot bypass authorization", as
 test("normal browser requests and bounded image/lightbox retries retain their signatures", async () => {
   const signedUrl = new URL(await signedMediaUrl(IMAGE_URL, "image", AUTH), "https://site.test");
   signedUrl.searchParams.set("retry", "1");
-  signedUrl.searchParams.set("lightboxRetry", "100");
+  signedUrl.searchParams.set("lightboxRetry", "3");
   assert.equal(await isAuthorized(signedUrl, "image"), true);
   assert.equal(await isAuthorized(signedUrl, "image", AUTH, { headers: { "Sec-Fetch-Site": "same-origin" } }), true);
   assert.equal(await isAuthorized(signedUrl, "image", AUTH, { headers: { "Sec-Fetch-Site": "cross-site" } }), false);
+});
+
+test("the accepted retry variants are canonical, bounded, and identical on both sides", async () => {
+  assert.equal(MAX_MEDIA_RETRY, MEDIA_RETRY_LIMIT);
+  const signedUrl = await signedMediaUrl(IMAGE_URL, "image", AUTH);
+  for (const kind of ["retry", "lightboxRetry"]) {
+    for (let value = 1; value <= MEDIA_RETRY_LIMIT; value += 1) {
+      const url = new URL(signedUrl, "https://site.test");
+      url.searchParams.set(kind, String(value));
+      assert.equal(await isAuthorized(url, "image"), true, `${kind}=${value}`);
+      assert.equal(mediaRetrySrc(signedUrl, value, kind), `${signedUrl}&${kind}=${value}`, `${kind}=${value} client URL`);
+    }
+    for (const value of ["0", "00", "01", String(MEDIA_RETRY_LIMIT + 1), "10", "100", " "]) {
+      const url = new URL(signedUrl, "https://site.test");
+      url.searchParams.set(kind, value);
+      assert.equal(await isAuthorized(url, "image"), false, `${kind}=${value}`);
+    }
+  }
+  // Repeated failures vary the URL over the same bounded set instead of growing it.
+  const variants = new Set();
+  for (let attempt = 1; attempt <= 12; attempt += 1) variants.add(mediaRetrySrc(signedUrl, attempt));
+  assert.deepEqual([...variants].sort(), [1, 2, 3].map((value) => `${signedUrl}&retry=${value}`));
+  assert.equal(mediaRetrySrc(signedUrl, 0), signedUrl);
+  assert.equal(mediaRetrySrc(null, 2), null);
 });
 
 test("unsigned compatibility permissions cover exactly previously published resources", async () => {

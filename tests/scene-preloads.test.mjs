@@ -24,20 +24,8 @@ test("direct route shells replace home preloads rather than fetching unrelated s
   }
 });
 
-test("production rewrites point to built shells sharing the current React entry", () => {
-  const config = JSON.parse(readFileSync(new URL("../vercel.json", import.meta.url), "utf8"));
-  const home = readFileSync(new URL("../dist/client/index.html", import.meta.url), "utf8");
-  const entry = home.match(/<script[^>]+src="([^"]+)"/)[1];
-  for (const page of ["posts", "contact"]) {
-    const rewrite = config.rewrites.find(({ source }) => source === `/${page}`);
-    assert.equal(rewrite.destination, `/route-shells/${page}.html`);
-    assert.equal(config.rewrites.find(({ source }) => source === `/${page}/`).destination, `/route-shells/${page}.html`);
-    const html = readFileSync(new URL(`../dist/client/route-shells/${page}.html`, import.meta.url), "utf8");
-    assert.ok(html.includes(entry));
-    assert.equal((html.match(/data-scene-preload/g) ?? []).length, 1);
-    assert.doesNotMatch(html, /hero-sky-(?:mobile|alt)/);
-  }
-});
+// The built-shell rewrite assertions live in tests/build/artifacts.test.mjs:
+// they read dist/ and must not gate the logic-only tests on a produced build.
 
 test("long immutable caching matches hashed build files while excluding fixed scene and avatar names", () => {
   const config = JSON.parse(readFileSync(new URL("../vercel.json", import.meta.url), "utf8"));

@@ -2,7 +2,7 @@
 
 React / Vite 个人网站，提供首页、动态、联系三个页面，支持中文、日文、英文。联系页唯一邮箱为 `fyh20071004@gmail.com`。
 
-2026-10-11：商务页及其入口已移除，联系页已精简为上述唯一邮箱。自定义右键菜单已移除，补充了分享预览（OG）标签。本轮修改保留在本地，尚未发布。
+2026-10-11：商务页及其入口已移除，联系页已精简为上述唯一邮箱。自定义右键菜单已移除，补充了分享预览（OG）标签。同日完成依赖安全更新、测试与构建分层、灯箱横屏修复、站内动效开关统一和媒体重试收紧；本轮修改仍保留在本地，尚未发布。
 
 ## 仓库与发布
 
@@ -22,11 +22,16 @@ npm run dev:proxy -- --host 127.0.0.1 --port 4173 --strictPort
 打开 http://127.0.0.1:4173/。本机访问 X 使用现有网络代理；无需代理的环境可使用 `npm run dev`。
 
 ```powershell
-npm test
-npm run build
-npm run test:sites
+npm test              # 逻辑测试，不需要 dist
+npm run build         # 生成 dist/client、dist/server、dist/.openai
+npm run test:build    # 构建产物检查，必须在上一步之后运行
+npm run test:sites    # Sites/Worker 兼容检查
+npm run check         # 上述四项按顺序一次跑完，CI 与交付使用
 git diff --check
+npm audit
 ```
+
+`npm test` 只跑不依赖构建产物的逻辑测试，因此干净检出后可直接运行；`test:build` 读取 `dist/`，缺产物时会明确报错而不是静默跳过。发布门禁是 `npm run check`（见 `.github/workflows/check.yml`）。`vercel.json` 的构建命令保持 `npm run build`：`.vercelignore` 只上传构建输入，测试在 CI 中执行。
 
 页面构建产物位于 `dist/client`，Sites 兼容产物位于 `dist/server` 和 `dist/.openai`。
 
