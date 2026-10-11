@@ -1,6 +1,6 @@
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
-import { xFeedPlugin } from "./server/x-feed-plugin.mjs";
+import { apiPlugin } from "./server/vite-api-plugin.mjs";
 import { scenePreloadPlugin } from "./build/scene-preloads.mjs";
 
 export default defineConfig(({ mode }) => ({
@@ -22,9 +22,7 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     scenePreloadPlugin(),
     react(),
-    xFeedPlugin({
-      token: loadEnv(mode, process.cwd(), "X_BEARER_TOKEN").X_BEARER_TOKEN,
-      mediaSigningSecret: loadEnv(mode, process.cwd(), "X_MEDIA_SIGNING_SECRET").X_MEDIA_SIGNING_SECRET,
-    }),
+    // Server-only secrets from .env.local (never VITE_-prefixed, never bundled).
+    apiPlugin(loadEnv(mode, process.cwd(), ["X_BEARER_TOKEN", "X_MEDIA_SIGNING_SECRET"])),
   ],
 }));

@@ -1,5 +1,8 @@
+import { X_USERNAME } from "../../shared/x-account.mjs";
+
 export const ASSETS = "/assets";
-export const X_USERNAME = "loveyong07";
+
+export { X_USERNAME };
 // The WeChat ID happens to match the X username; it is a separate account setting.
 export const WECHAT_ID = "loveyong07";
 export const QQ_NUMBER = "3077928326";
@@ -10,7 +13,7 @@ export const SNAPSHOT = {
   created_at: "2026-09-25",
   author: "初咏",
   avatar: FALLBACK_AVATAR,
-  permalink: "https://x.com/loveyong07/status/2103361629748682978",
+  permalink: `https://x.com/${X_USERNAME}/status/2103361629748682978`,
 };
 
 export const navIds = ["home", "posts", "contact"];

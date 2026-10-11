@@ -5,10 +5,6 @@ const CACHE_CONTROL = "public, max-age=1800, s-maxage=43200";
 // applies between chunks so a stalled upstream releases instead of hanging on.
 const STALL_TIMEOUT_MS = 15000;
 
-function parseXVideoUrl(value) {
-  return parseMediaSource(value, "video");
-}
-
 function errorResponse(status, message, extraHeaders = {}) {
   return new Response(message, {
     status,
@@ -70,7 +66,8 @@ export async function proxyXVideo(
 
   const requestUrl = new URL(request.url);
   const sourceValues = requestUrl.searchParams.getAll("url");
-  const source = sourceValues.length === 1 && validMediaQuery(request) ? parseXVideoUrl(sourceValues[0]) : null;
+  const source =
+    sourceValues.length === 1 && validMediaQuery(request) ? parseMediaSource(sourceValues[0], "video") : null;
   if (!source) return errorResponse(400, "Unsupported video URL");
   if (!(await authorizedMediaRequest(request, source, "video", authOptions)))
     return errorResponse(403, "Unsupported video URL");

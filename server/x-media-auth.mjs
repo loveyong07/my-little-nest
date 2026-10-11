@@ -1,7 +1,7 @@
+import { parseMediaSource } from "../shared/media-sources.mjs";
 import { LEGACY_IMAGE_URLS, LEGACY_VIDEO_URLS } from "./x-media-legacy.mjs";
 
-const IMAGE_PATHS = ["/media/", "/profile_images/", "/ext_tw_video_thumb/"];
-const VIDEO_PATHS = ["/ext_tw_video/", "/amplify_video/", "/tweet_video/"];
+export { parseMediaSource };
 const DAY_SECONDS = 86400;
 const MAX_LIFETIME_SECONDS = 8 * DAY_SECONDS;
 // Every accepted retry counter is a distinct CDN cache key for the same source, so the
@@ -13,31 +13,10 @@ const encoder = new TextEncoder();
 let cachedSecret;
 let cachedKey;
 
-export function mediaSigningSecret() {
-  return globalThis.process?.env?.X_MEDIA_SIGNING_SECRET || globalThis.process?.env?.X_BEARER_TOKEN || "";
-}
-
-export function parseMediaSource(value, kind) {
-  if (typeof value !== "string" || value.length > 2048) return null;
-  try {
-    const url = new URL(value);
-    const host = kind === "image" ? "pbs.twimg.com" : "video.twimg.com";
-    const paths = kind === "image" ? IMAGE_PATHS : VIDEO_PATHS;
-    if (
-      url.protocol !== "https:" ||
-      url.hostname !== host ||
-      url.username ||
-      url.password ||
-      url.port ||
-      url.hash ||
-      !paths.some((prefix) => url.pathname.startsWith(prefix))
-    )
-      return null;
-    // Signed and legacy permissions bind the complete URL, including the original size/format query.
-    return url;
-  } catch {
-    return null;
-  }
+// A dedicated X_MEDIA_SIGNING_SECRET is preferred; without it the key is derived from the
+// X credential (signingKey() never uses the secret directly).
+export function signingSecret(env = globalThis.process?.env ?? {}) {
+  return env.X_MEDIA_SIGNING_SECRET || env.X_BEARER_TOKEN || "";
 }
 
 export function validMediaQuery(request) {
@@ -77,7 +56,7 @@ function payload(kind, source, expires) {
   return encoder.encode(`little-nest/media/v1\n${kind}\n${expires}\n${source.href}`);
 }
 
-export async function signedMediaUrl(value, kind, { secret = mediaSigningSecret(), now = Date.now() } = {}) {
+export async function signedMediaUrl(value, kind, { secret = signingSecret(), now = Date.now() } = {}) {
   const source = parseMediaSource(value, kind);
   const key = source ? await signingKey(secret) : null;
   if (!key) return null;
@@ -92,7 +71,7 @@ export async function authorizedMediaRequest(
   request,
   source,
   kind,
-  { secret = mediaSigningSecret(), now = Date.now() } = {},
+  { secret = signingSecret(), now = Date.now() } = {},
 ) {
   if (!source || !validMediaQuery(request)) return false;
   // This is an early browser hotlink check, not a substitute for cryptographic authorization.

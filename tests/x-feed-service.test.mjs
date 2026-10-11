@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createXFeedService } from "../server/x-feed-plugin.mjs";
+import { createXFeedService } from "../server/x-feed-service.mjs";
 
 const post = (id, text, extra = {}) => ({
   id,
