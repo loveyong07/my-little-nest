@@ -151,6 +151,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .footer-script, .footer-flower { color: #6c8fad; }
 .micro-slogan { font-family: "Quicksand", sans-serif; color: #597e9e; }
 .media-lightbox { background: #18232de8; }
+/* Applies to the element carrying the class as well: <html> owns scrolling and
+   <main> owns the route background drift. */
+.motion-off, .motion-off::before, .motion-off::after,
 .motion-off *, .motion-off *::before, .motion-off *::after { animation: none !important; scroll-behavior: auto !important; }
 @keyframes nest-letter-in { from { opacity: 0; transform: translateY(10px) rotate(4deg); } to { opacity: 1; transform: none; } }
 @keyframes nest-type-in { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0); } }
@@ -167,7 +170,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .brand, .site-route .brand { flex-basis: 130px; }
   .brand-script { font-size: 33px; }
   .brand-caption { font-size: 10px; }
-  .language-picker button { min-height: 40px; color: #4a6984; }
+  .language-picker button { min-height: 44px; color: #4a6984; }
   .menu-toggle { color: #557897; background: #f6fafd; border-color: #fff; border-radius: 15px; }
   .site-nav, .site-route .site-nav { display: none; top: 72px; right: 20px; padding: 8px; border-radius: 22px; background: #f9fbfd; }
   .site-nav.is-open { display: flex; }
@@ -239,7 +242,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .hero-actions .secondary-cta { color: #315f53; background: #dff2e8; border-color: #a9d1bf; }
 .site-nav a:nth-child(1) { --control-bg: #e3effc; --control-ink: #345d83; }
 .site-nav a:nth-child(2) { --control-bg: #fbe1eb; --control-ink: #743e59; }
-.site-nav a[href="/contact"] { --control-bg: #e0f2e9; --control-ink: #315f53; }
+.site-nav a[data-page="contact"] { --control-bg: #e0f2e9; --control-ink: #315f53; }
 .site-nav a, .site-route .site-nav a { background: var(--control-bg); color: var(--control-ink); }
 .site-nav a.active, .site-route .site-nav a.active { background: var(--control-bg); color: var(--control-ink); box-shadow: inset 0 -3px currentColor; }
 .site-nav a:hover, .site-route .site-nav a:hover { filter: brightness(.96); }

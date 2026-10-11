@@ -76,6 +76,5 @@
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
-  .click-sparkle { display: none; }
   .hero::before, .site-route-posts::before, .site-route-contact::before, .home-floating-element, .home-mobile-petal, .route-floating-dove { animation: none !important; }
 }

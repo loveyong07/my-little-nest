@@ -11,7 +11,7 @@
 
 - Run the local server yourself and open the preview in the browser available to this environment. Do not give the user server-start instructions when you can run it.
 - Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts/prepare-sites-build.mjs`, and `tests/sites-worker.test.mjs` intact so the same local prototype can be handed to Sites.
-- Before a Sites handoff, run `npm run build` and `npm run test:sites`; the build must leave `dist/client/index.html`, `dist/server/index.js`, and `dist/.openai/hosting.json`.
+- Before a Sites handoff, run `npm run check` (logic tests, build, build-artifact checks, Sites worker tests); the build must leave `dist/client/index.html`, `dist/server/index.js`, and `dist/.openai/hosting.json`. Keep the logic tests independent of `dist/` and let the build-artifact checks fail, never skip, when the build is missing.
 - The user owns `loveyong07.top` through Tencent Cloud and selected GitHub plus Vercel for hosting. The production branch is `master`. Do not use Cloudflare or change DNS records; inspect Vercel's exact requirements and tell the user when DNS changes are needed. The user handles domain purchases and payments personally.
 - Preserve original assets and the Sites compatibility files. Do not remove unrelated untracked files or archived originals during focused changes.
 

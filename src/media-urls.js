@@ -1,4 +1,20 @@
 // Browser media must use the site's constrained same-origin X routes.
+
+// Retry counters are the only unsigned part of a media URL, so each accepted value is a
+// separate CDN cache key for the same source. Keep the set small and canonical; the proxy
+// enforces the same limit in server/x-media-auth.mjs (MEDIA_RETRY_LIMIT).
+export const MAX_MEDIA_RETRY = 3;
+
+export function mediaRetrySrc(src, attempts, key = "retry") {
+  if (!src) return null;
+  const parsed = Math.trunc(Number(attempts));
+  const count = Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+  // Attempts stay unlimited while the URL only walks the bounded variant set, so a
+  // repeatedly failing image can be retried again without minting new cache keys.
+  const variant = count > 0 ? ((count - 1) % MAX_MEDIA_RETRY) + 1 : 0;
+  return variant > 0 ? `${src}&${key}=${variant}` : src;
+}
+
 function authorizedProxySrc(value, route, source) {
   if (typeof value !== "string" || !value.startsWith(`${route}?`)) return null;
   try {

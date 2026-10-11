@@ -7,16 +7,17 @@ import { PostCard } from "../components/PostCard.jsx";
 import { useXFeed } from "../hooks/useXFeed.js";
 import { formatPostDate } from "../utils/date.js";
 import { postExcerpt, postMonthKey, postMonths } from "../utils/posts.js";
+import { preferredScrollBehavior } from "../utils/motion.js";
 import { canPrefetch } from "../utils/network.js";
 
-function PostControls({ postIndex, total, onChange, t, sticky = false }) {
-  return <div className={`post-controls${sticky ? " post-controls-reading" : ""}`} role="group" aria-label={t.postNavigation}>
+function PostControls({ postIndex, total, onChange, t }) {
+  return <div className="post-controls" role="group" aria-label={t.postNavigation}>
     <button type="button" onClick={() => onChange((postIndex - 1 + total) % total)} aria-label={t.prevPost}>
-      <FiChevronLeft aria-hidden="true" />{sticky && <span>{t.previousShort}</span>}
+      <FiChevronLeft aria-hidden="true" />
     </button>
-    <span className="post-position" aria-live={sticky ? "polite" : "off"}>{t.postNumber(postIndex + 1, total)}</span>
+    <span className="post-position" aria-live="off">{t.postNumber(postIndex + 1, total)}</span>
     <button type="button" onClick={() => onChange((postIndex + 1) % total)} aria-label={t.nextPost}>
-      {sticky && <span>{t.nextShort}</span>}<FiChevronRight aria-hidden="true" />
+      <FiChevronRight aria-hidden="true" />
     </button>
   </div>;
 }
@@ -39,7 +40,6 @@ export default function PostsPage({ language, t, profile, onFeedReady }) {
   const indexRef = useRef(null);
   const currentPost = posts[Math.min(postIndex, Math.max(0, posts.length - 1))];
   const months = useMemo(() => postMonths(posts, language), [posts, language]);
-  const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   useEffect(() => { if (!feedLoading) onFeedReady(true); }, [feedLoading, onFeedReady]);
   useEffect(() => {
     const strip = indexRef.current;
@@ -56,12 +56,12 @@ export default function PostsPage({ language, t, profile, onFeedReady }) {
     event.preventDefault();
     setPostIndex(0);
     latestRef.current?.focus({ preventScroll: true });
-    latestRef.current?.scrollIntoView({ block: "start", behavior: reducedMotion() ? "instant" : "smooth" });
+    latestRef.current?.scrollIntoView({ block: "start", behavior: preferredScrollBehavior() });
   }
   function changeReadingPost(index) {
     setPostIndex(index);
     // Keep the start of a new card in reach when leaving a long post halfway down.
-    readingRef.current?.scrollIntoView({ block: "start", behavior: reducedMotion() ? "instant" : "smooth" });
+    readingRef.current?.scrollIntoView({ block: "start", behavior: preferredScrollBehavior() });
   }
   const statusText = feedLoading ? (feedSource === "snapshot" ? t.feedLoading : t.feedRefreshing)
     : feedSource === "snapshot" ? t.feedUnavailable

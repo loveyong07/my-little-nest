@@ -15,13 +15,14 @@ function errorResponse(status, message) {
   });
 }
 
-async function readLimitedImage(body) {
+async function readLimitedImage(body, signal) {
   if (!body) return null;
   const reader = body.getReader();
   const chunks = [];
   let size = 0;
   try {
     while (true) {
+      if (signal?.aborted) { await reader.cancel(); return {}; }
       const { done, value } = await reader.read();
       if (done) break;
       size += value.byteLength;
@@ -106,6 +107,10 @@ export async function proxyXMedia(request, fetchImpl = globalThis.fetch, authOpt
   }
 
   const controller = new AbortController();
+  // A visitor that leaves must not leave an upstream image download running.
+  const abortFromClient = () => controller.abort(request.signal.reason);
+  if (request.signal.aborted) abortFromClient();
+  else request.signal.addEventListener("abort", abortFromClient, { once: true });
   const timeout = setTimeout(() => controller.abort(), 10000);
   let streamingResponse = false;
   let keepTimeoutForStream = false;
@@ -134,11 +139,15 @@ export async function proxyXMedia(request, fetchImpl = globalThis.fetch, authOpt
     let responseBody;
     if (upstream.body && contentLengthHeader !== null && Number.isFinite(contentLength)) {
       streamingResponse = true;
-      responseBody = streamLimitedImage(upstream.body, () => clearTimeout(timeout));
+      // The stream can outlive this function, so it owns clearing the timeout and the listener.
+      responseBody = streamLimitedImage(upstream.body, () => {
+        clearTimeout(timeout);
+        request.signal.removeEventListener("abort", abortFromClient);
+      });
     } else {
-      const body = await readLimitedImage(upstream.body);
-      if (body.tooLarge) return errorResponse(413, "Image is too large");
-      if (!body.image?.byteLength) return errorResponse(502, "Image source unavailable");
+      const body = await readLimitedImage(upstream.body, request.signal);
+      if (body?.tooLarge) return errorResponse(413, "Image is too large");
+      if (!body?.image?.byteLength) return errorResponse(502, "Image source unavailable");
       responseBody = body.image;
     }
 
@@ -157,6 +166,10 @@ export async function proxyXMedia(request, fetchImpl = globalThis.fetch, authOpt
   } catch {
     return errorResponse(502, "Image source unavailable");
   } finally {
-    if (!keepTimeoutForStream) clearTimeout(timeout);
+    // A returned stream keeps the listener until it finishes or is cancelled.
+    if (!keepTimeoutForStream) {
+      clearTimeout(timeout);
+      request.signal.removeEventListener("abort", abortFromClient);
+    }
   }
 }

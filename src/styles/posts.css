@@ -63,8 +63,6 @@
 .post-controls button:hover { border-color: #85b6d9; background: #fff; }
 .post-controls button:active { transform: scale(.97); }
 .post-controls svg { flex-shrink: 0; width: 19px; height: 19px; }
-.post-controls-reading { position: sticky; z-index: 5; top: var(--space-3); display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: var(--space-2); margin-top: var(--space-3); padding: 6px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: #f6fbfff5; box-shadow: 0 3px 12px #24486b0d; }
-.post-controls-reading button { width: 100%; height: 44px; padding-inline: var(--space-2); border-radius: var(--radius-sm); background: #fff; font-size: var(--font-sm); }
 .post-position { min-width: 60px; text-align: center; font-variant-numeric: tabular-nums; }
 .feed-status { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3); max-width: 800px; margin: 0 auto var(--space-5); padding: var(--space-3) var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: #f6fbffeb; color: #496780; font-size: var(--font-sm); line-height: 1.65; }
 .feed-status > svg { flex: 0 0 auto; width: 17px; height: 17px; color: #518bb8; }
@@ -94,7 +92,6 @@
   .post-card .post-text { margin-top: var(--space-4); line-height: 1.75; }
   .post-media-frame, .post-video-frame { width: 100%; max-width: 100%; max-height: 420px; }
   .post-index-button { flex-basis: 148px; }
-  .post-controls-reading button { font-size: .8125rem; }
   .post-position { min-width: 46px; font-size: .8125rem; }
   .feed-status-copy { flex-basis: calc(100% - 36px); }
   .feed-status-actions { margin-left: 0; }

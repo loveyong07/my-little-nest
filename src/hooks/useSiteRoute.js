@@ -5,17 +5,19 @@ import { scenePreloads } from "../routes/scene-assets.js";
 
 export { pagePaths };
 
-const preloadedScenes = new Set();
-
 function currentPage() {
   return resolvePage(window.location.pathname);
+}
+
+// "/posts/" and "/posts" are the same page; keep history free of no-op entries.
+function normalizedPath(pathname) {
+  return pathname.replace(/\/+$/, "") || "/";
 }
 
 function preloadScene(page) {
   const scenes = scenePreloads(page);
   const { href } = scenes.find((scene) => !scene.media || window.matchMedia(scene.media).matches) ?? scenes.at(-1);
-  if (preloadedScenes.has(href)) return;
-  preloadedScenes.add(href);
+  // The DOM is the record of what is already preloaded, including the server-rendered link.
   if ([...document.querySelectorAll('link[rel="preload"][as="image"]')].some((link) => link.getAttribute("href") === href)) return;
   const link = document.createElement("link");
   link.rel = "preload";
@@ -87,8 +89,12 @@ export function useSiteRoute() {
 
     event.preventDefault();
     activateScene(destination.page);
-    if (window.location.pathname !== destination.path) {
+    const current = window.location.pathname;
+    if (normalizedPath(current) !== destination.path) {
       window.history.pushState({ page: destination.page }, "", destination.path);
+    } else if (current !== destination.path) {
+      // Same page, non-canonical path: normalize the address without a new entry.
+      window.history.replaceState({ page: destination.page }, "", destination.path);
     }
     setPage(destination.page);
     if (destination.page !== page) window.scrollTo(0, 0);

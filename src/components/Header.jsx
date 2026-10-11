@@ -43,7 +43,7 @@ export function Header({ page, t, language, changeLanguage }) {
       <span className="brand-caption">{t.homePlaceLabel}</span>
     </a>
     <nav className={"site-nav " + (menuOpen ? "is-open" : "")} id="site-navigation" aria-label={t.navLabel}>
-      {navIds.map((id, index) => <a key={id} className={page === id ? "active" : ""} href={pagePaths[id]} onClick={closeMenuOnNavigation} aria-current={page === id ? "page" : undefined}><PiFlowerLight className="nav-active-flower" aria-hidden="true" />{t.nav[index]}</a>)}
+      {navIds.map((id, index) => <a key={id} data-page={id} className={page === id ? "active" : ""} href={pagePaths[id]} onClick={closeMenuOnNavigation} aria-current={page === id ? "page" : undefined}><PiFlowerLight className="nav-active-flower" aria-hidden="true" />{t.nav[index]}</a>)}
     </nav>
     <div className="language-picker" role="group" aria-label={t.languageLabel}>
       {[["zh", "中文"], ["ja", "日本語"], ["en", "EN"]].map(([code, label]) => <button key={code} className={language === code ? "active" : ""} onClick={() => changeLanguage(code)} aria-pressed={language === code}>{label}</button>)}

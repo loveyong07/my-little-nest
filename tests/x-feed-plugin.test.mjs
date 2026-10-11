@@ -41,6 +41,68 @@ test("syncs profile changes by stable user ID without fetching the timeline", as
   assert.equal(calls, 2);
 });
 
+test("coalesces concurrent profile lookups instead of one upstream request each", async () => {
+  let calls = 0;
+  const feed = createXFeedService({
+    token: "private-test-token",
+    fetchImpl: async (url) => {
+      calls += 1;
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      return new Response(JSON.stringify({ data: {
+        id: "2061726102180311040", username: "loveyong07", name: "初咏",
+        profile_image_url: "https://pbs.twimg.com/avatar.jpg",
+      } }), { status: 200 });
+    },
+  });
+  const results = await Promise.all(Array.from({ length: 8 }, () => feed.getProfile()));
+  for (const result of results) {
+    assert.deepEqual(result, { status: "ok", profile: {
+      name: "初咏", username: "loveyong07", avatar: "https://pbs.twimg.com/avatar.jpg",
+    } });
+  }
+  assert.equal(calls, 1);
+});
+
+test("backs off repeated profile failures and keeps the last successful profile as stale", async () => {
+  let calls = 0;
+  let time = 0;
+  let fail = false;
+  const feed = createXFeedService({
+    token: "private-test-token",
+    now: () => time,
+    fetchImpl: async () => {
+      calls += 1;
+      if (fail) return new Response("unavailable", { status: 500 });
+      return new Response(JSON.stringify({ data: {
+        id: "2061726102180311040", username: "loveyong07", name: "初咏",
+        profile_image_url: "https://pbs.twimg.com/avatar.jpg",
+      } }), { status: 200 });
+    },
+  });
+  assert.equal((await feed.getProfile()).status, "ok");
+  assert.equal(calls, 1);
+
+  fail = true;
+  time += 15 * 60 * 1000;
+  const failed = await Promise.all(Array.from({ length: 8 }, () => feed.getProfile()));
+  assert.equal(calls, 2, "concurrent failures must share one lookup");
+  for (const result of failed) {
+    assert.equal(result.status, "stale", "old data must not be reported as a fresh success");
+    assert.equal(result.profile.username, "loveyong07");
+  }
+
+  time += 30 * 1000;
+  assert.equal((await feed.getProfile()).status, "stale");
+  assert.equal(calls, 2, "a failed lookup must back off instead of repeating");
+
+  time += 31 * 1000;
+  fail = false;
+  assert.deepEqual(await feed.getProfile(), { status: "ok", profile: {
+    name: "初咏", username: "loveyong07", avatar: "https://pbs.twimg.com/avatar.jpg",
+  } });
+  assert.equal(calls, 3, "the profile must recover once the upstream works again");
+});
+
 test("returns only original posts and caches successful X responses", async () => {
   const urls = [];
   let time = 1000;

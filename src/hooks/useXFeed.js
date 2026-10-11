@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getFeedSnapshot, getFeedRetryAfter, fetchFeed } from "../feed-cache.js";
 import { REQUEST_RETRY_MS, startVisibleRefresh } from "../request-cache.js";
 import { SNAPSHOT } from "../constants/site.js";
@@ -9,7 +9,13 @@ import { takeEarlyFeed } from "./useSiteRoute.js";
 export function useXFeed() {
   const [cachedFeed] = useState(getFeedSnapshot);
   const cachedPin = cachedFeed && ["ok", "stale"].includes(cachedFeed.feed.pinnedStatus) && isOwnPost(cachedFeed.feed.pinnedPost) ? cachedFeed.feed.pinnedPost : null;
-  const [posts, setPosts] = useState(() => cachedFeed ? cachedFeed.feed.posts.filter((post) => isOriginalPost(post) && post.id !== cachedPin?.id) : [SNAPSHOT]);
+  // Posts and the reading index move together: one state keeps them consistent for
+  // a background refresh that reads the committed values between renders.
+  const [reading, setReading] = useState(() => ({
+    posts: cachedFeed ? cachedFeed.feed.posts.filter((post) => isOriginalPost(post) && post.id !== cachedPin?.id) : [SNAPSHOT],
+    index: 0,
+  }));
+  const { posts, index: postIndex } = reading;
   const [feedSource, setFeedSource] = useState(cachedFeed ? "stale" : "snapshot");
   const [feedLoading, setFeedLoading] = useState(!cachedFeed);
   const [feedUpdatedAt, setFeedUpdatedAt] = useState(cachedFeed?.savedAt ?? null);
@@ -18,12 +24,11 @@ export function useXFeed() {
   const [pinnedPost, setPinnedPost] = useState(cachedPin);
   const [pinState, setPinState] = useState(cachedPin ? "stale" : cachedFeed?.feed.pinnedStatus === "none" ? "none" : "loading");
   const pinnedPostRef = useRef(cachedPin);
-  const [postIndex, setPostIndex] = useState(0);
-  const postsRef = useRef(posts);
-  const postIndexRef = useRef(postIndex);
-  postsRef.current = posts;
-  postIndexRef.current = postIndex;
   const retryTimerRef = useRef(null);
+
+  const setPostIndex = useCallback((value) => {
+    setReading((current) => ({ ...current, index: typeof value === "function" ? value(current.index) : value }));
+  }, []);
 
   function alignRetryCooldown() {
     const delay = getFeedRetryAfter();
@@ -68,11 +73,8 @@ export function useXFeed() {
           if (feed.status === "ok") {
             setFeedUpdatedAt(getFeedSnapshot()?.savedAt ?? null);
           }
-          const nextIndex = retainedPostIndex(postsRef.current, postIndexRef.current, originals);
-          postsRef.current = originals;
-          postIndexRef.current = nextIndex;
-          setPosts(originals); setFeedSource(feed.status === "stale" ? "stale" : "live");
-          setPostIndex(nextIndex);
+          setReading((current) => ({ posts: originals, index: retainedPostIndex(current.posts, current.index, originals) }));
+          setFeedSource(feed.status === "stale" ? "stale" : "live");
         } else {
           setFeedSource((current) => current === "live" ? "stale" : current);
         }

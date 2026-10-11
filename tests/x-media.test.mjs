@@ -90,6 +90,27 @@ test("streams known-length images before the upstream body finishes", async () =
   await reader.cancel();
 });
 
+test("a visitor that disconnects aborts the upstream image request", async () => {
+  const clientAbort = new AbortController();
+  let upstreamSignal = null;
+  let upstreamController = null;
+  const pending = proxyXMedia(new Request(mediaRequest(LEGACY_IMAGE_URL).url, { signal: clientAbort.signal }),
+    async (url, options) => {
+      upstreamSignal = options.signal;
+      options.signal.addEventListener("abort", () => upstreamController.error(new DOMException("Aborted", "AbortError")));
+      return new Response(new ReadableStream({ start(controller) { upstreamController = controller; } }),
+        { headers: { "Content-Type": "image/jpeg" } });
+    });
+  // Let the upstream fetch and the buffered read start before the visitor leaves.
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  assert.equal(upstreamSignal.aborted, false);
+  clientAbort.abort();
+  const response = await pending;
+  assert.equal(upstreamSignal.aborted, true, "the upstream image request must not outlive the visitor");
+  assert.equal(response.status, 502);
+  assert.equal(response.headers.get("cache-control"), "no-store");
+});
+
 test("rejects missing and malformed URL parameters without fetching", async (t) => {
   for (const [source, label] of [
     [undefined, "missing"],

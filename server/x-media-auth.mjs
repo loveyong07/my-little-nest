@@ -4,6 +4,10 @@ const IMAGE_PATHS = ["/media/", "/profile_images/", "/ext_tw_video_thumb/"];
 const VIDEO_PATHS = ["/ext_tw_video/", "/amplify_video/", "/tweet_video/"];
 const DAY_SECONDS = 86400;
 const MAX_LIFETIME_SECONDS = 8 * DAY_SECONDS;
+// Every accepted retry counter is a distinct CDN cache key for the same source, so the
+// accepted set stays small and canonical: decimal text without leading zeros or zero,
+// capped at this limit. Keep in step with MAX_MEDIA_RETRY in src/media-urls.js.
+export const MEDIA_RETRY_LIMIT = 3;
 const legacy = { image: new Set(LEGACY_IMAGE_URLS), video: new Set(LEGACY_VIDEO_URLS) };
 const encoder = new TextEncoder();
 let cachedSecret;
@@ -34,7 +38,8 @@ export function validMediaQuery(request) {
   }
   for (const key of ["retry", "lightboxRetry"]) {
     const value = params.get(key);
-    if (value !== null && (!/^\d{1,3}$/.test(value) || Number(value) > 100)) return false;
+    // Canonical text only: 0, 00, 04, 10 and 100 are rejected so the cache-key set stays fixed.
+    if (value !== null && (!/^[1-9]\d*$/.test(value) || Number(value) > MEDIA_RETRY_LIMIT)) return false;
   }
   return params.getAll("url").length === 1;
 }
