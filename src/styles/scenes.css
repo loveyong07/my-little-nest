@@ -2,7 +2,7 @@
   min-height: 100vh;
   overflow: clip;
   padding-bottom: 90px;
-  background: linear-gradient(145deg, #f7fafd, #f4f8fc 38%, #edf6ff 70%, #ebf3fa);
+  background: linear-gradient(145deg, var(--surface-tint) 38%, #edf6ff 70%, var(--surface-blue));
 }
 
 /* Posts and Contact: a fixed scene image over a fixed blue gradient. */
@@ -25,7 +25,7 @@
   z-index: -2;
   inset: 0;
   content: "";
-  background: linear-gradient(135deg, #f3f8fc, #e8f3ff 60%, #e3eef7);
+  background: linear-gradient(135deg, #f3f8fc, #e8f3ff 60%, var(--surface-blue-strong));
 }
 .site-route-posts::before {
   background-image: url("/assets/posts-winter-hero-q90.jpg");

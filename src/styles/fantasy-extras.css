@@ -46,7 +46,7 @@
   padding: 7px;
   border: 1px solid #fff;
   border-radius: 999px;
-  background: #f8fbfdf2;
+  background: #f9fcfef2;
   box-shadow: 0 6px 28px #51728f24;
 }
 .mini-player {
@@ -64,7 +64,7 @@
   border: 7px solid #d9adc2;
   border-radius: 50%;
   background: #fff0f6;
-  color: #743e59;
+  color: var(--pastel-pink-ink);
   animation: record-turn 12s linear infinite;
   animation-play-state: paused;
 }
@@ -87,7 +87,7 @@
   max-width: 170px;
 }
 .player-copy strong {
-  color: #50728f;
+  color: var(--color-muted);
   font-size: 12px;
   font-weight: 500;
 }
@@ -110,26 +110,26 @@
   border-radius: 50%;
 }
 .mini-player button {
-  border-color: #d2c0e8;
-  background: #eee5fa;
-  color: #654c83;
+  border-color: var(--pastel-lavender-line);
+  background: var(--pastel-lavender);
+  color: var(--pastel-lavender-ink);
 }
 .mini-player button svg {
   width: 13px;
   height: 13px;
 }
 .dock-toggle {
-  border-color: #b6d9c8;
-  background: #e0f2e9;
-  color: #315f53;
+  border-color: var(--pastel-mint-line);
+  background: var(--pastel-mint);
+  color: var(--pastel-mint-ink);
 }
 .dock-toggle:hover,
 .mini-player button:hover {
-  background: #e6f0f9;
+  background: var(--surface-blue-strong);
 }
 .dock-toggle[aria-pressed="true"] {
   background: #cdebdc;
-  color: #315f53;
+  color: var(--pastel-mint-ink);
 }
 .mini-player input {
   width: 52px;

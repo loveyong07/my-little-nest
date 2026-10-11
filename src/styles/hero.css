@@ -25,7 +25,7 @@
   padding: 32px 36px 30px;
   border: 1px solid #fff;
   border-radius: 32px;
-  background: linear-gradient(135deg, #fbfdfef2, #f7fafddb);
+  background: linear-gradient(135deg, #f9fcfef2, #f7fafddb);
   box-shadow: var(--panel-shadow);
 }
 .hero-copy::before {
@@ -34,7 +34,7 @@
   left: calc(50% - 52px);
   width: 104px;
   height: 25px;
-  border: 1px solid #ecf4fa;
+  border: 1px solid var(--surface-blue);
   background: repeating-linear-gradient(45deg, #b8d4ebaa 0 5px, #cce0f0aa 5px 10px);
   content: "";
   transform: rotate(-4deg);
@@ -56,10 +56,10 @@
   max-width: 100%;
   margin: 0 0 14px;
   padding: 6px 13px 6px 6px;
-  border: 1px solid #d8e5f0;
+  border: 1px solid var(--color-border-soft);
   border-radius: 999px;
   background: #f3f8fc;
-  color: #517390;
+  color: var(--color-muted);
   font-size: 13px;
   font-weight: 400;
   letter-spacing: 0.04em;
@@ -178,9 +178,9 @@
   height: 68px;
   border: 4px solid #fff;
   border-radius: 50%;
-  outline: 1px dashed #9ab9d3;
+  outline: 1px dashed #9ab8d0;
   outline-offset: 3px;
-  background: #f6fbff url("/assets/x-avatar.jpg") center / cover no-repeat;
+  background: var(--surface-tint) url("/assets/x-avatar.jpg") center / cover no-repeat;
   box-shadow: 0 6px 15px #6b8eac1f;
   object-fit: cover;
 }
@@ -189,14 +189,14 @@
   min-width: 0;
 }
 .profile strong {
-  color: #47647d;
+  color: var(--color-ink);
   font-size: 27px;
   font-weight: 400;
   line-height: 1.3;
   overflow-wrap: anywhere;
 }
 .profile a {
-  color: #6387a7;
+  color: #6287a7;
   font-family: "Quicksand", sans-serif;
   font-size: 15px;
   line-height: 1.45;
@@ -263,7 +263,7 @@
 }
 .primary-cta {
   border: 1px solid #dfacc2;
-  background: linear-gradient(115deg, #f9cddd, #fce4ed);
+  background: linear-gradient(115deg, #f9cddd, var(--pastel-pink));
   color: #713b58;
   box-shadow: 0 5px 15px #c0789820;
 }
@@ -272,8 +272,8 @@
 }
 .secondary-cta {
   border: 1px solid #a9d1bf;
-  background: #dff2e8;
-  color: #315f53;
+  background: var(--pastel-mint);
+  color: var(--pastel-mint-ink);
 }
 
 /* Wide screens only: a quote in the sky and a pinned note beside the character. */
@@ -315,7 +315,7 @@
   border-radius: 18px;
   background: #f4f8fced;
   box-shadow: var(--shadow-card);
-  color: #567998;
+  color: var(--color-ink-soft);
   transform: rotate(7deg);
 }
 .handwritten-note p {
@@ -364,7 +364,7 @@
   align-items: center;
   gap: 7px;
   margin: 0 0 9px;
-  color: #527492;
+  color: var(--color-muted);
   font-size: 13px;
   font-weight: 500;
 }
@@ -375,7 +375,7 @@
 }
 .journal-note p {
   margin: 0;
-  color: #4b6a85;
+  color: #4c6c88;
   font-size: 13px;
   line-height: 1.8;
 }
@@ -399,11 +399,11 @@
   height: 36px;
   border: 0;
   border-radius: 50%;
-  background: #eee5fa;
-  color: #654c83;
+  background: var(--pastel-lavender);
+  color: var(--pastel-lavender-ink);
 }
 .journal-note button:hover {
-  background: #d7e4ef;
+  background: var(--color-border-soft);
 }
 .interest-tags {
   display: flex;
@@ -425,8 +425,8 @@
   color: #526d8c;
 }
 .interest-tags li:nth-child(3n) {
-  background: #e3eff8;
-  color: #4f708d;
+  background: var(--surface-blue-strong);
+  color: #4e6f8c;
 }
 
 @media (max-width: 1280px) {
