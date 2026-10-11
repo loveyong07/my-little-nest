@@ -34,14 +34,13 @@ const server = await createServer({
   logLevel: "silent",
   server: { middlewareMode: true },
 });
-const [{ Header }, { MediaLightbox }, { default: ContactPage }, { default: PostsPage }, { copy }, { SNAPSHOT }, { formatPostDate }, { pagePaths }, { postMonths }, { useFantasyPreferences }] = await Promise.all([
+const [{ Header }, { MediaLightbox }, { default: ContactPage }, { default: PostsPage }, { copy }, { SNAPSHOT }, { pagePaths }, { postMonths }, { useFantasyPreferences }] = await Promise.all([
   server.ssrLoadModule("/src/components/Header.jsx"),
   server.ssrLoadModule("/src/components/MediaLightbox.jsx"),
   server.ssrLoadModule("/src/pages/ContactPage.jsx"),
   server.ssrLoadModule("/src/pages/PostsPage.jsx"),
   server.ssrLoadModule("/src/constants/locales.js"),
   server.ssrLoadModule("/src/constants/site.js"),
-  server.ssrLoadModule("/src/utils/date.js"),
   server.ssrLoadModule("/src/routes/site-route.js"),
   server.ssrLoadModule("/src/utils/posts.js"),
   server.ssrLoadModule("/src/hooks/useFantasyPreferences.js"),
