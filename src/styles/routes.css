@@ -1,12 +1,14 @@
+/* Posts and Contact: scene header with the page title, then the reading panel. */
 .route-hero {
   position: relative;
   isolation: isolate;
+  height: 285px;
   overflow: hidden;
   background: transparent;
-  height: 285px;
 }
 .route-page-title {
   position: absolute;
+  bottom: 49px;
   left: max(4.7vw, calc((100vw - 1320px) / 2));
   z-index: 1;
   display: flex;
@@ -21,34 +23,34 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  border: 1px solid #ffffff63;
-  border-radius: 999px;
-  box-shadow: inset 0 1px #ffffff40;
-  line-height: 1;
   padding: 8px 14px;
-  color: #567a99;
+  border: 1px solid #fff;
+  border-radius: 999px;
   background: #f7fafded;
-  border-color: #fff;
+  box-shadow: inset 0 1px #ffffff40;
+  color: #567a99;
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.06em;
+  line-height: 1;
 }
 .route-page-kicker svg {
   width: 13px;
   height: 13px;
-  stroke-width: 1.2;
   color: #7697b3;
+  stroke-width: 1.2;
 }
 .route-page-title h1 {
   margin: 0;
-  line-height: 1;
   color: #fff;
   font-family: var(--nest-font);
+  font-size: clamp(44px, 5vw, 62px);
   font-style: normal;
   font-weight: 500;
+  line-height: 1;
   text-shadow: 0 2px 14px #19426dc9;
-  font-size: clamp(44px, 5vw, 62px);
 }
+
 .route-panel {
   display: block;
   grid-template-columns: 1fr;
@@ -59,48 +61,20 @@
   padding: 32px;
   animation: panel-arrive 0.34s ease-out both;
 }
+/* A strip of washi tape on the panel's top edge. */
+.route-panel::before {
+  position: absolute;
+  top: -12px;
+  left: 46px;
+  width: 90px;
+  height: 23px;
+  border: 1px solid #eef5fb;
+  background: repeating-linear-gradient(45deg, #c4d7e7bd 0 5px, #dae8f4bd 5px 10px);
+  content: "";
+  transform: rotate(-5deg);
+}
 .route-panel-posts {
   max-width: 980px;
-}
-.route-panel-posts .post-card,
-.route-panel-posts .pinned-placeholder {
-  background: var(--surface-card);
-}
-.route-panel .section-heading h2 {
-  font-size: var(--font-title);
-}
-.route-panel-posts .posts-group {
-  max-width: 800px;
-  margin-inline: auto;
-}
-.route-panel-posts .posts-group + .posts-group {
-  margin-top: 28px;
-  padding-top: 23px;
-  border-top: 1px dashed #c2d1dd;
-}
-.route-panel-posts .posts-group[aria-labelledby="pinned-posts-heading"] .section-heading svg {
-  color: #b45682;
-}
-.pinned-placeholder {
-  display: flex;
-  align-items: center;
-  min-height: 64px;
-  margin-top: 15px;
-  padding: 14px 18px;
-  border: 1px solid #d4e3f5;
-  border-radius: 13px;
-  box-shadow: 0 3px 13px #7899be0e;
-  font-size: 14px;
-  border-color: #d0dce6;
-  color: #50718e;
-  background: #f8fbfd;
-}
-.route-panel .post-card {
-  max-width: 800px;
-  margin: 15px auto 0;
-}
-.route-panel .post-illustration {
-  height: clamp(220px, 28vw, 350px);
 }
 @keyframes panel-arrive {
   from {
@@ -112,10 +86,6 @@
     transform: translate3d(0, 0, 0);
   }
 }
-.route-panel-posts .post-card {
-  border-color: var(--color-border);
-  box-shadow: var(--shadow-card);
-}
 
 @media (max-width: 1050px) {
   .route-panel {
@@ -125,78 +95,30 @@
 }
 
 @media (max-width: 900px) {
-  .route-panel {
-    width: auto;
-    gap: 23px;
-    margin: 0 18px 35px;
-    padding: 24px 20px;
-  }
   .route-hero {
-    overflow: visible;
     z-index: 5;
     height: 234px;
+    overflow: visible;
   }
   .route-page-title {
+    bottom: 40px;
     left: 21px;
     gap: 6px;
   }
-  .route-panel .section-heading h2 {
-    font-size: 16px;
-  }
-  .route-panel-posts .posts-group + .posts-group {
-    margin-top: 20px;
-    padding-top: 18px;
-  }
-  .route-panel .post-card {
-    max-width: none;
-    margin-top: 13px;
-  }
-  .route-panel .post-illustration {
-    height: clamp(170px, 48vw, 260px);
-  }
-}
-
-.route-page-title {
-  bottom: 49px;
-}
-.route-panel::before {
-  content: "";
-  position: absolute;
-  width: 90px;
-  height: 23px;
-  top: -12px;
-  left: 46px;
-  transform: rotate(-5deg);
-  background: repeating-linear-gradient(45deg, #c4d7e7bd 0 5px, #dae8f4bd 5px 10px);
-  border: 1px solid #eef5fb;
-}
-.route-panel .post-card {
-  border-radius: 24px;
-  padding: 22px;
-}
-
-@media (max-width: 900px) {
-  .route-page-title {
-    bottom: 40px;
-  }
-}
-
-@media (max-width: 900px) {
-  .route-panel .post-card {
-    padding: 18px;
+  .route-panel {
+    gap: 23px;
+    width: auto;
+    margin: 0 18px 35px;
+    padding: 24px 20px;
   }
 }
 
 @media (max-width: 700px) {
+  .route-page-title h1 {
+    font-size: 46px;
+  }
   .route-panel {
     margin: -16px 12px 35px;
     padding: 23px 14px;
-  }
-  .route-panel .post-card {
-    padding: 15px;
-    border-radius: 20px;
-  }
-  .route-page-title h1 {
-    font-size: 46px;
   }
 }

@@ -6,12 +6,12 @@
   gap: var(--space-3) var(--space-5);
 }
 .micro-slogan {
-  font:
-    var(--font-xs)/1.6 Arial,
-    sans-serif;
-  font-family: "Quicksand", sans-serif;
   color: #597e9e;
+  font:
+    var(--font-xs) / 1.6 "Quicksand",
+    sans-serif;
 }
+
 .contact-grid {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -23,8 +23,9 @@
   flex-direction: column;
   align-items: center;
   min-width: 0;
+  min-height: 172px;
   padding: var(--space-4) var(--space-2) var(--space-3);
-  border: 1px solid var(--color-border);
+  border: 1px solid #d8e5ef;
   border-radius: var(--radius-md);
   background: var(--surface-card);
   box-shadow: var(--shadow-card);
@@ -35,48 +36,121 @@
     transform 0.18s,
     border-color 0.18s,
     box-shadow 0.18s;
-  border-color: #d8e5ef;
-  min-height: 172px;
   animation: nest-card-in 0.5s both;
 }
+.contact-tile:nth-child(2) {
+  animation-delay: 0.06s;
+}
+.contact-tile:nth-child(3) {
+  animation-delay: 0.12s;
+}
+.contact-tile:nth-child(4) {
+  animation-delay: 0.18s;
+}
+.contact-tile:nth-child(5) {
+  animation-delay: 0.24s;
+}
+.contact-tile:nth-child(6) {
+  animation-delay: 0.3s;
+}
 .contact-tile:hover {
-  transform: translateY(-3px);
   border-color: #a4c3dc;
   box-shadow: 0 8px 24px #678baa21;
+  transform: translateY(-3px);
 }
 .contact-tile:active {
   transform: scale(0.97);
 }
+.contact-tile strong {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+.contact-tile small {
+  margin-top: var(--space-1);
+  color: var(--color-muted);
+  font-size: var(--font-xs);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.contact-action {
+  margin-top: auto;
+  padding-top: var(--space-3);
+  color: #587c9c;
+  font-size: var(--font-xs);
+  font-weight: 700;
+  line-height: 1.4;
+}
+
 .contact-icon {
   position: relative;
   display: grid;
-  margin-bottom: var(--space-2);
   place-items: center;
-  border-radius: 50%;
-  transition: box-shadow 0.18s;
-  border: 0;
   width: 62px;
   height: 62px;
+  margin-bottom: var(--space-2);
+  border: 0;
+  border-radius: 50%;
   background: #e6f0f9;
-  box-shadow: none;
+  transition: box-shadow 0.18s;
 }
 .contact-icon svg {
   display: block;
+  width: 48px;
+  height: 48px;
   padding: 10px;
   border-radius: 50%;
   background: transparent;
   color: #517391;
-  width: 48px;
-  height: 48px;
 }
+.contact-tile.x .contact-icon {
+  background: #111111;
+}
+.contact-tile.x .contact-icon svg {
+  color: #ffffff;
+}
+.contact-tile.line .contact-icon,
+.contact-tile.wechat .contact-icon {
+  background: #e0f3e6;
+}
+.contact-tile.line .contact-icon svg,
+.contact-tile.wechat .contact-icon svg {
+  color: #5a8c73;
+}
+.contact-tile.telegram .contact-icon {
+  background: #e0edfb;
+}
+.contact-tile.telegram .contact-icon svg {
+  color: #5f8caf;
+}
+.contact-tile.qq .contact-icon {
+  background: #eee5fa;
+}
+.contact-tile.qq .contact-icon svg {
+  color: #654c83;
+}
+.contact-tile.email .contact-icon {
+  background: #fff0ce;
+}
+.contact-tile.email .contact-icon svg {
+  color: #79602e;
+  transform-origin: 50% 16%;
+  transition: transform 0.22s ease;
+}
+.contact-tile.email:hover .contact-icon svg {
+  transform: translateY(-2px) rotateX(-18deg);
+}
+
+/* The copied tick is a static state; the stamp animation only decorates it, so
+   turning animations off must not hide the feedback. */
 .contact-icon::after {
   position: absolute;
   top: -3px;
   right: -4px;
   display: grid;
+  place-items: center;
   width: 20px;
   height: 20px;
-  place-items: center;
   border: 1px solid #fff;
   border-radius: 50%;
   background: #b18b3f;
@@ -90,8 +164,6 @@
   pointer-events: none;
   transform: scale(0.65) rotate(-14deg);
 }
-/* The copied tick is a static state; the stamp animation only decorates it, so
-   turning animations off must not hide the feedback. */
 .contact-tile.is-copied .contact-icon::after {
   opacity: 1;
   transform: scale(1) rotate(-10deg);
@@ -101,13 +173,6 @@
   box-shadow:
     inset 0 0 0 4px #ffffffc9,
     0 0 0 2px #e9d5a8;
-}
-.contact-tile.email .contact-icon svg {
-  transform-origin: 50% 16%;
-  transition: transform 0.22s ease;
-}
-.contact-tile.email:hover .contact-icon svg {
-  transform: translateY(-2px) rotateX(-18deg);
 }
 @keyframes contact-stamp-drop {
   0% {
@@ -123,46 +188,8 @@
     transform: scale(1) rotate(-10deg);
   }
 }
-.contact-tile.line .contact-icon svg {
-  background: transparent;
-  color: #5a8c73;
-}
-.contact-tile.telegram .contact-icon svg {
-  background: transparent;
-  color: #5f8caf;
-}
-.contact-tile.wechat .contact-icon svg {
-  background: transparent;
-  color: #5a8c73;
-}
-.contact-tile.qq .contact-icon svg {
-  background: transparent;
-  color: #654c83;
-}
-.contact-tile.email .contact-icon svg {
-  background: transparent;
-  color: #79602e;
-}
-.contact-tile strong {
-  line-height: 1.5;
-  font-weight: 500;
-  font-size: 16px;
-}
-.contact-tile small {
-  margin-top: var(--space-1);
-  color: var(--color-muted);
-  font-size: var(--font-xs);
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-}
-.contact-action {
-  margin-top: auto;
-  padding-top: var(--space-3);
-  font-size: var(--font-xs);
-  font-weight: 700;
-  line-height: 1.4;
-  color: #587c9c;
-}
+
+/* Shown when the clipboard is unavailable, with the ID selected for manual copying. */
 .contact-copy-fallback {
   display: grid;
   grid-column: 1 / -1;
@@ -192,6 +219,7 @@
     monospace;
   user-select: all;
 }
+
 .email-row {
   position: relative;
   display: grid;
@@ -200,27 +228,25 @@
   gap: var(--space-4);
   margin-top: var(--space-5);
   padding: var(--space-4) 52px var(--space-4) var(--space-4);
-  border: 1px solid var(--color-border);
+  border: 1px solid #d2dfe9;
   border-radius: var(--radius-md);
-  scroll-margin-top: var(--space-5);
-  border-color: #d2dfe9;
   background: linear-gradient(125deg, #edf4faed, #f9fcfef2);
   box-shadow: inset 3px 0 #a6c4dc;
+  scroll-margin-top: var(--space-5);
 }
 .email-row h3 {
   display: flex;
   align-items: center;
   gap: var(--space-2);
   margin: 0;
+  color: #547796;
   font-size: var(--font-sm);
   line-height: 1.6;
-  color: #547796;
 }
 .email-row h3 svg {
+  flex: 0 0 auto;
   width: 19px;
   height: 19px;
-  flex: 0 0 auto;
-  color: #547796;
 }
 .email-row > div {
   display: grid;
@@ -229,43 +255,42 @@
 }
 .email-row a {
   display: flex;
-  min-width: 0;
-  min-height: 60px;
   flex-direction: column;
   justify-content: center;
   gap: var(--space-1);
+  min-width: 0;
+  min-height: 60px;
   padding: var(--space-2) var(--space-3);
   border-left: 1px solid var(--color-border);
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  color: #547796;
   font:
-    700 var(--font-sm)/1.4 Arial,
+    700 var(--font-sm) / 1.4 "Quicksand",
     sans-serif;
   text-decoration: none;
   transition:
     color 0.18s,
     background 0.18s;
-  color: #547796;
-  font-family: "Quicksand", sans-serif;
 }
 .email-row a span {
+  color: #547796;
   font-size: var(--font-xs);
   font-weight: 400;
   line-height: 1.5;
   overflow-wrap: anywhere;
-  color: #547796;
 }
 .email-row a:hover {
-  color: #1f75bd;
   background: #ffffffa8;
+  color: #1f75bd;
 }
 .email-row > .email-stamp {
   position: absolute;
   top: 14px;
   right: 13px;
   display: grid;
+  place-items: center;
   width: 29px;
   height: 29px;
-  place-items: center;
   border: 1px solid #d8bf82;
   border-radius: 50%;
   background: #fffaf0;
@@ -277,6 +302,7 @@
   height: 18px;
   stroke-width: 1.25;
 }
+
 .panel-footer {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto 48px;
@@ -286,13 +312,13 @@
 }
 .footer-script {
   margin: 0 0 var(--space-2) var(--space-3);
+  color: #6c8fad;
   font-family: "Segoe Script", "Brush Script MT", cursive;
   font-size: 20px;
   font-style: italic;
   line-height: 1.2;
   white-space: pre-line;
   transform: rotate(-5deg);
-  color: #6c8fad;
 }
 .footer-note {
   margin: 0;
@@ -304,42 +330,8 @@
 .footer-flower {
   width: 48px;
   height: 48px;
-  stroke-width: 1;
   color: #6c8fad;
-}
-.contact-tile:nth-child(2) {
-  animation-delay: 0.06s;
-}
-.contact-tile:nth-child(3) {
-  animation-delay: 0.12s;
-}
-.contact-tile:nth-child(4) {
-  animation-delay: 0.18s;
-}
-.contact-tile:nth-child(5) {
-  animation-delay: 0.24s;
-}
-.contact-tile:nth-child(6) {
-  animation-delay: 0.3s;
-}
-.contact-tile.line .contact-icon,
-.contact-tile.wechat .contact-icon {
-  background: #e0f3e6;
-}
-.contact-tile.telegram .contact-icon {
-  background: #e0edfb;
-}
-.contact-tile.x .contact-icon {
-  background: #111111;
-}
-.contact-tile.x .contact-icon svg {
-  color: #ffffff;
-}
-.contact-tile.qq .contact-icon {
-  background: #eee5fa;
-}
-.contact-tile.email .contact-icon {
-  background: #fff0ce;
+  stroke-width: 1;
 }
 
 @media (max-width: 1050px) {
@@ -353,9 +345,6 @@
     grid-template-columns: minmax(0, 1fr);
     gap: var(--space-3);
   }
-  .email-row > div {
-    padding-right: 0;
-  }
 }
 
 @media (max-width: 700px) {
@@ -364,18 +353,21 @@
     margin-top: var(--space-4);
   }
   .contact-tile {
-    padding: var(--space-3) var(--space-1);
     min-height: 152px;
+    padding: var(--space-3) var(--space-1);
     border-radius: 18px;
+  }
+  .contact-tile strong {
+    font-size: 14px;
   }
   .contact-icon {
     width: 52px;
     height: 52px;
   }
   .contact-icon svg {
-    padding: 9px;
     width: 42px;
     height: 42px;
+    padding: 9px;
   }
   .email-row {
     margin-top: var(--space-4);
@@ -391,14 +383,12 @@
   .email-row a {
     min-height: 62px;
     padding: var(--space-3) 0;
-    border-left: 0;
     border-top: 1px solid var(--color-border);
+    border-left: 0;
     border-radius: 0;
   }
   .panel-footer {
     grid-template-columns: minmax(0, 1fr) 38px;
-    gap: var(--space-4);
-    margin-top: var(--space-5);
   }
   .footer-script {
     grid-column: 1 / -1;
@@ -408,9 +398,6 @@
   .footer-flower {
     width: 38px;
     height: 38px;
-  }
-  .contact-tile strong {
-    font-size: 14px;
   }
 }
 
@@ -423,7 +410,5 @@
 @media (prefers-reduced-motion: reduce) {
   .contact-tile {
     animation: none;
-    clip-path: none;
-    opacity: 1;
   }
 }

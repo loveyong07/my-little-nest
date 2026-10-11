@@ -2,68 +2,79 @@
   position: relative;
   z-index: 2;
   display: grid;
-  margin-inline: auto;
-  width: min(100%, 1380px);
-  padding: 34px 38px 40px;
   grid-template-columns: minmax(0, 510px) minmax(0, 1fr);
   gap: 36px;
+  width: min(100%, 1380px);
+  margin-inline: auto;
+  padding: 34px 38px 40px;
 }
-.hero-copy {
-  width: 100%;
-  min-width: 0;
+.hero-intro-stack {
   position: relative;
-  max-width: none;
-  padding: 32px 36px 30px;
-  border: 1px solid #fff;
-  border-radius: 32px;
-  background: linear-gradient(135deg, #fbfdfef2, #f7fafddb);
-  box-shadow: var(--panel-shadow);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+  min-width: 0;
 }
 .hero-character-space {
   min-width: 0;
   pointer-events: none;
 }
-.hero-copy h1 {
-  margin: 0;
-  color: #4c6c88;
-  font-family: "Quicksand", sans-serif;
-  font-style: normal;
-  font-weight: 700;
-  letter-spacing: -0.065em;
-  text-shadow: 0 2px #fff;
+
+/* The white greeting card, with a strip of washi tape and a bow. */
+.hero-copy {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  padding: 32px 36px 30px;
+  border: 1px solid #fff;
+  border-radius: 32px;
+  background: linear-gradient(135deg, #fbfdfef2, #f7fafddb);
+  box-shadow: var(--panel-shadow);
 }
+.hero-copy::before {
+  position: absolute;
+  top: -13px;
+  left: calc(50% - 52px);
+  width: 104px;
+  height: 25px;
+  border: 1px solid #ecf4fa;
+  background: repeating-linear-gradient(45deg, #b8d4ebaa 0 5px, #cce0f0aa 5px 10px);
+  content: "";
+  transform: rotate(-4deg);
+}
+.hero-bow {
+  position: absolute;
+  top: 20px;
+  right: 25px;
+  width: 43px;
+  height: 43px;
+  color: #9ab8d0;
+  transform: rotate(12deg);
+}
+
 .home-place-badge {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
   max-width: 100%;
-  margin: 0 0 var(--space-5);
-  border: 1px solid #ffffffdc;
-  border-radius: 999px;
-  line-height: 1.4;
-  margin-bottom: 14px;
+  margin: 0 0 14px;
   padding: 6px 13px 6px 6px;
+  border: 1px solid #d8e5f0;
+  border-radius: 999px;
   background: #f3f8fc;
-  border-color: #d8e5f0;
   color: #517390;
-  font-weight: 400;
   font-size: 13px;
+  font-weight: 400;
   letter-spacing: 0.04em;
-  box-shadow: none;
+  line-height: 1.4;
 }
 .home-place-seal {
   display: grid;
-  width: 25px;
-  height: 25px;
   flex: 0 0 auto;
   place-items: center;
-  border: 1px solid #dcc48c;
+  width: 25px;
+  height: 25px;
+  border: 1px solid #c3d6e5;
   border-radius: 50%;
-  border-color: #c3d6e5;
-  color: #6287a7;
   background: #fff;
+  color: #6287a7;
 }
 .home-place-seal svg {
   width: 15px;
@@ -73,6 +84,22 @@
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 1.45;
+}
+.hero-chapter {
+  margin: 0 0 12px;
+  color: #6287a7;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+}
+
+.hero-copy h1 {
+  margin: 0;
+  color: #4c6c88;
+  font-family: "Quicksand", sans-serif;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: -0.065em;
+  text-shadow: 0 2px #fff;
 }
 .hero-copy h1 span {
   display: block;
@@ -89,28 +116,57 @@
   line-height: 1.25;
 }
 .hero-copy h1 em {
+  color: #6b9ecb;
   font-family: inherit;
   font-style: inherit;
-  color: #6b9ecb;
 }
+.greeting-letter {
+  display: inline-block;
+  font: inherit;
+  animation: nest-letter-in 0.55s both;
+  animation-delay: calc(var(--letter) * 65ms);
+}
+.greeting-line {
+  animation: nest-type-in 1.25s steps(18, end) 0.4s both;
+}
+@keyframes nest-letter-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) rotate(4deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes nest-type-in {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0);
+  }
+}
+
 .ornament {
   display: flex;
   align-items: center;
+  gap: 12px;
   width: 100%;
   margin-top: 21px;
-  gap: 12px;
   color: #88a5bf;
 }
 .ornament span {
-  height: 1px;
   flex: 1;
+  height: 1px;
   background: #cadae7;
 }
 .ornament svg {
-  stroke-width: 1.3;
   width: 22px;
   height: 22px;
+  stroke-width: 1.3;
 }
+
 .profile {
   display: flex;
   align-items: center;
@@ -119,81 +175,80 @@
 }
 .profile img {
   flex: 0 0 auto;
-  border-radius: 50%;
-  object-fit: cover;
-  background: #f6fbff url("/assets/x-avatar.jpg") center / cover no-repeat;
   width: 68px;
   height: 68px;
   border: 4px solid #fff;
+  border-radius: 50%;
   outline: 1px dashed #9ab9d3;
   outline-offset: 3px;
+  background: #f6fbff url("/assets/x-avatar.jpg") center / cover no-repeat;
   box-shadow: 0 6px 15px #6b8eac1f;
+  object-fit: cover;
 }
 .profile div {
   display: grid;
   min-width: 0;
 }
 .profile strong {
+  color: #47647d;
+  font-size: 27px;
+  font-weight: 400;
   line-height: 1.3;
   overflow-wrap: anywhere;
-  color: #47647d;
-  font-weight: 400;
-  font-size: 27px;
 }
 .profile a {
+  color: #6387a7;
+  font-family: "Quicksand", sans-serif;
+  font-size: 15px;
   line-height: 1.45;
   text-decoration: none;
   overflow-wrap: anywhere;
-  font-family: "Quicksand", sans-serif;
-  color: #6387a7;
-  font-size: 15px;
 }
 .profile a:hover {
   text-decoration: underline;
 }
 .bio {
-  white-space: pre-line;
-  overflow-wrap: anywhere;
   margin: 15px 0 0;
   color: #425d75;
   font-size: 17px;
   line-height: 1.7;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
 }
 .motto {
   width: fit-content;
   max-width: 100%;
-  line-height: 1.6;
   margin: 14px 0 0;
   color: #5b81a3;
   font-family: "Quicksand", sans-serif;
   font-size: 14px;
-  font-style: normal;
-  transform: none;
   letter-spacing: 0.01em;
+  line-height: 1.6;
 }
+
 .hero-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  margin-top: 23px;
   gap: 10px;
+  margin-top: 23px;
 }
 .hero-actions a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 9px;
+  min-height: 48px;
+  padding: 11px 18px;
   border-radius: 999px;
+  font-size: 15px;
+  font-weight: 500;
   line-height: 1.3;
   text-align: center;
   text-decoration: none;
   transition:
     transform 0.18s,
     box-shadow 0.18s;
-  min-height: 48px;
-  padding: 11px 18px;
-  font-size: 15px;
-  gap: 9px;
-  font-weight: 500;
 }
 .hero-actions a:hover {
   transform: translateY(-3px);
@@ -208,41 +263,38 @@
   height: 17px;
 }
 .primary-cta {
-  padding: 12px 24px;
-  color: #375874;
-  background: linear-gradient(115deg, #c7ddef, #deecf7);
-  border: 1px solid #a7c9e5;
-  box-shadow: 0 5px 15px #7cabd426;
+  border: 1px solid #dfacc2;
+  background: linear-gradient(115deg, #f9cddd, #fce4ed);
+  color: #713b58;
+  box-shadow: 0 5px 15px #c0789820;
 }
 .primary-cta svg:last-child {
   width: 18px;
 }
 .secondary-cta {
-  padding: 12px 22px;
-  border: 1px solid #398dea;
-  color: #51728f;
-  background: #eff6fb;
-  border-color: #c8dae8;
+  border: 1px solid #a9d1bf;
+  background: #dff2e8;
+  color: #315f53;
 }
+
+/* Wide screens only: a quote in the sky and a pinned note beside the character. */
 .sky-quote {
   position: absolute;
+  top: 155px;
   right: 4.5vw;
   z-index: 1;
   max-width: 21vw;
   margin: 0;
+  padding: 16px 20px;
+  border: 1px solid #fff;
+  border-radius: 22px;
+  background: #f5f9fdc7;
+  color: #4a6984;
+  font-size: 17px;
+  letter-spacing: 0.02em;
   line-height: 1.65;
   text-align: center;
   white-space: pre-line;
-  top: 155px;
-  color: #4a6984;
-  background: #f5f9fdc7;
-  border: 1px solid #fff;
-  border-radius: 22px;
-  padding: 16px 20px;
-  font-family: var(--nest-font);
-  font-size: 17px;
-  letter-spacing: 0.02em;
-  text-shadow: none;
   transform: rotate(5deg);
 }
 .sky-quote svg {
@@ -254,27 +306,24 @@
 }
 .handwritten-note {
   position: absolute;
+  right: 3%;
+  bottom: 305px;
   z-index: 1;
   width: 164px;
   min-height: 177px;
   padding: 13px;
   border: 1px solid #fff;
-  box-shadow: var(--shadow-card);
-  top: auto;
-  bottom: 305px;
-  right: 3%;
   border-radius: 18px;
   background: #f4f8fced;
+  box-shadow: var(--shadow-card);
   color: #567998;
   transform: rotate(7deg);
 }
 .handwritten-note p {
   margin: 3px 0 30px;
+  font-size: 15px;
   line-height: 1.5;
   white-space: pre-line;
-  font-family: var(--nest-font);
-  color: #567998;
-  font-size: 15px;
 }
 .handwritten-note span {
   display: block;
@@ -282,51 +331,11 @@
   font-style: italic;
   line-height: 1.45;
   text-align: right;
-  font-family: var(--nest-font);
-  color: #567998;
 }
 .handwritten-note time {
   display: block;
 }
-.hero-intro-stack {
-  min-width: 0;
-  position: relative;
-}
-.hero-copy::before {
-  position: absolute;
-  content: "";
-  width: 104px;
-  height: 25px;
-  top: -13px;
-  left: calc(50% - 52px);
-  background: repeating-linear-gradient(45deg, #b8d4ebaa 0 5px, #cce0f0aa 5px 10px);
-  border: 1px solid #ecf4fa;
-  transform: rotate(-4deg);
-}
-.hero-bow {
-  position: absolute;
-  top: 20px;
-  right: 25px;
-  width: 43px;
-  height: 43px;
-  color: #9ab8d0;
-  transform: rotate(12deg);
-}
-.hero-chapter {
-  margin: 0 0 12px;
-  color: #6287a7;
-  font-size: 12px;
-  letter-spacing: 0.1em;
-}
-.greeting-letter {
-  display: inline-block;
-  font: inherit;
-  animation: nest-letter-in 0.55s both;
-  animation-delay: calc(var(--letter) * 65ms);
-}
-.greeting-line {
-  animation: nest-type-in 1.25s steps(18, end) 0.4s both;
-}
+
 .home-journal {
   display: grid;
   grid-template-columns: 0.9fr 1.1fr;
@@ -347,17 +356,17 @@
   transform: rotate(-1.5deg);
 }
 .journal-quote {
+  padding-right: 42px;
   background: #edf4faea;
   animation-delay: 0.3s;
-  padding-right: 42px;
 }
 .journal-note h2 {
   display: flex;
   align-items: center;
   gap: 7px;
   margin: 0 0 9px;
-  font-size: 13px;
   color: #527492;
+  font-size: 13px;
   font-weight: 500;
 }
 .journal-note h2 svg {
@@ -373,13 +382,13 @@
 }
 .journal-sticker {
   position: absolute;
-  right: 9px;
   top: -14px;
+  right: 9px;
   width: 32px;
   height: 32px;
   color: #77a0c4;
-  transform: rotate(16deg);
   filter: drop-shadow(0 2px 0 #fff);
+  transform: rotate(16deg);
 }
 .journal-note button {
   position: absolute;
@@ -401,9 +410,9 @@
   display: flex;
   flex-wrap: wrap;
   gap: 7px;
-  list-style: none;
   margin: 12px 0 0;
   padding: 0;
+  list-style: none;
 }
 .interest-tags li {
   padding: 3px 11px;
@@ -419,18 +428,6 @@
 .interest-tags li:nth-child(3n) {
   background: #e3eff8;
   color: #4f708d;
-}
-/* Pastel controls add variety while the scene and reading surfaces stay blue-white. */
-.hero-actions .primary-cta {
-  color: #713b58;
-  background: linear-gradient(115deg, #f9cddd, #fce4ed);
-  border-color: #dfacc2;
-  box-shadow: 0 5px 15px #c0789820;
-}
-.hero-actions .secondary-cta {
-  color: #315f53;
-  background: #dff2e8;
-  border-color: #a9d1bf;
 }
 
 @media (max-width: 1280px) {
@@ -455,13 +452,18 @@
     grid-template-columns: minmax(0, 1fr);
     padding: 270px 22px 28px;
   }
+  .hero-intro-stack {
+    width: 100%;
+    max-width: 570px;
+    margin: auto;
+  }
   .hero-character-space {
     display: none;
   }
   .hero-copy {
+    display: block;
     flex-direction: column;
     margin-inline: auto;
-    display: block;
     background: #f9fbfded;
   }
   .home-place-badge {
@@ -479,11 +481,6 @@
   .motto {
     order: 2;
   }
-  .hero-intro-stack {
-    max-width: 570px;
-    width: 100%;
-    margin: auto;
-  }
   .home-journal {
     margin-top: 18px;
   }
@@ -496,7 +493,11 @@
   .hero-copy {
     padding: 25px 24px;
     border-radius: 28px;
-    backdrop-filter: none;
+  }
+  .hero-chapter {
+    margin-bottom: 8px;
+    font-size: 11px;
+    letter-spacing: 0.04em;
   }
   .hero-copy h1 span:first-child {
     font-size: clamp(49px, 15.5vw, 74px);
@@ -517,29 +518,24 @@
   .bio {
     font-size: 15px;
   }
+  .motto {
+    font-size: 12px;
+  }
   .hero-actions {
-    margin-top: 20px;
     gap: 8px;
+    margin-top: 20px;
   }
   .hero-actions a {
-    font-size: 13px;
-    padding-inline: 13px;
     gap: 6px;
+    padding-inline: 13px;
+    font-size: 13px;
   }
   .primary-cta svg:last-child {
     width: 16px;
   }
-  .motto {
-    font-size: 12px;
-  }
-  .hero-chapter {
-    font-size: 11px;
-    letter-spacing: 0.04em;
-    margin-bottom: 8px;
-  }
   .home-journal {
-    gap: 10px;
     grid-template-columns: 1fr 1fr;
+    gap: 10px;
   }
   .journal-note {
     padding: 16px 14px;
@@ -550,9 +546,6 @@
   }
   .journal-note h2 {
     font-size: 12px;
-  }
-  .journal-note p {
-    font-size: 13px;
   }
 }
 
@@ -568,8 +561,8 @@
 
 @media (max-height: 600px) and (min-width: 701px) {
   .hero-layout {
-    padding-top: 35px;
     grid-template-columns: minmax(0, 52%) 1fr;
+    padding-top: 35px;
   }
   .hero-copy h1 span:first-child {
     font-size: 56px;
@@ -582,16 +575,7 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .greeting-letter,
-  .greeting-line,
-  .journal-note {
-    animation: none;
-    clip-path: none;
-    opacity: 1;
-  }
-}
-
+/* Desktop home fits the viewport: HeroSection.jsx sets --home-fit to scale the cards down. */
 @media (min-width: 901px) and (pointer: fine) {
   .site:not(.site-route) .hero-layout {
     padding-top: 18px;
@@ -600,5 +584,13 @@
   .site:not(.site-route) .hero-intro-stack {
     transform: scale(var(--home-fit, 1));
     transform-origin: top left;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .greeting-letter,
+  .greeting-line,
+  .journal-note {
+    animation: none;
   }
 }
