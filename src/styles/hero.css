@@ -96,7 +96,6 @@
   margin: 0;
   color: #4c6c88;
   font-family: "Quicksand", sans-serif;
-  font-style: normal;
   font-weight: 700;
   letter-spacing: -0.065em;
   text-shadow: 0 2px #fff;
@@ -461,25 +460,13 @@
     display: none;
   }
   .hero-copy {
-    display: block;
-    flex-direction: column;
-    margin-inline: auto;
     background: #f9fbfded;
-  }
-  .home-place-badge {
-    align-self: flex-start;
   }
   .hero-copy h1 span:first-child {
     font-size: 76px;
   }
   .hero-copy h1 span:nth-child(2) {
     font-size: 35px;
-  }
-  .hero-actions {
-    order: 1;
-  }
-  .motto {
-    order: 2;
   }
   .home-journal {
     margin-top: 18px;

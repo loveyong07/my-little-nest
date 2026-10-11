@@ -20,15 +20,6 @@
   );
   animation: home-background-breeze 12s ease-in-out infinite alternate;
 }
-.hero::after {
-  position: fixed;
-  z-index: -1;
-  inset: 0;
-  display: block;
-  content: "";
-  pointer-events: none;
-  background: transparent;
-}
 
 .home-floating-elements {
   position: fixed;
