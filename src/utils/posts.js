@@ -1,3 +1,5 @@
+import { intlLocale } from "../constants/languages.js";
+
 export function isOwnPost(post) {
   if (!post || !/^\d+$/.test(String(post.id ?? "")) || typeof post.text !== "string") return false;
   if (!post.text.trim() && !post.media?.length) return false;
@@ -59,8 +61,7 @@ export function postMonthKey(post) {
 }
 
 export function postMonths(posts, language) {
-  const locale = language === "zh" ? "zh-CN" : language === "ja" ? "ja-JP" : "en-US";
-  const formatter = new Intl.DateTimeFormat(locale, { year: "numeric", month: "long" });
+  const formatter = new Intl.DateTimeFormat(intlLocale(language), { year: "numeric", month: "long" });
   const months = new Map();
   posts.forEach((post, index) => {
     const key = postMonthKey(post);

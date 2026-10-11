@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { FiMenu, FiX } from "react-icons/fi";
 import { PiFlowerLight } from "react-icons/pi";
+import { LANGUAGES } from "../constants/languages.js";
 import { navIds } from "../constants/site.js";
 import { pagePaths } from "../routes/site-route.js";
 
@@ -64,11 +65,7 @@ export function Header({ page, t, language, changeLanguage }) {
         ))}
       </nav>
       <div className="language-picker" role="group" aria-label={t.languageLabel}>
-        {[
-          ["zh", "中文"],
-          ["ja", "日本語"],
-          ["en", "EN"],
-        ].map(([code, label]) => (
+        {LANGUAGES.map(({ code, label }) => (
           <button
             key={code}
             className={language === code ? "active" : ""}

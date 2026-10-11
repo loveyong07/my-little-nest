@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { copy } from "../constants/locales.js";
-import { LANGUAGE_STORAGE_KEY } from "../constants/site.js";
+import { DEFAULT_LANGUAGE, LANGUAGE_STORAGE_KEY, htmlLang } from "../constants/languages.js";
 
 function readStoredLanguage() {
   try {
     const saved = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
-    return Object.hasOwn(copy, saved) ? saved : "zh";
+    return Object.hasOwn(copy, saved) ? saved : DEFAULT_LANGUAGE;
   } catch {
-    return "zh";
+    return DEFAULT_LANGUAGE;
   }
 }
 
@@ -15,7 +15,7 @@ export function useI18n() {
   const [language, setLanguage] = useState(readStoredLanguage);
 
   useEffect(() => {
-    document.documentElement.lang = language === "zh" ? "zh-CN" : language === "ja" ? "ja" : "en";
+    document.documentElement.lang = htmlLang(language);
   }, [language]);
 
   function changeLanguage(nextLanguage) {

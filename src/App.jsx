@@ -82,7 +82,7 @@ export function App() {
               {page === "posts" ? (
                 <PostsPage language={language} t={t} profile={profile} onFeedReady={setPostsReady} />
               ) : (
-                <ContactPage language={language} t={t} profile={profile} />
+                <ContactPage t={t} profile={profile} />
               )}
             </Suspense>
           </section>
