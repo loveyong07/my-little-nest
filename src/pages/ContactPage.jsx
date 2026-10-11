@@ -2,14 +2,13 @@ import { FaEnvelope, FaLine, FaQq, FaTelegram, FaWeixin, FaXTwitter } from "reac
 import { HiOutlineSparkles } from "react-icons/hi2";
 import { PiFlowerLight } from "react-icons/pi";
 import { ContactTile } from "../components/ContactTile.jsx";
-import { mailboxes, HANDLE, QQ_NUMBER } from "../constants/site.js";
+import { mailboxes, QQ_NUMBER, WECHAT_ID } from "../constants/site.js";
 import { useClipboard } from "../hooks/useClipboard.js";
 
-export default function ContactPage({ language, t, profile }) {
+export default function ContactPage({ t, profile }) {
   const { copiedId, copyFailedId, manualCopyRef, copyId } = useClipboard();
   // The service name belongs in the accessible name of a copy tile, not only in the visible title.
   const copyLabel = (service, account) => `${service} · ${t.copy}: ${account}`;
-  const wechat = language === "zh" ? "微信" : "WeChat";
 
   const socials = [
     {
@@ -39,13 +38,13 @@ export default function ContactPage({ language, t, profile }) {
     {
       icon: FaWeixin,
       className: "wechat",
-      title: wechat,
+      title: t.wechatTitle,
       sub: t.wechatSub,
-      onClick: () => copyId(HANDLE),
-      copyLabel: copyLabel(wechat, HANDLE),
-      copied: copiedId === HANDLE ? t.copied : undefined,
+      onClick: () => copyId(WECHAT_ID),
+      copyLabel: copyLabel(t.wechatTitle, WECHAT_ID),
+      copied: copiedId === WECHAT_ID ? t.copied : undefined,
       action: t.actionCopy,
-      failedId: copyFailedId === HANDLE ? HANDLE : undefined,
+      failedId: copyFailedId === WECHAT_ID ? WECHAT_ID : undefined,
     },
     {
       icon: FaQq,
@@ -61,7 +60,7 @@ export default function ContactPage({ language, t, profile }) {
     {
       icon: FaEnvelope,
       className: "email",
-      title: language === "zh" ? "邮箱" : language === "ja" ? "メール" : "Email",
+      title: t.emailTitle,
       sub: t.emailSub,
       href: `mailto:${mailboxes[0].address}`,
       action: t.actionWrite,

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ASSETS, HANDLE } from "../constants/site.js";
+import { FALLBACK_AVATAR, X_USERNAME } from "../constants/site.js";
 import { fetchProfile, getProfileSnapshot } from "../profile-cache.js";
 import { startVisibleRefresh } from "../request-cache.js";
 
@@ -7,14 +7,14 @@ function displayProfile(profile) {
   return {
     name: profile.name || profile.username,
     username: profile.username,
-    avatar: profile.avatar || `${ASSETS}/x-avatar.jpg`,
+    avatar: profile.avatar || FALLBACK_AVATAR,
     avatarProxy: profile.avatarProxy,
   };
 }
 
 function initialProfile() {
   const cached = getProfileSnapshot();
-  return cached ? displayProfile(cached.profile) : { name: "初咏", username: HANDLE, avatar: `${ASSETS}/x-avatar.jpg` };
+  return cached ? displayProfile(cached.profile) : { name: "初咏", username: X_USERNAME, avatar: FALLBACK_AVATAR };
 }
 
 export function useXProfile(page, ready = true) {
