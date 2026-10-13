@@ -42,6 +42,31 @@ test("feed routes accept only GET", async () => {
   }
 });
 
+test("feed routes reject query variants before initializing or calling the upstream service", async () => {
+  let initialized = 0;
+  const handleApi = createApiHandler(
+    {},
+    {
+      serviceFactory: () => {
+        initialized++;
+        throw new Error("must not run");
+      },
+    },
+  );
+  for (const path of ["/api/x-posts", "/api/x-profile"]) {
+    for (const query of ["?t=1", "?retry=1", "?url=https://example.com", "?a=1&a=2", "?%61=1", "?&&"]) {
+      const response = await handleApi(request(path + query));
+      assert.equal(response.status, 400);
+      assert.equal((await response.json()).status, "invalid_request");
+      assert.equal(response.headers.get("cache-control"), "no-store");
+      assert.equal(response.headers.get("vercel-cdn-cache-control"), null);
+      assert.equal(response.headers.get("x-content-type-options"), "nosniff");
+      assert.equal(response.headers.get("cross-origin-resource-policy"), "same-origin");
+    }
+  }
+  assert.equal(initialized, 0);
+});
+
 test("media routes reach the signed proxies", async () => {
   let upstream = 0;
   const handleApi = createApiHandler(

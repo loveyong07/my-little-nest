@@ -1,4 +1,5 @@
 import { authorizedMediaRequest, boundedMediaCache, parseMediaSource, validMediaQuery } from "./x-media-auth.mjs";
+import { mediaContextHeaders } from "./media-request-policy.mjs";
 const VIDEO_TYPE = "video/mp4";
 const CACHE_CONTROL = "public, max-age=1800, s-maxage=43200";
 // Covers connecting and waiting for the first byte; while streaming, the same limit
@@ -136,7 +137,7 @@ export async function proxyXVideo(
       "Cache-Control": boundedMediaCache(request, CACHE_CONTROL, authOptions?.now),
       "Accept-Ranges": "bytes",
       "X-Content-Type-Options": "nosniff",
-      "Cross-Origin-Resource-Policy": "same-origin",
+      ...mediaContextHeaders(request),
     });
     for (const name of ["content-length", "content-range", "etag", "last-modified"]) {
       const value = upstream.headers.get(name);

@@ -18,6 +18,10 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
       - name: Lint, formatting, logic tests, build and runtime compatibility
+        # Public canaries: artifact checks fail if server-only values enter dist/client.
+        env:
+          X_BEARER_TOKEN: BUILD_ONLY_X_TOKEN_CANARY_20261013
+          X_MEDIA_SIGNING_SECRET: BUILD_ONLY_MEDIA_SECRET_CANARY_20261013
         run: npm run check
       - name: Fail on high or critical dependency advisories
         run: npm audit --audit-level=high

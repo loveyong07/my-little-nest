@@ -40,6 +40,33 @@ test("removed companion assets are not shipped", () => {
   assert.ok(existsSync(path.join(client, "assets/audio/air-tori-no-uta-piano-uno.mp3")));
 });
 
+test("public artifacts exclude source maps, server code, credentials and environment files", () => {
+  const secrets = [process.env.X_BEARER_TOKEN, process.env.X_MEDIA_SIGNING_SECRET].filter(Boolean);
+  let checked = 0;
+  function inspect(directory) {
+    for (const entry of readdirSync(directory, { withFileTypes: true })) {
+      const file = path.join(directory, entry.name);
+      const relative = path.relative(client, file);
+      assert.doesNotMatch(entry.name, /^(?:\.env(?:\.|$)|\.git$)|\.(?:map|pem|key)$/i, relative);
+      assert.doesNotMatch(relative, /^(?:server|api|node_modules)(?:[\\/]|$)/, relative);
+      if (entry.isDirectory()) inspect(file);
+      else if (/\.(?:js|mjs|html|css|json|txt|svg)$/i.test(entry.name)) {
+        checked++;
+        const code = readFileSync(file, "utf8");
+        assert.ok(!/sourceMappingURL\s*=/.test(code), `Source map reference in ${relative}`);
+        assert.ok(
+          !/X_BEARER_TOKEN|X_MEDIA_SIGNING_SECRET|BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY/.test(code),
+          `Server-only material in ${relative}`,
+        );
+        // Never include a credential or artifact contents in a failure message.
+        for (const secret of secrets) assert.ok(!code.includes(secret), `Server credential leaked into ${relative}`);
+      }
+    }
+  }
+  inspect(client);
+  assert.ok(checked > 0, "Inspect the produced public artifacts");
+});
+
 test("production rewrites point to built shells sharing the current React entry", async () => {
   const home = await readFile(path.join(client, "index.html"), "utf8");
   const entry = home.match(/<script[^>]+src="([^"]+)"/)[1];

@@ -193,7 +193,7 @@ test("signed video freshness is bounded by authorization expiry without changing
   );
   const expires = Number(signedUrl.searchParams.get("expires"));
   const response = await proxyXVideo(
-    new Request(signedUrl),
+    new Request(signedUrl, { headers: { "Sec-Fetch-Site": "same-origin" } }),
     async () =>
       new Response(VIDEO_BYTES, {
         headers: { "Content-Type": "video/mp4" },

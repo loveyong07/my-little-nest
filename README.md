@@ -80,6 +80,12 @@ CSS、布局或组件结构修改必须另做视觉比较；`npm run check` 不�
 
 `/api/x-media`、`/api/x-video` 为同源媒体接口。服务端为本站媒体生成签名并校验源地址、类型、有效期和签名；精确旧媒体名单提供缓存兼容。保留原图画质、视频 Range 和缓存寿命限制。
 
+媒体来源策略集中在 `server/media-request-policy.mjs`：现代浏览器只接受 `Sec-Fetch-Site: same-origin` 或直接导航的 `none`，不把兄弟子域的 `same-site` 视作同源。成功响应带 `Vary: Sec-Fetch-Site`，避免同源缓存被跨站请求复用，并保留 `Cross-Origin-Resource-Policy: same-origin`。无 Fetch Metadata 时检查存在的 Origin / Referer 是否与请求 URL 严格同源；没有来源头仍可直接访问，但该类成功响应对浏览器和 Vercel CDN 均为 `no-store`，避免回退规则被缓存跳过，也避免按完整 Referer 分裂缓存。普通浏览器的原缓存期限不变。非浏览器客户端可伪造这些头，因此这不是身份认证、限流或费用上限。
+
+资料和动态接口不接受查询参数；带参数返回不缓存的 400，且不初始化上游服务。JSON 响应带 `nosniff` 与同源资源策略。新生成的媒体项显式使用 `type: "photo"` / `"video"`；旧快照和旧浏览器缓存继续兼容。
+
+生产构建显式关闭 sourcemap，`test:build` 检查公共产物中的环境文件、服务端目录、source map、密钥标记和已提供的服务端环境变量值。CI 在检查步骤使用非真实的凭据哨兵，防止未来误把服务端变量打包给浏览器；这只是回归门禁，不能代替全面的凭据扫描。`node scripts/qa/security-smoke.mjs` 使用本机 Edge 和本地模拟上游验证浏览器缓存、来源拒绝及 Range 传输，不调用真实 X API；可用 `QA_BROWSER=chrome` 切换已安装的浏览器。详细取舍与验收见 [安全加固评估-2026-10-13.md](安全加固评估-2026-10-13.md)。
+
 本地密钥放在 `.env.local`，可参考 `.env.example`；线上密钥配置在 Vercel 服务端环境变量。禁止提交密钥或添加 `VITE_` 前缀。媒体签名优先使用 `X_MEDIA_SIGNING_SECRET`，否则从服务端 X 凭据派生。
 
 ## 项目约定

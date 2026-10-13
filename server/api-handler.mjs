@@ -19,6 +19,8 @@ function json(body, { status = 200, headers = {} } = {}) {
     headers: {
       "Content-Type": "application/json; charset=utf-8",
       "Cache-Control": JSON_CACHE_CONTROL,
+      "X-Content-Type-Options": "nosniff",
+      "Cross-Origin-Resource-Policy": "same-origin",
       ...headers,
     },
   });
@@ -43,6 +45,11 @@ export function createApiHandler(
         status: 405,
         headers: { Allow: "GET" },
       });
+    }
+    // These endpoints take no input. Random query strings must not mint cached
+    // feed variants or trigger X lookups on fresh serverless instances.
+    if (new URL(request.url).search) {
+      return json({ ...empty, status: "invalid_request" }, { status: 400 });
     }
     try {
       const result =

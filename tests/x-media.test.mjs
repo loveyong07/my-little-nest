@@ -35,7 +35,7 @@ test("proxies authorized X image paths with the requested cache headers and orig
       let fetchOptions;
       const signedUrl = await signedMediaUrl(source, "image", AUTH);
       const response = await proxyXMedia(
-        new Request(new URL(signedUrl, "https://site.test")),
+        new Request(new URL(signedUrl, "https://site.test"), { headers: { "Sec-Fetch-Site": "same-origin" } }),
         async (url, options) => {
           requestedUrl = url;
           fetchOptions = options;
@@ -201,7 +201,11 @@ test("keeps already-published unsigned images accessible with bounded retry para
   const requestUrl = new URL(mediaRequest(LEGACY_IMAGE_URL).url);
   requestUrl.searchParams.set("retry", "1");
   requestUrl.searchParams.set("lightboxRetry", "2");
-  const response = await proxyXMedia(new Request(requestUrl), async () => imageResponse(), AUTH);
+  const response = await proxyXMedia(
+    new Request(requestUrl, { headers: { "Sec-Fetch-Site": "same-origin" } }),
+    async () => imageResponse(),
+    AUTH,
+  );
   assert.equal(response.status, 200);
   assert.equal(response.headers.get("cache-control"), "public, max-age=86400, stale-while-revalidate=604800");
   assert.equal(
@@ -270,10 +274,11 @@ test("signed image caching shrinks as authorization approaches expiry", async ()
     "https://site.test",
   );
   const expires = Number(signedUrl.searchParams.get("expires"));
-  const response = await proxyXMedia(new Request(signedUrl), async () => imageResponse(), {
-    ...AUTH,
-    now: (expires - 30) * 1000,
-  });
+  const response = await proxyXMedia(
+    new Request(signedUrl, { headers: { "Sec-Fetch-Site": "same-origin" } }),
+    async () => imageResponse(),
+    { ...AUTH, now: (expires - 30) * 1000 },
+  );
   assert.equal(response.status, 200);
   assert.equal(response.headers.get("cache-control"), "public, max-age=29, stale-while-revalidate=0");
   assert.equal(response.headers.get("vercel-cdn-cache-control"), "public, s-maxage=29, stale-while-revalidate=0");

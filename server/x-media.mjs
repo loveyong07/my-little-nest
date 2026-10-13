@@ -1,4 +1,5 @@
 import { authorizedMediaRequest, boundedMediaCache, parseMediaSource, validMediaQuery } from "./x-media-auth.mjs";
+import { mediaContextHeaders } from "./media-request-policy.mjs";
 const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"]);
 const MAX_IMAGE_BYTES = 12 * 1024 * 1024;
 const CACHE_CONTROL = "public, max-age=86400, stale-while-revalidate=604800";
@@ -168,7 +169,7 @@ export async function proxyXMedia(request, fetchImpl = globalThis.fetch, authOpt
         "Cache-Control": boundedMediaCache(request, CACHE_CONTROL, authOptions?.now),
         "Vercel-CDN-Cache-Control": boundedMediaCache(request, VERCEL_CDN_CACHE_CONTROL, authOptions?.now),
         "X-Content-Type-Options": "nosniff",
-        "Cross-Origin-Resource-Policy": "same-origin",
+        ...mediaContextHeaders(request),
       },
     });
     keepTimeoutForStream = streamingResponse;
