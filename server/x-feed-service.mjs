@@ -116,7 +116,7 @@ function normalizedPost(post, user, mediaByKey, { allowReferences = false } = {}
     const alt = typeof media?.alt_text === "string" ? media.alt_text.trim() : "";
     if (media?.type === "photo") {
       const url = safePhotoUrl(media.url);
-      if (url) mediaItems.push({ url, alt, ...(mediaDimensions(media) ?? {}) });
+      if (url) mediaItems.push({ type: "photo", url, alt, ...(mediaDimensions(media) ?? {}) });
     } else if (media?.type === "video") {
       const variants = Array.isArray(media.variants) ? media.variants : [];
       const videoVariants = variants.filter(

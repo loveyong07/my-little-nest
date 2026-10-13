@@ -335,8 +335,8 @@ test("loads photos from the post's media keys in attachment order", async () => 
   assert.ok(postsUrl.searchParams.get("media.fields").split(",").includes("url"));
   assert.equal(result.posts[0].text, "Photos https://t.co/article");
   assert.deepEqual(result.posts[0].media, [
-    { url: "https://pbs.twimg.com/media/second.jpg", alt: "Second photo" },
-    { url: "https://pbs.twimg.com/media/first.jpg", alt: "First photo" },
+    { type: "photo", url: "https://pbs.twimg.com/media/second.jpg", alt: "Second photo" },
+    { type: "photo", url: "https://pbs.twimg.com/media/first.jpg", alt: "First photo" },
   ]);
 });
 
@@ -416,7 +416,7 @@ test("retains safe photo and video dimensions for daily and pinned media without
   });
   const result = await feed();
   for (const item of [result.posts[0], result.pinnedPost]) {
-    assert.deepEqual(item.media[0], { url: photoUrl, alt: "", width: 1200, height: 1800 });
+    assert.deepEqual(item.media[0], { type: "photo", url: photoUrl, alt: "", width: 1200, height: 1800 });
     for (const invalid of item.media.slice(1, -1)) {
       assert.equal(invalid.url, photoUrl);
       assert.equal("width" in invalid, false);
@@ -796,7 +796,9 @@ test("loads the account's pinned reply with its photo and excludes it from daily
   assert.equal(result.pinnedStatus, "ok");
   assert.equal(result.pinnedPost.id, "8");
   assert.equal(result.pinnedPost.text, "Pinned reply");
-  assert.deepEqual(result.pinnedPost.media, [{ url: "https://pbs.twimg.com/media/photo.jpg", alt: "Pinned photo" }]);
+  assert.deepEqual(result.pinnedPost.media, [
+    { type: "photo", url: "https://pbs.twimg.com/media/photo.jpg", alt: "Pinned photo" },
+  ]);
   assert.deepEqual(
     result.posts.map((item) => item.id),
     ["10", "9", "7", "6", "5", "4"],

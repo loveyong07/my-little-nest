@@ -1,5 +1,6 @@
 import { parseMediaSource } from "../shared/media-sources.mjs";
 import { LEGACY_IMAGE_URLS, LEGACY_VIDEO_URLS } from "./x-media-legacy.mjs";
+import { allowedMediaContext } from "./media-request-policy.mjs";
 
 export { parseMediaSource };
 const DAY_SECONDS = 86400;
@@ -75,7 +76,7 @@ export async function authorizedMediaRequest(
 ) {
   if (!source || !validMediaQuery(request)) return false;
   // This is an early browser hotlink check, not a substitute for cryptographic authorization.
-  if (request.headers.get("sec-fetch-site") === "cross-site") return false;
+  if (!allowedMediaContext(request)) return false;
   const params = new URL(request.url).searchParams;
   const expiresText = params.get("expires");
   const signature = params.get("signature");
