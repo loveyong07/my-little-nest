@@ -71,6 +71,7 @@ function resetDom() {
   document.body.style.overflow = "";
   document.documentElement.classList.remove("motion-off");
   window.localStorage.clear();
+  window.sessionStorage.clear();
 }
 
 async function mount(element) {
@@ -424,8 +425,108 @@ test("contact copy action reports success and exposes a manual fallback on failu
   await view.unmount();
 });
 
+test("Posts requires age confirmation in every language and offers a home exit without loading the feed", async (context) => {
+  resetDom();
+  let requests = 0;
+  context.mock.method(globalThis, "fetch", async () => {
+    requests++;
+    return { ok: false, status: 503 };
+  });
+  for (const language of ["zh", "ja", "en"]) {
+    const view = await mount(
+      React.createElement(PostsPage, {
+        language,
+        t: copy[language],
+        profile: { username: "loveyong07" },
+        onFeedReady() {},
+      }),
+    );
+    assert.equal(view.container.querySelector("#posts-age-heading")?.textContent, copy[language].ageGateHeading);
+    assert.equal(view.container.querySelector(".posts-age-exit")?.getAttribute("href"), pagePaths.home);
+    assert.equal(view.container.querySelector(".post-card, .posts-section"), null);
+    assert.equal(window.sessionStorage.getItem("nest-posts-age-confirmed"), null);
+    await view.unmount();
+  }
+  assert.equal(requests, 0);
+});
+
+test("Age confirmation reveals Posts and persists on return only while the session remains confirmed", async (context) => {
+  resetDom();
+  // Keep this fixture out of the following feed tests' real-time cache window.
+  const now = Date.now() + 60 * 60_000;
+  context.mock.method(Date, "now", () => now);
+  let requests = 0;
+  context.mock.method(globalThis, "fetch", async () => {
+    requests++;
+    return { ok: true, json: async () => ({ status: "ok", posts: [], pinnedStatus: "none" }) };
+  });
+  const element = () =>
+    React.createElement(PostsPage, {
+      language: "zh",
+      t: copy.zh,
+      profile: { username: "loveyong07" },
+      onFeedReady() {},
+    });
+  let view = await mount(element());
+  assert.equal(requests, 0);
+  await React.act(async () => view.container.querySelector(".posts-age-confirm").click());
+  assert.equal(window.sessionStorage.getItem("nest-posts-age-confirmed"), "18+");
+  assert.equal(requests, 1);
+  assert.ok(view.container.querySelector(".posts-section"));
+  assert.equal(view.container.querySelector(".posts-age-gate"), null);
+  await view.unmount();
+
+  view = await mount(element());
+  assert.ok(view.container.querySelector(".posts-section"));
+  await view.unmount();
+  window.sessionStorage.clear();
+  view = await mount(element());
+  assert.ok(view.container.querySelector(".posts-age-gate"));
+  assert.equal(view.container.querySelector(".posts-section"), null);
+  assert.equal(requests, 1);
+  await view.unmount();
+});
+
+test("Blocked session storage still requires confirmation and allows an explicitly confirmed visit", async (context) => {
+  resetDom();
+  const now = Date.now() + 120 * 60_000;
+  context.mock.method(Date, "now", () => now);
+  context.mock.method(globalThis, "fetch", async () => ({
+    ok: true,
+    json: async () => ({ status: "ok", posts: [], pinnedStatus: "none" }),
+  }));
+  const storageDescriptor = Object.getOwnPropertyDescriptor(window, "sessionStorage");
+  Object.defineProperty(window, "sessionStorage", {
+    configurable: true,
+    get() {
+      throw new Error("Storage blocked");
+    },
+  });
+  const element = () =>
+    React.createElement(PostsPage, {
+      language: "en",
+      t: copy.en,
+      profile: { username: "loveyong07" },
+      onFeedReady() {},
+    });
+  let view;
+  try {
+    view = await mount(element());
+    assert.ok(view.container.querySelector(".posts-age-gate"));
+    await React.act(async () => view.container.querySelector(".posts-age-confirm").click());
+    assert.ok(view.container.querySelector(".posts-section"));
+    await view.unmount();
+    view = await mount(element());
+    assert.ok(view.container.querySelector(".posts-age-gate"));
+  } finally {
+    await view?.unmount();
+    Object.defineProperty(window, "sessionStorage", storageDescriptor);
+  }
+});
+
 test("Posts page keeps the dated snapshot visible and offers recovery after a feed failure", async () => {
   resetDom();
+  window.sessionStorage.setItem("nest-posts-age-confirmed", "18+");
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () => ({ ok: false, status: 503 });
   const ready = [];
@@ -453,6 +554,7 @@ test("Posts page keeps the dated snapshot visible and offers recovery after a fe
 
 test("Posts opens on the latest feed post and preserves only an explicitly selected reading position", async (context) => {
   resetDom();
+  window.sessionStorage.setItem("nest-posts-age-confirmed", "18+");
   // Let the preceding outage's shared request cooldown expire.
   let now = Date.now() + 31_000;
   context.mock.method(Date, "now", () => now);

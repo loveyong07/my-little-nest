@@ -1,3 +1,86 @@
+/* Age confirmation replaces the feed until the visitor explicitly accepts. */
+.posts-age-gate {
+  max-width: 680px;
+  margin: var(--space-4) auto;
+  padding: clamp(20px, 4vw, 40px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--card-radius);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-card);
+  text-align: center;
+}
+.posts-age-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--pastel-lavender-line);
+  border-radius: 999px;
+  background: var(--pastel-lavender);
+  color: var(--pastel-lavender-ink);
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+.posts-age-badge svg {
+  width: 24px;
+  height: 24px;
+}
+.posts-age-gate h2 {
+  margin: var(--space-5) 0 var(--space-3);
+  color: var(--color-ink);
+  font-size: var(--font-title);
+  line-height: 1.5;
+}
+.posts-age-gate p {
+  margin: 0;
+  color: var(--color-muted);
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+.posts-age-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-5) 0;
+}
+.posts-age-actions button,
+.posts-age-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: 100%;
+  max-width: 380px;
+  min-height: 48px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  line-height: 1.6;
+  text-decoration: none;
+}
+.posts-age-confirm {
+  border: 1px solid #b8d6eb;
+  background: var(--pastel-blue);
+  color: var(--pastel-blue-ink);
+}
+.posts-age-confirm svg {
+  flex-shrink: 0;
+}
+.posts-age-exit {
+  border: 1px solid var(--color-border);
+  background: var(--surface-tint);
+  color: var(--color-muted);
+}
+.posts-age-actions button:hover,
+.posts-age-actions a:hover {
+  border-color: var(--color-primary);
+  background: #fff;
+}
+.posts-age-gate .posts-age-note {
+  font-size: var(--font-xs);
+}
+
 /* Reading entry above the feed. */
 .posts-reading-entry {
   display: flex;

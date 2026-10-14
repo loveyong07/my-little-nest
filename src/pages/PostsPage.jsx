@@ -1,14 +1,16 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FaArrowDown, FaArrowRight } from "react-icons/fa6";
 import { FiChevronLeft, FiChevronRight, FiCalendar, FiRefreshCw } from "react-icons/fi";
 import { HiOutlineSparkles } from "react-icons/hi2";
 import { PiPushPinFill } from "react-icons/pi";
 import { PostCard } from "../components/PostCard.jsx";
+import { PostsAgeGate } from "../components/PostsAgeGate.jsx";
 import { useXFeed } from "../hooks/useXFeed.js";
 import { formatPostDate } from "../utils/date.js";
 import { postExcerpt, postMonthKey, postMonths } from "../utils/posts.js";
 import { preferredScrollBehavior } from "../utils/motion.js";
 import { canPrefetch } from "../utils/network.js";
+import { hasAgeConfirmation, rememberAgeConfirmation } from "../utils/age-confirmation.js";
 
 function PostControls({ postIndex, total, onChange, t }) {
   return (
@@ -26,7 +28,20 @@ function PostControls({ postIndex, total, onChange, t }) {
   );
 }
 
-export default function PostsPage({ language, t, profile, onFeedReady }) {
+export default function PostsPage(props) {
+  const [confirmed, setConfirmed] = useState(hasAgeConfirmation);
+
+  function confirmAge() {
+    rememberAgeConfirmation();
+    setConfirmed(true);
+    // The confirmation button is removed; give keyboard readers a stable focus target.
+    window.requestAnimationFrame(() => document.getElementById("page-heading")?.focus({ preventScroll: true }));
+  }
+
+  return confirmed ? <PostsContent {...props} /> : <PostsAgeGate t={props.t} onConfirm={confirmAge} />;
+}
+
+function PostsContent({ language, t, profile, onFeedReady }) {
   useEffect(() => {
     // Decorative glyphs must not compete with post photos on constrained links.
     if (!canPrefetch()) return undefined;

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { canPrefetch } from "../utils/network.js";
 import { pagePaths, resolvePage, siteNavigation } from "../routes/site-route.js";
 import { scenePreloads } from "../routes/scene-assets.js";
+import { hasAgeConfirmation } from "../utils/age-confirmation.js";
 
 export { pagePaths };
 
@@ -42,10 +43,10 @@ function activateScene(page) {
 
 if (typeof window !== "undefined") activateScene(currentPage());
 
-// A direct /posts visit starts loading before React mounts. fetchFeed coalesces
-// any later request until this one settles.
+// A confirmed direct /posts visit starts loading before React mounts. New visitors
+// wait for age confirmation; fetchFeed coalesces any later request.
 let earlyFeed =
-  typeof window !== "undefined" && currentPage() === "posts"
+  typeof window !== "undefined" && currentPage() === "posts" && hasAgeConfirmation()
     ? import("../feed-cache.js").then(({ fetchFeed }) => fetchFeed())
     : null;
 earlyFeed?.catch(() => {});
