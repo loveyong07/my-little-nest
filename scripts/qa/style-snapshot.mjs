@@ -68,10 +68,14 @@ function scenarios() {
   add({ vp: "landscape", page: "posts", action: "photo", shot: true });
   add({ vp: "short-phone", page: "home", action: "menu-contact", shot: true });
   for (const vp of ["desktop", "phone"]) add({ vp, page: "posts", action: "photo-keyboard", shot: true });
+  for (const vp of baseViewports) add({ vp, page: "posts", ageGate: true, shot: true });
+  for (const vp of ["desktop", "phone"]) for (const lang of ["ja", "en"]) add({ vp, page: "posts", lang, ageGate: true, shot: true });
+  add({ vp: "phone", page: "posts", ageGate: true, forcedColors: true, shot: true });
   return list.map((scenario) => ({
     ...scenario,
     name: [scenario.page, scenario.vp, scenario.lang, scenario.effects === false && "effects-off",
-      scenario.reducedMotion && "reduced", scenario.feed, scenario.action].filter(Boolean).join("-"),
+      scenario.reducedMotion && "reduced", scenario.ageGate && "age-confirmation",
+      scenario.forcedColors && "forced-colors", scenario.feed, scenario.action].filter(Boolean).join("-"),
   }));
 }
 
@@ -173,6 +177,7 @@ async function prepareContext(browser, scenario) {
     locale: "zh-CN",
     timezoneId: "Asia/Shanghai",
     reducedMotion: scenario.reducedMotion ? "reduce" : "no-preference",
+    forcedColors: scenario.forcedColors ? "active" : "none",
   });
   const feed = readFileSync(path.join(fixtures, "feed.json"), "utf8");
   const profile = readFileSync(path.join(fixtures, "profile.json"), "utf8");
@@ -196,7 +201,7 @@ async function prepareContext(browser, scenario) {
     : route.fulfill({ status: 200, contentType: "image/jpeg", body: image }));
   await context.route(/\/api\/x-video\?/, (route) => route.fulfill({ status: 404, body: "" }));
   await context.route(/\.mp3(?:\?|$)/, (route) => route.abort());
-  await context.addInitScript(({ lang, effects, copy }) => {
+  await context.addInitScript(({ lang, effects, copy, ageGate }) => {
     let seed = 20261011;
     Math.random = () => {
       seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
@@ -205,6 +210,8 @@ async function prepareContext(browser, scenario) {
     try {
       localStorage.setItem("hello-nice-site-language", lang);
       localStorage.setItem("nest-effects", String(effects));
+      // Existing reading scenarios compare the feed after age confirmation.
+      if (!ageGate) sessionStorage.setItem("nest-posts-age-confirmed", "18+");
     } catch { /* Storage is optional. */ }
     if (copy) {
       Object.defineProperty(navigator, "clipboard", {
@@ -212,7 +219,7 @@ async function prepareContext(browser, scenario) {
         value: { writeText: () => copy === "ok" ? Promise.resolve() : Promise.reject(new Error("denied")) },
       });
     }
-  }, { lang: scenario.lang, effects: scenario.effects !== false, copy: scenario.action === "copy" ? "ok" : scenario.action === "copy-fail" ? "fail" : null });
+  }, { lang: scenario.lang, effects: scenario.effects !== false, ageGate: scenario.ageGate, copy: scenario.action === "copy" ? "ok" : scenario.action === "copy-fail" ? "fail" : null });
   return context;
 }
 
@@ -220,13 +227,14 @@ async function load(page, scenario) {
   await page.clock.setFixedTime(FIXED_TIME);
   await page.addInitScript(pageHelpers);
   await page.goto(ORIGIN + pages[scenario.page], { waitUntil: "load" });
-  if (scenario.page === "posts") {
+  if (scenario.ageGate) await page.waitForSelector(".posts-age-gate", { timeout: 15000 });
+  else if (scenario.page === "posts") {
     await page.waitForSelector(scenario.feed === "loading" ? ".pinned-placeholder-loading" : ".post-reading .post-card, .feed-empty", { timeout: 15000 });
     // The timeline font stylesheet loads 3 seconds after load; it changes .post-text.
     await page.waitForFunction(() => [...document.fonts].some((font) => font.family.includes("ZCOOL")), null, { timeout: 15000 });
   }
   // Extras wait for the feed, so a pending feed never shows the dock.
-  if (scenario.feed !== "loading") await page.waitForSelector(".nest-dock", { timeout: 15000 });
+  if (scenario.feed !== "loading" && !scenario.ageGate) await page.waitForSelector(".nest-dock", { timeout: 15000 });
   // Bring lazy media into range once so every capture sees loaded images.
   await page.evaluate(async () => {
     window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" });
