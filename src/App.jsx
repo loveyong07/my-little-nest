@@ -85,6 +85,7 @@ export function App() {
                 <ContactPage t={t} profile={profile} />
               )}
             </Suspense>
+            <div className="glass-panel-backdrop" aria-hidden="true" />
           </section>
         </>
       )}
