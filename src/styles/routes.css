@@ -50,12 +50,13 @@
 }
 
 .route-panel {
+  --panel-arrive-duration: 0.34s;
   display: block;
   width: calc(100% - 8vw);
   max-width: 1160px;
   margin: -28px auto 35px;
   padding: 32px;
-  animation: panel-arrive 0.34s ease-out both;
+  animation: panel-arrive var(--panel-arrive-duration) ease-out backwards;
 }
 /* A strip of washi tape on the panel's top edge. */
 .route-panel::before {
@@ -79,7 +80,8 @@
   }
   to {
     opacity: 1;
-    transform: translate3d(0, 0, 0);
+    /* Release the fixed glass scene from the entrance's containing block. */
+    transform: none;
   }
 }
 

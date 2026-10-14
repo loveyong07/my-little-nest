@@ -1,0 +1,276 @@
+/* Clear glass inspired by the supplied ColorOS desktop / control-center photos.
+   The outer pane admits the scene; nested panes progressively frost the scene. */
+:root {
+  --glass-edge-light:
+    inset 0 1px 1px #ffffffb3, inset 1px 0 1px #ffffff73, inset 0 -1px 1px #ffffff8c, inset -1px 0 1px #ffffff33,
+    inset 0 0 9px #ffffff0f;
+  --glass-panel-shadow: 0 0 0 1px #ffffff26, 0 0 12px #ffffff1a, 0 12px 30px #284b6821, var(--glass-edge-light);
+  --glass-card-shadow: 0 0 0 1px #ffffff1a, 0 0 10px #ffffff18, 0 6px 18px #355b811a, var(--glass-edge-light);
+  --glass-scene-blur: 1.5px;
+  --glass-home-blur: 0.75px;
+  --glass-home-fill:
+    radial-gradient(ellipse at 0% 0%, #ffffff45, #ffffff00 48%),
+    radial-gradient(ellipse at 100% 100%, #ffffff2e, #ffffff00 42%),
+    linear-gradient(135deg, #f9fcfe1f, #e7f4ff0d 60%, #ffffff1a);
+  --glass-panel-fill: linear-gradient(135deg, #ffffff29, #e8f3ff1a 60%, #ffffff24);
+  --glass-tile-fill: linear-gradient(135deg, #ffffff4d, #f4f9ff66);
+  --glass-reading-fill: linear-gradient(135deg, #ffffff6b, #f9fcfe80);
+  --glass-control-fill: linear-gradient(135deg, #ffffff94, #f4f9ffad);
+  --glass-text-halo: 0 1px 2px #ffffffbf, 0 0 6px #ffffff66;
+  --glass-tile-blur: 3px;
+  --glass-email-blur: 4px;
+  --glass-reading-blur: 6px;
+  --glass-control-blur: 8px;
+}
+
+/* These remain readable, high-opacity surfaces when a filter is unsupported. */
+.hero-copy,
+.content-panel {
+  --color-text: #213f58;
+  --color-ink: #294c68;
+  --color-muted: #325572;
+  --color-ink-soft: #375b77;
+  border-color: #ffffff73;
+  box-shadow: var(--glass-panel-shadow);
+  text-shadow: var(--glass-text-halo);
+}
+.hero-copy {
+  box-shadow:
+    0 0 0 1px #ffffff33,
+    0 0 18px #ffffff24,
+    0 12px 30px #284b681a,
+    inset 0 1px 2px #ffffffeb,
+    inset 1px 0 2px #ffffff80,
+    inset 0 -2px 3px #ffffff99,
+    inset -1px 0 2px #ffffff40;
+}
+.hero-copy h1 {
+  color: #2e526f;
+  text-shadow: var(--glass-text-halo);
+}
+.hero-copy h1 em {
+  color: #396b91;
+}
+.hero-copy .bio {
+  color: #294961;
+}
+.hero-chapter,
+.profile a {
+  color: #325572;
+}
+.motto {
+  color: #325572;
+}
+.content-panel .section-heading {
+  color: #294c68;
+}
+.micro-slogan,
+.contact-action {
+  color: #325572;
+}
+.footer-script,
+.footer-flower {
+  color: #325572;
+}
+
+.post-card,
+.contact-tile,
+.route-panel-posts .pinned-placeholder {
+  border-color: #ffffff80;
+  box-shadow: var(--glass-card-shadow);
+}
+.contact-tile:hover {
+  border-color: #ffffffb3;
+  box-shadow:
+    0 0 14px #ffffff33,
+    0 9px 22px #355b8121,
+    var(--glass-edge-light);
+}
+.email-row {
+  border-color: #ffffff80;
+  box-shadow:
+    inset 3px 0 #a4c3dc99,
+    var(--glass-card-shadow);
+}
+.post-index-button {
+  border-color: #ffffff80;
+  box-shadow: var(--glass-card-shadow);
+}
+.post-index-button.is-active {
+  box-shadow:
+    inset 0 -3px #9cbcd6,
+    var(--glass-edge-light);
+}
+
+.glass-panel-backdrop {
+  display: none;
+}
+
+/* A single clear droplet: corner reflections and almost no background blur. */
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .hero-copy {
+    background: var(--glass-home-fill);
+    -webkit-backdrop-filter: blur(var(--glass-home-blur)) saturate(1.06);
+    backdrop-filter: blur(var(--glass-home-blur)) saturate(1.06);
+  }
+  /* Small raised panes can sample the static outer scene directly. */
+  .contact-tile,
+  .post-index-button,
+  .route-panel-posts .pinned-placeholder {
+    -webkit-backdrop-filter: blur(var(--glass-tile-blur)) saturate(1.03);
+    backdrop-filter: blur(var(--glass-tile-blur)) saturate(1.03);
+  }
+  .email-row {
+    -webkit-backdrop-filter: blur(var(--glass-email-blur)) saturate(1.03);
+    backdrop-filter: blur(var(--glass-email-blur)) saturate(1.03);
+  }
+  .post-date,
+  .post-month-picker select {
+    -webkit-backdrop-filter: blur(var(--glass-control-blur)) saturate(1.02);
+    backdrop-filter: blur(var(--glass-control-blur)) saturate(1.02);
+  }
+}
+
+/* The rim is a coating only: the mask keeps its bright reflection off the text. */
+@supports (mask-composite: exclude) or (-webkit-mask-composite: xor) {
+  .hero-copy::after {
+    position: absolute;
+    inset: 0;
+    padding: 2px;
+    border-radius: inherit;
+    background: linear-gradient(135deg, #fffffff2, #ffffff1a 38%, #ffffff80 72%, #fffffff2);
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    content: "";
+    pointer-events: none;
+  }
+}
+
+/* The long route panels blur only a copy of their static scene, never the feed,
+   videos or particles. It shares the scene URL/position and stays viewport-sized.
+   Clip this decorative layer, leaving the tape and focus outlines unclipped. */
+@supports (filter: blur(1px)) and (clip-path: border-box) {
+  .glass-panel-backdrop {
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    display: block;
+    border-radius: inherit;
+    clip-path: border-box;
+    pointer-events: none;
+    /* Show the fixed scene after the panel's entrance releases its transform. */
+    animation: glass-backdrop-ready var(--panel-arrive-duration) step-end backwards;
+  }
+  .glass-panel-backdrop::before {
+    position: fixed;
+    inset: -16px;
+    background-image: var(--route-scene-image);
+    background-position: var(--route-scene-position);
+    background-size: cover;
+    background-repeat: no-repeat;
+    filter: blur(var(--glass-scene-blur)) saturate(1.04);
+    content: "";
+  }
+  .glass-panel-backdrop::after {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--glass-panel-fill);
+    box-shadow: var(--glass-edge-light);
+    content: "";
+  }
+  /* A post can be very tall: frost a viewport-sized static image, not a live
+     backdrop covering the full article. The fill reproduces both glass layers. */
+  .post-card {
+    position: relative;
+    isolation: isolate;
+    background: var(--glass-reading-fill);
+  }
+  .glass-reading-backdrop::before {
+    filter: blur(var(--glass-reading-blur)) saturate(1.04);
+  }
+  .glass-reading-backdrop::after {
+    background: var(--glass-reading-fill), var(--glass-panel-fill);
+  }
+  /* Successive layers: clear outer pane, translucent cards, then reading controls. */
+  .contact-tile,
+  .route-panel-posts .pinned-placeholder {
+    background: var(--glass-tile-fill);
+  }
+  .email-row {
+    background: linear-gradient(125deg, #eaf3fa5c, #f9fcfe73);
+  }
+  .post-index-button {
+    background: var(--glass-tile-fill);
+  }
+  .post-index-button:hover {
+    background: #ffffff73;
+  }
+  .post-index-button.is-active {
+    background: #e6f0f97a;
+  }
+  .post-date,
+  .post-month-picker select {
+    border-color: #ffffff8c;
+    background: var(--glass-control-fill);
+    box-shadow: var(--glass-edge-light);
+  }
+}
+
+@keyframes glass-backdrop-ready {
+  from {
+    visibility: hidden;
+  }
+  to {
+    visibility: visible;
+  }
+}
+
+@media (max-width: 700px) {
+  :root {
+    --glass-scene-blur: 1px;
+    --glass-home-blur: 1px;
+    --glass-home-fill:
+      radial-gradient(ellipse at 0% 0%, #ffffff45, #ffffff00 48%),
+      radial-gradient(ellipse at 100% 100%, #ffffff2e, #ffffff00 42%),
+      linear-gradient(135deg, #f9fcfe2e, #e7f4ff1f 60%, #ffffff29);
+    --glass-panel-fill: linear-gradient(135deg, #ffffff33, #e8f3ff24 60%, #ffffff2e);
+    --glass-tile-fill: linear-gradient(135deg, #ffffff5c, #f4f9ff73);
+    --glass-reading-fill: linear-gradient(135deg, #ffffff7a, #f9fcfe8c);
+    --glass-tile-blur: 2.5px;
+    --glass-email-blur: 3px;
+    --glass-reading-blur: 4.5px;
+    --glass-control-blur: 6px;
+  }
+}
+
+@media (forced-colors: active) {
+  .glass-panel-backdrop {
+    display: none;
+  }
+  .hero-copy::after {
+    content: none;
+  }
+  .hero-copy,
+  .content-panel,
+  .post-card,
+  .contact-tile,
+  .email-row,
+  .post-index-button,
+  .pinned-placeholder,
+  .post-date,
+  .post-month-picker select {
+    background: Canvas;
+    border-color: CanvasText;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    text-shadow: none;
+  }
+}

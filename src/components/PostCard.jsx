@@ -213,6 +213,7 @@ export function PostCard({ post, feedSource, language, t, label, profile, priori
             <FaArrowRight aria-hidden="true" />
           </a>
         </div>
+        <div className="glass-panel-backdrop glass-reading-backdrop" aria-hidden="true" />
       </article>
       {expandedMedia && (expandedMedia === "photo" ? currentPhoto : video) && (
         <MediaLightbox
