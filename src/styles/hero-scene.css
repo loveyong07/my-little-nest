@@ -13,10 +13,10 @@
   inset: -16px;
   content: "";
   pointer-events: none;
-  background: url("/assets/hero-sky-alt-motion-q90.jpg") center top / cover no-repeat;
+  background: url("/assets/home-beach-desktop-d941f675.jpg") center top / cover no-repeat;
   background-image: image-set(
-    "/assets/hero-sky-alt-motion-q90.webp" type("image/webp"),
-    "/assets/hero-sky-alt-motion-q90.jpg" type("image/jpeg")
+    "/assets/home-beach-desktop-cadff3fb.webp" type("image/webp"),
+    "/assets/home-beach-desktop-d941f675.jpg" type("image/jpeg")
   );
   animation: home-background-breeze 12s ease-in-out infinite alternate;
 }
@@ -185,13 +185,13 @@
     --home-scene-position: 62%;
   }
   .hero::before {
-    background-image: url("/assets/hero-sky-mobile-motion-q90.jpg");
+    background-image: url("/assets/home-beach-mobile-25197c74.jpg");
   }
   @supports (background-image: image-set(url("") type("image/webp"))) {
     .hero::before {
       background-image: image-set(
-        "/assets/hero-sky-mobile-motion-q90.webp" type("image/webp"),
-        "/assets/hero-sky-mobile-motion-q90.jpg" type("image/jpeg")
+        "/assets/home-beach-mobile-ed18d0d3.webp" type("image/webp"),
+        "/assets/home-beach-mobile-25197c74.jpg" type("image/jpeg")
       );
     }
   }

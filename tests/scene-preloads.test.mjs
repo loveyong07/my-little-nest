@@ -26,7 +26,7 @@ test("direct route shells replace home preloads rather than fetching unrelated s
     const html = withScenePreloads(home, page);
     assert.equal((html.match(/data-scene-preload/g) ?? []).length, 1);
     assert.match(html, new RegExp(scene));
-    assert.doesNotMatch(html, /hero-sky-(?:mobile|alt)/);
+    assert.doesNotMatch(html, /home-beach-(?:mobile|desktop)/);
   }
 });
 
