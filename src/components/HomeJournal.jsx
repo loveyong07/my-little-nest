@@ -6,8 +6,15 @@ import { fantasyCopy, interests } from "../constants/fantasy.js";
 
 export function HomeJournal({ language }) {
   const f = fantasyCopy[language];
-  const [notice] = useState(() => Math.floor(Math.random() * 3));
-  const [quote, setQuote] = useState(() => Math.floor(Math.random() * 3));
+  const [notice] = useState(() => Math.floor(Math.random() * f.notices.length));
+  const [quote, setQuote] = useState(() => Math.floor(Math.random() * f.quotes.length));
+
+  function shuffleQuote() {
+    if (f.quotes.length < 2) return;
+    const next = Math.floor(Math.random() * (f.quotes.length - 1));
+    setQuote(next >= quote ? next + 1 : next);
+  }
+
   return (
     <section className="home-journal" aria-label={f.journal}>
       <article className="journal-note journal-notice">
@@ -28,7 +35,7 @@ export function HomeJournal({ language }) {
           {f.quote}
         </h2>
         <p aria-live="polite">{f.quotes[quote]}</p>
-        <button type="button" onClick={() => setQuote((value) => (value + 1) % f.quotes.length)} aria-label={f.shuffle}>
+        <button type="button" onClick={shuffleQuote} aria-label={f.shuffle}>
           <FiRefreshCw aria-hidden="true" />
         </button>
       </article>
