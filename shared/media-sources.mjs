@@ -1,7 +1,10 @@
 // X media hosts and path prefixes the site may display. Shared by the feed service,
 // the signed media proxy (server/) and the browser (src/media-urls.js).
 export const MEDIA_SOURCES = {
-  image: { host: "pbs.twimg.com", paths: ["/media/", "/profile_images/", "/ext_tw_video_thumb/"] },
+  image: {
+    host: "pbs.twimg.com",
+    paths: ["/media/", "/profile_images/", "/ext_tw_video_thumb/", "/amplify_video_thumb/"],
+  },
   video: { host: "video.twimg.com", paths: ["/ext_tw_video/", "/amplify_video/", "/tweet_video/"] },
 };
 

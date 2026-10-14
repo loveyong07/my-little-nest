@@ -60,13 +60,15 @@ test("published photos and both avatar resolutions retain their authorized image
 
 test("published videos and posters retain separate authorized routes", () => {
   const video = "https://video.twimg.com/ext_tw_video/123/pu/vid/720x720/clip.mp4?tag=12";
-  const poster = "https://pbs.twimg.com/ext_tw_video_thumb/123/pu/img/preview.jpg";
   const videoSrc = authorizedSrc("/api/x-video", video);
-  const posterSrc = authorizedSrc("/api/x-media", poster);
   assert.equal(xVideoSrc(video, videoSrc), videoSrc);
-  assert.equal(xMediaSrc(poster, false, posterSrc), posterSrc);
-  assert.equal(xVideoSrc(video, posterSrc), null);
-  assert.equal(xMediaSrc(poster, false, videoSrc), null);
+  for (const path of ["ext_tw_video_thumb", "amplify_video_thumb"]) {
+    const poster = `https://pbs.twimg.com/${path}/123/pu/img/preview.jpg`;
+    const posterSrc = authorizedSrc("/api/x-media", poster);
+    assert.equal(xMediaSrc(poster, false, posterSrc), posterSrc);
+    assert.equal(xVideoSrc(video, posterSrc), null);
+    assert.equal(xMediaSrc(poster, false, videoSrc), null);
+  }
 });
 
 test("invalid proxy fields cannot redirect media or silently fall back to unsigned requests", () => {

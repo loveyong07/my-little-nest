@@ -3,14 +3,23 @@ import assert from "node:assert/strict";
 import { readFeedCache, writeFeedCache, canPrefetch, fetchFeed, getFeedSnapshot } from "../src/feed-cache.js";
 
 function storage() {
-  let value = null;
+  const values = new Map();
   return {
-    getItem: () => value,
-    setItem: (_, next) => {
-      value = next;
+    getItem: (key) => values.get(key) ?? null,
+    setItem: (key, next) => {
+      values.set(key, next);
     },
   };
 }
+
+test("feeds cached before amplified video posters were supported are refetched", () => {
+  const store = storage();
+  const feed = { status: "ok", posts: [], pinnedStatus: "none" };
+  store.setItem("little-nest-feed-v1", JSON.stringify({ savedAt: 1000, feed }));
+  assert.equal(readFeedCache(store, 1001), null);
+  writeFeedCache(store, feed, 1002);
+  assert.deepEqual(readFeedCache(store, 1003), { savedAt: 1002, feed });
+});
 
 test("saved feed expires and failed refreshes cannot renew stale data", () => {
   const store = storage();
