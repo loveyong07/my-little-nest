@@ -29,6 +29,7 @@ test("proxies authorized X image paths with the requested cache headers and orig
     "https://pbs.twimg.com/media/existing?format=jpg&name=orig",
     "https://pbs.twimg.com/profile_images/123/avatar_normal.jpg",
     "https://pbs.twimg.com/ext_tw_video_thumb/123/pu/img/poster.jpg",
+    "https://pbs.twimg.com/amplify_video_thumb/123/img/poster.jpg",
   ]) {
     await t.test(source, async () => {
       let requestedUrl;

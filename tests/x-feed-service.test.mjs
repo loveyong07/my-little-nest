@@ -396,7 +396,7 @@ test("retains safe photo and video dimensions for daily and pinned media without
     type: "video",
     width: 1920,
     height: 1080,
-    preview_image_url: "https://pbs.twimg.com/ext_tw_video_thumb/123/poster.jpg",
+    preview_image_url: "https://pbs.twimg.com/amplify_video_thumb/123/poster.jpg",
     variants: [{ content_type: "video/mp4", bit_rate: 1000, url: videoUrl }],
   });
   const feed = createXFeedService({
@@ -425,7 +425,7 @@ test("retains safe photo and video dimensions for daily and pinned media without
     assert.deepEqual(item.media.at(-1), {
       type: "video",
       url: videoUrl,
-      poster: "https://pbs.twimg.com/ext_tw_video_thumb/123/poster.jpg",
+      poster: "https://pbs.twimg.com/amplify_video_thumb/123/poster.jpg",
       alt: "",
       width: 1920,
       height: 1080,

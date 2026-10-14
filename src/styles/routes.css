@@ -76,12 +76,9 @@
 @keyframes panel-arrive {
   from {
     opacity: 0.72;
-    transform: translate3d(0, 10px, 0);
   }
   to {
     opacity: 1;
-    /* Release the fixed glass scene from the entrance's containing block. */
-    transform: none;
   }
 }
 

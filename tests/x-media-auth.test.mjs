@@ -18,7 +18,7 @@ const AUTH = { secret: "test-only-secret-never-in-public-feed", now: NOW };
 const IMAGE_URL = "https://pbs.twimg.com/media/site-photo?format=jpg&name=orig";
 const VIDEO_URL = "https://video.twimg.com/ext_tw_video/123/pu/vid/1280x720/site-video.mp4";
 const AVATAR_URL = "https://pbs.twimg.com/profile_images/123/avatar_normal.jpg";
-const POSTER_URL = "https://pbs.twimg.com/ext_tw_video_thumb/123/pu/img/poster.jpg";
+const POSTER_URL = "https://pbs.twimg.com/amplify_video_thumb/123/pu/img/poster.jpg";
 
 function requestFor(value, options) {
   return new Request(new URL(value, "https://site.test"), options);
@@ -40,6 +40,7 @@ test("only signs expected HTTPS hosts and X media path families", async (t) => {
     ["image", "https://pbs.twimg.com:444/media/photo.jpg"],
     ["image", "https://pbs.twimg.com/media/photo.jpg#fragment"],
     ["image", "https://pbs.twimg.com/arbitrary/photo.jpg"],
+    ["image", "https://pbs.twimg.com/amplify_video_thumbnail/123/poster.jpg"],
     ["video", "https://video.twimg.com/arbitrary/video.mp4"],
     ["video", IMAGE_URL],
     ["image", VIDEO_URL],

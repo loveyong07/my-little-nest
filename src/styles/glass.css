@@ -158,7 +158,8 @@
 
 /* The long route panels blur only a copy of their static scene, never the feed,
    videos or particles. It shares the scene URL/position and stays viewport-sized.
-   Clip this decorative layer, leaving the tape and focus outlines unclipped. */
+   Clip this decorative layer, leaving the tape and focus outlines unclipped.
+   Keep the panel entrance transform-free so this scene is visible from the first frame. */
 @supports (filter: blur(1px)) and (clip-path: border-box) {
   .glass-panel-backdrop {
     position: absolute;
@@ -168,8 +169,6 @@
     border-radius: inherit;
     clip-path: border-box;
     pointer-events: none;
-    /* Show the fixed scene after the panel's entrance releases its transform. */
-    animation: glass-backdrop-ready var(--panel-arrive-duration) step-end backwards;
   }
   .glass-panel-backdrop::before {
     position: fixed;
@@ -247,15 +246,6 @@
   .posts-age-actions a:hover {
     border-color: var(--color-primary);
     background: #ffffffc2;
-  }
-}
-
-@keyframes glass-backdrop-ready {
-  from {
-    visibility: hidden;
-  }
-  to {
-    visibility: visible;
   }
 }
 
