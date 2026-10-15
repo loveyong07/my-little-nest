@@ -283,6 +283,31 @@ test("lightbox photo retries reset on navigation while keyboard focus stays in p
   assert.equal(document.body.style.overflow, "");
 });
 
+test("post cards render X entities once as plain text for live and cached posts in every locale", async () => {
+  resetDom();
+  const raw = "可爱&gt;_&lt; 😊\n\n&amp;lt; &amp; &lt;img src=x onerror=alert(1)&gt;";
+  const post = { ...SNAPSHOT, text: raw, media: [] };
+  for (const language of ["zh", "ja", "en"]) {
+    for (const feedSource of ["live", "stale", "snapshot"]) {
+      const view = await mount(
+        React.createElement(PostCard, {
+          post,
+          feedSource,
+          language,
+          t: copy[language],
+          profile: { username: "loveyong07" },
+        }),
+      );
+      const paragraphs = view.container.querySelectorAll(".post-text p");
+      assert.equal(paragraphs[0].textContent, "可爱>_< 😊");
+      assert.equal(paragraphs[1].textContent, "&lt; & <img src=x onerror=alert(1)>");
+      assert.equal(view.container.querySelector(".post-text img"), null);
+      assert.equal(post.text, raw, "rendering must not mutate cached or API text");
+      await view.unmount();
+    }
+  }
+});
+
 test("post photo failures and retries stay separate from a failed video", async () => {
   resetDom();
   const photos = ["One", "Two"].map((name) => ({ type: "photo", url: `https://pbs.twimg.com/media/Test${name}.jpg` }));

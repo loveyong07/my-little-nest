@@ -3,8 +3,8 @@ import { createSharedRequest, SUCCESS_MAX_AGE_MS } from "./request-cache.js";
 
 export { canPrefetch };
 
-// Refetch snapshots saved before amplified video posters were retained.
-const KEY = "little-nest-feed-v2";
+// Refetch snapshots saved before X short links were expanded to original URLs.
+const KEY = "little-nest-feed-v3";
 const MAX_AGE = SUCCESS_MAX_AGE_MS;
 
 export function readFeedCache(storage, now = Date.now()) {

@@ -333,12 +333,55 @@ test("loads photos from the post's media keys in attachment order", async () => 
   assert.ok(postsUrl.searchParams.get("tweet.fields").split(",").includes("attachments"));
   assert.ok(postsUrl.searchParams.get("tweet.fields").split(",").includes("entities"));
   assert.ok(postsUrl.searchParams.get("media.fields").split(",").includes("url"));
-  assert.equal(result.posts[0].text, "Photos https://t.co/article");
+  assert.equal(result.posts[0].text, "Photos https://example.com/article");
   assert.deepEqual(result.posts[0].media, [
     { type: "photo", url: "https://pbs.twimg.com/media/second.jpg", alt: "Second photo" },
     { type: "photo", url: "https://pbs.twimg.com/media/first.jpg", alt: "First photo" },
   ]);
 });
+
+for (const source of ["text", "note_tweet", "note_post"]) {
+  test(`expands original website URLs from ${source} without fetching destinations or altering other links`, async () => {
+    const text =
+      "https://t.co/c0ixUEIXVm\n&gt;_&lt; https://t.co/site https://t.co/siteExtra https://t.co/unsafe https://t.co/missing";
+    const entities = {
+      urls: [
+        { url: "https://t.co/c0ixUEIXVm", expanded_url: "https://loveyong07.top" },
+        { url: "https://t.co/site", expanded_url: "https://example.com/?a=1&b=2" },
+        { url: "https://t.co/unsafe", expanded_url: "javascript:alert(1)" },
+        { url: "https://t.co/missing" },
+      ],
+    };
+    let calls = 0;
+    const feed = createXFeedService({
+      token: "test-token",
+      fetchImpl: async (url) => {
+        calls++;
+        const parsed = new URL(url);
+        assert.equal(parsed.hostname, "api.x.com", "expansion must not follow external redirects");
+        if (parsed.pathname === "/2/users/2061726102180311040") {
+          return Response.json({ data: { id: "2061726102180311040", username: "loveyong07" } });
+        }
+        return Response.json({
+          data: [
+            post(
+              "10",
+              source === "text" ? text : "Truncated",
+              source === "text" ? { entities } : { [source]: { text, entities } },
+            ),
+          ],
+        });
+      },
+    });
+    const result = await feed();
+    assert.equal(result.status, "ok");
+    assert.equal(
+      result.posts[0].text,
+      "https://loveyong07.top\n&gt;_&lt; https://example.com/?a=1&b=2 https://t.co/siteExtra https://t.co/unsafe https://t.co/missing",
+    );
+    assert.equal(calls, 2);
+  });
+}
 
 test("keeps an image-only original post after removing its photo link", async () => {
   const feed = createXFeedService({

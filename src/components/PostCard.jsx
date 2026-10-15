@@ -9,8 +9,10 @@ import { xMediaSrc, xVideoSrc } from "../media-urls.js";
 import { useMediaRequest } from "../hooks/useMediaRequest.js";
 import { prefetchImage } from "../feed-cache.js";
 import { MediaLightbox } from "./MediaLightbox.jsx";
+import { displayXText } from "../utils/x-text.js";
 
 export function PostCard({ post, feedSource, language, t, label, profile, priorityMedia = false, nextPost }) {
+  const text = displayXText(post.text);
   const isSnapshot = feedSource === "snapshot";
   const sourceLabel =
     label ??
@@ -79,9 +81,9 @@ export function PostCard({ post, feedSource, language, t, label, profile, priori
           </time>
           <FaXTwitter className="post-x-mark" aria-hidden="true" />
         </div>
-        {post.text.trim() && (
+        {text.trim() && (
           <div className="post-text">
-            {post.text.split(/(?:\r?\n){2,}/).map((paragraph, index) => (
+            {text.split(/(?:\r?\n){2,}/).map((paragraph, index) => (
               <p key={index}>{paragraph}</p>
             ))}
           </div>
