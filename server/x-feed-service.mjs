@@ -60,18 +60,32 @@ function isMediaLinkForPost(entity, postId, media, username) {
   }
 }
 
-function withoutMediaLinks(text, post, media, username) {
-  if (!media.length) return text;
+function normalizedPostText(text, post, media, username) {
   const entities = [
     ...(Array.isArray(post.entities?.urls) ? post.entities.urls : []),
     ...(Array.isArray(post.note_tweet?.entities?.urls) ? post.note_tweet.entities.urls : []),
     ...(Array.isArray(post.note_post?.entities?.urls) ? post.note_post.entities.urls : []),
   ];
-  const mediaLinks = new Set(
-    entities.filter((entity) => isMediaLinkForPost(entity, post.id, media, username)).map((entity) => entity.url),
-  );
-  for (const link of mediaLinks) text = text.replaceAll(link, "");
-  return text.trimEnd();
+  const replacements = new Map();
+  for (const entity of entities) {
+    if (!/^https:\/\/t\.co\/[A-Za-z0-9]+$/.test(entity?.url ?? "")) continue;
+    if (isMediaLinkForPost(entity, post.id, media, username)) {
+      replacements.set(entity.url, "");
+      continue;
+    }
+    try {
+      const expanded = new URL(entity.expanded_url);
+      if (["https:", "http:"].includes(expanded.protocol) && !expanded.username && !expanded.password) {
+        replacements.set(entity.url, entity.expanded_url);
+      }
+    } catch {
+      // Keep the original short link when X supplies no valid destination.
+    }
+  }
+  // Match each complete short link once; never replace prefixes or recursively
+  // expand a destination. No requests to external destinations are necessary.
+  const result = text.replace(/https:\/\/t\.co\/[A-Za-z0-9]+/g, (link) => replacements.get(link) ?? link);
+  return media.length ? result.trimEnd() : result;
 }
 
 async function getXJson(url, token, fetchImpl, { allowPartialErrors = false } = {}) {
@@ -129,7 +143,7 @@ function normalizedPost(post, user, mediaByKey, { allowReferences = false } = {}
         mediaItems.push({ type: "video", url, ...(poster ? { poster } : {}), alt, ...(mediaDimensions(media) ?? {}) });
     }
   }
-  const text = withoutMediaLinks(
+  const text = normalizedPostText(
     post.note_tweet?.text || post.note_post?.text || post.text,
     post,
     mediaItems,

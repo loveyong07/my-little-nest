@@ -1,5 +1,6 @@
 import { mediaDimensions } from "../../shared/media-sources.mjs";
 import { intlLocale } from "../constants/languages.js";
+import { displayXText } from "./x-text.js";
 
 export { mediaDimensions };
 
@@ -24,7 +25,7 @@ export function isOriginalPost(post) {
 }
 
 export function postExcerpt(post, t) {
-  const text = typeof post.text === "string" ? post.text.trim().replace(/\s+/g, " ") : "";
+  const text = typeof post.text === "string" ? displayXText(post.text).trim().replace(/\s+/g, " ") : "";
   if (text) {
     const characters = Array.from(text);
     return characters.length > 38 ? `${characters.slice(0, 38).join("")}…` : text;

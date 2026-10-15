@@ -12,10 +12,11 @@ function storage() {
   };
 }
 
-test("feeds cached before amplified video posters were supported are refetched", () => {
+test("feeds cached before expanded X links were supported are refetched", () => {
   const store = storage();
   const feed = { status: "ok", posts: [], pinnedStatus: "none" };
   store.setItem("little-nest-feed-v1", JSON.stringify({ savedAt: 1000, feed }));
+  store.setItem("little-nest-feed-v2", JSON.stringify({ savedAt: 1000, feed }));
   assert.equal(readFeedCache(store, 1001), null);
   writeFeedCache(store, feed, 1002);
   assert.deepEqual(readFeedCache(store, 1003), { savedAt: 1002, feed });
