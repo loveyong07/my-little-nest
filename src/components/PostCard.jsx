@@ -93,6 +93,7 @@ export function PostCard({ post, feedSource, language, t, label, profile, priori
             className={`post-media post-media-frame${photos.length === 1 ? " post-media-single" : ""}`}
             style={{ aspectRatio: mediaFrameRatio(photos) }}
           >
+            <div className="glass-panel-backdrop glass-media-backdrop" aria-hidden="true" />
             {photoRequest.unavailable || !photoRequest.src ? (
               <div className="post-media-unavailable" role="status">
                 <span>{t.photoUnavailable}</span>

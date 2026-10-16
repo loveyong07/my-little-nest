@@ -56,6 +56,7 @@ CSS、布局或组件结构修改必须另做视觉比较；`npm run check` 不�
 - `src/hooks/`、`src/routes/`：动态、资料、语言、站内导航与共享媒体请求状态。
 - `src/styles.css`、`src/styles/`：按组件组织样式，颜色变量位于 `globals.css`。
 - `src/styles/glass.css`：参考 ColorOS 桌面/控制中心；首页使用水滴式通透玻璃，动态和联系页保持透明底层，上层卡片逐级增加轻磨砂。高光、底色和磨砂强度集中在这里，大面板与长帖子复用 `scenes.css` 的静态插画。参数与验证范围见 [玻璃质感验收-2026-10-14.md](玻璃质感验收-2026-10-14.md)。
+- 动态照片容器使用独立的 `glass-media-backdrop`：窄图或混合比例轮播的留白透出分层磨砂背景，取代纯浅蓝填充。仅静态场景副本使用桌面 `10px` / 手机 `8px` 模糊，叠加柔白渐变和细亮边；照片仍以原图 `object-fit: contain` 完整显示，切图、放大及视频沿用原有行为。
 - `biome.json`、`scripts/check-css-syntax.mjs`：CSS 结构和语法检查，JavaScript/React Hooks 仍由 ESLint 检查，格式仍由 Prettier 检查。
 - `server/api-handler.mjs`：四个 API 的共享入口；`server/x-feed-service.mjs`：X 资料和动态服务。
 - `api/`、`server/vite-api-plugin.mjs`、`worker/index.js`：Vercel、Vite 与 Sites 的运行环境适配。
