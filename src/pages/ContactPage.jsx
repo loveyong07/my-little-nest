@@ -8,7 +8,7 @@ import { useClipboard } from "../hooks/useClipboard.js";
 export default function ContactPage({ t, profile }) {
   const { copiedId, copyFailedId, manualCopyRef, copyId } = useClipboard();
   // The service name belongs in the accessible name of a copy tile, not only in the visible title.
-  const copyLabel = (service, account) => `${service} · ${t.copy}: ${account}`;
+  const copyLabel = (service, account) => (account ? `${service} · ${t.copy}: ${account}` : `${service} · ${t.copy}`);
 
   const socials = [
     {
@@ -39,9 +39,9 @@ export default function ContactPage({ t, profile }) {
       icon: FaWhatsapp,
       className: "whatsapp",
       title: "WhatsApp",
-      sub: WHATSAPP_USERNAME,
+      sub: t.whatsappSub,
       onClick: () => copyId(WHATSAPP_USERNAME),
-      copyLabel: copyLabel("WhatsApp", WHATSAPP_USERNAME),
+      copyLabel: copyLabel("WhatsApp"),
       copied: copiedId === WHATSAPP_USERNAME ? t.copied : undefined,
       action: t.actionCopy,
       failedId: copyFailedId === WHATSAPP_USERNAME ? WHATSAPP_USERNAME : undefined,
