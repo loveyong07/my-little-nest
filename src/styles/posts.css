@@ -468,7 +468,10 @@
   border-radius: var(--radius-sm);
 }
 .post-media {
-  background: var(--surface-blue);
+  isolation: isolate;
+  border-color: #ffffff99;
+  background: var(--glass-media-fill);
+  box-shadow: var(--glass-edge-light);
 }
 .post-video {
   background: #101820;
