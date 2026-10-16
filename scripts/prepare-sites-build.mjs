@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Packages the Sites (Cloudflare-style) worker next to the Vite build: the worker becomes
 // dist/server/index.js and keeps importing the shared server and shared modules relatively.
-import { copyFileSync, existsSync, mkdirSync, readdirSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, unlinkSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -17,8 +17,15 @@ for (const file of required) {
 }
 
 function copyModules(from, to, skip = () => false) {
+  const names = readdirSync(from).filter((file) => file.endsWith(".mjs") && !skip(file));
   mkdirSync(to, { recursive: true });
-  for (const name of readdirSync(from).filter((file) => file.endsWith(".mjs") && !skip(file))) {
+  // Only remove obsolete generated modules, leaving other output files untouched.
+  for (const entry of readdirSync(to, { withFileTypes: true })) {
+    if (entry.isFile() && entry.name.endsWith(".mjs") && !names.includes(entry.name)) {
+      unlinkSync(path.join(to, entry.name));
+    }
+  }
+  for (const name of names) {
     copyFileSync(path.join(from, name), path.join(to, name));
   }
 }

@@ -49,6 +49,8 @@ CSS、布局或组件结构修改必须另做视觉比较；`npm run check` 不�
 
 页面构建产物位于 `dist/client`，Sites 兼容产物位于 `dist/server` 和 `dist/.openai`。
 
+重复构建会清除 `dist/server` 和 `dist/shared` 中已不属于当前源码的 `.mjs` 模块，保留其他文件；Sites 运行时对未知 `/api` 和 `/api/` 路径直接返回不缓存的 404，不进入页面回退。
+
 ## 维护入口
 
 - `src/constants/locales.js`：三语通用文案；`src/constants/site.js`：站点与联系方式配置。
@@ -81,6 +83,8 @@ CSS、布局或组件结构修改必须另做视觉比较；`npm run check` 不�
 共享 handler 表示源码规则相同。四个 Vercel 函数分别创建 handler，内存缓存仅限各自实例；不能假定跨函数、实例或运行环境共享内存。当前不额外引入数据库或外部缓存服务。
 
 `/api/x-media`、`/api/x-video` 为同源媒体接口。服务端为本站媒体生成签名并校验源地址、类型、有效期和签名；精确旧媒体名单提供缓存兼容。保留原图画质、视频 Range 和缓存寿命限制。
+
+图片代理的连接超时为 10 秒，每次等待上游数据的空闲超时为 10 秒，总请求时限为 60 秒；持续传输可超过 10 秒，客户端背压不计为空闲读取超时，但仍受总时限和 12 MiB 大小限制。响应结束、失败或取消后释放计时器和断开监听，客户端取消时中止上游请求。
 
 媒体来源策略集中在 `server/media-request-policy.mjs`：现代浏览器只接受 `Sec-Fetch-Site: same-origin` 或直接导航的 `none`，不把兄弟子域的 `same-site` 视作同源。成功响应带 `Vary: Sec-Fetch-Site`，避免同源缓存被跨站请求复用，并保留 `Cross-Origin-Resource-Policy: same-origin`。无 Fetch Metadata 时检查存在的 Origin / Referer 是否与请求 URL 严格同源；没有来源头仍可直接访问，但该类成功响应对浏览器和 Vercel CDN 均为 `no-store`，避免回退规则被缓存跳过，也避免按完整 Referer 分裂缓存。普通浏览器的原缓存期限不变。非浏览器客户端可伪造这些头，因此这不是身份认证、限流或费用上限。
 

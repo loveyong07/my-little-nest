@@ -14,6 +14,11 @@ export default {
     const apiResponse = await apiHandlerFor(env)(request);
     if (apiResponse) return apiResponse;
 
+    const pathname = new URL(request.url).pathname;
+    if (pathname === "/api" || pathname.startsWith("/api/")) {
+      return new Response("Not found", { status: 404, headers: { "Cache-Control": "no-store" } });
+    }
+
     const response = await env.ASSETS.fetch(request);
     const acceptsHtml = request.headers.get("accept")?.includes("text/html");
 
