@@ -1,12 +1,4 @@
-import {
-  FaEnvelope,
-  FaLine,
-  FaQq,
-  FaTelegram,
-  FaWhatsapp,
-  FaWeixin,
-  FaXTwitter,
-} from "react-icons/fa6";
+import { FaEnvelope, FaLine, FaQq, FaTelegram, FaWhatsapp, FaWeixin, FaXTwitter } from "react-icons/fa6";
 import { HiOutlineSparkles } from "react-icons/hi2";
 import { PiFlowerLight } from "react-icons/pi";
 import { ContactTile } from "../components/ContactTile.jsx";
