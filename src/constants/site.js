@@ -5,7 +5,7 @@ export const ASSETS = "/assets";
 export { X_USERNAME };
 // The WeChat ID happens to match the X username; it is a separate account setting.
 export const WECHAT_ID = "loveyong07";
-export const QQ_NUMBER = "3077928326";
+export const QQ_NUMBER = "3437702786";
 export const FALLBACK_AVATAR = `${ASSETS}/x-avatar.jpg`;
 export const SNAPSHOT = {
   id: "2103361629748682978",
