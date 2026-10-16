@@ -122,22 +122,17 @@
 .contact-tile.telegram .contact-icon svg {
   color: #5f8caf;
 }
+.contact-tile.whatsapp .contact-icon {
+  background: #e3f3e8;
+}
+.contact-tile.whatsapp .contact-icon svg {
+  color: #477f5d;
+}
 .contact-tile.qq .contact-icon {
   background: var(--pastel-lavender);
 }
 .contact-tile.qq .contact-icon svg {
   color: var(--pastel-lavender-ink);
-}
-.contact-tile.email .contact-icon {
-  background: var(--pastel-yellow);
-}
-.contact-tile.email .contact-icon svg {
-  color: var(--pastel-yellow-ink);
-  transform-origin: 50% 16%;
-  transition: transform 0.22s ease;
-}
-.contact-tile.email:hover .contact-icon svg {
-  transform: translateY(-2px) rotateX(-18deg);
 }
 
 /* The copied tick is a static state; the stamp animation only decorates it, so

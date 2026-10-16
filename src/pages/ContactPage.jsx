@@ -1,8 +1,16 @@
-import { FaEnvelope, FaLine, FaQq, FaTelegram, FaWeixin, FaXTwitter } from "react-icons/fa6";
+import {
+  FaEnvelope,
+  FaLine,
+  FaQq,
+  FaTelegram,
+  FaWhatsapp,
+  FaWeixin,
+  FaXTwitter,
+} from "react-icons/fa6";
 import { HiOutlineSparkles } from "react-icons/hi2";
 import { PiFlowerLight } from "react-icons/pi";
 import { ContactTile } from "../components/ContactTile.jsx";
-import { mailboxes, QQ_NUMBER, WECHAT_ID } from "../constants/site.js";
+import { mailboxes, QQ_NUMBER, WECHAT_ID, WHATSAPP_USERNAME } from "../constants/site.js";
 import { useClipboard } from "../hooks/useClipboard.js";
 
 export default function ContactPage({ t, profile }) {
@@ -36,6 +44,17 @@ export default function ContactPage({ t, profile }) {
       action: t.actionOpen,
     },
     {
+      icon: FaWhatsapp,
+      className: "whatsapp",
+      title: "WhatsApp",
+      sub: WHATSAPP_USERNAME,
+      onClick: () => copyId(WHATSAPP_USERNAME),
+      copyLabel: copyLabel("WhatsApp", WHATSAPP_USERNAME),
+      copied: copiedId === WHATSAPP_USERNAME ? t.copied : undefined,
+      action: t.actionCopy,
+      failedId: copyFailedId === WHATSAPP_USERNAME ? WHATSAPP_USERNAME : undefined,
+    },
+    {
       icon: FaWeixin,
       className: "wechat",
       title: t.wechatTitle,
@@ -56,14 +75,6 @@ export default function ContactPage({ t, profile }) {
       copied: copiedId === QQ_NUMBER ? t.copied : undefined,
       action: t.actionCopy,
       failedId: copyFailedId === QQ_NUMBER ? QQ_NUMBER : undefined,
-    },
-    {
-      icon: FaEnvelope,
-      className: "email",
-      title: t.emailTitle,
-      sub: t.emailSub,
-      href: `mailto:${mailboxes[0].address}`,
-      action: t.actionWrite,
     },
   ];
 
