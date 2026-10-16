@@ -8,6 +8,112 @@ const IMAGE_BYTES = new Uint8Array([0xff, 0xd8, 0xff, 0xd9]);
 const AUTH = { secret: "image-proxy-test-secret", now: Date.UTC(2026, 8, 30, 12) };
 const LEGACY_IMAGE_URL = LEGACY_IMAGE_URLS[0];
 
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function timedImageUpstream({ knownLength, delayMs, chunks, onSignal = () => {} }) {
+  return async (_url, { signal }) => {
+    onSignal(signal);
+    let sent = 0;
+    const body = new ReadableStream({
+      start(controller) {
+        signal.addEventListener("abort", () => controller.error(signal.reason), { once: true });
+      },
+      async pull(controller) {
+        await wait(delayMs);
+        if (signal.aborted) return;
+        controller.enqueue(IMAGE_BYTES);
+        if (++sent === chunks) controller.close();
+      },
+    });
+    return new Response(body, {
+      headers: {
+        "Content-Type": "image/jpeg",
+        ...(knownLength ? { "Content-Length": String(chunks * IMAGE_BYTES.length) } : {}),
+      },
+    });
+  };
+}
+
+for (const knownLength of [true, false]) {
+  const mode = knownLength ? "streamed" : "buffered";
+  test(`${mode} images keep flowing beyond the connection and idle timeout durations`, async () => {
+    let signal;
+    const response = await proxyXMedia(
+      mediaRequest(LEGACY_IMAGE_URL),
+      timedImageUpstream({ knownLength, delayMs: 80, chunks: 8, onSignal: (value) => (signal = value) }),
+      undefined,
+      { connectTimeoutMs: 100, stallTimeoutMs: 400, totalTimeoutMs: 3000 },
+    );
+    assert.equal(response.status, 200);
+    assert.deepEqual(
+      new Uint8Array(await response.arrayBuffer()),
+      new Uint8Array(
+        Array(8)
+          .fill([...IMAGE_BYTES])
+          .flat(),
+      ),
+    );
+    assert.equal(signal.aborted, false);
+  });
+
+  test(`${mode} images abort a stalled upstream read`, async () => {
+    let signal;
+    const response = await proxyXMedia(
+      mediaRequest(LEGACY_IMAGE_URL),
+      timedImageUpstream({ knownLength, delayMs: 250, chunks: 1, onSignal: (value) => (signal = value) }),
+      undefined,
+      { stallTimeoutMs: 60, totalTimeoutMs: 3000 },
+    );
+    if (knownLength) await assert.rejects(response.arrayBuffer(), { name: "AbortError" });
+    else assert.equal(response.status, 502);
+    assert.equal(signal.aborted, true);
+  });
+
+  test(`${mode} images retain a total lifetime cap even with continuous progress`, async () => {
+    let signal;
+    const response = await proxyXMedia(
+      mediaRequest(LEGACY_IMAGE_URL),
+      timedImageUpstream({ knownLength, delayMs: 25, chunks: 100, onSignal: (value) => (signal = value) }),
+      undefined,
+      { stallTimeoutMs: 1000, totalTimeoutMs: 200 },
+    );
+    if (knownLength) await assert.rejects(response.arrayBuffer(), { name: "AbortError" });
+    else assert.equal(response.status, 502);
+    assert.equal(signal.aborted, true);
+  });
+}
+
+test("images abort while waiting for upstream response headers", async () => {
+  let upstreamSignal;
+  const response = await proxyXMedia(
+    mediaRequest(LEGACY_IMAGE_URL),
+    (_url, { signal }) => {
+      upstreamSignal = signal;
+      return new Promise((_, reject) => signal.addEventListener("abort", () => reject(signal.reason), { once: true }));
+    },
+    undefined,
+    { connectTimeoutMs: 60, totalTimeoutMs: 3000 },
+  );
+  assert.equal(response.status, 502);
+  assert.equal(upstreamSignal.aborted, true);
+});
+
+test("image backpressure is not an upstream stall and cancellation aborts the download", async () => {
+  let signal;
+  const response = await proxyXMedia(
+    mediaRequest(LEGACY_IMAGE_URL),
+    timedImageUpstream({ knownLength: true, delayMs: 20, chunks: 100, onSignal: (value) => (signal = value) }),
+    undefined,
+    { stallTimeoutMs: 150, totalTimeoutMs: 3000 },
+  );
+  const reader = response.body.getReader();
+  await reader.read();
+  await wait(400);
+  assert.equal(signal.aborted, false);
+  await reader.cancel();
+  assert.equal(signal.aborted, true);
+});
+
 function mediaRequest(source, options) {
   const url = new URL("https://site.test/api/x-media");
   if (source !== undefined) url.searchParams.set("url", source);

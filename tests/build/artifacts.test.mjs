@@ -125,3 +125,12 @@ test("every relative import in the Sites worker bundle resolves to a shipped fil
   }
   assert.ok(imports > 0, "Check the packaged worker, not an empty folder");
 });
+
+test("Sites module outputs match current sources without obsolete modules", () => {
+  for (const directory of ["server", "shared"]) {
+    const source = fileURLToPath(new URL(`../../${directory}/`, import.meta.url));
+    const expected = readdirSync(source).filter((name) => name.endsWith(".mjs") && !name.startsWith("vite-"));
+    const actual = readdirSync(path.join(dist, directory)).filter((name) => name.endsWith(".mjs"));
+    assert.deepEqual(actual.sort(), expected.sort(), directory);
+  }
+});
