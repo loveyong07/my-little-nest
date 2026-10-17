@@ -19,6 +19,7 @@ test("feeds cached before expanded X links were supported are refetched", () => 
   store.setItem("little-nest-feed-v2", JSON.stringify({ savedAt: 1000, feed }));
   store.setItem("little-nest-feed-v3", JSON.stringify({ savedAt: 1000, feed }));
   store.setItem("little-nest-feed-v4", JSON.stringify({ savedAt: 1000, feed }));
+  store.setItem("little-nest-feed-v5", JSON.stringify({ savedAt: 1000, feed }));
   assert.equal(readFeedCache(store, 1001), null);
   writeFeedCache(store, feed, 1002);
   assert.deepEqual(readFeedCache(store, 1003), { savedAt: 1002, feed });
@@ -96,7 +97,7 @@ test("confirmed Articles and confirmed empty collections survive caching", () =>
 test("cached partial Article responses cannot become fresh Articles", () => {
   const store = storage();
   store.setItem(
-    "little-nest-feed-v5",
+    "little-nest-feed-v6",
     JSON.stringify({
       savedAt: 1000,
       feed: { status: "ok", posts: [], articles: [{ id: "456" }], articlesStatus: "stale" },

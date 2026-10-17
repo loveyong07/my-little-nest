@@ -22,7 +22,13 @@ function authorizedProxySrc(value, route, source) {
     const url = new URL(value, "https://media.invalid");
     if (url.origin !== "https://media.invalid" || url.pathname !== route || url.hash) return null;
     const keys = [...url.searchParams.keys()];
-    if (keys.length !== 3 || !["url", "expires", "signature"].every((key) => url.searchParams.getAll(key).length === 1))
+    const webp = route === "/api/x-media" && url.searchParams.get("format") === "webp";
+    if (
+      keys.length !== (webp ? 4 : 3) ||
+      !["url", "expires", "signature", ...(webp ? ["format"] : [])].every(
+        (key) => url.searchParams.getAll(key).length === 1,
+      )
+    )
       return null;
     const expires = url.searchParams.get("expires");
     if (

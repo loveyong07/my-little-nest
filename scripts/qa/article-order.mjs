@@ -25,7 +25,8 @@ try {
     await context.route("**/api/x-profile", (route) => route.fulfill({ json: { status: "unavailable" } }));
     await context.route("**/api/x-media?**", async (route) => {
       const url = new URL(route.request().url());
-      const response = await fetch(`https://loveyong07.top${url.pathname}${url.search}`, { headers: { "Sec-Fetch-Site": "same-origin", Referer: "https://loveyong07.top/posts" } });
+      const mediaOrigin = process.env.QA_MEDIA_ORIGIN ?? "https://loveyong07.top";
+      const response = await fetch(`${mediaOrigin}${url.pathname}${url.search}`, { headers: { "Sec-Fetch-Site": "same-origin", Referer: `${mediaOrigin}/posts` } });
       await route.fulfill({ status: response.status, contentType: response.headers.get("content-type"), body: Buffer.from(await response.arrayBuffer()) });
     });
     const page = await context.newPage();
@@ -38,6 +39,8 @@ try {
     for (const photo of await page.locator(".article-photo").all()) {
       await photo.scrollIntoViewIfNeeded();
       await photo.locator("img").evaluate((image) => image.decode());
+      const dimensions = await photo.locator("img").evaluate((image) => ({ actual: [image.naturalWidth, image.naturalHeight], declared: [Number(image.getAttribute("width")), Number(image.getAttribute("height"))] }));
+      assert.deepEqual(dimensions.actual, dimensions.declared, "the delivered photos must use X's original pixel dimensions");
     }
     assert.equal(await page.locator(".article-cover").count(), 6);
     await page.locator(".x-article-card").screenshot({ path: `qa/article-order/live-article-${width}.png` });

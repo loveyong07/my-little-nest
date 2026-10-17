@@ -57,7 +57,7 @@
 ## Performance and media
 
 - Most mainland-China visitors use the site without a network proxy. Serve new scene images and display assets from this site's `/assets/` or constrained `/api/` paths, prioritize the active scene and check cold-load size.
-- Improve direct access without adding a proxy. Preserve original post-photo URLs and quality in cards and enlarged previews; do not introduce reduced-size card images.
+- Improve direct access without adding a proxy. For existing and future pinned, daily and Article static photos, request X's `name=orig` pixels and serve signed WebP at quality 90 without resizing in both cards and enlarged previews. Conversion failure or a runtime without the encoder falls back to original bytes. Keep avatars, video posters, video and animated images on their existing paths; preserve Article block positions when normalizing photo URLs.
 - Prioritize scene loading, cached feed rendering and bounded adjacent-photo prefetch.
 - Keep scrolling smooth on photo posts. Avoid paint-heavy background animation and large live backdrop blur, especially across the full Posts panel. Reuse prerendered particle sprites and bound decorative canvas resolution on high-DPI displays.
 - Keep the signed same-origin X media restrictions, video Range behavior, cache lifetime limits and server-only secret handling described in `README.md`.

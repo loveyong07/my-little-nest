@@ -31,6 +31,22 @@ export function parseMediaSource(value, kind) {
   }
 }
 
+// Bare pbs /media/*.jpg links return a 1200px rendition even when the API
+// reports the original dimensions. Select the actual original explicitly.
+export function originalPhotoSource(value) {
+  const url = parseMediaSource(value, "image");
+  if (!url || !/^\/media\/[A-Za-z0-9_-]+(?:\.(?:jpe?g|png|webp))?$/i.test(url.pathname)) return value;
+  const format = (url.pathname.match(/\.([a-z]+)$/i)?.[1] ?? url.searchParams.get("format") ?? "jpg")
+    .toLowerCase()
+    .replace("jpeg", "jpg");
+  if (!["jpg", "png", "webp"].includes(format)) return value;
+  url.pathname = url.pathname.replace(/\.[a-z]+$/i, "");
+  url.search = "";
+  url.searchParams.set("format", format);
+  url.searchParams.set("name", "orig");
+  return url.href;
+}
+
 // Width and height reported by X, when they are plausible pixel sizes.
 export function mediaDimensions(media) {
   const { width, height } = media ?? {};

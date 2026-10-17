@@ -3,6 +3,7 @@ import test from "node:test";
 import { createXFeedService } from "../server/x-feed-service.mjs";
 import { createApiHandler, JSON_CDN_CACHE_CONTROL, JSON_CDN_CACHE_CONTROL_RETRY } from "../server/api-handler.mjs";
 import { authorizeFeed, authorizedMediaRequest, parseMediaSource } from "../server/x-media-auth.mjs";
+import { originalPhotoSource } from "../shared/media-sources.mjs";
 
 const USER_ID = "2061726102180311040";
 const author = { id: USER_ID, username: "loveyong07", name: "初咏" };
@@ -144,7 +145,9 @@ test("enriches the feed with original text/photo blocks from the public Article 
   const response = await handler(new Request("https://nest.test/api/x-posts"));
   assert.deepEqual(
     (await response.json()).articles[0].blocks,
-    (await feed()).articles[0].blocks,
+    (await feed()).articles[0].blocks.map((block) =>
+      block.type === "photo" ? { ...block, url: originalPhotoSource(block.url) } : block,
+    ),
     "all runtime adapters must enable the public Article document transport",
   );
 });

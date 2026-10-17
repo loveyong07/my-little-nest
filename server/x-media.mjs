@@ -1,5 +1,6 @@
 import { authorizedMediaRequest, boundedMediaCache, parseMediaSource, validMediaQuery } from "./x-media-auth.mjs";
 import { mediaContextHeaders } from "./media-request-policy.mjs";
+import { encodeOriginalWebp } from "./x-image-webp.mjs";
 const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"]);
 const MAX_IMAGE_BYTES = 12 * 1024 * 1024;
 const CACHE_CONTROL = "public, max-age=86400, stale-while-revalidate=604800";
@@ -101,7 +102,7 @@ export async function proxyXMedia(
   request,
   fetchImpl = globalThis.fetch,
   authOptions,
-  { connectTimeoutMs = 10000, stallTimeoutMs = 10000, totalTimeoutMs = 60000 } = {},
+  { connectTimeoutMs = 10000, stallTimeoutMs = 10000, totalTimeoutMs = 60000, webpEncoder = encodeOriginalWebp } = {},
 ) {
   if (request.method !== "GET") {
     return new Response("Method not allowed", {
@@ -164,7 +165,7 @@ export async function proxyXMedia(
       return errorResponse(upstream.status === 404 ? 404 : 502, "Image source unavailable");
     }
 
-    const contentType = upstream.headers.get("content-type")?.split(";")[0].trim().toLowerCase();
+    let contentType = upstream.headers.get("content-type")?.split(";")[0].trim().toLowerCase();
     if (!IMAGE_TYPES.has(contentType)) {
       await upstream.body?.cancel();
       return errorResponse(415, "Unsupported image type");
@@ -176,7 +177,9 @@ export async function proxyXMedia(
       return errorResponse(413, "Image is too large");
     }
     let responseBody;
-    if (upstream.body && contentLengthHeader !== null && Number.isFinite(contentLength)) {
+    const convertToWebp =
+      requestUrl.searchParams.get("format") === "webp" && ["image/jpeg", "image/png"].includes(contentType);
+    if (!convertToWebp && upstream.body && contentLengthHeader !== null && Number.isFinite(contentLength)) {
       streamingResponse = true;
       // The stream can outlive this function, so it owns clearing the timeout and the listener.
       responseBody = streamLimitedImage(upstream.body, cleanup, readChunk, (reason) => controller.abort(reason));
@@ -185,6 +188,17 @@ export async function proxyXMedia(
       if (body?.tooLarge) return errorResponse(413, "Image is too large");
       if (!body?.image?.byteLength) return errorResponse(502, "Image source unavailable");
       responseBody = body.image;
+      if (convertToWebp) {
+        try {
+          const converted = await webpEncoder(body.image);
+          if (converted?.byteLength) {
+            responseBody = converted;
+            contentType = "image/webp";
+          }
+        } catch {
+          // Keep the full-resolution original when conversion is unavailable.
+        }
+      }
     }
 
     const response = new Response(responseBody, {
