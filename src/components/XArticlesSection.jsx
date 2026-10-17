@@ -5,7 +5,8 @@ import { formatPostDate } from "../utils/date.js";
 import { postMonthKey, postMonths } from "../utils/posts.js";
 import { displayXText } from "../utils/x-text.js";
 import { preferredScrollBehavior } from "../utils/motion.js";
-import { xMediaSrc } from "../media-urls.js";
+import { ArticlePhoto } from "./ArticlePhoto.jsx";
+import { articleLinkParts } from "../../shared/article-links.mjs";
 
 export function XArticlesSection({
   articles,
@@ -24,9 +25,17 @@ export function XArticlesSection({
   const currentIndex = Math.min(articleIndex, Math.max(0, articles.length - 1));
   const article = articles[currentIndex];
   const months = useMemo(() => postMonths(articles, language), [articles, language]);
-  const text = displayXText(article?.text ?? "");
-  const cover = article?.media?.find((media) => (media.type ?? "photo") === "photo");
-  const coverSrc = cover ? xMediaSrc(cover.url, false, cover.proxyUrl) : null;
+  const text = article?.text ?? "";
+  const sourcePhotos = (article?.media ?? []).filter((media) => (media.type ?? "photo") === "photo");
+  const blocks = article?.blocks;
+  const photos = blocks?.length
+    ? [
+        sourcePhotos[0],
+        ...blocks
+          .filter((block) => block.type === "photo")
+          .map((block) => sourcePhotos.find((photo) => photo.url === block.url)),
+      ].filter(Boolean)
+    : sourcePhotos;
   const recovering = ["stale", "unavailable"].includes(articleState);
   const message =
     articleState === "loading"
@@ -137,27 +146,43 @@ export function XArticlesSection({
                 {formatPostDate(article.created_at, language)}
               </time>
             )}
-            {coverSrc && (
-              <img
-                className="article-cover"
-                src={coverSrc}
-                alt={cover.alt || ""}
-                width={cover.width}
-                height={cover.height}
-                loading="lazy"
-                decoding="async"
-                referrerPolicy="no-referrer"
-                onError={(event) => {
-                  event.currentTarget.hidden = true;
-                }}
-              />
-            )}
-            {text.trim() && (
+            {photos[0] && <ArticlePhoto key={photos[0].url} photos={photos} number={1} t={t} />}
+            {(blocks?.length || text.trim()) && (
               <div className="article-text">
-                {text.split(/(?:\r?\n){2,}/).map((paragraph, index) => (
-                  <p key={index}>{paragraph}</p>
-                ))}
+                {(blocks?.length
+                  ? blocks
+                  : text.split(/(?:\r?\n){2,}/).map((paragraph) => ({ type: "text", text: paragraph }))
+                ).map((block, index) => {
+                  if (block.type === "divider") return <hr key={index} />;
+                  if (block.type === "photo") {
+                    const photoIndex = photos.findIndex((photo) => photo.url === block.url);
+                    return photoIndex >= 0 ? (
+                      <ArticlePhoto key={index} photos={photos} number={photoIndex + 1} t={t} />
+                    ) : null;
+                  }
+                  return (
+                    <p key={index}>
+                      {articleLinkParts(blocks?.length ? block.text : displayXText(block.text), [
+                        ...(article.links ?? []),
+                        ...(block.links ?? []),
+                      ]).map((part, partIndex) =>
+                        part.url ? (
+                          <a key={partIndex} href={part.url} target="_blank" rel="noopener noreferrer">
+                            {part.text}
+                          </a>
+                        ) : (
+                          part.text
+                        ),
+                      )}
+                    </p>
+                  );
+                })}
               </div>
+            )}
+            {!blocks?.length && photos.length > 1 && (
+              <p className="article-layout-unavailable" role="status">
+                {t.articleLayoutUnavailable}
+              </p>
             )}
             <div className="post-bottomline">
               <a href={article.permalink} target="_blank" rel="noopener noreferrer">

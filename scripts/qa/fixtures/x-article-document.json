@@ -1,0 +1,542 @@
+{
+  "__typename": "ArticleEntity",
+  "content_state": {
+    "blocks": [
+      {
+        "data": {},
+        "entity_ranges": [
+          {
+            "key": 0,
+            "length": 1,
+            "offset": 0
+          }
+        ],
+        "inline_style_ranges": [],
+        "key": "6vs7d",
+        "text": "😘Hello，欢迎路过这篇示例笔记！",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [],
+        "inline_style_ranges": [],
+        "key": "f9ln8",
+        "text": "平时习惯把日常里的零碎想法、喜欢的游戏截图和偶尔写长的随笔慢慢整理在一起，回头翻看的时候总觉得很有意思。",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [
+          {
+            "key": 1,
+            "length": 1,
+            "offset": 0
+          }
+        ],
+        "inline_style_ranges": [],
+        "key": "ff570",
+        "text": " ",
+        "type": "atomic"
+      },
+      {
+        "data": {},
+        "entity_ranges": [],
+        "inline_style_ranges": [],
+        "key": "61h05",
+        "text": "下面是一段用来验证长文图文排版的示例内容：",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [],
+        "inline_style_ranges": [],
+        "key": "a8qlm",
+        "text": "从喜欢的视觉小说与动画配乐聊起，记录一些周末的轻松日常。",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [
+          {
+            "key": 2,
+            "length": 26,
+            "offset": 20
+          },
+          {
+            "key": 3,
+            "length": 1,
+            "offset": 68
+          }
+        ],
+        "inline_style_ranges": [],
+        "key": "dovgb",
+        "text": "平时喜欢看看番、玩些视觉小说，也很感谢 TouchGal - 一站式Galgame文化社区! 整理的资料与社区分享，帮我找到不少好作品。😇",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [
+          {
+            "key": 4,
+            "length": 1,
+            "offset": 0
+          }
+        ],
+        "inline_style_ranges": [],
+        "key": "223g2",
+        "text": " ",
+        "type": "atomic"
+      },
+      {
+        "data": {},
+        "entity_ranges": [],
+        "inline_style_ranges": [],
+        "key": "fhnjk",
+        "text": "第一次折腾博客和个人主页时也踩过不少坑，好在一步步查文档试下来都跑通了。",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [],
+        "inline_style_ranges": [],
+        "key": "bgp6i",
+        "text": "从那以后就养成把配置笔记顺手记下来的习惯。",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [],
+        "inline_style_ranges": [],
+        "key": "eqb6k",
+        "text": "整理页面样式时最在意排版留白和字体加载速度，尽量让桌面和手机端读起来都顺眼。",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [],
+        "inline_style_ranges": [],
+        "key": "337hp",
+        "text": "配色方面偏爱晴空的浅蓝和柔和的浅粉，卡片加上一点通透质感就很耐看。",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [],
+        "inline_style_ranges": [],
+        "key": "bra90",
+        "text": "闲下来的时候也会拍拍窗外的云层和海边风景，当作背景灵感。",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [],
+        "inline_style_ranges": [],
+        "key": "25ip0",
+        "text": "平时在时间线上主要看插画、独立游戏和前端设计相关的分享，偶尔看到喜欢的句子也会顺手收藏进小窝手记里。",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [],
+        "inline_style_ranges": [],
+        "key": "88bi9",
+        "text": "说到折腾小站点的过程，有几段经历挺难忘：",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [],
+        "inline_style_ranges": [],
+        "key": "f89bg",
+        "text": "今年夏天开始陆续把页面结构重新梳理了一遍，把动态、转帖和长文分别拆成了独立的阅读区。",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [
+          {
+            "key": 5,
+            "length": 1,
+            "offset": 0
+          }
+        ],
+        "inline_style_ranges": [],
+        "key": "mr0q",
+        "text": " ",
+        "type": "atomic"
+      },
+      {
+        "data": {},
+        "entity_ranges": [],
+        "inline_style_ranges": [],
+        "key": "49mue",
+        "text": "做图文混排时最麻烦的是配图顺序不能打乱，每张图必须老老实实留在原来的段落后面，这样读长文才不会跳戏。",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [
+          {
+            "key": 6,
+            "length": 1,
+            "offset": 32
+          }
+        ],
+        "inline_style_ranges": [],
+        "key": "4pnt3",
+        "text": "调试灯箱缩放和键盘翻页时踩了几个细节坑，反复改了几版才终于顺手。😭",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [],
+        "inline_style_ranges": [],
+        "key": "em37m",
+        "text": "把静态图转成无缩放 WebP 之后，页面打开确实轻快了很多。",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [],
+        "inline_style_ranges": [],
+        "key": "ajkp0",
+        "text": "空余时间除了写代码，也会学一点视频剪辑和平面排版，把玩过的游戏片段剪成短片留作纪念，记在日常视频合集里。",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [
+          {
+            "key": 7,
+            "length": 1,
+            "offset": 0
+          }
+        ],
+        "inline_style_ranges": [],
+        "key": "aee0b",
+        "text": " ",
+        "type": "atomic"
+      },
+      {
+        "data": {
+          "urls": [
+            {
+              "from_index": 19,
+              "text": "Muse.ai",
+              "to_index": 26
+            }
+          ]
+        },
+        "entity_ranges": [
+          {
+            "key": 8,
+            "length": 1,
+            "offset": 45
+          }
+        ],
+        "inline_style_ranges": [],
+        "key": "1p198",
+        "text": "另外也常用一些顺手的创作小工具，比如 Muse.ai 之类的在线服务，用来整理素材很方便。😊",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [
+          {
+            "key": 9,
+            "length": 1,
+            "offset": 0
+          }
+        ],
+        "inline_style_ranges": [],
+        "key": "bv2ks",
+        "text": " ",
+        "type": "atomic"
+      },
+      {
+        "data": {},
+        "entity_ranges": [],
+        "inline_style_ranges": [],
+        "key": "d618r",
+        "text": "平常出门逛展或散步时喜欢收集好看的明信片和纪念票根，夹在笔记本里很有纪念意义。",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [],
+        "inline_style_ranges": [],
+        "key": "2f9r0",
+        "text": "挑个天气晴朗的周末想去海边栈道散散步，吹吹海风、拍几张胶片色调的街景照片。",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [
+          {
+            "key": 10,
+            "length": 1,
+            "offset": 41
+          }
+        ],
+        "inline_style_ranges": [],
+        "key": "3rrqa",
+        "text": "等假期有空还想去不同城市逛逛书店、看看夜景和海景，回来再慢慢写成新的游记分享出来。😘",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [
+          {
+            "key": 11,
+            "length": 1,
+            "offset": 0
+          }
+        ],
+        "inline_style_ranges": [],
+        "key": "3knf6",
+        "text": " ",
+        "type": "atomic"
+      },
+      {
+        "data": {},
+        "entity_ranges": [],
+        "inline_style_ranges": [],
+        "key": "1ahcs",
+        "text": "以上就是这篇示例文章的全部内容，感谢看到这里！",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [
+          {
+            "key": 12,
+            "length": 1,
+            "offset": 0
+          }
+        ],
+        "inline_style_ranges": [],
+        "key": "8d55c",
+        "text": " ",
+        "type": "atomic"
+      },
+      {
+        "data": {},
+        "entity_ranges": [],
+        "inline_style_ranges": [],
+        "key": "6886i",
+        "text": "",
+        "type": "unstyled"
+      }
+    ],
+    "entity_map": [
+      {
+        "key": "12",
+        "value": {
+          "data": {
+            "media_items": [
+              {
+                "media_id": "2111445168348106752"
+              }
+            ]
+          },
+          "type": "MEDIA"
+        }
+      },
+      {
+        "key": "8",
+        "value": {
+          "data": {
+            "url": "https://abs.twimg.com/emoji/v2/svg/1f60a.svg"
+          },
+          "type": "TWEMOJI"
+        }
+      },
+      {
+        "key": "4",
+        "value": {
+          "data": {
+            "media_items": [
+              {
+                "media_id": "2111426819467644928"
+              }
+            ]
+          },
+          "type": "MEDIA"
+        }
+      },
+      {
+        "key": "11",
+        "value": {
+          "data": {},
+          "type": "DIVIDER"
+        }
+      },
+      {
+        "key": "9",
+        "value": {
+          "data": {
+            "media_items": [
+              {
+                "media_id": "2111442686666530817"
+              }
+            ]
+          },
+          "type": "MEDIA"
+        }
+      },
+      {
+        "key": "5",
+        "value": {
+          "data": {
+            "media_items": [
+              {
+                "media_id": "2111433571969974272"
+              }
+            ]
+          },
+          "type": "MEDIA"
+        }
+      },
+      {
+        "key": "10",
+        "value": {
+          "data": {
+            "url": "https://abs.twimg.com/emoji/v2/svg/1f618.svg"
+          },
+          "type": "TWEMOJI"
+        }
+      },
+      {
+        "key": "6",
+        "value": {
+          "data": {
+            "url": "https://abs.twimg.com/emoji/v2/svg/1f62d.svg"
+          },
+          "type": "TWEMOJI"
+        }
+      },
+      {
+        "key": "1",
+        "value": {
+          "data": {},
+          "type": "DIVIDER"
+        }
+      },
+      {
+        "key": "0",
+        "value": {
+          "data": {
+            "url": "https://abs.twimg.com/emoji/v2/svg/1f618.svg"
+          },
+          "type": "TWEMOJI"
+        }
+      },
+      {
+        "key": "2",
+        "value": {
+          "data": {
+            "url": "https://www.touchgal.ink/"
+          },
+          "type": "LINK"
+        }
+      },
+      {
+        "key": "7",
+        "value": {
+          "data": {
+            "media_items": [
+              {
+                "media_id": "2111440384887009280"
+              }
+            ]
+          },
+          "type": "MEDIA"
+        }
+      },
+      {
+        "key": "3",
+        "value": {
+          "data": {
+            "url": "https://abs.twimg.com/emoji/v2/svg/1f607.svg"
+          },
+          "type": "TWEMOJI"
+        }
+      }
+    ]
+  },
+  "cover_media_results": {
+    "id": "QXBpTWVkaWFSZXN1bHRzOgwABQoAAR1NS03Fm4AACgACHJy492ibsAAAAA==",
+    "result": {
+      "__typename": "ApiMedia",
+      "id": "QXBpTWVkaWE6DAAFCgABHU1LTcWbgAAKAAIcnLj3aJuwAAAA",
+      "media_id": "2111426597706498048",
+      "media_info": {
+        "__typename": "ApiImage",
+        "original_img_height": 1024,
+        "original_img_url": "https://pbs.twimg.com/media/HU1LTcWbgAAnC3Y.jpg",
+        "original_img_width": 2559
+      }
+    }
+  },
+  "id": "QXJ0aWNsZUVudGl0eToyMTExNDIzOTA2MjAwNTg0MTky",
+  "media_entities": [
+    {
+      "id": "QXBpTWVkaWE6DAAFCgABHU1X19masAAKAAIcnLj3aJuwAAAA",
+      "media_id": "2111440384887009280",
+      "media_info": {
+        "__typename": "ApiImage",
+        "original_img_height": 1599,
+        "original_img_url": "https://pbs.twimg.com/media/HU1X19masAA2LTR.jpg",
+        "original_img_width": 2559
+      }
+    },
+    {
+      "id": "QXBpTWVkaWE6DAAFCgABHU1LgWeaEAAKAAIcnLj3aJuwAAAA",
+      "media_id": "2111426819467644928",
+      "media_info": {
+        "__typename": "ApiImage",
+        "original_img_height": 1599,
+        "original_img_url": "https://pbs.twimg.com/media/HU1LgWeaEAAezM_.jpg",
+        "original_img_width": 2559
+      }
+    },
+    {
+      "id": "QXBpTWVkaWE6DAAFCgABHU1Z78Za4AEKAAIcnLj3aJuwAAAA",
+      "media_id": "2111442686666530817",
+      "media_info": {
+        "__typename": "ApiImage",
+        "original_img_height": 1599,
+        "original_img_url": "https://pbs.twimg.com/media/HU1Z78Za4AEZqdu.jpg",
+        "original_img_width": 2559
+      }
+    },
+    {
+      "id": "QXBpTWVkaWE6DAAFCgABHU1RpZgawAAKAAIcnLj3aJuwAAAA",
+      "media_id": "2111433571969974272",
+      "media_info": {
+        "__typename": "ApiImage",
+        "original_img_height": 1599,
+        "original_img_url": "https://pbs.twimg.com/media/HU1RpZgawAApaPo.jpg",
+        "original_img_width": 2559
+      }
+    },
+    {
+      "id": "QXBpTWVkaWE6DAAFCgABHU1cMZYakAAKAAIcnLj3aJuwAAAA",
+      "media_id": "2111445168348106752",
+      "media_info": {
+        "__typename": "ApiImage",
+        "original_img_height": 1599,
+        "original_img_url": "https://pbs.twimg.com/media/HU1cMZYakAAioQg.jpg",
+        "original_img_width": 2559
+      }
+    }
+  ],
+  "metadata": {
+    "created_at_secs": 1792237662,
+    "first_published_at_secs": 1792242842,
+    "modified_at_secs": 1792242816
+  },
+  "plain_text": "😘Hello，欢迎路过这篇示例笔记！\n平时习惯把日常里的零碎想法、喜欢的游戏截图和偶尔写长的随笔慢慢整理在一起，回头翻看的时候总觉得很有意思。\n下面是一段用来验证长文图文排版的示例内容：\n从喜欢的视觉小说与动画配乐聊起，记录一些周末的轻松日常。\n平时喜欢看看番、玩些视觉小说，也很感谢 TouchGal - 一站式Galgame文化社区! 整理的资料与社区分享，帮我找到不少好作品。😇\n第一次折腾博客和个人主页时也踩过不少坑，好在一步步查文档试下来都跑通了。\n从那以后就养成把配置笔记顺手记下来的习惯。\n整理页面样式时最在意排版留白和字体加载速度，尽量让桌面和手机端读起来都顺眼。\n配色方面偏爱晴空的浅蓝和柔和的浅粉，卡片加上一点通透质感就很耐看。\n闲下来的时候也会拍拍窗外的云层和海边风景，当作背景灵感。\n平时在时间线上主要看插画、独立游戏和前端设计相关的分享，偶尔看到喜欢的句子也会顺手收藏进小窝手记里。\n说到折腾小站点的过程，有几段经历挺难忘：\n今年夏天开始陆续把页面结构重新梳理了一遍，把动态、转帖和长文分别拆成了独立的阅读区。\n做图文混排时最麻烦的是配图顺序不能打乱，每张图必须老老实实留在原来的段落后面，这样读长文才不会跳戏。\n调试灯箱缩放和键盘翻页时踩了几个细节坑，反复改了几版才终于顺手。😭\n把静态图转成无缩放 WebP 之后，页面打开确实轻快了很多。\n空余时间除了写代码，也会学一点视频剪辑和平面排版，把玩过的游戏片段剪成短片留作纪念，记在日常视频合集里。\n另外也常用一些顺手的创作小工具，比如 Muse.ai 之类的在线服务，用来整理素材很方便。😊\n平常出门逛展或散步时喜欢收集好看的明信片和纪念票根，夹在笔记本里很有纪念意义。\n挑个天气晴朗的周末想去海边栈道散散步，吹吹海风、拍几张胶片色调的街景照片。\n等假期有空还想去不同城市逛逛书店、看看夜景和海景，回来再慢慢写成新的游记分享出来。😘\n以上就是这篇示例文章的全部内容，感谢看到这里！\n",
+  "preview_text": "😘Hello，欢迎路过这篇示例笔记！",
+  "title": "示例图文文章"
+}

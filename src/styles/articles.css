@@ -135,17 +135,34 @@
   width: 14px;
   height: 14px;
 }
+.article-photo {
+  margin-top: var(--space-5);
+}
+.article-photo > .post-media-unavailable {
+  position: relative;
+  min-height: 160px;
+  border-radius: var(--radius-sm);
+}
+.article-photo-open {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: zoom-in;
+}
+.article-photo-open:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 4px;
+}
 .article-cover {
   display: block;
   width: 100%;
   height: auto;
   max-height: 480px;
-  margin-top: var(--space-5);
   border-radius: var(--radius-sm);
   object-fit: contain;
-}
-.article-cover[hidden] {
-  display: none;
 }
 .article-text {
   margin-top: var(--space-5);
@@ -159,6 +176,32 @@
 }
 .article-text p:last-child {
   margin-bottom: 0;
+}
+.article-text .article-photo {
+  margin-bottom: var(--space-5);
+}
+.article-text hr {
+  margin: var(--space-5) 0;
+  border: 0;
+  border-top: 1px solid var(--color-border);
+}
+.article-layout-unavailable {
+  color: var(--color-muted);
+  font-size: var(--font-sm);
+}
+.article-text a {
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  text-decoration-thickness: 1px;
+}
+.article-text a:hover {
+  text-decoration-thickness: 2px;
+}
+.article-text a:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+  border-radius: 2px;
 }
 
 /* Blend a more frosted static scene into the lower reading surface. Text and

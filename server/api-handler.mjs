@@ -32,11 +32,16 @@ function json(body, { status = 200, headers = {} } = {}) {
  */
 export function createApiHandler(
   env = {},
-  { fetchImpl = (...args) => globalThis.fetch(...args), serviceFactory = createXFeedService } = {},
+  {
+    fetchImpl = (...args) => globalThis.fetch(...args),
+    articleFetchImpl = fetchImpl,
+    serviceFactory = createXFeedService,
+  } = {},
 ) {
   const authOptions = { secret: signingSecret(env) };
   let service = null;
-  const feedService = () => (service ??= serviceFactory({ token: env.X_BEARER_TOKEN ?? "", fetchImpl }));
+  const feedService = () =>
+    (service ??= serviceFactory({ token: env.X_BEARER_TOKEN ?? "", fetchImpl, articleFetchImpl }));
 
   async function feedRoute(request, route) {
     const empty = route === "posts" ? { status: "unavailable", posts: [] } : { status: "unavailable" };

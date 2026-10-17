@@ -98,6 +98,89 @@ after(async () => {
   dom.window.close();
 });
 
+test("Articles retain all six images, clickable named links and an independent failed-image retry", async () => {
+  resetDom();
+  const { XArticlesSection } = await server.ssrLoadModule("/src/components/XArticlesSection.jsx");
+  const media = Array.from({ length: 6 }, (_, index) => ({
+    type: "photo",
+    url: `https://pbs.twimg.com/media/Article${index}.jpg`,
+  }));
+  const view = await mount(
+    React.createElement(XArticlesSection, {
+      articles: [
+        {
+          id: "20",
+          title: "关于我",
+          text: "TouchGal - 一站式Galgame文化社区! 和 Muse.ai",
+          media,
+          blocks: [
+            { type: "text", text: "TouchGal - 一站式Galgame文化社区! 和 Muse.ai" },
+            ...media.slice(1).flatMap((photo, index) => [
+              { type: "photo", url: photo.url },
+              { type: "text", text: `配图后段落 ${index + 1}` },
+            ]),
+          ],
+        },
+      ],
+      articleIndex: 0,
+      articleState: "ok",
+      language: "zh",
+      t: copy.zh,
+      profile: { name: "初咏", username: "loveyong07" },
+    }),
+  );
+  assert.equal(view.container.querySelectorAll(".article-cover").length, 6);
+  assert.deepEqual(
+    [...view.container.querySelector(".article-text").children].map((node) =>
+      node.classList.contains("article-photo") ? "photo" : node.tagName,
+    ),
+    ["P", "photo", "P", "photo", "P", "photo", "P", "photo", "P", "photo", "P"],
+  );
+  const anchors = [...view.container.querySelectorAll(".article-text a")];
+  assert.deepEqual(
+    anchors.map((a) => a.href),
+    ["https://www.touchgal.ink/", "https://muse.ai/"],
+  );
+  assert.ok(anchors.every((a) => a.target === "_blank" && a.rel.includes("noopener")));
+  await React.act(async () => view.container.querySelectorAll(".article-cover")[1].dispatchEvent(new Event("error")));
+  assert.equal(view.container.querySelectorAll(".article-cover").length, 5);
+  assert.equal(view.container.querySelectorAll(".article-photo").length, 6);
+  await React.act(async () => view.container.querySelector(".article-photo .post-media-unavailable button").click());
+  assert.equal(view.container.querySelectorAll(".article-cover").length, 6);
+  assert.match(view.container.querySelectorAll(".article-cover")[1].src, /retry=1/);
+  await view.unmount();
+});
+
+test("an Article without verified image positions never collects its body photos at the end", async () => {
+  resetDom();
+  const { XArticlesSection } = await server.ssrLoadModule("/src/components/XArticlesSection.jsx");
+  const view = await mount(
+    React.createElement(XArticlesSection, {
+      articles: [
+        {
+          id: "20",
+          text: "Body",
+          media: [
+            { type: "photo", url: "https://pbs.twimg.com/media/Cover.jpg" },
+            { type: "photo", url: "https://pbs.twimg.com/media/Inline.jpg" },
+          ],
+        },
+      ],
+      articleIndex: 0,
+      articleState: "ok",
+      language: "zh",
+      t: copy.zh,
+      profile: {},
+    }),
+  );
+  assert.equal(view.container.querySelectorAll(".article-photo").length, 1);
+  assert.equal(
+    view.container.querySelector(".article-layout-unavailable").textContent,
+    copy.zh.articleLayoutUnavailable,
+  );
+  await view.unmount();
+});
+
 test("mobile navigation opens and Escape closes it with focus returned", async () => {
   resetDom();
   const { container, unmount } = await mount(

@@ -95,6 +95,60 @@ test("keeps an Article preview readable when the API omits its full body", async
   assert.equal(result.articles[0].contentKind, "preview");
 });
 
+test("keeps Article entity destinations in the feed instead of flattening them into plain text", async () => {
+  const { feed } = service(() =>
+    Response.json({
+      data: [
+        article("20", {
+          entities: { urls: [{ text: "官方链接", expanded_url: "https://example.com/official" }] },
+        }),
+      ],
+    }),
+  );
+  assert.deepEqual((await feed()).articles[0].links, [{ text: "官方链接", url: "https://example.com/official" }]);
+});
+
+test("enriches the feed with original text/photo blocks from the public Article document", async () => {
+  const doc = {
+    content_state: {
+      blocks: [
+        { type: "unstyled", text: "Before" },
+        { type: "atomic", entity_ranges: [{ key: 0 }] },
+        { type: "unstyled", text: "After" },
+      ],
+      entity_map: [{ key: "0", value: { type: "MEDIA", data: { media_items: [{ media_id: "1" }] } } }],
+    },
+    media_entities: [{ media_id: "1", media_info: { original_img_url: media[0].url } }],
+  };
+  const html = `<script>const data = ${JSON.stringify(JSON.stringify({ data: { tweet_result_by_rest_id: { rest_id: "20", result: { article: { article_results: { result: doc } } } } } }))}</script>`;
+  const { feed } = service(
+    () => Response.json({ data: [article("20", { plain_text: "Before\nAfter" })], includes: { media } }),
+    { articleFetchImpl: async () => new Response(html) },
+  );
+  assert.deepEqual((await feed()).articles[0].blocks, [
+    { type: "text", text: "Before" },
+    { type: "photo", url: media[0].url },
+    { type: "text", text: "After" },
+  ]);
+  const handler = createApiHandler(
+    { X_BEARER_TOKEN: "test-token", X_MEDIA_SIGNING_SECRET: "test-secret" },
+    {
+      fetchImpl: async (url) => {
+        const source = new URL(url);
+        if (source.hostname === "x.com") return new Response(html);
+        if (source.pathname === `/2/users/${USER_ID}`) return Response.json({ data: author });
+        return Response.json({ data: [article("20", { plain_text: "Before\nAfter" })], includes: { media } });
+      },
+    },
+  );
+  const response = await handler(new Request("https://nest.test/api/x-posts"));
+  assert.deepEqual(
+    (await response.json()).articles[0].blocks,
+    (await feed()).articles[0].blocks,
+    "all runtime adapters must enable the public Article document transport",
+  );
+});
+
 test("reports no Articles only after a successful complete timeline, and caches that empty result", async () => {
   const { feed, urls } = service(() => Response.json({ data: [post("20")] }));
   const result = await feed();
