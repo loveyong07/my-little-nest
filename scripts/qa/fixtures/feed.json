@@ -1,5 +1,104 @@
 {
   "status": "ok",
+  "articlesStatus": "ok",
+  "articles": [
+    {
+      "id": "2100000000000000020",
+      "title": "多图文章展示检查",
+      "text": "这是一篇包含封面和五张配图的测试文章。\n\nTouchGal - 一站式Galgame文化社区! 和 Muse.ai\n[测试链接](https://example.com/article) 以及 https://example.com/plain。\n\n文章配图按接口提供的顺序展示。",
+      "created_at": "2026-10-10T08:00:00.000Z",
+      "author": "初咏",
+      "permalink": "https://x.com/loveyong07/status/2100000000000000020",
+      "media": [
+        {
+          "type": "photo",
+          "url": "https://pbs.twimg.com/media/QaArticle1.jpg",
+          "width": 1200,
+          "height": 480
+        },
+        {
+          "type": "photo",
+          "url": "https://pbs.twimg.com/media/QaArticle2.jpg",
+          "width": 1200,
+          "height": 750
+        },
+        {
+          "type": "photo",
+          "url": "https://pbs.twimg.com/media/QaArticle3.jpg",
+          "width": 1200,
+          "height": 750
+        },
+        {
+          "type": "photo",
+          "url": "https://pbs.twimg.com/media/QaArticle4.jpg",
+          "width": 1200,
+          "height": 750
+        },
+        {
+          "type": "photo",
+          "url": "https://pbs.twimg.com/media/QaArticle5.jpg",
+          "width": 1200,
+          "height": 750
+        },
+        {
+          "type": "photo",
+          "url": "https://pbs.twimg.com/media/QaArticle6.jpg",
+          "width": 1200,
+          "height": 750
+        }
+      ],
+      "blocks": [
+        {
+          "type": "text",
+          "text": "这是一篇包含封面和五张配图的测试文章。"
+        },
+        {
+          "type": "text",
+          "text": "TouchGal - 一站式Galgame文化社区! 和 Muse.ai\n[测试链接](https://example.com/article) 以及 https://example.com/plain。"
+        },
+        {
+          "type": "photo",
+          "url": "https://pbs.twimg.com/media/QaArticle2.jpg"
+        },
+        {
+          "type": "text",
+          "text": "第 1 张正文配图后的段落。"
+        },
+        {
+          "type": "photo",
+          "url": "https://pbs.twimg.com/media/QaArticle3.jpg"
+        },
+        {
+          "type": "text",
+          "text": "第 2 张正文配图后的段落。"
+        },
+        {
+          "type": "photo",
+          "url": "https://pbs.twimg.com/media/QaArticle4.jpg"
+        },
+        {
+          "type": "text",
+          "text": "第 3 张正文配图后的段落。"
+        },
+        {
+          "type": "photo",
+          "url": "https://pbs.twimg.com/media/QaArticle5.jpg"
+        },
+        {
+          "type": "text",
+          "text": "第 4 张正文配图后的段落。"
+        },
+        {
+          "type": "photo",
+          "url": "https://pbs.twimg.com/media/QaArticle6.jpg"
+        },
+        {
+          "type": "text",
+          "text": "第 5 张正文配图后的段落。"
+        }
+      ]
+    }
+  ],
   "pinnedStatus": "ok",
   "pinnedPost": {
     "id": "2100000000000000001",

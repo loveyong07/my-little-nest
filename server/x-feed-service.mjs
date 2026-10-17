@@ -2,6 +2,8 @@
 // in-memory cache, incremental refreshes and a failure backoff. Shared by every runtime
 // through server/api-handler.mjs.
 import { mediaDimensions, parseMediaSource } from "../shared/media-sources.mjs";
+import { normalizedArticleLinks } from "../shared/article-links.mjs";
+import { enrichArticleDocuments } from "./x-article-document.mjs";
 import { X_USER_ID as USER_ID, X_USERNAME as USERNAME } from "../shared/x-account.mjs";
 
 const X_API = "https://api.x.com/2";
@@ -197,6 +199,7 @@ function normalizedArticle(post, user, mediaByKey) {
   const fullText = typeof article.plain_text === "string" ? article.plain_text : "";
   const preview = typeof article.preview_text === "string" ? article.preview_text : "";
   const text = fullText || preview;
+  const links = normalizedArticleLinks(article.entities);
   const media = normalizedMedia(
     [
       article.cover_media,
@@ -212,6 +215,7 @@ function normalizedArticle(post, user, mediaByKey) {
     title,
     text,
     contentKind: fullText ? "full" : "preview",
+    ...(links.length ? { links } : {}),
     created_at: post.created_at ?? null,
     author: user.name || USERNAME,
     avatar: safeAvatar(user.profile_image_url),
@@ -234,6 +238,8 @@ function mergeArticles(current, previous = []) {
 export function createXFeedService({
   token = globalThis.process?.env?.X_BEARER_TOKEN ?? "",
   fetchImpl = globalThis.fetch,
+  // Offline API fixtures opt in with an explicit public-page transport.
+  articleFetchImpl = fetchImpl === globalThis.fetch ? globalThis.fetch : null,
   now = Date.now,
 } = {}) {
   let user = null;
@@ -445,7 +451,11 @@ export function createXFeedService({
         unique.push(post);
       }
     }
-    const articles = mergeArticles(foundArticles, articlesAvailable && fullRefresh ? [] : (cached?.articles ?? []));
+    const articles = await enrichArticleDocuments(
+      mergeArticles(foundArticles, articlesAvailable && fullRefresh ? [] : (cached?.articles ?? [])),
+      cached?.articles,
+      articleFetchImpl,
+    );
     const articlesStatus = articlesAvailable
       ? articles.length
         ? "ok"

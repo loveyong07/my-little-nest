@@ -1,0 +1,542 @@
+{
+  "__typename": "ArticleEntity",
+  "content_state": {
+    "blocks": [
+      {
+        "data": {},
+        "entity_ranges": [
+          {
+            "key": 0,
+            "length": 1,
+            "offset": 0
+          }
+        ],
+        "inline_style_ranges": [],
+        "key": "6vs7d",
+        "text": "😘Hello,看到这篇文章各位兄弟姐妹们！",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [],
+        "inline_style_ranges": [],
+        "key": "f9ln8",
+        "text": "不知不觉玩X已经几个月了，还记得之前第一次注册X账号，登录的时候更多的只是想在这里当个看客，慢慢的我把X当做除了QQ、微信外的第三个我能分享内容的地方。在这里，无国界之分，有更多内容可以自己探索，也许对于你们来说，玩X是一件顺手的事，但对于我来说，更多的是巧合。",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [
+          {
+            "key": 1,
+            "length": 1,
+            "offset": 0
+          }
+        ],
+        "inline_style_ranges": [],
+        "key": "ff570",
+        "text": " ",
+        "type": "atomic"
+      },
+      {
+        "data": {},
+        "entity_ranges": [],
+        "inline_style_ranges": [],
+        "key": "61h05",
+        "text": "以下就是我个人的分享啦，个人真实经历>_<：",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [],
+        "inline_style_ranges": [],
+        "key": "a8qlm",
+        "text": "你们绝对不会想到，我科学上网竟然是从Galgame开始，很奇幻吧！",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [
+          {
+            "key": 2,
+            "length": 26,
+            "offset": 108
+          },
+          {
+            "key": 3,
+            "length": 1,
+            "offset": 227
+          }
+        ],
+        "inline_style_ranges": [],
+        "key": "dovgb",
+        "text": "我在简介也说过，我是一个Galgame爱好者，所以有钱的时候我肯定会买相对应的美少女游戏，柚子社的游戏我都是买的！除了最新的《Limelight Lemonade Jam》然后在我没钱的时候就喜欢寻找资源，我很感谢 TouchGal - 一站式Galgame文化社区! ,这个网站让我得到了自己喜欢玩的游戏，永远支持它！为什么说它让我学会科学上网就是因为它推荐了一个机场吧，这里就不贴出链接了，我怕给自号玩封了，虽然看别的博主推荐没被封，自己还是比较胆小😇",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [
+          {
+            "key": 4,
+            "length": 1,
+            "offset": 0
+          }
+        ],
+        "inline_style_ranges": [],
+        "key": "223g2",
+        "text": " ",
+        "type": "atomic"
+      },
+      {
+        "data": {},
+        "entity_ranges": [],
+        "inline_style_ranges": [],
+        "key": "fhnjk",
+        "text": "最开始它推荐的机场，我买了订阅却不知道怎么使用，换做是你是不是会笑我？反正当时我甚至还找客服，然后他们没理我。后面看了订阅的相关事项才知道原来需要一个类似于Clash类的东西，然后我就知道了FIClash哈哈。还挺巧的你们觉不觉得？",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [],
+        "inline_style_ranges": [],
+        "key": "bgp6i",
+        "text": "从此以后我的生活基本就是天天科学上网了。",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [],
+        "inline_style_ranges": [],
+        "key": "eqb6k",
+        "text": "第一件事是什么，那肯定是注册Gmail，由于我的Gmail一开始不知道什么原因，需要申诉，不知道你们有没有遇到，所以虽然现在我有两个邮箱，但第一个邮箱还是购买的哈哈，当时贪便宜买的一个号结果无法使用Google类似于云空间之类的，所以我的Gmail虽然是付费的Pro用户，但无法使用Antigravity（谷歌反重力），气死我了；然后自建的Gmail买的是咸鱼jio订阅，目前也无法使用Gemini-4-Argon，",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [],
+        "inline_style_ranges": [],
+        "key": "337hp",
+        "text": "Gmail也是梦的开始，然后我就用Gmail注册的X，当然现在改成QQ邮箱了，基本上邮箱都是用Gmail",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [],
+        "inline_style_ranges": [],
+        "key": "bra90",
+        "text": "另外对于我自己的X和Telegram我都是用+86注册的，主打一个心大！",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [],
+        "inline_style_ranges": [],
+        "key": "25ip0",
+        "text": "在X上，我习惯于刷自己喜欢的东西，像什么coser（谁不喜欢？），AI，美少女游戏等等之类的。最开始我想在Google play绑定卡片才发现不支持银联，然后我就了解到了Visa以及Mastercard之类的，进而在X上看见各位前辈分享我就知道原来有一种东西叫做“加密货币”，什么比特币，USDx等等。然后我就知道了虚拟卡和那些平台，比如我现在在用的虚拟Visa卡，它就是来自Gate的，然后买u的话一般也会去币安，我不玩加密货币，因为不了解，买这个也只是用于订阅ChatGPT，当然我第一张虚拟卡是Payfun，现在不用了。",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [],
+        "inline_style_ranges": [],
+        "key": "88bi9",
+        "text": "说到ChatGPT，就可以说说我的经历了：",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [],
+        "inline_style_ranges": [],
+        "key": "f89bg",
+        "text": "在2026年3月左右，一堂课上老师提到小龙虾，应该是Open Claw，我当是就觉得有这么厉害的东西，然后就自己摸索用了早期的Trae，WorkBuddy等国产Agent工具，知道2026年5月学会科学上网后首先就用了ChatGPT，当时它和Codex还没有合并，6月我第一次用上了Codex。",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [
+          {
+            "key": 5,
+            "length": 1,
+            "offset": 0
+          }
+        ],
+        "inline_style_ranges": [],
+        "key": "mr0q",
+        "text": " ",
+        "type": "atomic"
+      },
+      {
+        "data": {},
+        "entity_ranges": [],
+        "inline_style_ranges": [],
+        "key": "49mue",
+        "text": "其实在早期我更多的是接触到Claude code，因为当时接入deepseek的api，然后终端也比较简单吧。然后当时对于Codex就是用Codex++接入，后来第一次通过Google play订阅的go，然后就是一直plus了，虽然一个月20美元但是我觉得很值得！现在我在学习上以及离不开他们了，当我周围的人还在用Deepseek，WorkBuddy，豆包等Agent工具的时候，用世界领先的Agent体验感真的很好（我从来没有瞧不起他们）",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [
+          {
+            "key": 6,
+            "length": 1,
+            "offset": 67
+          }
+        ],
+        "inline_style_ranges": [],
+        "key": "4pnt3",
+        "text": "相比于Anthropic，我更喜欢OpenAI，因为他不封我的号。我绝对不会说我在2026年10月11日向A\\捐款20美元（气死我了）😭，我刚用1小时修改网站就受到了“Hello...”",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [],
+        "inline_style_ranges": [],
+        "key": "em37m",
+        "text": "当然我也再用Gemini（美国大豆包），Grok（啥都说）体验感都很不错!",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [],
+        "inline_style_ranges": [],
+        "key": "ajkp0",
+        "text": "回过头看，其实在我初中高中那个年龄段肯定想不到现在的我见世面会这么广。现在的日子，因为要上学，所以基本没有像更多成年人一样去工作，我现在也就偶尔兼职，多赚一些钱，让自己活得更好一点。我也在用影视飓风教的课偶尔学学剪辑还是很不错的。教的都是一些基础，所以我也在抖音剪一些游戏视频吧，虽然最近没认真剪辑了。我的抖音：loveyong1004",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [
+          {
+            "key": 7,
+            "length": 1,
+            "offset": 0
+          }
+        ],
+        "inline_style_ranges": [],
+        "key": "aee0b",
+        "text": " ",
+        "type": "atomic"
+      },
+      {
+        "data": {
+          "urls": [
+            {
+              "from_index": 23,
+              "text": "Muse.ai",
+              "to_index": 30
+            }
+          ]
+        },
+        "entity_ranges": [
+          {
+            "key": 8,
+            "length": 1,
+            "offset": 68
+          }
+        ],
+        "inline_style_ranges": [],
+        "key": "1p198",
+        "text": "另外对于那种个人能帮你动手做事的工具，比如说 Muse.ai 或者Grok dot等那些，要是平常用的多其实也很棒的！关键在于怎么使用吧😊",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [
+          {
+            "key": 9,
+            "length": 1,
+            "offset": 0
+          }
+        ],
+        "inline_style_ranges": [],
+        "key": "bv2ks",
+        "text": " ",
+        "type": "atomic"
+      },
+      {
+        "data": {},
+        "entity_ranges": [],
+        "inline_style_ranges": [],
+        "key": "d618r",
+        "text": "我也喜欢好看的卡片，比如说那个中行的2233哔哩哔哩联名的万事达借记卡，starryblu等。但是在国内卡多了会限制，之前我就去中信激活那个金貔貅，他说什么反诈什么的拒绝激活，要不就直接只能存不能非柜面使用，我说实话是真的无语了。不能非柜面使用我激活有什么意思？我表名我的态度我就走了。",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [],
+        "inline_style_ranges": [],
+        "key": "2f9r0",
+        "text": "这个月的10月28日我回去办理港澳通行证，想去香港一日游来着，等证件到了直接出发，想看看那维多利亚港的风景，和旺角的贴地气等等！我很期待。当然去都去了，肯定顺路弄一个众安黑色Visa，k线卡面很好看，万一以后就接触股票了哈哈！也可以用FPS来充值starryblu",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [
+          {
+            "key": 10,
+            "length": 1,
+            "offset": 143
+          }
+        ],
+        "inline_style_ranges": [],
+        "key": "3rrqa",
+        "text": "另外在这个月底或者下个月，钱够了就买机票了，计划2027.3.1-2027.3.8去日本玩，真的很喜欢日本的风景，我看过很多动漫，玩过很多游戏，刷到过很多视频，我真的很想去涩谷Sky看风景，走过那个十字路口，去京都二年坂、三年坂拍照，秋叶原的手办，江之岛的海景......我真的很期待！😘",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [
+          {
+            "key": 11,
+            "length": 1,
+            "offset": 0
+          }
+        ],
+        "inline_style_ranges": [],
+        "key": "3knf6",
+        "text": " ",
+        "type": "atomic"
+      },
+      {
+        "data": {},
+        "entity_ranges": [],
+        "inline_style_ranges": [],
+        "key": "1ahcs",
+        "text": "以上就是关于“我”了，都看到这了还不关注我，万一以后fo多了呢，哈哈！",
+        "type": "unstyled"
+      },
+      {
+        "data": {},
+        "entity_ranges": [
+          {
+            "key": 12,
+            "length": 1,
+            "offset": 0
+          }
+        ],
+        "inline_style_ranges": [],
+        "key": "8d55c",
+        "text": " ",
+        "type": "atomic"
+      },
+      {
+        "data": {},
+        "entity_ranges": [],
+        "inline_style_ranges": [],
+        "key": "6886i",
+        "text": "",
+        "type": "unstyled"
+      }
+    ],
+    "entity_map": [
+      {
+        "key": "12",
+        "value": {
+          "data": {
+            "media_items": [
+              {
+                "media_id": "2111445168348106752"
+              }
+            ]
+          },
+          "type": "MEDIA"
+        }
+      },
+      {
+        "key": "8",
+        "value": {
+          "data": {
+            "url": "https://abs.twimg.com/emoji/v2/svg/1f60a.svg"
+          },
+          "type": "TWEMOJI"
+        }
+      },
+      {
+        "key": "4",
+        "value": {
+          "data": {
+            "media_items": [
+              {
+                "media_id": "2111426819467644928"
+              }
+            ]
+          },
+          "type": "MEDIA"
+        }
+      },
+      {
+        "key": "11",
+        "value": {
+          "data": {},
+          "type": "DIVIDER"
+        }
+      },
+      {
+        "key": "9",
+        "value": {
+          "data": {
+            "media_items": [
+              {
+                "media_id": "2111442686666530817"
+              }
+            ]
+          },
+          "type": "MEDIA"
+        }
+      },
+      {
+        "key": "5",
+        "value": {
+          "data": {
+            "media_items": [
+              {
+                "media_id": "2111433571969974272"
+              }
+            ]
+          },
+          "type": "MEDIA"
+        }
+      },
+      {
+        "key": "10",
+        "value": {
+          "data": {
+            "url": "https://abs.twimg.com/emoji/v2/svg/1f618.svg"
+          },
+          "type": "TWEMOJI"
+        }
+      },
+      {
+        "key": "6",
+        "value": {
+          "data": {
+            "url": "https://abs.twimg.com/emoji/v2/svg/1f62d.svg"
+          },
+          "type": "TWEMOJI"
+        }
+      },
+      {
+        "key": "1",
+        "value": {
+          "data": {},
+          "type": "DIVIDER"
+        }
+      },
+      {
+        "key": "0",
+        "value": {
+          "data": {
+            "url": "https://abs.twimg.com/emoji/v2/svg/1f618.svg"
+          },
+          "type": "TWEMOJI"
+        }
+      },
+      {
+        "key": "2",
+        "value": {
+          "data": {
+            "url": "https://www.touchgal.ink/"
+          },
+          "type": "LINK"
+        }
+      },
+      {
+        "key": "7",
+        "value": {
+          "data": {
+            "media_items": [
+              {
+                "media_id": "2111440384887009280"
+              }
+            ]
+          },
+          "type": "MEDIA"
+        }
+      },
+      {
+        "key": "3",
+        "value": {
+          "data": {
+            "url": "https://abs.twimg.com/emoji/v2/svg/1f607.svg"
+          },
+          "type": "TWEMOJI"
+        }
+      }
+    ]
+  },
+  "cover_media_results": {
+    "id": "QXBpTWVkaWFSZXN1bHRzOgwABQoAAR1NS03Fm4AACgACHJy492ibsAAAAA==",
+    "result": {
+      "__typename": "ApiMedia",
+      "id": "QXBpTWVkaWE6DAAFCgABHU1LTcWbgAAKAAIcnLj3aJuwAAAA",
+      "media_id": "2111426597706498048",
+      "media_info": {
+        "__typename": "ApiImage",
+        "original_img_height": 1024,
+        "original_img_url": "https://pbs.twimg.com/media/HU1LTcWbgAAnC3Y.jpg",
+        "original_img_width": 2559
+      }
+    }
+  },
+  "id": "QXJ0aWNsZUVudGl0eToyMTExNDIzOTA2MjAwNTg0MTky",
+  "media_entities": [
+    {
+      "id": "QXBpTWVkaWE6DAAFCgABHU1X19masAAKAAIcnLj3aJuwAAAA",
+      "media_id": "2111440384887009280",
+      "media_info": {
+        "__typename": "ApiImage",
+        "original_img_height": 1599,
+        "original_img_url": "https://pbs.twimg.com/media/HU1X19masAA2LTR.jpg",
+        "original_img_width": 2559
+      }
+    },
+    {
+      "id": "QXBpTWVkaWE6DAAFCgABHU1LgWeaEAAKAAIcnLj3aJuwAAAA",
+      "media_id": "2111426819467644928",
+      "media_info": {
+        "__typename": "ApiImage",
+        "original_img_height": 1599,
+        "original_img_url": "https://pbs.twimg.com/media/HU1LgWeaEAAezM_.jpg",
+        "original_img_width": 2559
+      }
+    },
+    {
+      "id": "QXBpTWVkaWE6DAAFCgABHU1Z78Za4AEKAAIcnLj3aJuwAAAA",
+      "media_id": "2111442686666530817",
+      "media_info": {
+        "__typename": "ApiImage",
+        "original_img_height": 1599,
+        "original_img_url": "https://pbs.twimg.com/media/HU1Z78Za4AEZqdu.jpg",
+        "original_img_width": 2559
+      }
+    },
+    {
+      "id": "QXBpTWVkaWE6DAAFCgABHU1RpZgawAAKAAIcnLj3aJuwAAAA",
+      "media_id": "2111433571969974272",
+      "media_info": {
+        "__typename": "ApiImage",
+        "original_img_height": 1599,
+        "original_img_url": "https://pbs.twimg.com/media/HU1RpZgawAApaPo.jpg",
+        "original_img_width": 2559
+      }
+    },
+    {
+      "id": "QXBpTWVkaWE6DAAFCgABHU1cMZYakAAKAAIcnLj3aJuwAAAA",
+      "media_id": "2111445168348106752",
+      "media_info": {
+        "__typename": "ApiImage",
+        "original_img_height": 1599,
+        "original_img_url": "https://pbs.twimg.com/media/HU1cMZYakAAioQg.jpg",
+        "original_img_width": 2559
+      }
+    }
+  ],
+  "metadata": {
+    "created_at_secs": 1792237662,
+    "first_published_at_secs": 1792242842,
+    "modified_at_secs": 1792242816
+  },
+  "plain_text": "Hello,看到这篇文章各位兄弟姐妹们！\n不知不觉玩X已经几个月了，还记得之前第一次注册X账号，登录的时候更多的只是想在这里当个看客，慢慢的我把X当做除了QQ、微信外的第三个我能分享内容的地方。在这里，无国界之分，有更多内容可以自己探索，也许对于你们来说，玩X是一件顺手的事，但对于我来说，更多的是巧合。\n \n以下就是我个人的分享啦，个人真实经历>_<：\n你们绝对不会想到，我科学上网竟然是从Galgame开始，很奇幻吧！\n我在简介也说过，我是一个Galgame爱好者，所以有钱的时候我肯定会买相对应的美少女游戏，柚子社的游戏我都是买的！除了最新的《Limelight Lemonade Jam》然后在我没钱的时候就喜欢寻找资源，我很感谢 TouchGal - 一站式Galgame文化社区! ,这个网站让我得到了自己喜欢玩的游戏，永远支持它！为什么说它让我学会科学上网就是因为它推荐了一个机场吧，这里就不贴出链接了，我怕给自号玩封了，虽然看别的博主推荐没被封，自己还是比较胆小😇\n \n最开始它推荐的机场，我买了订阅却不知道怎么使用，换做是你是不是会笑我？反正当时我甚至还找客服，然后他们没理我。后面看了订阅的相关事项才知道原来需要一个类似于Clash类的东西，然后我就知道了FIClash哈哈。还挺巧的你们觉不觉得？\n从此以后我的生活基本就是天天科学上网了。\n第一件事是什么，那肯定是注册Gmail，由于我的Gmail一开始不知道什么原因，需要申诉，不知道你们有没有遇到，所以虽然现在我有两个邮箱，但第一个邮箱还是购买的哈哈，当时贪便宜买的一个号结果无法使用Google类似于云空间之类的，所以我的Gmail虽然是付费的Pro用户，但无法使用Antigravity（谷歌反重力），气死我了；然后自建的Gmail买的是咸鱼jio订阅，目前也无法使用Gemini-4-Argon，\nGmail也是梦的开始，然后我就用Gmail注册的X，当然现在改成QQ邮箱了，基本上邮箱都是用Gmail\n另外对于我自己的X和Telegram我都是用+86注册的，主打一个心大！\n在X上，我习惯于刷自己喜欢的东西，像什么coser（谁不喜欢？），AI，美少女游戏等等之类的。最开始我想在Google play绑定卡片才发现不支持银联，然后我就了解到了Visa以及Mastercard之类的，进而在X上看见各位前辈分享我就知道原来有一种东西叫做“加密货币”，什么比特币，USDx等等。然后我就知道了虚拟卡和那些平台，比如我现在在用的虚拟Visa卡，它就是来自Gate的，然后买u的话一般也会去币安，我不玩加密货币，因为不了解，买这个也只是用于订阅ChatGPT，当然我第一张虚拟卡是Payfun，现在不用了。\n说到ChatGPT，就可以说说我的经历了：\n在2026年3月左右，一堂课上老师提到小龙虾，应该是Open Claw，我当是就觉得有这么厉害的东西，然后就自己摸索用了早期的Trae，WorkBuddy等国产Agent工具，知道2026年5月学会科学上网后首先就用了ChatGPT，当时它和Codex还没有合并，6月我第一次用上了Codex。\n \n其实在早期我更多的是接触到Claude code，因为当时接入deepseek的api，然后终端也比较简单吧。然后当时对于Codex就是用Codex++接入，后来第一次通过Google play订阅的go，然后就是一直plus了，虽然一个月20美元但是我觉得很值得！现在我在学习上以及离不开他们了，当我周围的人还在用Deepseek，WorkBuddy，豆包等Agent工具的时候，用世界领先的Agent体验感真的很好（我从来没有瞧不起他们）\n相比于Anthropic，我更喜欢OpenAI，因为他不封我的号。我绝对不会说我在2026年10月11日向A\\捐款20美元（气死我了）😭，我刚用1小时修改网站就受到了“Hello...”\n当然我也再用Gemini（美国大豆包），Grok（啥都说）体验感都很不错!\n回过头看，其实在我初中高中那个年龄段肯定想不到现在的我见世面会这么广。现在的日子，因为要上学，所以基本没有像更多成年人一样去工作，我现在也就偶尔兼职，多赚一些钱，让自己活得更好一点。我也在用影视飓风教的课偶尔学学剪辑还是很不错的。教的都是一些基础，所以我也在抖音剪一些游戏视频吧，虽然最近没认真剪辑了。我的抖音：loveyong1004\n \n另外对于那种个人能帮你动手做事的工具，比如说 Muse.ai 或者Grok dot等那些，要是平常用的多其实也很棒的！关键在于怎么使用吧😊\n \n我也喜欢好看的卡片，比如说那个中行的2233哔哩哔哩联名的万事达借记卡，starryblu等。但是在国内卡多了会限制，之前我就去中信激活那个金貔貅，他说什么反诈什么的拒绝激活，要不就直接只能存不能非柜面使用，我说实话是真的无语了。不能非柜面使用我激活有什么意思？我表名我的态度我就走了。\n这个月的10月28日我回去办理港澳通行证，想去香港一日游来着，看看那维多利亚港的风景，和旺角的贴地气等等！我很期待。当然去都去了，肯定顺路弄一个众安黑色Visa，k线卡面很好看，万一以后就接触股票了哈哈！\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n，h",
+  "preview_text": "😘Hello,看到这篇文章各位兄弟姐妹们！",
+  "title": "关于我"
+}

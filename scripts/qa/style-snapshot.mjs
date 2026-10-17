@@ -449,7 +449,7 @@ async function capture(outDir) {
   try {
     await waitForServer();
     browser = await chromium.launch({ channel: process.env.QA_BROWSER || "chrome", args: ["--autoplay-policy=user-gesture-required"] });
-    const queue = scenarios();
+    const queue = scenarios().filter((scenario) => !process.env.QA_SCENARIO_PATTERN || new RegExp(process.env.QA_SCENARIO_PATTERN).test(scenario.name));
     const results = [];
     const worker = async () => {
       for (let scenario = queue.shift(); scenario; scenario = queue.shift()) {
