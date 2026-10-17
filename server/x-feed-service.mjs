@@ -311,11 +311,11 @@ export function createXFeedService({
       if (mode === "tweet") {
         url.searchParams.set(
           "tweet.fields",
-          "created_at,referenced_tweets,author_id,in_reply_to_user_id,note_tweet,attachments,entities",
+          "created_at,referenced_tweets,author_id,in_reply_to_user_id,note_tweet,attachments,entities,article,article_title",
         );
         url.searchParams.set("expansions", "attachments.media_keys");
       } else {
-        url.searchParams.set("post.fields", "created_at,note_post,attachments,entities");
+        url.searchParams.set("post.fields", "created_at,note_post,attachments,entities,article,article_title");
         url.searchParams.set("expansions", "attachments.media_keys,author_id");
       }
       url.searchParams.set("media.fields", "media_key,type,url,alt_text,width,height,preview_image_url,variants");
@@ -330,6 +330,7 @@ export function createXFeedService({
         json = await lookup("post");
         postFieldMode = "post";
       }
+      if (json.data?.id === pinnedId && isArticlePost(json.data)) return { post: null, status: "none" };
       const mediaByKey = new Map(
         (Array.isArray(json.includes?.media) ? json.includes.media : [])
           .filter((media) => typeof media?.media_key === "string")
@@ -474,7 +475,16 @@ export function createXFeedService({
       fetchPinnedPost(author, pinnedId),
     ]);
     return {
-      result: { status: "ok", posts, articles, articlesStatus, pinnedPost: pinned.post, pinnedStatus: pinned.status },
+      result: {
+        status: "ok",
+        posts,
+        articles,
+        articlesStatus,
+        // The timeline can identify an Article even when a compatibility detail
+        // response omitted optional Article fields. Never turn it into a link card.
+        pinnedPost: articles.some((article) => article.id === pinnedId) ? null : pinned.post,
+        pinnedStatus: articles.some((article) => article.id === pinnedId) ? "none" : pinned.status,
+      },
       latestId,
       pinnedId,
       author,

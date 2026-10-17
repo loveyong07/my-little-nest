@@ -333,6 +333,62 @@ test("a pinned Article stays in the independent Article timeline and out of dail
     result.posts.map((item) => item.id),
     ["19"],
   );
+  assert.equal(result.pinnedPost, null);
+  assert.equal(result.pinnedStatus, "none");
+});
+
+for (const metadata of [{ article: { title: "Pinned Article" } }, { article_title: "Pinned Article" }]) {
+  test(`pinned Article metadata (${Object.keys(metadata)[0]}) returns no pinned post even outside the timeline`, async () => {
+    const feed = createXFeedService({
+      token: "test-token",
+      fetchImpl: async (url) => {
+        const parsed = new URL(url);
+        if (parsed.pathname === `/2/users/${USER_ID}`)
+          return Response.json({ data: { ...author, pinned_tweet_id: "20" } });
+        if (parsed.pathname === "/2/tweets/20") {
+          assert.ok(parsed.searchParams.get("tweet.fields").split(",").includes("article"));
+          return Response.json({ data: post("20", metadata) });
+        }
+        return Response.json({ data: [post("19")] });
+      },
+    });
+    const result = await feed();
+    assert.equal(result.pinnedPost, null);
+    assert.equal(result.pinnedStatus, "none");
+    assert.equal(result.posts[0].id, "19");
+  });
+}
+
+test("timeline Article identity suppresses a pinned detail response that omitted Article metadata", async () => {
+  const feed = createXFeedService({
+    token: "test-token",
+    fetchImpl: async (url) => {
+      const { pathname } = new URL(url);
+      if (pathname === `/2/users/${USER_ID}`) return Response.json({ data: { ...author, pinned_tweet_id: "20" } });
+      if (pathname === "/2/tweets/20")
+        return Response.json({ data: post("20", { text: "https://x.com/i/article/123" }) });
+      return Response.json({ data: [article("20"), post("19")] });
+    },
+  });
+  const result = await feed();
+  assert.equal(result.pinnedStatus, "none");
+  assert.equal(result.pinnedPost, null);
+  assert.equal(result.articles[0].id, "20");
+});
+
+test("ordinary pinned posts keep working even when their text links to an Article", async () => {
+  const feed = createXFeedService({
+    token: "test-token",
+    fetchImpl: async (url) => {
+      const { pathname } = new URL(url);
+      if (pathname === `/2/users/${USER_ID}`) return Response.json({ data: { ...author, pinned_tweet_id: "20" } });
+      if (pathname === "/2/tweets/20")
+        return Response.json({ data: post("20", { text: "推荐 https://x.com/i/article/123" }) });
+      return Response.json({ data: [post("19")] });
+    },
+  });
+  const result = await feed();
+  assert.equal(result.pinnedStatus, "ok");
   assert.equal(result.pinnedPost.id, "20");
 });
 

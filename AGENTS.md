@@ -40,6 +40,7 @@
 - The homepage X avatar, display name and username follow the current X profile using the account's stable X user ID. Retain local fallback content during API outages and prefer the higher-resolution avatar on Home and Posts when available.
 - Show the user's own original X posts in cards, and label decorative art separately from actual post media.
 - On Posts, keep a stationary card for the account's current X pinned post above the daily carousel. Update it when the pin changes and keep it out of the daily carousel. Never present a dated fallback snapshot as a pinned post.
+- A pinned X Article is not a pinned post: show the existing no-pinned-post message in that section and retain the Article only in the independent Articles section. Classify using Article metadata, not merely an Article URL in an ordinary post's text.
 - Show all original posts available from the X user timeline rather than limiting the daily carousel to six.
 - Each Posts entry defaults to the latest daily post, including after loading a fresh timeline over a snapshot or cache. Preserve the reading post during background refresh only after the visitor manually selects one.
 - Omit the sticky previous/next bar above the daily card. Keep the lower daily-post navigation and date index.
