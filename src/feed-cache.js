@@ -4,8 +4,8 @@ import { cacheArticleData } from "./utils/article-reading.js";
 
 export { canPrefetch };
 
-// Refetch snapshots saved before Articles retained their original block order.
-const KEY = "little-nest-feed-v4";
+// Refetch snapshots that could display a pinned Article as an ordinary post.
+const KEY = "little-nest-feed-v5";
 const MAX_AGE = SUCCESS_MAX_AGE_MS;
 
 export function readFeedCache(storage, now = Date.now()) {
