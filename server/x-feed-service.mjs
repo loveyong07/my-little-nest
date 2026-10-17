@@ -1,4 +1,4 @@
-// Reads the account's profile, pinned post and original posts from the X API, with an
+// Reads the account's profile, pinned post, original posts and Articles from the X API, with an
 // in-memory cache, incremental refreshes and a failure backoff. Shared by every runtime
 // through server/api-handler.mjs.
 import { mediaDimensions, parseMediaSource } from "../shared/media-sources.mjs";
@@ -115,15 +115,10 @@ async function getXJson(url, token, fetchImpl, { allowPartialErrors = false } = 
   }
 }
 
-function normalizedPost(post, user, mediaByKey, { allowReferences = false } = {}) {
-  if (!isId(post?.id) || typeof post.text !== "string") return null;
-  if (post.author_id && post.author_id !== user.id) return null;
-  if (allowReferences && post.author_id !== user.id) return null;
-  if (!allowReferences && (post.in_reply_to_user_id || post.referenced_tweets?.length || post.referenced_posts?.length))
-    return null;
+function normalizedMedia(keys, mediaByKey) {
   const mediaItems = [];
   const usedKeys = new Set();
-  for (const key of Array.isArray(post.attachments?.media_keys) ? post.attachments.media_keys : []) {
+  for (const key of keys) {
     if (usedKeys.has(key)) continue;
     usedKeys.add(key);
     const media = mediaByKey.get(key);
@@ -143,6 +138,19 @@ function normalizedPost(post, user, mediaByKey, { allowReferences = false } = {}
         mediaItems.push({ type: "video", url, ...(poster ? { poster } : {}), alt, ...(mediaDimensions(media) ?? {}) });
     }
   }
+  return mediaItems;
+}
+
+function normalizedPost(post, user, mediaByKey, { allowReferences = false } = {}) {
+  if (!isId(post?.id) || typeof post.text !== "string") return null;
+  if (post.author_id && post.author_id !== user.id) return null;
+  if (allowReferences && post.author_id !== user.id) return null;
+  if (!allowReferences && (post.in_reply_to_user_id || post.referenced_tweets?.length || post.referenced_posts?.length))
+    return null;
+  const mediaItems = normalizedMedia(
+    Array.isArray(post.attachments?.media_keys) ? post.attachments.media_keys : [],
+    mediaByKey,
+  );
   const text = normalizedPostText(
     post.note_tweet?.text || post.note_post?.text || post.text,
     post,
@@ -159,6 +167,68 @@ function normalizedPost(post, user, mediaByKey, { allowReferences = false } = {}
     permalink: `https://x.com/${user.username}/status/${post.id}`,
     ...(mediaItems.length ? { media: mediaItems } : {}),
   };
+}
+
+// Article metadata comes from the requested article field, never from note_tweet:
+// long ordinary posts and links that mention an Article remain ordinary posts.
+function isArticlePost(post) {
+  return (
+    (post.article !== null && typeof post.article === "object" && !Array.isArray(post.article)) ||
+    (typeof post.article_title === "string" && Boolean(post.article_title.trim()))
+  );
+}
+
+function normalizedArticle(post, user, mediaByKey) {
+  if (
+    !isId(post?.id) ||
+    post.author_id !== user.id ||
+    post.in_reply_to_user_id ||
+    post.referenced_tweets?.length ||
+    post.referenced_posts?.length
+  )
+    return null;
+  const article = post.article ?? {};
+  const title =
+    typeof article.title === "string"
+      ? article.title.trim()
+      : typeof post.article_title === "string"
+        ? post.article_title.trim()
+        : "";
+  const fullText = typeof article.plain_text === "string" ? article.plain_text : "";
+  const preview = typeof article.preview_text === "string" ? article.preview_text : "";
+  const text = fullText || preview;
+  const media = normalizedMedia(
+    [
+      article.cover_media,
+      ...(Array.isArray(article.media_entities) ? article.media_entities : []),
+      ...(Array.isArray(post.attachments?.media_keys) ? post.attachments.media_keys : []),
+    ].filter((key) => typeof key === "string"),
+    mediaByKey,
+  );
+  // An unexpected/empty Article payload is not proof that the account has no Articles.
+  if (!title && !text.trim() && !media.length) return null;
+  return {
+    id: post.id,
+    title,
+    text,
+    contentKind: fullText ? "full" : "preview",
+    created_at: post.created_at ?? null,
+    author: user.name || USERNAME,
+    avatar: safeAvatar(user.profile_image_url),
+    permalink: `https://x.com/${user.username}/status/${post.id}`,
+    ...(media.length ? { media } : {}),
+  };
+}
+
+function mergeArticles(current, previous = []) {
+  const unique = new Map();
+  for (const article of [...current, ...previous]) {
+    if (!unique.has(article.id)) unique.set(article.id, article);
+  }
+  return [...unique.values()].sort((left, right) => {
+    const byDate = (Date.parse(right.created_at) || 0) - (Date.parse(left.created_at) || 0);
+    return byDate || right.id.length - left.id.length || right.id.localeCompare(left.id);
+  });
 }
 
 export function createXFeedService({
@@ -179,6 +249,7 @@ export function createXFeedService({
   let cachedPinnedId = null;
   let cachedAuthor = null;
   let pinnedRetryAt = 0;
+  let articlesRetryAt = 0;
   let fullRefreshAt = null;
   let cachedProfile = null;
   let profileRetryAt = 0;
@@ -272,11 +343,15 @@ export function createXFeedService({
 
   async function fetchOriginalPosts(author, pinnedId) {
     const found = [];
+    const foundArticles = [];
     const seen = new Set();
     let nextToken = null;
+    let includeArticles = true;
+    let articlesAvailable = true;
     const fullRefresh =
       !cached ||
       cachedPinnedId !== pinnedId ||
+      !["ok", "none"].includes(cached.articlesStatus) ||
       fullRefreshAt === null ||
       now() - fullRefreshAt >= FULL_REFRESH_TTL_MS ||
       !newestSeenId;
@@ -285,12 +360,16 @@ export function createXFeedService({
     for (let page = 0; page < MAX_PAGES; page += 1) {
       const url = new URL(`${X_API}/users/${author.id}/tweets`);
       url.searchParams.set("exclude", "replies,retweets");
-      // The live X API accepted tweet.fields for this endpoint on 2026-09-26.
+      // The live X API accepted these Article fields and expansions on 2026-10-17.
       url.searchParams.set(
         "tweet.fields",
-        "created_at,referenced_tweets,author_id,in_reply_to_user_id,note_tweet,attachments,entities",
+        "created_at,referenced_tweets,author_id,in_reply_to_user_id,note_tweet,attachments,entities" +
+          (includeArticles ? ",article,article_title" : ""),
       );
-      url.searchParams.set("expansions", "attachments.media_keys");
+      url.searchParams.set(
+        "expansions",
+        "attachments.media_keys" + (includeArticles ? ",article.cover_media,article.media_entities" : ""),
+      );
       url.searchParams.set("media.fields", "media_key,type,url,alt_text,width,height,preview_image_url,variants");
       url.searchParams.set("max_results", String(PAGE_SIZE));
       if (!fullRefresh) {
@@ -298,7 +377,22 @@ export function createXFeedService({
       }
       if (nextToken) url.searchParams.set("pagination_token", nextToken);
 
-      const json = await getXJson(url, token, fetchImpl);
+      let json;
+      try {
+        json = await getXJson(url, token, fetchImpl);
+      } catch (error) {
+        // Optional Article fields must not take the existing post feed down if an
+        // X API access tier/version rejects them. A fallback is unknown, not empty.
+        if (!includeArticles || error?.status !== 400) throw error;
+        includeArticles = false;
+        articlesAvailable = false;
+        url.searchParams.set(
+          "tweet.fields",
+          "created_at,referenced_tweets,author_id,in_reply_to_user_id,note_tweet,attachments,entities",
+        );
+        url.searchParams.set("expansions", "attachments.media_keys");
+        json = await getXJson(url, token, fetchImpl);
+      }
       if (json.data !== undefined && !Array.isArray(json.data)) {
         throw new Error("Invalid X posts response");
       }
@@ -317,6 +411,18 @@ export function createXFeedService({
         latestId = json.meta?.newest_id ?? pagePosts[0].id;
       }
       for (const post of pagePosts) {
+        if (isArticlePost(post)) {
+          const article = normalizedArticle(post, author, mediaByKey);
+          if (article) foundArticles.push(article);
+          else if (
+            post.author_id === author.id &&
+            !post.in_reply_to_user_id &&
+            !post.referenced_tweets?.length &&
+            !post.referenced_posts?.length
+          )
+            articlesAvailable = false;
+          continue;
+        }
         const original = post.id === pinnedId ? null : normalizedPost(post, author, mediaByKey);
         if (original && !seen.has(original.id)) {
           seen.add(original.id);
@@ -339,18 +445,26 @@ export function createXFeedService({
         unique.push(post);
       }
     }
-    return { posts: unique, latestId, fullRefresh };
+    const articles = mergeArticles(foundArticles, articlesAvailable && fullRefresh ? [] : (cached?.articles ?? []));
+    const articlesStatus = articlesAvailable
+      ? articles.length
+        ? "ok"
+        : "none"
+      : articles.length
+        ? "stale"
+        : "unavailable";
+    return { posts: unique, articles, articlesStatus, latestId, fullRefresh };
   }
 
   async function fetchFeed() {
     const author = await getUser();
     const pinnedId = author.pinned_tweet_id ?? author.pinned_post_id ?? null;
-    const [{ posts, latestId, fullRefresh }, pinned] = await Promise.all([
+    const [{ posts, articles, articlesStatus, latestId, fullRefresh }, pinned] = await Promise.all([
       fetchOriginalPosts(author, pinnedId),
       fetchPinnedPost(author, pinnedId),
     ]);
     return {
-      result: { status: "ok", posts, pinnedPost: pinned.post, pinnedStatus: pinned.status },
+      result: { status: "ok", posts, articles, articlesStatus, pinnedPost: pinned.post, pinnedStatus: pinned.status },
       latestId,
       pinnedId,
       author,
@@ -396,24 +510,34 @@ export function createXFeedService({
     if (!token?.trim()) return unavailable();
     if (inFlight) return inFlight;
     if (cached && now() - cachedAt < CACHE_TTL_MS) {
-      if (["ok", "none"].includes(cached.pinnedStatus) || now() < pinnedRetryAt) return cached;
-      // Retry only the failed pin. Keep the timeline's original freshness timestamp
-      // and author/pin pair, even if the standalone profile lookup has since changed.
-      inFlight = fetchPinnedPost(cachedAuthor, cachedPinnedId)
-        .then((pinned) => {
-          cached = { ...cached, pinnedPost: pinned.post, pinnedStatus: pinned.status };
-          pinnedRetryAt = ["ok", "none"].includes(pinned.status) ? 0 : now() + ERROR_RETRY_MS;
-          return cached;
-        })
-        .finally(() => {
-          inFlight = null;
-        });
-      return inFlight;
+      const retryArticles = !["ok", "none"].includes(cached.articlesStatus) && now() >= articlesRetryAt;
+      if (!retryArticles) {
+        if (["ok", "none"].includes(cached.pinnedStatus) || now() < pinnedRetryAt) return cached;
+        // Retry only the failed pin. Keep the timeline's original freshness timestamp
+        // and author/pin pair, even if the standalone profile lookup has since changed.
+        inFlight = fetchPinnedPost(cachedAuthor, cachedPinnedId)
+          .then((pinned) => {
+            cached = { ...cached, pinnedPost: pinned.post, pinnedStatus: pinned.status };
+            pinnedRetryAt = ["ok", "none"].includes(pinned.status) ? 0 : now() + ERROR_RETRY_MS;
+            return cached;
+          })
+          .finally(() => {
+            inFlight = null;
+          });
+        return inFlight;
+      }
     }
-    if (now() < retryAt)
+    function lastKnown() {
       return cached
-        ? { ...cached, status: "stale", pinnedStatus: cached.pinnedPost ? "stale" : cached.pinnedStatus }
+        ? {
+            ...cached,
+            status: "stale",
+            pinnedStatus: cached.pinnedPost ? "stale" : cached.pinnedStatus,
+            articlesStatus: cached.articles.length ? "stale" : "unavailable",
+          }
         : unavailable();
+    }
+    if (now() < retryAt) return lastKnown();
     inFlight = fetchFeed()
       .then(({ result, latestId, pinnedId, author, fullRefresh }) => {
         cached = result;
@@ -422,15 +546,18 @@ export function createXFeedService({
         cachedPinnedId = pinnedId;
         cachedAuthor = author;
         pinnedRetryAt = ["ok", "none"].includes(result.pinnedStatus) ? 0 : cachedAt + ERROR_RETRY_MS;
+        articlesRetryAt = ["ok", "none"].includes(result.articlesStatus) ? 0 : cachedAt + ERROR_RETRY_MS;
         if (fullRefresh) fullRefreshAt = cachedAt;
         retryAt = 0;
         return result;
       })
       .catch(() => {
         retryAt = now() + ERROR_RETRY_MS;
-        return cached
-          ? { ...cached, status: "stale", pinnedStatus: cached.pinnedPost ? "stale" : cached.pinnedStatus }
-          : unavailable();
+        articlesRetryAt = retryAt;
+        // A retry for partial Article data may fail while ordinary posts are still
+        // fresh. Retain that successful response without renewing its freshness.
+        if (cached && now() - cachedAt < CACHE_TTL_MS) return cached;
+        return lastKnown();
       })
       .finally(() => {
         inFlight = null;

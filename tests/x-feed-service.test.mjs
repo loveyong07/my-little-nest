@@ -258,6 +258,8 @@ test("returns only original posts and caches successful X responses", async () =
     status: "ok",
     pinnedPost: null,
     pinnedStatus: "none",
+    articles: [],
+    articlesStatus: "none",
     posts: [
       {
         id: "1",
@@ -329,7 +331,10 @@ test("loads photos from the post's media keys in attachment order", async () => 
 
   const result = await feed();
   assert.equal(result.status, "ok");
-  assert.equal(postsUrl.searchParams.get("expansions"), "attachments.media_keys");
+  assert.equal(
+    postsUrl.searchParams.get("expansions"),
+    "attachments.media_keys,article.cover_media,article.media_entities",
+  );
   assert.ok(postsUrl.searchParams.get("tweet.fields").split(",").includes("attachments"));
   assert.ok(postsUrl.searchParams.get("tweet.fields").split(",").includes("entities"));
   assert.ok(postsUrl.searchParams.get("media.fields").split(",").includes("url"));

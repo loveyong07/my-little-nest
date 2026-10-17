@@ -1,0 +1,212 @@
+/* Article browsing has its own timeline and controls below the daily posts. */
+.articles-group > .posts-daily-heading .section-heading > svg {
+  color: #687da8;
+}
+.article-timeline {
+  position: relative;
+  margin-top: var(--space-4);
+  padding: 3px 2px var(--space-2);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-color: #adc6db transparent;
+  scrollbar-width: thin;
+}
+.article-timeline ol {
+  display: flex;
+  gap: var(--space-3);
+  width: max-content;
+  min-width: 100%;
+  margin: 0;
+  padding: 16px 0 0;
+  list-style: none;
+}
+.article-timeline li {
+  position: relative;
+  width: 192px;
+}
+.article-timeline li::before {
+  position: absolute;
+  top: -11px;
+  left: 0;
+  width: calc(100% + var(--space-3));
+  height: 1px;
+  background: #9eb8cc99;
+  content: "";
+}
+.article-timeline li:last-child::before {
+  width: 100%;
+}
+.article-timeline-button {
+  position: relative;
+  width: 100%;
+  min-height: 82px;
+  gap: var(--space-2);
+}
+.article-timeline-button::before {
+  position: absolute;
+  top: -16px;
+  left: 15px;
+  width: 9px;
+  height: 9px;
+  border: 2px solid #f3f8ff;
+  border-radius: 50%;
+  background: #a5bdd2;
+  box-shadow: 0 0 0 1px #b5cada;
+  content: "";
+}
+.article-timeline-button.is-active::before {
+  background: #617f9f;
+  box-shadow: 0 0 0 3px #dce9f3b3;
+}
+.article-timeline-title {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow-wrap: anywhere;
+}
+.article-status {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  min-height: 176px;
+  margin-top: var(--space-4);
+  padding: var(--space-5);
+  border: 1px solid #ffffff80;
+  border-radius: 24px;
+  background: var(--surface-card);
+  box-shadow: var(--glass-card-shadow);
+  color: var(--color-muted);
+  text-align: center;
+}
+.article-empty-mark {
+  width: 28px;
+  height: 28px;
+  color: #6683a3;
+}
+.article-status .feed-status-actions {
+  justify-content: center;
+  margin: 0;
+}
+.article-status-compact {
+  min-height: 0;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--font-sm);
+}
+.article-reading {
+  scroll-margin-top: var(--space-5);
+}
+.article-byline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  color: var(--color-muted);
+  font-size: var(--font-sm);
+  overflow-wrap: anywhere;
+}
+.article-byline > svg {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  margin-left: auto;
+}
+.x-article-card h3 {
+  margin: var(--space-4) 0 var(--space-3);
+  color: var(--color-ink);
+  font-size: clamp(1.25rem, 3vw, 1.7rem);
+  font-weight: 500;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.article-date {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-muted);
+  font-size: var(--font-xs);
+}
+.article-date svg {
+  width: 14px;
+  height: 14px;
+}
+.article-cover {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 480px;
+  margin-top: var(--space-5);
+  border-radius: var(--radius-sm);
+  object-fit: contain;
+}
+.article-cover[hidden] {
+  display: none;
+}
+.article-text {
+  margin-top: var(--space-5);
+  font-size: var(--font-body);
+  line-height: 2;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.article-text p {
+  margin: 0 0 1.2em;
+}
+.article-text p:last-child {
+  margin-bottom: 0;
+}
+
+/* Blend a more frosted static scene into the lower reading surface. Text and
+   original cover media remain above it; no tall live backdrop is filtered. */
+@supports (filter: blur(1px)) and (clip-path: border-box) {
+  .article-status {
+    background: var(--glass-reading-fill);
+  }
+  .article-frost-backdrop::before {
+    -webkit-mask-image: linear-gradient(to bottom, #0006, #000b 36%, #000 100%);
+    mask-image: linear-gradient(to bottom, #0006, #000b 36%, #000 100%);
+  }
+  .article-frost-backdrop::after {
+    background: linear-gradient(160deg, #ffffff33, #f0f5ff66 55%, #f9fcfe99), var(--glass-panel-fill);
+  }
+}
+
+@media (max-width: 700px) {
+  .article-timeline li {
+    width: 168px;
+  }
+  .article-status {
+    min-height: 156px;
+    border-radius: 20px;
+    font-size: var(--font-sm);
+  }
+  .article-status-compact {
+    min-height: 0;
+  }
+  .article-text {
+    font-size: var(--font-sm);
+    line-height: 1.95;
+  }
+}
+
+@media (forced-colors: active) {
+  .article-status {
+    border-color: CanvasText;
+    background: Canvas;
+    box-shadow: none;
+    text-shadow: none;
+  }
+  .article-timeline li::before,
+  .article-timeline-button::before {
+    background: CanvasText;
+  }
+  .article-timeline-button.is-active {
+    outline: 2px solid Highlight;
+    outline-offset: -3px;
+  }
+}

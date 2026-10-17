@@ -43,6 +43,8 @@
 - Show all original posts available from the X user timeline rather than limiting the daily carousel to six.
 - Each Posts entry defaults to the latest daily post, including after loading a fresh timeline over a snapshot or cache. Preserve the reading post during background refresh only after the visitor manually selects one.
 - Omit the sticky previous/next bar above the daily card. Keep the lower daily-post navigation and date index.
+- Below daily posts, show a separate X Articles section with its own reading selection, date timeline and previous/next controls. Changing a post must not change the selected Article, or vice versa. Read actual Article fields from the existing X API timeline; ordinary long posts remain posts.
+- The Chinese Articles heading is `随心分享 · X 文章`. Show `X当前没有文章` only after a successful empty Article result; distinguish loading, stale and unavailable results. Retain layered translucent glass and progressively frosted reading surfaces.
 - Show previous/next photo buttons on pinned and daily cards whenever a post has a photo, including a single-photo post where either button leaves it in place. Keep photo and daily-post navigation distinct.
 - When a post displays its photo, hide the short URL X adds for that photo from the card text. Preserve unrelated links.
 - Render X video attachments inline through same-origin `/api/x-video` with byte-range support. Clicking a photo or video opens an enlarged on-site preview with a close X below the media; the bottom-right original-post link opens X. Use the same behavior for pinned and daily posts in all three languages.

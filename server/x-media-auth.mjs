@@ -138,6 +138,7 @@ export async function authorizeFeed(result, options) {
   return {
     ...result,
     posts: await Promise.all((result?.posts ?? []).map(postWithMedia)),
+    ...(Array.isArray(result?.articles) ? { articles: await Promise.all(result.articles.map(postWithMedia)) } : {}),
     ...(result?.pinnedPost ? { pinnedPost: await postWithMedia(result.pinnedPost) } : {}),
   };
 }

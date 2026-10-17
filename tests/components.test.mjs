@@ -52,6 +52,7 @@ const [
   { postMonths },
   { useFantasyPreferences },
   { useMediaRequest },
+  { useXFeed },
 ] = await Promise.all([
   server.ssrLoadModule("/src/components/Header.jsx"),
   server.ssrLoadModule("/src/components/MediaLightbox.jsx"),
@@ -64,6 +65,7 @@ const [
   server.ssrLoadModule("/src/utils/posts.js"),
   server.ssrLoadModule("/src/hooks/useFantasyPreferences.js"),
   server.ssrLoadModule("/src/hooks/useMediaRequest.js"),
+  server.ssrLoadModule("/src/hooks/useXFeed.js"),
 ]);
 
 function resetDom() {
@@ -483,7 +485,7 @@ test("Age confirmation reveals Posts and persists on return only while the sessi
   let requests = 0;
   context.mock.method(globalThis, "fetch", async () => {
     requests++;
-    return { ok: true, json: async () => ({ status: "ok", posts: [], pinnedStatus: "none" }) };
+    return { ok: true, json: async () => ({ status: "ok", posts: [], pinnedStatus: "none", articlesStatus: "none" }) };
   });
   const element = () =>
     React.createElement(PostsPage, {
@@ -518,7 +520,7 @@ test("Blocked session storage still requires confirmation and allows an explicit
   context.mock.method(Date, "now", () => now);
   context.mock.method(globalThis, "fetch", async () => ({
     ok: true,
-    json: async () => ({ status: "ok", posts: [], pinnedStatus: "none" }),
+    json: async () => ({ status: "ok", posts: [], pinnedStatus: "none", articlesStatus: "none" }),
   }));
   const storageDescriptor = Object.getOwnPropertyDescriptor(window, "sessionStorage");
   Object.defineProperty(window, "sessionStorage", {
@@ -608,7 +610,7 @@ test("Posts opens on the latest feed post and preserves only an explicitly selec
     const complete = respond;
     respond = null;
     await React.act(async () =>
-      complete({ ok: true, json: async () => ({ status: "ok", pinnedStatus: "none", posts }) }),
+      complete({ ok: true, json: async () => ({ status: "ok", pinnedStatus: "none", articlesStatus: "none", posts }) }),
     );
   };
   const refresh = async (posts) => {
@@ -646,6 +648,88 @@ test("Posts opens on the latest feed post and preserves only an explicitly selec
     assert.equal(shownText(), third.text);
     await deliver([fourth, third, second, first, SNAPSHOT]);
     assert.equal(shownText(), fourth.text);
+  } finally {
+    await view.unmount();
+  }
+});
+
+test("posts and Articles navigate independently and retain both identities through reordered refreshes", async (context) => {
+  resetDom();
+  let now = Date.now() + 3 * 24 * 60 * 60_000;
+  context.mock.method(Date, "now", () => now);
+  let requests = 0;
+  let respond;
+  let rejectRequest;
+  context.mock.method(globalThis, "fetch", () => {
+    requests++;
+    return new Promise((resolveResponse, rejectResponse) => {
+      respond = resolveResponse;
+      rejectRequest = rejectResponse;
+    });
+  });
+  const post = (id) => ({ ...SNAPSHOT, id, text: `Post ${id}`, permalink: `https://x.com/loveyong07/status/${id}` });
+  const article = (id) => ({ id, title: `Article ${id}`, text: `Article body ${id}` });
+  let reading;
+  function Harness() {
+    reading = useXFeed();
+    return null;
+  }
+  const view = await mount(React.createElement(Harness));
+  const deliver = async (articles, posts, articlesStatus = "ok") => {
+    const complete = respond;
+    respond = null;
+    assert.equal(typeof complete, "function");
+    await React.act(async () =>
+      complete({
+        ok: true,
+        json: async () => ({ status: "ok", pinnedStatus: "none", posts, articles, articlesStatus }),
+      }),
+    );
+  };
+  const refresh = async (articles, posts, articlesStatus = "ok") => {
+    now += 16 * 60_000;
+    await React.act(async () => document.dispatchEvent(new Event("visibilitychange")));
+    await deliver(articles, posts, articlesStatus);
+  };
+  try {
+    assert.equal(reading.articleState, "loading");
+    await deliver([article("10"), article("11")], [post("20"), post("21")]);
+    assert.equal(requests, 1, "one shared API response supplies both collections");
+    assert.equal(reading.articleState, "live");
+    await React.act(async () => reading.setPostIndex(1));
+    assert.equal(reading.postIndex, 1);
+    assert.equal(reading.articleIndex, 0);
+    await React.act(async () => reading.setArticleIndex((index) => index + 1));
+    assert.equal(reading.postIndex, 1);
+    assert.equal(reading.articleIndex, 1);
+
+    await refresh([article("12"), article("11"), article("10")], [post("22"), post("20"), post("21")]);
+    assert.equal(reading.posts[reading.postIndex].id, "21");
+    assert.equal(reading.articles[reading.articleIndex].id, "11");
+    await React.act(async () => reading.setPostIndex(0));
+    assert.equal(reading.articles[reading.articleIndex].id, "11");
+    await React.act(async () => reading.setArticleIndex(2));
+    assert.equal(reading.posts[reading.postIndex].id, "22");
+
+    await refresh([], [post("23"), post("22"), post("21")], "unavailable");
+    assert.equal(reading.articleState, "stale");
+    assert.equal(reading.articles[reading.articleIndex].id, "10");
+    assert.equal(reading.posts[reading.postIndex].id, "22");
+    now += 16 * 60_000;
+    await React.act(async () => document.dispatchEvent(new Event("visibilitychange")));
+    await React.act(async () => rejectRequest(new Error("Network unavailable")));
+    assert.equal(reading.articleState, "stale");
+    assert.equal(reading.articles[reading.articleIndex].id, "10");
+    await refresh([], [post("24")], "none");
+    assert.equal(reading.articleState, "none");
+    assert.deepEqual(reading.articles, []);
+    assert.equal(reading.articleIndex, 0);
+    now += 16 * 60_000;
+    await React.act(async () => document.dispatchEvent(new Event("visibilitychange")));
+    await React.act(async () => rejectRequest(new Error("Network unavailable")));
+    assert.equal(reading.articleState, "unavailable");
+    assert.equal(reading.articleLoading, false);
+    assert.equal(requests, 6);
   } finally {
     await view.unmount();
   }
