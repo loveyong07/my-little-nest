@@ -1,5 +1,6 @@
 import { canPrefetch } from "./utils/network.js";
 import { createSharedRequest, SUCCESS_MAX_AGE_MS } from "./request-cache.js";
+import { cacheArticleData } from "./utils/article-reading.js";
 
 export { canPrefetch };
 
@@ -19,7 +20,7 @@ export function readFeedCache(storage, now = Date.now()) {
       !Array.isArray(cached.feed.posts)
     )
       return null;
-    return cached;
+    return { ...cached, feed: cacheArticleData(cached.feed) };
   } catch {
     return null;
   }
@@ -29,9 +30,9 @@ export function writeFeedCache(storage, feed, now = Date.now()) {
   // Never extend the lifetime of stale data after an upstream failure.
   if (feed?.status !== "ok" || !Array.isArray(feed.posts)) return;
   // A successful timeline must not keep renewing an old/unverified pin.
-  const savedFeed = ["ok", "none"].includes(feed.pinnedStatus)
-    ? feed
-    : { ...feed, pinnedPost: null, pinnedStatus: "unavailable" };
+  const savedFeed = cacheArticleData(
+    ["ok", "none"].includes(feed.pinnedStatus) ? feed : { ...feed, pinnedPost: null, pinnedStatus: "unavailable" },
+  );
   try {
     storage.setItem(KEY, JSON.stringify({ savedAt: now, feed: savedFeed }));
   } catch {
@@ -42,7 +43,9 @@ export function writeFeedCache(storage, feed, now = Date.now()) {
 const request = createSharedRequest({
   url: "/api/x-posts",
   isSuccess: (feed) => feed?.status === "ok" && Array.isArray(feed.posts),
-  isFresh: (feed) => ["ok", "none"].includes(feed?.pinnedStatus),
+  isFresh: (feed) =>
+    ["ok", "none"].includes(feed?.pinnedStatus) &&
+    (feed.articlesStatus === "none" || (feed.articlesStatus === "ok" && Array.isArray(feed.articles))),
   onSuccess: (feed, savedAt) => {
     if (typeof window !== "undefined") writeFeedCache(window.localStorage, feed, savedAt);
   },
@@ -58,7 +61,7 @@ export function getFeedSnapshot() {
     }
   }
   const snapshot = request.getSnapshot();
-  return snapshot ? { savedAt: snapshot.savedAt, feed: snapshot.value } : null;
+  return snapshot ? { savedAt: snapshot.savedAt, feed: cacheArticleData(snapshot.value) } : null;
 }
 
 export function fetchFeed(options) {

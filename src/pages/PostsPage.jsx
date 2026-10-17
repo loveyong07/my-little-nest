@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FaArrowDown, FaArrowRight } from "react-icons/fa6";
+import { FaArrowRight } from "react-icons/fa6";
 import { FiChevronLeft, FiChevronRight, FiCalendar, FiRefreshCw } from "react-icons/fi";
 import { HiOutlineSparkles } from "react-icons/hi2";
 import { PiPushPinFill } from "react-icons/pi";
 import { PostCard } from "../components/PostCard.jsx";
 import { PostsAgeGate } from "../components/PostsAgeGate.jsx";
+import { XArticlesSection } from "../components/XArticlesSection.jsx";
 import { useXFeed } from "../hooks/useXFeed.js";
 import { formatPostDate } from "../utils/date.js";
 import { postExcerpt, postMonthKey, postMonths } from "../utils/posts.js";
@@ -69,8 +70,11 @@ function PostsContent({ language, t, profile, onFeedReady }) {
     postIndex,
     setPostIndex,
     retryFeed,
+    articles,
+    articleIndex,
+    setArticleIndex,
+    articleState,
   } = useXFeed();
-  const latestRef = useRef(null);
   const readingRef = useRef(null);
   const indexRef = useRef(null);
   const currentPost = posts[Math.min(postIndex, Math.max(0, posts.length - 1))];
@@ -89,12 +93,6 @@ function PostsContent({ language, t, profile, onFeedReady }) {
     }
   }, [postIndex, posts, language]);
 
-  function goLatest(event) {
-    event.preventDefault();
-    setPostIndex(0);
-    latestRef.current?.focus({ preventScroll: true });
-    latestRef.current?.scrollIntoView({ block: "start", behavior: preferredScrollBehavior() });
-  }
   function changeReadingPost(index) {
     setPostIndex(index);
     // Keep the start of a new card in reach when leaving a long post halfway down.
@@ -116,19 +114,6 @@ function PostsContent({ language, t, profile, onFeedReady }) {
 
   return (
     <div className="posts-section" id="posts">
-      <div className="posts-reading-entry">
-        <div>
-          <span className="posts-entry-kicker">{t.postsEntryKicker}</span>
-          <p>{t.postsReadingIntro}</p>
-        </div>
-        <a className="posts-jump-link" href="#latest-posts" onClick={goLatest}>
-          <span>
-            {t.latestPosts}
-            {posts[0] && <time dateTime={posts[0].created_at}>{formatPostDate(posts[0].created_at, language)}</time>}
-          </span>
-          <FaArrowDown aria-hidden="true" />
-        </a>
-      </div>
       {statusText && (
         <div className={`feed-status${feedLoading ? " is-loading" : ""}`} role="status">
           <FiRefreshCw aria-hidden="true" />
@@ -200,13 +185,7 @@ function PostsContent({ language, t, profile, onFeedReady }) {
           </div>
         )}
       </section>
-      <section
-        className="posts-group"
-        id="latest-posts"
-        ref={latestRef}
-        tabIndex="-1"
-        aria-labelledby="daily-posts-heading"
-      >
+      <section className="posts-group" id="latest-posts" aria-labelledby="daily-posts-heading">
         <div className="posts-daily-heading">
           <div className="section-heading">
             <HiOutlineSparkles aria-hidden="true" />
@@ -277,6 +256,18 @@ function PostsContent({ language, t, profile, onFeedReady }) {
           )}
         </div>
       </section>
+      <XArticlesSection
+        articles={articles}
+        articleIndex={articleIndex}
+        setArticleIndex={setArticleIndex}
+        articleState={articleState}
+        feedLoading={feedLoading}
+        retryDisabled={retryDisabled}
+        retryFeed={retryFeed}
+        language={language}
+        t={t}
+        profile={profile}
+      />
     </div>
   );
 }

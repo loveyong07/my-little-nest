@@ -4,6 +4,7 @@ import { REQUEST_RETRY_MS, startVisibleRefresh } from "../request-cache.js";
 import { SNAPSHOT } from "../constants/site.js";
 import { isOwnPost, isOriginalPost } from "../utils/posts.js";
 import { retainedPostIndex } from "../utils/feed-reading.js";
+import { initialArticleReading, refreshedArticleReading } from "../utils/article-reading.js";
 import { takeEarlyFeed } from "./useSiteRoute.js";
 
 export function useXFeed() {
@@ -22,6 +23,8 @@ export function useXFeed() {
     hasSelectedPost: false,
   }));
   const { posts, index: postIndex } = reading;
+  const [articleReading, setArticleReading] = useState(() => initialArticleReading(cachedFeed?.feed));
+  const { articles, index: articleIndex, state: articleState } = articleReading;
   const [feedSource, setFeedSource] = useState(cachedFeed ? "stale" : "snapshot");
   const [feedLoading, setFeedLoading] = useState(!cachedFeed);
   const [feedUpdatedAt, setFeedUpdatedAt] = useState(cachedFeed?.savedAt ?? null);
@@ -39,6 +42,14 @@ export function useXFeed() {
       ...current,
       index: typeof value === "function" ? value(current.index) : value,
       hasSelectedPost: true,
+    }));
+  }, []);
+
+  const setArticleIndex = useCallback((value) => {
+    setArticleReading((current) => ({
+      ...current,
+      index: typeof value === "function" ? value(current.index) : value,
+      hasSelectedArticle: true,
     }));
   }, []);
 
@@ -60,6 +71,7 @@ export function useXFeed() {
         const request = takeEarlyFeed() ?? fetchFeed({ force });
         const feed = await request;
         if (!mounted) return;
+        setArticleReading((current) => refreshedArticleReading(current, feed));
         const hasPinStatus = ["ok", "stale", "none", "unavailable"].includes(feed.pinnedStatus);
         const nextPinned =
           isOwnPost(feed.pinnedPost) && (!hasPinStatus || ["ok", "stale"].includes(feed.pinnedStatus))
@@ -116,6 +128,7 @@ export function useXFeed() {
         if (mounted) {
           setFeedSource((current) => (current === "live" ? "stale" : current));
           setPinState(pinnedPostRef.current ? "stale" : "unavailable");
+          setArticleReading((current) => refreshedArticleReading(current, null));
           alignRetryCooldown();
           setFeedLoading(false);
         }
@@ -148,6 +161,11 @@ export function useXFeed() {
     pinState,
     postIndex,
     setPostIndex,
+    articles,
+    articleIndex,
+    setArticleIndex,
+    articleState,
+    articleLoading: articleState === "loading" || feedLoading,
     retryFeed,
   };
 }

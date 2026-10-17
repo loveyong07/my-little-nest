@@ -134,7 +134,13 @@ for (const [status, pinnedStatus, complete] of [
   ["ok", null, false],
 ]) {
   test(`posts response headers: ${status}/${String(pinnedStatus)}`, async () => {
-    const body = { status, posts: [], ...(pinnedStatus === undefined ? {} : { pinnedStatus }) };
+    const body = {
+      status,
+      posts: [],
+      articles: [],
+      articlesStatus: "none",
+      ...(pinnedStatus === undefined ? {} : { pinnedStatus }),
+    };
     const handleApi = createApiHandler({}, { serviceFactory: () => async () => body });
     const result = await handleApi(request("/api/x-posts"));
     assert.equal(result.status, 200);

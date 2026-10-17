@@ -62,6 +62,49 @@ test("a fresh timeline does not renew an unverified pinned post", () => {
   assert.equal(readFeedCache(store, 1001).feed.pinnedStatus, "unavailable");
 });
 
+test("fresh timeline caching never renews stale or unavailable Articles", () => {
+  const store = storage();
+  const article = { id: "456", title: "An earlier Article" };
+  for (const articlesStatus of ["stale", "unavailable", undefined]) {
+    writeFeedCache(store, { status: "ok", posts: [], pinnedStatus: "none", articles: [article], articlesStatus }, 1000);
+    const cached = readFeedCache(store, 1001).feed;
+    assert.deepEqual(cached.articles, []);
+    assert.equal(cached.articlesStatus, "unavailable");
+  }
+});
+
+test("confirmed Articles and confirmed empty collections survive caching", () => {
+  const store = storage();
+  const article = { id: "456", title: "A fresh Article" };
+  writeFeedCache(
+    store,
+    { status: "ok", posts: [], pinnedStatus: "none", articles: [article], articlesStatus: "ok" },
+    1000,
+  );
+  assert.deepEqual(readFeedCache(store, 1001).feed.articles, [article]);
+  writeFeedCache(
+    store,
+    { status: "ok", posts: [], pinnedStatus: "none", articles: [article], articlesStatus: "none" },
+    2000,
+  );
+  assert.deepEqual(readFeedCache(store, 2001).feed.articles, []);
+  assert.equal(readFeedCache(store, 2001).feed.articlesStatus, "none");
+});
+
+test("old cached partial Article responses cannot become fresh Articles", () => {
+  const store = storage();
+  store.setItem(
+    "little-nest-feed-v3",
+    JSON.stringify({
+      savedAt: 1000,
+      feed: { status: "ok", posts: [], articles: [{ id: "456" }], articlesStatus: "stale" },
+    }),
+  );
+  assert.equal(readFeedCache(store, 1001).savedAt, 1000);
+  assert.equal(readFeedCache(store, 1001).feed.articlesStatus, "unavailable");
+  assert.deepEqual(readFeedCache(store, 1001).feed.articles, []);
+});
+
 test("speculative images are disabled on slow or metered connections", () => {
   assert.equal(canPrefetch({ saveData: true, effectiveType: "4g" }), false);
   for (const effectiveType of ["slow-2g", "2g", "3g"]) assert.equal(canPrefetch({ effectiveType }), false);
@@ -73,7 +116,7 @@ test("concurrent feed consumers share a request and fresh reads retain its succe
   let calls = 0;
   globalThis.fetch = async () => {
     calls++;
-    return { ok: true, json: async () => ({ status: "ok", posts: [], pinnedStatus: "none" }) };
+    return { ok: true, json: async () => ({ status: "ok", posts: [], pinnedStatus: "none", articlesStatus: "none" }) };
   };
   try {
     const first = fetchFeed();
@@ -97,7 +140,10 @@ for (const pinnedStatus of ["unavailable", "stale", undefined, "unexpected"]) {
     const partial = { status: "ok", posts: [], ...(pinnedStatus === undefined ? {} : { pinnedStatus }) };
     globalThis.fetch = async () => {
       calls++;
-      return { ok: true, json: async () => (calls === 1 ? partial : { ...partial, pinnedStatus: "none" }) };
+      return {
+        ok: true,
+        json: async () => (calls === 1 ? partial : { ...partial, pinnedStatus: "none", articlesStatus: "none" }),
+      };
     };
     Date.now = () => time;
     try {
@@ -121,3 +167,44 @@ for (const pinnedStatus of ["unavailable", "stale", undefined, "unexpected"]) {
     }
   });
 }
+
+test("Article failures use the shared recovery cooldown and never renew their in-memory snapshot", async () => {
+  const originalFetch = globalThis.fetch;
+  const originalNow = Date.now;
+  let time = 1000;
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls++;
+    return {
+      ok: true,
+      json: async () => ({
+        status: "ok",
+        posts: [],
+        pinnedStatus: "none",
+        articles: [{ id: "456" }],
+        articlesStatus: calls === 1 ? "stale" : "ok",
+      }),
+    };
+  };
+  Date.now = () => time;
+  try {
+    const feed = await import("../src/feed-cache.js?article-recovery");
+    assert.equal((await feed.fetchFeed()).articlesStatus, "stale");
+    assert.equal(feed.getFeedSnapshot().feed.articlesStatus, "unavailable");
+    assert.deepEqual(feed.getFeedSnapshot().feed.articles, []);
+    assert.equal(feed.getFeedRetryAfter(), 30_000);
+    await Promise.all(Array.from({ length: 8 }, () => feed.fetchFeed({ force: true })));
+    assert.equal(calls, 1);
+    time += 30_000;
+    const recovered = await Promise.all(Array.from({ length: 8 }, () => feed.fetchFeed()));
+    assert.ok(recovered.every((value) => value.articlesStatus === "ok"));
+    assert.equal(calls, 2);
+    assert.deepEqual(feed.getFeedSnapshot().feed.articles, [{ id: "456" }]);
+    time += 15 * 60_000 - 1;
+    await feed.fetchFeed();
+    assert.equal(calls, 2);
+  } finally {
+    globalThis.fetch = originalFetch;
+    Date.now = originalNow;
+  }
+});

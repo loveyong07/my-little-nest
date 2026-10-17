@@ -56,7 +56,10 @@ export function createApiHandler(
         route === "posts"
           ? await authorizeFeed(await feedService()(), authOptions)
           : await authorizeProfile(await feedService().getProfile(), authOptions);
-      const complete = result?.status === "ok" && (route === "profile" || ["ok", "none"].includes(result.pinnedStatus));
+      const complete =
+        result?.status === "ok" &&
+        (route === "profile" ||
+          (["ok", "none"].includes(result.pinnedStatus) && ["ok", "none"].includes(result.articlesStatus)));
       const cdn = complete ? JSON_CDN_CACHE_CONTROL : JSON_CDN_CACHE_CONTROL_RETRY;
       return json(result, { headers: { "Vercel-CDN-Cache-Control": cdn } });
     } catch {
