@@ -4,8 +4,8 @@ import { cacheArticleData } from "./utils/article-reading.js";
 
 export { canPrefetch };
 
-// Refetch snapshots that could display a pinned Article as an ordinary post.
-const KEY = "little-nest-feed-v5";
+// Refetch Article photos saved before original-resolution WebP delivery.
+const KEY = "little-nest-feed-v6";
 const MAX_AGE = SUCCESS_MAX_AGE_MS;
 
 export function readFeedCache(storage, now = Date.now()) {
