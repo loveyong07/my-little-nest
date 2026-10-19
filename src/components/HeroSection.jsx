@@ -2,13 +2,14 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { FaArrowRight, FaEnvelope, FaXTwitter } from "react-icons/fa6";
 import { HiOutlineSparkles } from "react-icons/hi2";
 import { PiFlowerLight } from "react-icons/pi";
-import { GiBowTieRibbon } from "react-icons/gi";
+import { BsPostageHeart } from "react-icons/bs";
 import { ASSETS, FALLBACK_AVATAR } from "../constants/site.js";
 import { pagePaths } from "../routes/site-route.js";
 import { xMediaSrc } from "../media-urls.js";
 import { handleAvatarError } from "../utils/profile.js";
 import { formatLocalDate, formatVisitDate } from "../utils/date.js";
 import { HomeJournal } from "./HomeJournal.jsx";
+import { GlassFlorals } from "./GlassFlorals.jsx";
 import { fantasyCopy } from "../constants/fantasy.js";
 
 export function HeroSection({ header, language, t, profile }) {
@@ -107,7 +108,11 @@ export function HeroSection({ header, language, t, profile }) {
       <div className="hero-layout">
         <div className="hero-intro-stack" ref={introRef}>
           <div className="hero-copy">
-            <GiBowTieRibbon className="hero-bow" aria-hidden="true" />
+            <GlassFlorals />
+            <div className="hero-postmark" aria-hidden="true">
+              <BsPostageHeart />
+              <span>FROM CHUYONG</span>
+            </div>
             <p className="home-place-badge">
               <span className="home-place-seal" aria-hidden="true">
                 <svg viewBox="0 0 24 24" focusable="false">
@@ -117,18 +122,15 @@ export function HeroSection({ header, language, t, profile }) {
               {t.homePlaceLabel}
             </p>
             <p className="hero-chapter">{fantasyCopy[language].chapter}</p>
-            <h1 id="page-heading" tabIndex={-1} aria-label="Welcome to my little nest！">
-              <span aria-hidden="true">
-                {"Welcome".split("").map((letter, i) => (
-                  <b className="greeting-letter" style={{ "--letter": i }} key={i}>
-                    {letter}
-                  </b>
-                ))}
+            <h1 id="page-heading" tabIndex={-1} aria-label={t.homeGreeting.join(language === "en" ? " " : "")}>
+              <span className="greeting-opening" aria-hidden="true">
+                {t.homeGreeting[0]}
               </span>
               <span className="greeting-line" aria-hidden="true">
-                to my little nest<em>!</em>
+                {t.homeGreeting[1]}
               </span>
             </h1>
+            <p className="hero-letter-caption">Little moments, from me to you.</p>
             <div className="ornament" aria-hidden="true">
               <span />
               <PiFlowerLight />

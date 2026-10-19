@@ -21,7 +21,8 @@
 - Before making substantial visual changes, use the Product Design plugin's `get-context` skill when the visual source is unclear or no longer matches the current goal.
 - `design-reference.png` is the visual reference for the open blue sky, right-side character artwork, large blue serif greeting, and white rounded social panel. Current explicit wording and contact rules in this file take precedence over text in the reference image.
 - Keep the established illustrations, welcome mood and scrapbook layout. Use clean blue-and-white scene and reading surfaces, with distinct soft pink, blue, mint, lavender and yellow fills for buttons, navigation, language selectors and small controls.
-- The browser tab title is exactly `初咏的小窝`; keep the visible homepage heading as `Welcome to my little nest！`.
+- The browser tab title is exactly `初咏的小窝`. The homepage glass letter uses the localized heading `把日常，寄给你。` with its small English caption and a subtle `FROM CHUYONG` postage mark; keep the airy scrapbook layout. Do not add a /now or recent-status module.
+- The outer glass panes on Home, Posts and Contact share small blue bouquets at the four corners only. Keep the glass edges clear between corners, scale the bouquets down on mobile, and keep flowers off inner post/media/contact cards.
 - Provide Chinese, Japanese and English UI. Preserve supplied wording and translations. Leave personal-interest or recent-status copy blank unless the user supplies it; do not invent personal interests or life events.
 - Render scene images at full opacity without broad white haze overlays. Keep readable translucent cards, with subtle blue shading and white text for exposed route titles and branding.
 - Keep the Home illustration fixed to the viewport. On fine-pointer viewports wider than 900px, fit the entire homepage, including journal cards, into one viewport. Retain scrolling on mobile and other routes.
