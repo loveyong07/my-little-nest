@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { Header } from "./components/Header.jsx";
 import { HeroSection } from "./components/HeroSection.jsx";
+import { GlassFlorals } from "./components/GlassFlorals.jsx";
 import { RouteHero } from "./components/RouteHero.jsx";
 import { ASSETS, navIds } from "./constants/site.js";
 import { useI18n } from "./hooks/useI18n.js";
@@ -72,6 +73,7 @@ export function App() {
             className={"content-panel route-panel route-panel-" + page}
             aria-label={page === "posts" ? t.postsHeading : t.contactsHeading}
           >
+            <GlassFlorals />
             <Suspense
               fallback={
                 <div className="pinned-placeholder" role="status">

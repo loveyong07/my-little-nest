@@ -1,0 +1,52 @@
+/* Small transparent bouquets decorate only the four corners of the outer pane. */
+.glass-florals {
+  --bouquet-size: 92px;
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  pointer-events: none;
+  user-select: none;
+}
+.glass-bouquet {
+  position: absolute;
+  display: block;
+  width: var(--bouquet-size);
+  height: auto;
+  opacity: 0.94;
+}
+.glass-bouquet-top-left,
+.glass-bouquet-top-right {
+  top: calc(var(--bouquet-size) * -0.5);
+}
+.glass-bouquet-bottom-left,
+.glass-bouquet-bottom-right {
+  bottom: calc(var(--bouquet-size) * -0.5);
+}
+.glass-bouquet-top-left,
+.glass-bouquet-bottom-left {
+  left: -8px;
+}
+.glass-bouquet-top-right,
+.glass-bouquet-bottom-right {
+  right: -8px;
+}
+.glass-bouquet-top-left,
+.glass-bouquet-bottom-right {
+  transform: rotate(-40deg);
+}
+.glass-bouquet-top-right,
+.glass-bouquet-bottom-left {
+  transform: rotate(140deg);
+}
+
+@media (max-width: 700px) {
+  .glass-florals {
+    --bouquet-size: 72px;
+  }
+}
+
+@media (forced-colors: active) {
+  .glass-florals {
+    display: none;
+  }
+}
