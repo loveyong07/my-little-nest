@@ -40,10 +40,6 @@ export function App() {
   const sceneActive = useSceneActivity(page);
   const header = <Header page={page} t={t} language={language} changeLanguage={changeLanguage} />;
 
-  function handleClick(event) {
-    handleRouteClick(event);
-  }
-
   return (
     <main
       aria-labelledby="page-heading"
@@ -54,7 +50,7 @@ export function App() {
         (preferences.motion ? "" : " motion-off") +
         (page === "home" ? "" : " site-route site-route-" + page)
       }
-      onClick={handleClick}
+      onClick={handleRouteClick}
       onPointerOver={preparePosts}
       onFocus={preparePosts}
       onTouchStart={preparePosts}

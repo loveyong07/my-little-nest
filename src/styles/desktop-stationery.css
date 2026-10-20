@@ -184,7 +184,7 @@
   transform-origin: 199px 30px;
 }
 
-/* Scene-edge ornaments need spare margins and height (DESKTOP_DECORATION_QUERY). */
+/* Scene-edge ornaments need spare margins and height; these queries are CSS-only. */
 @media (min-width: 1366px) and (min-height: 680px) and (pointer: fine) {
   .desktop-stationery {
     display: block;

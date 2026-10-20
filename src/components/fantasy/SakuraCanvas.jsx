@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { MOBILE_QUERY, FINE_HOVER_QUERY } from "../../constants/media-queries.js";
 import { FaHeart, FaStar } from "react-icons/fa6";
 
 export function SakuraCanvas({ snow = false }) {
@@ -8,8 +9,8 @@ export function SakuraCanvas({ snow = false }) {
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
     if (!context) return undefined;
-    const mobile = matchMedia("(max-width: 700px)");
-    const finePointer = matchMedia("(hover: hover) and (pointer: fine)");
+    const mobile = matchMedia(MOBILE_QUERY);
+    const finePointer = matchMedia(FINE_HOVER_QUERY);
     const petal = new Image();
     // Rasterize decorative artwork once instead of resampling the source and
     // stroking blurred snowflake paths for every particle on every frame.

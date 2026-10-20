@@ -5,6 +5,7 @@ export function useClipboard() {
   const [copyFailedId, setCopyFailedId] = useState("");
   const manualCopyRef = useRef(null);
   const copyTimerRef = useRef(null);
+  const attemptRef = useRef(0);
 
   useEffect(() => {
     if (copyFailedId) {
@@ -13,17 +14,28 @@ export function useClipboard() {
     }
   }, [copyFailedId]);
 
-  useEffect(() => () => window.clearTimeout(copyTimerRef.current), []);
+  useEffect(
+    () => () => {
+      attemptRef.current++;
+      window.clearTimeout(copyTimerRef.current);
+    },
+    [],
+  );
 
   async function copyId(id) {
+    const attempt = ++attemptRef.current;
+    window.clearTimeout(copyTimerRef.current);
+    setCopiedId("");
+    setCopyFailedId("");
     try {
       await navigator.clipboard.writeText(id);
-      window.clearTimeout(copyTimerRef.current);
+      // An older clipboard request may finish after the visitor selects another account.
+      if (attempt !== attemptRef.current) return;
       setCopyFailedId("");
       setCopiedId(id);
       copyTimerRef.current = window.setTimeout(() => setCopiedId(""), 2400);
     } catch {
-      window.clearTimeout(copyTimerRef.current);
+      if (attempt !== attemptRef.current) return;
       setCopiedId("");
       setCopyFailedId(id);
     }

@@ -1,3 +1,20 @@
+export function CopyFallback({ value, message, label, inputRef }) {
+  return (
+    <div className="contact-copy-fallback" role="status">
+      <p>{message}</p>
+      <input
+        ref={inputRef}
+        type="text"
+        readOnly
+        value={value}
+        aria-label={label}
+        onFocus={(event) => event.currentTarget.select()}
+        onClick={(event) => event.currentTarget.select()}
+      />
+    </div>
+  );
+}
+
 export function ContactTile({
   icon: Icon,
   className,
@@ -36,18 +53,7 @@ export function ContactTile({
         <span className="contact-action">{copied || action}</span>
       </Tag>
       {failedId && (
-        <div className="contact-copy-fallback" role="status">
-          <p>{failureMessage}</p>
-          <input
-            ref={inputRef}
-            type="text"
-            readOnly
-            value={failedId}
-            aria-label={manualCopyLabel}
-            onFocus={(event) => event.currentTarget.select()}
-            onClick={(event) => event.currentTarget.select()}
-          />
-        </div>
+        <CopyFallback value={failedId} message={failureMessage} label={manualCopyLabel} inputRef={inputRef} />
       )}
     </>
   );
