@@ -105,9 +105,89 @@
   width: var(--stationery-size);
 }
 
+/* Letter and route drawings follow their own panels instead of covering the scene. */
+.scrapbook-accent {
+  display: none;
+  position: absolute;
+  overflow: visible;
+  color: #6b94af;
+  stroke: currentColor;
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+  user-select: none;
+}
+.letter-seaside {
+  top: 120px;
+  right: 18px;
+  width: 150px;
+  height: auto;
+}
+.accent-dotted {
+  stroke: #739bb7;
+  stroke-dasharray: 1 5;
+}
+.accent-ring {
+  fill: #e4f3fc24;
+  stroke: #eef9ffcc;
+}
+.accent-paper {
+  fill: #f7fcffcf;
+  stroke: #80a5bf;
+}
+.accent-blue {
+  fill: #c4e2f2bd;
+  stroke: #80a5bf;
+}
+.accent-pink {
+  fill: #efcfddd9;
+  stroke: #c698ad;
+}
+.accent-glint,
+.accent-string {
+  stroke: #f1faffeb;
+}
+.accent-dot {
+  fill: #edf9ff;
+  stroke: #a9cadc;
+}
+.accent-waves {
+  stroke: #6f9fbd;
+}
+.route-garland {
+  top: 118px;
+  left: calc(50% - 260px);
+  width: 330px;
+  height: auto;
+}
+.garland-postcard {
+  transform: rotate(-9deg);
+  transform-origin: 221px 62px;
+}
+.route-panel-contact .panel-footer {
+  position: relative;
+}
+.contact-postcard {
+  top: 50%;
+  left: 48%;
+  width: 230px;
+  height: auto;
+  transform: translate(-50%, -50%);
+}
+.contact-postcard-envelope {
+  transform: rotate(-8deg);
+  transform-origin: 118px 48px;
+}
+.contact-postcard-stamp {
+  transform: rotate(9deg);
+  transform-origin: 199px 30px;
+}
+
 /* Matches DESKTOP_DECORATION_QUERY; smaller or short screens keep the original composition. */
 @media (min-width: 1366px) and (min-height: 680px) and (pointer: fine) {
-  .desktop-stationery {
+  .desktop-stationery,
+  .scrapbook-accent {
     display: block;
   }
 }
@@ -144,7 +224,8 @@
   }
 }
 @media (forced-colors: active), print {
-  .desktop-stationery {
+  .desktop-stationery,
+  .scrapbook-accent {
     display: none;
   }
 }

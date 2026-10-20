@@ -11,6 +11,7 @@ import { formatLocalDate, formatVisitDate } from "../utils/date.js";
 import { HomeJournal } from "./HomeJournal.jsx";
 import { GlassFlorals } from "./GlassFlorals.jsx";
 import { DesktopStationery } from "./DesktopStationery.jsx";
+import { LetterSeaside } from "./ScrapbookAccents.jsx";
 import { fantasyCopy } from "../constants/fantasy.js";
 
 export function HeroSection({ header, language, t, profile }) {
@@ -164,6 +165,7 @@ export function HeroSection({ header, language, t, profile }) {
                 {t.contactCta}
               </a>
             </div>
+            <LetterSeaside />
           </div>
           <HomeJournal language={language} />
         </div>
