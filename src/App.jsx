@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import { Header } from "./components/Header.jsx";
 import { HeroSection } from "./components/HeroSection.jsx";
 import { GlassFlorals } from "./components/GlassFlorals.jsx";
+import { DesktopStationery } from "./components/DesktopStationery.jsx";
 import { RouteHero } from "./components/RouteHero.jsx";
 import { ASSETS, navIds } from "./constants/site.js";
 import { useI18n } from "./hooks/useI18n.js";
@@ -96,6 +97,7 @@ export function App() {
           <FantasyExtras language={language} page={page} preferences={preferences} />
         </Suspense>
       )}
+      {page !== "home" && <DesktopStationery page={page} />}
       <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
         {t.nav[navIds.indexOf(page)]}
       </div>

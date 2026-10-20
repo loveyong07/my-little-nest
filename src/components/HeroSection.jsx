@@ -10,6 +10,7 @@ import { handleAvatarError } from "../utils/profile.js";
 import { formatLocalDate, formatVisitDate } from "../utils/date.js";
 import { HomeJournal } from "./HomeJournal.jsx";
 import { GlassFlorals } from "./GlassFlorals.jsx";
+import { DesktopStationery } from "./DesktopStationery.jsx";
 import { fantasyCopy } from "../constants/fantasy.js";
 
 export function HeroSection({ header, language, t, profile }) {
@@ -182,6 +183,7 @@ export function HeroSection({ header, language, t, profile }) {
           <time dateTime={formatLocalDate(visitDate)}>— {formatVisitDate(visitDate, language)} ✧</time>
         </span>
       </div>
+      <DesktopStationery />
     </section>
   );
 }
