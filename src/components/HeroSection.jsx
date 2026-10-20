@@ -3,7 +3,8 @@ import { FaArrowRight, FaEnvelope, FaXTwitter } from "react-icons/fa6";
 import { HiOutlineSparkles } from "react-icons/hi2";
 import { PiFlowerLight } from "react-icons/pi";
 import { BsPostageHeart } from "react-icons/bs";
-import { ASSETS, FALLBACK_AVATAR } from "../constants/site.js";
+import { ASSETS, FALLBACK_AVATAR, xProfileUrl } from "../constants/site.js";
+import { DESKTOP_FIT_QUERY, MOBILE_QUERY } from "../constants/media-queries.js";
 import { pagePaths } from "../routes/site-route.js";
 import { xMediaSrc } from "../media-urls.js";
 import { handleAvatarError } from "../utils/profile.js";
@@ -18,7 +19,7 @@ export function HeroSection({ header, language, t, profile }) {
   const heroRef = useRef(null);
   const introRef = useRef(null);
   useLayoutEffect(() => {
-    const desktop = matchMedia("(min-width: 901px) and (pointer: fine)");
+    const desktop = matchMedia(DESKTOP_FIT_QUERY);
     const hero = heroRef.current;
     const intro = introRef.current;
     const fit = () => {
@@ -43,13 +44,13 @@ export function HeroSection({ header, language, t, profile }) {
     };
   }, []);
   const [visitDate, setVisitDate] = useState(() => new Date());
-  const [mobileScene, setMobileScene] = useState(() => window.matchMedia("(max-width: 700px)").matches);
+  const [mobileScene, setMobileScene] = useState(() => window.matchMedia(MOBILE_QUERY).matches);
   useEffect(() => {
     const timer = window.setInterval(() => setVisitDate(new Date()), 60_000);
     return () => window.clearInterval(timer);
   }, []);
   useEffect(() => {
-    const query = window.matchMedia("(max-width: 700px)");
+    const query = window.matchMedia(MOBILE_QUERY);
     const updateScene = () => setMobileScene(query.matches);
     query.addEventListener("change", updateScene);
     return () => query.removeEventListener("change", updateScene);
@@ -147,7 +148,7 @@ export function HeroSection({ header, language, t, profile }) {
               />
               <div>
                 <strong>{profile.name}</strong>
-                <a href={`https://x.com/${profile.username}`} target="_blank" rel="noopener noreferrer">
+                <a href={xProfileUrl(profile.username)} target="_blank" rel="noopener noreferrer">
                   @{profile.username}
                 </a>
               </div>
@@ -167,7 +168,7 @@ export function HeroSection({ header, language, t, profile }) {
             </div>
             <LetterSeaside />
           </div>
-          <HomeJournal language={language} />
+          <HomeJournal language={language} t={t} />
         </div>
         <div className="hero-character-space" aria-hidden="true" />
       </div>

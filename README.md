@@ -4,6 +4,8 @@ React / Vite 个人网站，提供首页、动态、联系三个页面，支持�
 
 当前重构已统一三语与联系方式配置、按组件整理样式并集中颜色变量；Vercel、Vite 和 Sites 共用 API 路由与媒体规则。卡片和灯箱共用媒体请求状态，保留独立重试、图片切换与键盘焦点。完整检查包含 lint、格式、逻辑测试和构建兼容性。本轮已通过本地验收，后续由生产分支 `master` 触发 Vercel 发布；当前线上版本以该分支最新成功的 Production 部署为准。
 
+2026-10-20 的代码审核与内容润色已通过本地验收，用户随后授权经 `master` 发布，具体部署结果以对应提交的 Vercel Production 状态为准。首页补充小窝说明，联系页增加来信引导与复制邮箱，动态页末尾增加交流入口；账号目标和脚本断点统一配置，复制交互防止旧请求覆盖新反馈。审核范围与验收边界见 [代码审核与内容润色-2026-10-20.md](代码审核与内容润色-2026-10-20.md)。
+
 ## 仓库与发布
 
 - GitHub：[loveyong07/my-little-nest](https://github.com/loveyong07/my-little-nest)，私有仓库，生产分支 `master`。
@@ -53,7 +55,7 @@ CSS、布局或组件结构修改必须另做视觉比较；`npm run check` 不�
 
 ## 维护入口
 
-- `src/constants/locales.js`：三语通用文案；`src/constants/site.js`：站点与联系方式配置。
+- `src/constants/locales.js`：三语通用文案、首页小窝说明与来信引导；`src/constants/site.js`：站点、联系方式与社交链接配置。
 - `src/components/HeroSection.jsx`：首页；`src/pages/PostsPage.jsx`：动态页；`src/pages/ContactPage.jsx`：联系页。
 - `src/components/DesktopStationery.jsx` 与 `src/styles/desktop-stationery.css`：三页共用的纸飞机、星星挂饰和信封装饰，仅在至少 1366 × 680 的精细指针视口显示，不占用内容布局；断点与 `src/constants/media-queries.js` 同步。
 - `src/components/ScrapbookAccents.jsx`：信纸右侧的小帆船邮戳、动态和联系页标题旁的手帐挂绳，以及联系页底部的淡蓝信笺与心形邮戳；在至少 901px 的精细指针桌面布局显示，尺寸随窗口收缩，不限制窗口高度。手机与触摸平板隐藏，不新增内容或网络资源。外侧 `DesktopStationery` 仍保留至少 1366 × 680 的空间条件。

@@ -7,6 +7,7 @@ import { displayXText } from "../utils/x-text.js";
 import { preferredScrollBehavior } from "../utils/motion.js";
 import { ArticlePhoto } from "./ArticlePhoto.jsx";
 import { articleLinkParts } from "../../shared/article-links.mjs";
+import { xProfileUrl } from "../constants/site.js";
 
 export function XArticlesSection({
   articles,
@@ -122,7 +123,7 @@ export function XArticlesSection({
               <button type="button" onClick={retryFeed} disabled={retryDisabled || feedLoading}>
                 {t.retry}
               </button>
-              <a href={`https://x.com/${profile.username}/articles`} target="_blank" rel="noopener noreferrer">
+              <a href={`${xProfileUrl(profile.username)}/articles`} target="_blank" rel="noopener noreferrer">
                 {t.visitX}
                 <FaArrowRight aria-hidden="true" />
               </a>

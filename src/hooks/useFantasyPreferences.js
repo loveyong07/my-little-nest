@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { applySiteMotion } from "../utils/motion.js";
+import { REDUCED_MOTION_QUERY } from "../constants/media-queries.js";
 
 function stored(key, fallback) {
   try {
@@ -11,10 +12,10 @@ function stored(key, fallback) {
 }
 export function useFantasyPreferences() {
   const [effects, setEffects] = useState(() => stored("nest-effects", true));
-  const [reduced, setReduced] = useState(() => matchMedia("(prefers-reduced-motion: reduce)").matches);
+  const [reduced, setReduced] = useState(() => matchMedia(REDUCED_MOTION_QUERY).matches);
   const motion = effects && !reduced;
   useEffect(() => {
-    const query = matchMedia("(prefers-reduced-motion: reduce)");
+    const query = matchMedia(REDUCED_MOTION_QUERY);
     const update = () => setReduced(query.matches);
     query.addEventListener("change", update);
     return () => query.removeEventListener("change", update);

@@ -535,6 +535,74 @@ test("contact copy action reports success and exposes a manual fallback on failu
   await view.unmount();
 });
 
+test("late clipboard results cannot overwrite the latest account's success or failure", async () => {
+  for (const latestFails of [false, true]) {
+    resetDom();
+    const pending = [];
+    Object.defineProperty(window.navigator, "clipboard", {
+      configurable: true,
+      value: { writeText: (value) => new Promise((resolve, reject) => pending.push({ value, resolve, reject })) },
+    });
+    const view = await mount(React.createElement(ContactPage, { t: copy.zh, profile: { username: "loveyong07" } }));
+    await React.act(async () => view.container.querySelector(".contact-tile.wechat").click());
+    await React.act(async () => view.container.querySelector(".contact-tile.qq").click());
+    await React.act(async () => {
+      if (latestFails) pending[1].reject(new Error("clipboard unavailable"));
+      else pending[1].resolve();
+    });
+    await React.act(async () => {
+      if (latestFails) pending[0].resolve();
+      else pending[0].reject(new Error("late failure"));
+    });
+    if (latestFails) {
+      const fallback = view.container.querySelector(".contact-copy-fallback input");
+      assert.equal(fallback.value, pending[1].value);
+      assert.equal(document.activeElement, fallback);
+      assert.equal(view.container.querySelector(".is-copied"), null);
+    } else {
+      assert.ok(view.container.querySelector(".contact-tile.qq.is-copied"));
+      assert.equal(view.container.querySelector(".contact-copy-fallback"), null);
+    }
+    await view.unmount();
+  }
+});
+
+test("email remains a mailto link and offers localized copying with a selectable failure fallback", async () => {
+  for (const language of ["zh", "ja", "en"]) {
+    for (const fails of [false, true]) {
+      resetDom();
+      let copied;
+      Object.defineProperty(window.navigator, "clipboard", {
+        configurable: true,
+        value: {
+          writeText: async (value) => {
+            if (fails) throw new Error("clipboard unavailable");
+            copied = value;
+          },
+        },
+      });
+      const view = await mount(
+        React.createElement(ContactPage, { t: copy[language], profile: { username: "loveyong07" } }),
+      );
+      const link = view.container.querySelector('.email-row a[href^="mailto:"]');
+      const address = link.getAttribute("href").slice("mailto:".length);
+      const button = view.container.querySelector(".email-option button");
+      assert.equal(button.getAttribute("aria-label"), `${copy[language].copyEmail}: ${address}`);
+      await React.act(async () => button.click());
+      if (fails) {
+        const fallback = view.container.querySelector(".contact-copy-fallback input");
+        assert.equal(fallback.value, address);
+        assert.equal(document.activeElement, fallback);
+        assert.equal(fallback.selectionEnd, address.length);
+      } else {
+        assert.equal(copied, address);
+        assert.equal(button.querySelector('[role="status"]').textContent, copy[language].copied);
+      }
+      await view.unmount();
+    }
+  }
+});
+
 test("Posts requires age confirmation in every language and offers a home exit without loading the feed", async (context) => {
   resetDom();
   let requests = 0;
@@ -625,6 +693,7 @@ test("Blocked session storage still requires confirmation and allows an explicit
     assert.ok(view.container.querySelector(".posts-age-gate"));
     await React.act(async () => view.container.querySelector(".posts-age-confirm").click());
     assert.ok(view.container.querySelector(".posts-section"));
+    assert.equal(view.container.querySelector(".feed-empty a")?.getAttribute("href"), "https://x.com/loveyong07");
     await view.unmount();
     view = await mount(element());
     assert.ok(view.container.querySelector(".posts-age-gate"));

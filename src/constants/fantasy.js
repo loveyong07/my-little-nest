@@ -6,7 +6,6 @@ export const fantasyCopy = {
   zh: {
     chapter: "一页小小的相遇",
     journal: "小窝手记",
-    notice: "碎碎念",
     quote: "留一句温柔给今天",
     shuffle: "换一句",
     notices: [
@@ -226,7 +225,6 @@ export const fantasyCopy = {
   ja: {
     chapter: "小さな出会いの一ページ",
     journal: "おうちノート",
-    notice: "ひとこと",
     quote: "今日に、やさしい言葉を",
     shuffle: "もうひとつ",
     notices: [
@@ -446,7 +444,6 @@ export const fantasyCopy = {
   en: {
     chapter: "A little page of serendipity",
     journal: "Nest journal",
-    notice: "A little hello",
     quote: "A little kindness for today",
     shuffle: "Another thought",
     notices: [

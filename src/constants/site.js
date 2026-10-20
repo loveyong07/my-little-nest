@@ -20,3 +20,17 @@ export const SNAPSHOT = {
 export const navIds = ["home", "posts", "contact"];
 
 export const mailboxes = [{ label: "Gmail", address: "fyh20071004@gmail.com" }];
+
+// Account destinations belong here; components only decide how to present them.
+export const contactChannels = [
+  { id: "x", title: "X", descriptionKey: "xSub" },
+  { id: "line", title: "LINE", descriptionKey: "lineSub", href: "https://line.me/ti/p/LSaMZQcRLu" },
+  { id: "telegram", title: "Telegram", descriptionKey: "telegramSub", href: "https://t.me/loveyong07" },
+  { id: "whatsapp", title: "WhatsApp", descriptionKey: "whatsappSub", account: WHATSAPP_USERNAME },
+  { id: "wechat", titleKey: "wechatTitle", descriptionKey: "wechatSub", account: WECHAT_ID },
+  { id: "qq", title: "QQ", descriptionKey: "qqSub", account: QQ_NUMBER },
+];
+
+export function xProfileUrl(username = X_USERNAME) {
+  return `https://x.com/${username}`;
+}

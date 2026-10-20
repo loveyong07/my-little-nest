@@ -415,6 +415,13 @@
   font-size: 13px;
   line-height: 1.8;
 }
+.journal-note .journal-welcome {
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px dashed #b7cddd;
+  color: var(--color-muted);
+  font-size: 12px;
+}
 .journal-sticker {
   position: absolute;
   top: -14px;
@@ -431,8 +438,8 @@
   bottom: 7px;
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   border: 0;
   border-radius: 50%;
   background: var(--pastel-lavender);
@@ -618,6 +625,45 @@
   .site:not(.site-route) .hero-intro-stack {
     transform: scale(var(--home-fit, 1));
     transform-origin: top left;
+  }
+}
+
+/* Keep short desktop windows legible before applying the one-screen fit. */
+@media (min-width: 901px) and (max-height: 700px) and (pointer: fine) {
+  .hero-copy {
+    padding: 20px 26px;
+  }
+  .home-place-badge {
+    margin-bottom: 10px;
+  }
+  .hero-chapter {
+    margin-bottom: 8px;
+  }
+  .ornament {
+    margin-top: 14px;
+  }
+  .profile {
+    margin-top: 12px;
+  }
+  .bio,
+  .motto {
+    margin-top: 8px;
+  }
+  .hero-actions {
+    margin-top: 14px;
+  }
+  .home-journal {
+    grid-template-columns: 0.9fr 1.1fr;
+    margin-top: 16px;
+  }
+  .journal-note {
+    padding: 14px;
+  }
+  .journal-quote {
+    padding-right: 48px;
+  }
+  .journal-note .journal-welcome {
+    display: none;
   }
 }
 

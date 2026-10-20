@@ -12,6 +12,8 @@ import { postExcerpt, postMonthKey, postMonths } from "../utils/posts.js";
 import { preferredScrollBehavior } from "../utils/motion.js";
 import { canPrefetch } from "../utils/network.js";
 import { hasAgeConfirmation, rememberAgeConfirmation } from "../utils/age-confirmation.js";
+import { xProfileUrl } from "../constants/site.js";
+import { pagePaths } from "../routes/site-route.js";
 
 function PostControls({ postIndex, total, onChange, t }) {
   return (
@@ -110,7 +112,7 @@ function PostsContent({ language, t, profile, onFeedReady }) {
           ? t.pinnedStale
           : null;
   const showRecovery = !feedLoading && (feedSource === "snapshot" || feedSource === "stale" || pinState === "stale");
-  const xProfileUrl = `https://x.com/${profile.username}`;
+  const profileUrl = xProfileUrl(profile.username);
 
   return (
     <div className="posts-section" id="posts">
@@ -131,7 +133,7 @@ function PostsContent({ language, t, profile, onFeedReady }) {
               <button type="button" onClick={retryFeed} disabled={retryDisabled || feedLoading}>
                 {t.retry}
               </button>
-              <a href={xProfileUrl} target="_blank" rel="noopener noreferrer">
+              <a href={profileUrl} target="_blank" rel="noopener noreferrer">
                 {t.visitX}
                 <FaArrowRight aria-hidden="true" />
               </a>
@@ -176,7 +178,7 @@ function PostsContent({ language, t, profile, onFeedReady }) {
                 <button type="button" onClick={retryFeed} disabled={retryDisabled || feedLoading}>
                   {t.retry}
                 </button>
-                <a href={xProfileUrl} target="_blank" rel="noopener noreferrer">
+                <a href={profileUrl} target="_blank" rel="noopener noreferrer">
                   {t.visitX}
                   <FaArrowRight aria-hidden="true" />
                 </a>
@@ -244,7 +246,7 @@ function PostsContent({ language, t, profile, onFeedReady }) {
             <div className="pinned-placeholder feed-empty" role="status">
               <span>{feedLoading ? t.feedRefreshing : t.feedEmpty}</span>
               {!feedLoading && (
-                <a href={xProfileUrl} target="_blank" rel="noopener noreferrer">
+                <a href={profileUrl} target="_blank" rel="noopener noreferrer">
                   {t.visitX}
                   <FaArrowRight aria-hidden="true" />
                 </a>
@@ -268,6 +270,16 @@ function PostsContent({ language, t, profile, onFeedReady }) {
         t={t}
         profile={profile}
       />
+      <aside className="reading-invitation" aria-labelledby="reading-invitation-heading">
+        <div>
+          <h2 id="reading-invitation-heading">{t.readingInvitationHeading}</h2>
+          <p>{t.readingInvitationText}</p>
+        </div>
+        <a href={pagePaths.contact}>
+          {t.readingInvitationCta}
+          <FaArrowRight aria-hidden="true" />
+        </a>
+      </aside>
     </div>
   );
 }

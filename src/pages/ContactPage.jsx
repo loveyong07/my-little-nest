@@ -1,75 +1,42 @@
 import { FaEnvelope, FaLine, FaQq, FaTelegram, FaWhatsapp, FaWeixin, FaXTwitter } from "react-icons/fa6";
 import { HiOutlineSparkles } from "react-icons/hi2";
+import { FiCopy, FiMessageCircle, FiFeather, FiMail } from "react-icons/fi";
 import { PiFlowerLight } from "react-icons/pi";
-import { ContactTile } from "../components/ContactTile.jsx";
+import { ContactTile, CopyFallback } from "../components/ContactTile.jsx";
 import { ContactPostcard } from "../components/ScrapbookAccents.jsx";
-import { mailboxes, QQ_NUMBER, WECHAT_ID, WHATSAPP_USERNAME } from "../constants/site.js";
+import { mailboxes, contactChannels, xProfileUrl } from "../constants/site.js";
 import { useClipboard } from "../hooks/useClipboard.js";
+
+const contactIcons = {
+  x: FaXTwitter,
+  line: FaLine,
+  telegram: FaTelegram,
+  whatsapp: FaWhatsapp,
+  wechat: FaWeixin,
+  qq: FaQq,
+};
+const letterIcons = [FiMessageCircle, FiFeather, FiMail];
 
 export default function ContactPage({ t, profile }) {
   const { copiedId, copyFailedId, manualCopyRef, copyId } = useClipboard();
   // The service name belongs in the accessible name of a copy tile, not only in the visible title.
-  const copyLabel = (service, account) => (account ? `${service} · ${t.copy}: ${account}` : `${service} · ${t.copy}`);
+  const copyLabel = (service, account) => `${service} · ${t.copy}: ${account}`;
 
-  const socials = [
-    {
-      icon: FaXTwitter,
-      className: "x",
-      title: "X",
-      sub: t.xSub,
-      href: `https://x.com/${profile.username}`,
-      action: t.actionOpen,
-    },
-    {
-      icon: FaLine,
-      className: "line",
-      title: "LINE",
-      sub: t.lineSub,
-      href: "https://line.me/ti/p/LSaMZQcRLu",
-      action: t.actionOpen,
-    },
-    {
-      icon: FaTelegram,
-      className: "telegram",
-      title: "Telegram",
-      sub: t.telegramSub,
-      href: "https://t.me/loveyong07",
-      action: t.actionOpen,
-    },
-    {
-      icon: FaWhatsapp,
-      className: "whatsapp",
-      title: "WhatsApp",
-      sub: t.whatsappSub,
-      onClick: () => copyId(WHATSAPP_USERNAME),
-      copyLabel: copyLabel("WhatsApp"),
-      copied: copiedId === WHATSAPP_USERNAME ? t.copied : undefined,
-      action: t.actionCopy,
-      failedId: copyFailedId === WHATSAPP_USERNAME ? WHATSAPP_USERNAME : undefined,
-    },
-    {
-      icon: FaWeixin,
-      className: "wechat",
-      title: t.wechatTitle,
-      sub: t.wechatSub,
-      onClick: () => copyId(WECHAT_ID),
-      copyLabel: copyLabel(t.wechatTitle, WECHAT_ID),
-      copied: copiedId === WECHAT_ID ? t.copied : undefined,
-      action: t.actionCopy,
-      failedId: copyFailedId === WECHAT_ID ? WECHAT_ID : undefined,
-    },
-    {
-      icon: FaQq,
-      className: "qq",
-      title: "QQ",
-      sub: t.qqSub,
-      onClick: () => copyId(QQ_NUMBER),
-      copyLabel: copyLabel("QQ", QQ_NUMBER),
-      copied: copiedId === QQ_NUMBER ? t.copied : undefined,
-      action: t.actionCopy,
-      failedId: copyFailedId === QQ_NUMBER ? QQ_NUMBER : undefined,
-    },
-  ];
+  const socials = contactChannels.map(({ id, title, titleKey, descriptionKey, href, account }) => {
+    const name = titleKey ? t[titleKey] : title;
+    return {
+      icon: contactIcons[id],
+      className: id,
+      title: name,
+      sub: t[descriptionKey],
+      href: id === "x" ? xProfileUrl(profile.username) : href,
+      onClick: account ? () => copyId(account) : undefined,
+      copyLabel: account ? copyLabel(name, account) : undefined,
+      copied: account && copiedId === account ? t.copied : undefined,
+      action: account ? t.actionCopy : t.actionOpen,
+      failedId: account && copyFailedId === account ? account : undefined,
+    };
+  });
 
   return (
     <div className="contacts-section" id="contact">
@@ -80,6 +47,7 @@ export default function ContactPage({ t, profile }) {
         </div>
         <span className="micro-slogan">{t.footerSmall}</span>
       </div>
+      <p className="contact-intro">{t.contactIntro}</p>
       <div className="contact-grid">
         {socials.map((social) => (
           <ContactTile
@@ -98,15 +66,41 @@ export default function ContactPage({ t, profile }) {
         </h3>
         <div>
           {mailboxes.map(({ label, address }) => (
-            <a key={address} href={"mailto:" + address} title={address}>
-              {label}
-              <span>{address}</span>
-            </a>
+            <div className="email-option" key={address}>
+              <a href={"mailto:" + address} title={address}>
+                {label}
+                <span>{address}</span>
+              </a>
+              <button type="button" onClick={() => copyId(address)} aria-label={`${t.copyEmail}: ${address}`}>
+                <FiCopy aria-hidden="true" />
+                <span role="status">{copiedId === address ? t.copied : t.copyEmail}</span>
+              </button>
+            </div>
           ))}
         </div>
         <span className="email-stamp" aria-hidden="true">
           <PiFlowerLight />
         </span>
+      </section>
+      {mailboxes.some(({ address }) => address === copyFailedId) && (
+        <CopyFallback value={copyFailedId} message={t.copyFailed} label={t.manualCopyId} inputRef={manualCopyRef} />
+      )}
+      <section className="letter-guide" aria-labelledby="letter-guide-heading">
+        <h3 id="letter-guide-heading">{t.letterGuideHeading}</h3>
+        <ul>
+          {t.letterGuide.map(({ title, text }, index) => {
+            const Icon = letterIcons[index];
+            return (
+              <li key={title}>
+                <Icon aria-hidden="true" />
+                <div>
+                  <h4>{title}</h4>
+                  <p>{text}</p>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       </section>
       <div className="panel-footer">
         <p className="footer-script">{t.footerScript}</p>
