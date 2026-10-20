@@ -56,6 +56,7 @@ CSS、布局或组件结构修改必须另做视觉比较；`npm run check` 不�
 - `src/constants/locales.js`：三语通用文案；`src/constants/site.js`：站点与联系方式配置。
 - `src/components/HeroSection.jsx`：首页；`src/pages/PostsPage.jsx`：动态页；`src/pages/ContactPage.jsx`：联系页。
 - `src/components/DesktopStationery.jsx` 与 `src/styles/desktop-stationery.css`：三页共用的纸飞机、星星挂饰和信封装饰，仅在至少 1366 × 680 的精细指针视口显示，不占用内容布局；断点与 `src/constants/media-queries.js` 同步。
+- `src/components/ScrapbookAccents.jsx`：信纸右侧的小帆船邮戳、动态和联系页标题旁的手帐挂绳，以及联系页底部的淡蓝信笺与心形邮戳；沿用同一桌面装饰断点和样式文件。手机与紧凑窗口隐藏，不新增内容或网络资源。
 - `src/hooks/`、`src/routes/`：动态、资料、语言、站内导航与共享媒体请求状态。
 - `src/styles.css`、`src/styles/`：按组件组织样式，颜色变量位于 `globals.css`。
 - `src/styles/glass.css`：参考 ColorOS 桌面/控制中心；首页使用水滴式通透玻璃，动态和联系页保持透明底层，上层卡片逐级增加轻磨砂。高光、底色和磨砂强度集中在这里，大面板与长帖子复用 `scenes.css` 的静态插画。参数与验证范围见 [玻璃质感验收-2026-10-14.md](玻璃质感验收-2026-10-14.md)。

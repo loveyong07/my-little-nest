@@ -1,4 +1,5 @@
 import { PiFlowerLight } from "react-icons/pi";
+import { RouteGarland } from "./ScrapbookAccents.jsx";
 
 export function RouteHero({ page, t, header }) {
   return (
@@ -13,6 +14,7 @@ export function RouteHero({ page, t, header }) {
           {t.pageTitle[page]}
         </h1>
       </div>
+      <RouteGarland page={page} />
     </section>
   );
 }

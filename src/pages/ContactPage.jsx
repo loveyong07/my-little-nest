@@ -2,6 +2,7 @@ import { FaEnvelope, FaLine, FaQq, FaTelegram, FaWhatsapp, FaWeixin, FaXTwitter 
 import { HiOutlineSparkles } from "react-icons/hi2";
 import { PiFlowerLight } from "react-icons/pi";
 import { ContactTile } from "../components/ContactTile.jsx";
+import { ContactPostcard } from "../components/ScrapbookAccents.jsx";
 import { mailboxes, QQ_NUMBER, WECHAT_ID, WHATSAPP_USERNAME } from "../constants/site.js";
 import { useClipboard } from "../hooks/useClipboard.js";
 
@@ -111,6 +112,7 @@ export default function ContactPage({ t, profile }) {
         <p className="footer-script">{t.footerScript}</p>
         <p className="footer-note">{t.footerNote}</p>
         <PiFlowerLight className="footer-flower" aria-hidden="true" />
+        <ContactPostcard />
       </div>
     </div>
   );
