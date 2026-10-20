@@ -184,11 +184,27 @@
   transform-origin: 199px 30px;
 }
 
-/* Matches DESKTOP_DECORATION_QUERY; smaller or short screens keep the original composition. */
+/* Scene-edge ornaments need spare margins and height (DESKTOP_DECORATION_QUERY). */
 @media (min-width: 1366px) and (min-height: 680px) and (pointer: fine) {
-  .desktop-stationery,
+  .desktop-stationery {
+    display: block;
+  }
+}
+
+/* Interior drawings fit the desktop layout, including short laptop viewports. */
+@media (min-width: 901px) and (pointer: fine) {
   .scrapbook-accent {
     display: block;
+  }
+  .letter-seaside {
+    width: clamp(104px, 10.42vw, 150px);
+  }
+  .route-garland {
+    left: max(320px, calc(50% - 260px));
+    width: clamp(200px, 22.92vw, 330px);
+  }
+  .contact-postcard {
+    width: clamp(160px, 16vw, 230px);
   }
 }
 
