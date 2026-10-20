@@ -1,0 +1,150 @@
+/* Keep the scrapbook ornaments in spare desktop scene space, outside reading surfaces. */
+.desktop-stationery {
+  display: none;
+  position: fixed;
+  z-index: 1;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+
+.desktop-stationery > svg {
+  position: absolute;
+  overflow: visible;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.4;
+}
+
+.stationery-thread {
+  stroke: #7398b5;
+}
+.stationery-paper {
+  fill: #f3faffdc;
+  stroke: #8bacc6;
+}
+.stationery-fold {
+  fill: #bfdbedc9;
+  stroke: #8bacc6;
+}
+.stationery-pearl {
+  fill: #fff7dc;
+  stroke: #fff;
+}
+.stationery-trail {
+  stroke: #f2faffdf;
+  stroke-dasharray: 4 7;
+  stroke-width: 1.7;
+}
+.stationery-glints {
+  stroke: #f5fbff;
+  stroke-width: 1.6;
+}
+.stationery-postmark {
+  stroke: #e2f2ffe6;
+  stroke-width: 1.2;
+  transform: rotate(12deg);
+  transform-origin: 130px 33px;
+}
+.stationery-seal {
+  fill: #e8c9dd;
+  stroke: #f9e7f0;
+}
+.stationery-heart {
+  fill: #fff5fb;
+  stroke: none;
+}
+.stationery-chime {
+  top: 112px;
+  left: calc(50% - 102px);
+  width: 112px;
+  height: auto;
+  transform-origin: 50% 9px;
+  animation: stationery-sway 8s ease-in-out infinite alternate;
+}
+.stationery-airmail {
+  top: 40%;
+  left: calc(50% - 130px);
+  width: 180px;
+  height: auto;
+}
+.stationery-plane {
+  animation: stationery-float 7s ease-in-out infinite alternate;
+}
+.stationery-letter {
+  right: 46px;
+  bottom: 85px;
+  width: 162px;
+  height: auto;
+  transform: rotate(-10deg);
+}
+
+.desktop-stationery-posts,
+.desktop-stationery-contact {
+  --stationery-panel-width: 1160px;
+  --stationery-size: clamp(78px, calc((100vw - var(--stationery-panel-width)) / 2 - 40px), 150px);
+}
+.desktop-stationery-posts {
+  --stationery-panel-width: 980px;
+}
+.site-route .stationery-chime {
+  top: 126px;
+  right: calc((100vw - var(--stationery-panel-width)) / 4 - 39px);
+  left: auto;
+  width: 78px;
+}
+.site-route .stationery-airmail {
+  top: 46%;
+  left: calc((100vw - var(--stationery-panel-width)) / 4 - var(--stationery-size) / 2);
+  width: var(--stationery-size);
+}
+.site-route .stationery-letter {
+  right: calc((100vw - var(--stationery-panel-width)) / 4 - var(--stationery-size) / 2);
+  bottom: 132px;
+  width: var(--stationery-size);
+}
+
+/* Matches DESKTOP_DECORATION_QUERY; smaller or short screens keep the original composition. */
+@media (min-width: 1366px) and (min-height: 680px) and (pointer: fine) {
+  .desktop-stationery {
+    display: block;
+  }
+}
+
+@keyframes stationery-sway {
+  from {
+    transform: rotate(-3deg);
+  }
+  to {
+    transform: rotate(3deg);
+  }
+}
+@keyframes stationery-float {
+  from {
+    transform: translate(0, 0);
+  }
+  to {
+    transform: translate(3px, -6px);
+  }
+}
+
+.scene-paused .stationery-chime,
+.scene-paused .stationery-plane {
+  animation-play-state: paused;
+}
+.motion-off .stationery-chime,
+.motion-off .stationery-plane {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .stationery-chime,
+  .stationery-plane {
+    animation: none;
+  }
+}
+@media (forced-colors: active), print {
+  .desktop-stationery {
+    display: none;
+  }
+}
