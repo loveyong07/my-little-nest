@@ -29,14 +29,15 @@ export function XArticlesSection({
   const text = article?.text ?? "";
   const sourcePhotos = (article?.media ?? []).filter((media) => (media.type ?? "photo") === "photo");
   const blocks = article?.blocks;
-  const photos = blocks?.length
-    ? [
-        sourcePhotos[0],
-        ...blocks
-          .filter((block) => block.type === "photo")
-          .map((block) => sourcePhotos.find((photo) => photo.url === block.url)),
-      ].filter(Boolean)
-    : sourcePhotos;
+  const cover = sourcePhotos.find((photo) => photo.url === article?.coverUrl);
+  const photos = cover ? [cover, ...(!blocks?.length ? sourcePhotos.filter((photo) => photo !== cover) : [])] : [];
+  // Every body occurrence gets its own position, even when URLs repeat.
+  const renderedBlocks = blocks?.map((block) => {
+    if (block.type !== "photo") return block;
+    const photo = sourcePhotos.find((item) => item.url === block.url);
+    return { ...block, photoNumber: photo ? photos.push(photo) : null };
+  });
+  const layoutUnavailable = !blocks?.length && sourcePhotos.some((photo) => photo !== cover);
   const recovering = ["stale", "unavailable"].includes(articleState);
   const message =
     articleState === "loading"
@@ -147,18 +148,17 @@ export function XArticlesSection({
                 {formatPostDate(article.created_at, language)}
               </time>
             )}
-            {photos[0] && <ArticlePhoto key={photos[0].url} photos={photos} number={1} t={t} />}
+            {cover && <ArticlePhoto key={cover.url} photos={photos} number={1} t={t} />}
             {(blocks?.length || text.trim()) && (
               <div className="article-text">
                 {(blocks?.length
-                  ? blocks
+                  ? renderedBlocks
                   : text.split(/(?:\r?\n){2,}/).map((paragraph) => ({ type: "text", text: paragraph }))
                 ).map((block, index) => {
                   if (block.type === "divider") return <hr key={index} />;
                   if (block.type === "photo") {
-                    const photoIndex = photos.findIndex((photo) => photo.url === block.url);
-                    return photoIndex >= 0 ? (
-                      <ArticlePhoto key={index} photos={photos} number={photoIndex + 1} t={t} />
+                    return block.photoNumber ? (
+                      <ArticlePhoto key={index} photos={photos} number={block.photoNumber} t={t} />
                     ) : null;
                   }
                   return (
@@ -180,7 +180,7 @@ export function XArticlesSection({
                 })}
               </div>
             )}
-            {!blocks?.length && photos.length > 1 && (
+            {layoutUnavailable && (
               <p className="article-layout-unavailable" role="status">
                 {t.articleLayoutUnavailable}
               </p>

@@ -5,6 +5,7 @@ import { readFileSync, mkdirSync } from "node:fs";
 import { chromium } from "playwright-core";
 
 const origin = "http://127.0.0.1:4328";
+const output = process.env.QA_ARTICLE_OUTPUT || "qa/article-images";
 const server = spawn(process.execPath, ["node_modules/vite/bin/vite.js", "preview", "--host", "127.0.0.1", "--port", "4328", "--strictPort"], { stdio: "ignore" });
 let browser;
 try {
@@ -13,11 +14,12 @@ try {
     await new Promise((resolve) => setTimeout(resolve, 200));
   }
   browser = await chromium.launch({ channel: "chrome" });
-  const feed = readFileSync("scripts/qa/fixtures/feed.json");
+  const fixture = readFileSync("scripts/qa/fixtures/feed.json");
   const profile = readFileSync("scripts/qa/fixtures/profile.json");
   const image = readFileSync("public/assets/og-cover.jpg");
-  mkdirSync("qa/article-images", { recursive: true });
+  mkdirSync(output, { recursive: true });
   for (const width of [1440, 390]) {
+    let feed = fixture;
     const context = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: "reduce" });
     await context.addInitScript(() => sessionStorage.setItem("nest-posts-age-confirmed", "18+"));
     await context.route("**/api/x-posts", (route) => route.fulfill({ contentType: "application/json", body: feed }));
@@ -62,9 +64,45 @@ try {
     assert.equal(await page.locator(".media-lightbox").count(), 0);
     assert.ok(await photos.nth(5).locator("button").evaluate((button) => button === document.activeElement));
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), "no horizontal overflow");
-    await page.locator(".x-article-card").screenshot({ path: `qa/article-images/article-${width}.png` });
+    await page.locator(".x-article-card").screenshot({ path: `${output}/article-${width}.png` });
     assert.deepEqual(errors, []);
     console.log(`PASS ${width}px: original text/photo order, six images, links/clicks/underlines, retry, lightbox navigation, focus return, no overflow`);
+    for (const hasCover of [false, true]) {
+      const boundaryFeed = JSON.parse(fixture);
+      const article = boundaryFeed.articles[0];
+      const media = [article.media[0], article.media[2]];
+      article.title = `Repeated photos, cover=${hasCover}`;
+      article.coverUrl = hasCover ? media[0].url : null;
+      article.media = media;
+      article.blocks = [
+        { type: "text", text: "Before the first body image" },
+        ...[media[0], media[1], media[0]].flatMap((photo) => [
+          { type: "photo", url: photo.url },
+          { type: "text", text: "After the body image" },
+        ]),
+      ];
+      feed = JSON.stringify(boundaryFeed);
+      await page.evaluate(() => localStorage.clear());
+      await page.reload();
+      await page.getByRole("heading", { name: article.title, exact: true }).waitFor();
+      const buttons = page.locator(".x-article-card .article-photo-open");
+      const count = hasCover ? 4 : 3;
+      assert.equal(await buttons.count(), count);
+      assert.equal(await page.locator(".article-text .article-photo").count(), 3);
+      for (let index = 0; index < count; index++) {
+        const alt = await buttons.nth(index).locator("img").getAttribute("alt");
+        await buttons.nth(index).click();
+        assert.equal(await page.locator(".media-lightbox img").getAttribute("alt"), alt);
+        await page.keyboard.press("ArrowRight");
+        const nextAlt = await buttons.nth((index + 1) % count).locator("img").getAttribute("alt");
+        await page.waitForFunction((expected) => document.querySelector(".media-lightbox img")?.alt === expected, nextAlt);
+        await page.keyboard.press("Escape");
+      }
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+      assert.deepEqual(errors, []);
+      await page.locator(".x-article-card").screenshot({ path: `${output}/repeated-cover-${hasCover}-${width}.png` });
+      console.log(`PASS ${width}px: repeated photo positions, independent numbering and lightbox navigation, cover=${hasCover}`);
+    }
     await context.close();
   }
 } finally {

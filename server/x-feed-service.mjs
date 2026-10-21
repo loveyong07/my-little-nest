@@ -200,6 +200,9 @@ function normalizedArticle(post, user, mediaByKey) {
   const preview = typeof article.preview_text === "string" ? article.preview_text : "";
   const text = fullText || preview;
   const links = normalizedArticleLinks(article.entities);
+  const cover = normalizedMedia(typeof article.cover_media === "string" ? [article.cover_media] : [], mediaByKey).find(
+    (item) => item.type === "photo",
+  );
   const media = normalizedMedia(
     [
       article.cover_media,
@@ -215,6 +218,7 @@ function normalizedArticle(post, user, mediaByKey) {
     title,
     text,
     contentKind: fullText ? "full" : "preview",
+    coverUrl: cover?.url ?? null,
     ...(links.length ? { links } : {}),
     created_at: post.created_at ?? null,
     author: user.name || USERNAME,

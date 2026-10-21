@@ -6,6 +6,7 @@ const MAX_PAGE_BYTES = 2 * 1024 * 1024;
 // inside JavaScript; executing that script would run untrusted remote code.
 export function articleDocumentFromHtml(html, postId) {
   for (const script of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)) {
+    if (!script[1].includes("content_state")) continue;
     for (const literal of script[1].matchAll(/"(?:[^"\\]|\\.)*"/g)) {
       if (!literal[0].includes("content_state")) continue;
       try {
@@ -73,7 +74,7 @@ export function normalizedArticleDocument(document, article) {
   )
     return null;
   const positionedPhotos = new Set(blocks.filter((block) => block.type === "photo").map((block) => block.url));
-  if ([...allowedPhotos].slice(1).some((url) => !positionedPhotos.has(url))) return null;
+  if ([...allowedPhotos].some((url) => url !== article.coverUrl && !positionedPhotos.has(url))) return null;
   return blocks;
 }
 
@@ -121,7 +122,9 @@ export async function enrichArticleDocuments(articles, previous, fetchImpl) {
           const blocks = await loadArticleDocument(article, fetchImpl, controller.signal);
           const old = previous?.find((item) => item.id === article.id);
           const retained =
-            old?.text === article.text && JSON.stringify(old?.media) === JSON.stringify(article.media)
+            old?.text === article.text &&
+            old?.coverUrl === article.coverUrl &&
+            JSON.stringify(old?.media) === JSON.stringify(article.media)
               ? old?.blocks
               : null;
           if (blocks || retained) result[index] = { ...article, blocks: blocks ?? retained };

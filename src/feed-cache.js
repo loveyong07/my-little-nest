@@ -4,8 +4,8 @@ import { cacheArticleData } from "./utils/article-reading.js";
 
 export { canPrefetch };
 
-// Refetch Article photos saved before original-resolution WebP delivery.
-const KEY = "little-nest-feed-v6";
+// Refetch Articles saved before explicit cover identity was available.
+const KEY = "little-nest-feed-v7";
 const MAX_AGE = SUCCESS_MAX_AGE_MS;
 
 export function readFeedCache(storage, now = Date.now()) {

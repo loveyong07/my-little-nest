@@ -14,6 +14,7 @@ const media = [document.cover_media_results.result, ...document.media_entities].
   url: item.media_info.original_img_url,
 }));
 const article = {
+  coverUrl: media[0].url,
   id: "2111445635736146057",
   permalink: "https://x.com/loveyong07/status/2111445635736146057",
   text: document.content_state.blocks
@@ -46,6 +47,45 @@ test("preserves the original five body-image positions, which differ from the AP
   assert.ok(previousText[4].includes("以上就是关于"));
   assert.equal(blocks.filter((block) => block.type === "divider").length, 2);
   assert.ok(blocks.some((block) => block.links?.some((link) => link.url === "https://www.touchgal.ink/")));
+});
+
+test("script filtering still accepts escaped post IDs and ignores unrelated scripts", () => {
+  const escaped = htmlFor(document).replace(
+    article.id,
+    [...article.id].map((digit) => `\\u${digit.charCodeAt(0).toString(16).padStart(4, "0")}`).join(""),
+  );
+  assert.equal(escaped.includes(article.id), false);
+  assert.deepEqual(
+    articleDocumentFromHtml(`<script>const noise = "irrelevant";</script>${escaped}`, article.id),
+    document,
+  );
+});
+
+test("without a cover, every attached photo needs a verified body position", () => {
+  const noCover = { ...article, coverUrl: null, media: media.slice(1) };
+  assert.ok(normalizedArticleDocument(document, noCover));
+  const changed = structuredClone(document);
+  const state = changed.content_state;
+  const firstUrl = noCover.media[0].url;
+  const firstId = changed.media_entities.find((item) => item.media_info.original_img_url === firstUrl).media_id;
+  const entities = new Map(state.entity_map.map((entry) => [String(entry.key), entry.value]));
+  state.blocks = state.blocks.filter(
+    (block) =>
+      !block.entity_ranges?.some((range) =>
+        entities.get(String(range.key))?.data?.media_items?.some((item) => String(item.media_id) === String(firstId)),
+      ),
+  );
+  assert.equal(normalizedArticleDocument(changed, noCover), null);
+});
+
+test("a cover change prevents reusing body positions validated against the old cover", async () => {
+  const previous = [{ ...article, blocks: normalizedArticleDocument(document, article) }];
+  const [result] = await enrichArticleDocuments(
+    [{ ...article, coverUrl: null }],
+    previous,
+    async () => new Response("Unavailable", { status: 503 }),
+  );
+  assert.equal(result.blocks, undefined);
 });
 
 test("rejects out-of-date text and unknown media instead of guessing positions or moving photos to the end", () => {
