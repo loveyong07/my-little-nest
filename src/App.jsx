@@ -4,6 +4,7 @@ import { HeroSection } from "./components/HeroSection.jsx";
 import { GlassFlorals } from "./components/GlassFlorals.jsx";
 import { DesktopStationery } from "./components/DesktopStationery.jsx";
 import { RouteHero } from "./components/RouteHero.jsx";
+import { PageFooter } from "./components/PageFooter.jsx";
 import { ASSETS, navIds } from "./constants/site.js";
 import { useI18n } from "./hooks/useI18n.js";
 import { useXProfile } from "./hooks/useXProfile.js";
@@ -67,6 +68,7 @@ export function App() {
         <>
           <RouteHero page={page} t={t} header={header} />
           <section
+            key={page}
             className={"content-panel route-panel route-panel-" + page}
             aria-label={page === "posts" ? t.postsHeading : t.contactsHeading}
           >
@@ -86,6 +88,7 @@ export function App() {
             </Suspense>
             <div className="glass-panel-backdrop" aria-hidden="true" />
           </section>
+          <PageFooter t={t} page={page} />
         </>
       )}
       {extrasReady && (

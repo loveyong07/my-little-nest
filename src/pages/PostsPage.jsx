@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FaArrowRight } from "react-icons/fa6";
-import { FiChevronLeft, FiChevronRight, FiCalendar, FiFeather, FiRefreshCw } from "react-icons/fi";
+import { FiChevronLeft, FiChevronRight, FiCalendar, FiRefreshCw } from "react-icons/fi";
 import { HiOutlineSparkles } from "react-icons/hi2";
 import { PiPushPinFill } from "react-icons/pi";
 import { PostCard } from "../components/PostCard.jsx";
 import { PostsAgeGate } from "../components/PostsAgeGate.jsx";
 import { XArticlesSection } from "../components/XArticlesSection.jsx";
+import { PostsNavigator } from "../components/PostsNavigator.jsx";
+import { SectionHeading } from "../components/SectionHeading.jsx";
+import { useSectionEntrance } from "../hooks/useSectionEntrance.js";
 import { useXFeed } from "../hooks/useXFeed.js";
 import { formatPostDate } from "../utils/date.js";
 import { postExcerpt, postMonthKey, postMonths } from "../utils/posts.js";
@@ -45,6 +48,9 @@ export default function PostsPage(props) {
 }
 
 function PostsContent({ language, t, profile, onFeedReady }) {
+  const [largeText, setLargeText] = useState(false);
+  const sectionRef = useRef(null);
+  useSectionEntrance(sectionRef);
   useEffect(() => {
     // Decorative glyphs must not compete with post photos on constrained links.
     if (!canPrefetch()) return undefined;
@@ -101,10 +107,6 @@ function PostsContent({ language, t, profile, onFeedReady }) {
     readingRef.current?.scrollIntoView({ block: "start", behavior: preferredScrollBehavior() });
   }
 
-  function jumpToSection(targetId) {
-    document.getElementById(targetId)?.scrollIntoView({ block: "start", behavior: preferredScrollBehavior() });
-  }
-
   const statusText = feedLoading
     ? feedSource === "snapshot"
       ? t.feedLoading
@@ -120,65 +122,21 @@ function PostsContent({ language, t, profile, onFeedReady }) {
   const profileUrl = xProfileUrl(profile.username);
 
   return (
-    <div className="posts-section" id="posts">
-      {statusText && (
-        <div className={`feed-status${feedLoading ? " is-loading" : ""}`} role="status">
-          <FiRefreshCw aria-hidden="true" />
-          <div className="feed-status-copy">
-            <span>{statusText}</span>
-            {feedSource === "stale" && feedUpdatedAt && (
-              <small>
-                {t.lastFetched}
-                {formatPostDate(new Date(feedUpdatedAt).toISOString(), language)}
-              </small>
-            )}
-          </div>
-          {showRecovery && (
-            <div className="feed-status-actions">
-              <button type="button" onClick={retryFeed} disabled={retryDisabled || feedLoading}>
-                {t.retry}
-              </button>
-              <a href={profileUrl} target="_blank" rel="noopener noreferrer">
-                {t.visitX}
-                <FaArrowRight aria-hidden="true" />
-              </a>
+    <div className={`posts-section${largeText ? " is-reading-large" : ""}`} id="posts" ref={sectionRef}>
+      <div className="posts-flow">
+        {statusText && (
+          <div className={`feed-status${feedLoading ? " is-loading" : ""}`} role="status">
+            <FiRefreshCw aria-hidden="true" />
+            <div className="feed-status-copy">
+              <span>{statusText}</span>
+              {feedSource === "stale" && feedUpdatedAt && (
+                <small>
+                  {t.lastFetched}
+                  {formatPostDate(new Date(feedUpdatedAt).toISOString(), language)}
+                </small>
+              )}
             </div>
-          )}
-        </div>
-      )}
-      <section className="posts-group" aria-labelledby="pinned-posts-heading">
-        <div className="section-heading">
-          <PiPushPinFill aria-hidden="true" />
-          <h2 id="pinned-posts-heading">{t.pinnedHeading}</h2>
-        </div>
-        {pinnedPost ? (
-          <PostCard
-            key={pinnedPost.id}
-            post={pinnedPost}
-            feedSource={pinState}
-            language={language}
-            t={t}
-            profile={profile}
-            label={pinState === "stale" ? t.pinnedStale : undefined}
-            priorityMedia
-          />
-        ) : (
-          <div
-            className={`pinned-placeholder${pinState === "loading" ? " pinned-placeholder-loading" : ""}`}
-            role="status"
-          >
-            <span>
-              {pinState === "loading" ? t.pinnedLoading : pinState === "none" ? t.pinnedNone : t.pinnedUnavailable}
-            </span>
-            {pinState === "loading" && (
-              <div className="post-skeleton" aria-hidden="true">
-                <span />
-                <span />
-                <span />
-                <div />
-              </div>
-            )}
-            {pinState === "unavailable" && feedSource !== "snapshot" && (
+            {showRecovery && (
               <div className="feed-status-actions">
                 <button type="button" onClick={retryFeed} disabled={retryDisabled || feedLoading}>
                   {t.retry}
@@ -191,129 +149,154 @@ function PostsContent({ language, t, profile, onFeedReady }) {
             )}
           </div>
         )}
-      </section>
-      <section className="posts-group" id="latest-posts" aria-labelledby="daily-posts-heading">
-        <div className="posts-daily-heading">
-          <div className="section-heading">
-            <HiOutlineSparkles aria-hidden="true" />
-            <h2 id="daily-posts-heading">{t.postsHeading}</h2>
-          </div>
-          {months.length > 1 && (
-            <label className="post-month-picker">
-              <FiCalendar aria-hidden="true" />
-              <span>{t.choosePostMonth}</span>
-              <select
-                value={postMonthKey(currentPost)}
-                onChange={(event) => {
-                  const month = months.find((item) => item.key === event.target.value);
-                  if (month) setPostIndex(month.index);
-                }}
-              >
-                {months.map((month) => (
-                  <option key={month.key} value={month.key}>
-                    {month.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-        </div>
-        {posts.length > 1 && (
-          <div className="post-index" ref={indexRef} role="group" aria-label={t.postsIndexLabel}>
-            {posts.map((post, index) => (
-              <button
-                key={post.id}
-                className={`post-index-button${index === postIndex ? " is-active" : ""}`}
-                type="button"
-                aria-current={index === postIndex ? "true" : undefined}
-                onClick={() => setPostIndex(index)}
-              >
-                <span>{t.postNumber(index + 1, posts.length)}</span>
-                <time dateTime={post.created_at}>{formatPostDate(post.created_at, language)}</time>
-                <span className="post-index-excerpt">{postExcerpt(post, t)}</span>
-              </button>
-            ))}
-          </div>
-        )}
-        <div className="post-reading" ref={readingRef}>
-          {currentPost ? (
+        <section className="posts-group" aria-labelledby="pinned-posts-heading">
+          <SectionHeading icon={PiPushPinFill} number="01" kicker="A NOTE TO KEEP" id="pinned-posts-heading">
+            {t.pinnedHeading}
+          </SectionHeading>
+          {pinnedPost ? (
             <PostCard
-              key={currentPost.id}
-              post={currentPost}
-              feedSource={feedSource}
+              key={pinnedPost.id}
+              post={pinnedPost}
+              feedSource={pinState}
               language={language}
               t={t}
               profile={profile}
-              nextPost={posts.length > 1 ? posts[(postIndex + 1) % posts.length] : null}
-              priorityMedia={!pinnedPost}
+              label={pinState === "stale" ? t.pinnedStale : undefined}
+              priorityMedia
             />
           ) : (
-            <div className="pinned-placeholder feed-empty" role="status">
-              <span>{feedLoading ? t.feedRefreshing : t.feedEmpty}</span>
-              {!feedLoading && (
-                <a href={profileUrl} target="_blank" rel="noopener noreferrer">
-                  {t.visitX}
-                  <FaArrowRight aria-hidden="true" />
-                </a>
+            <div
+              className={`pinned-placeholder${pinState === "loading" ? " pinned-placeholder-loading" : ""}`}
+              role="status"
+            >
+              <span>
+                {pinState === "loading" ? t.pinnedLoading : pinState === "none" ? t.pinnedNone : t.pinnedUnavailable}
+              </span>
+              {pinState === "loading" && (
+                <div className="post-skeleton" aria-hidden="true">
+                  <span />
+                  <span />
+                  <span />
+                  <div />
+                </div>
+              )}
+              {pinState === "unavailable" && feedSource !== "snapshot" && (
+                <div className="feed-status-actions">
+                  <button type="button" onClick={retryFeed} disabled={retryDisabled || feedLoading}>
+                    {t.retry}
+                  </button>
+                  <a href={profileUrl} target="_blank" rel="noopener noreferrer">
+                    {t.visitX}
+                    <FaArrowRight aria-hidden="true" />
+                  </a>
+                </div>
               )}
             </div>
           )}
+        </section>
+        <section className="posts-group" id="latest-posts" aria-labelledby="daily-posts-heading">
+          <div className="posts-daily-heading">
+            <SectionHeading icon={HiOutlineSparkles} number="02" kicker="EVERYDAY MOMENTS" id="daily-posts-heading">
+              {t.postsHeading}
+            </SectionHeading>
+            {months.length > 1 && (
+              <label className="post-month-picker">
+                <FiCalendar aria-hidden="true" />
+                <span>{t.choosePostMonth}</span>
+                <select
+                  value={postMonthKey(currentPost)}
+                  onChange={(event) => {
+                    const month = months.find((item) => item.key === event.target.value);
+                    if (month) setPostIndex(month.index);
+                  }}
+                >
+                  {months.map((month) => (
+                    <option key={month.key} value={month.key}>
+                      {month.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+          </div>
           {posts.length > 1 && (
-            <PostControls postIndex={postIndex} total={posts.length} onChange={changeReadingPost} t={t} />
+            <div className="post-index" ref={indexRef} role="group" aria-label={t.postsIndexLabel}>
+              {posts.map((post, index) => (
+                <button
+                  key={post.id}
+                  className={`post-index-button${index === postIndex ? " is-active" : ""}`}
+                  type="button"
+                  aria-current={index === postIndex ? "true" : undefined}
+                  onClick={() => setPostIndex(index)}
+                >
+                  <span>{t.postNumber(index + 1, posts.length)}</span>
+                  <time dateTime={post.created_at}>{formatPostDate(post.created_at, language)}</time>
+                  <span className="post-index-excerpt">{postExcerpt(post, t)}</span>
+                </button>
+              ))}
+            </div>
           )}
-        </div>
-      </section>
-      <XArticlesSection
-        articles={articles}
-        articleIndex={articleIndex}
-        setArticleIndex={setArticleIndex}
-        articleState={articleState}
-        feedLoading={feedLoading}
-        retryDisabled={retryDisabled}
-        retryFeed={retryFeed}
-        language={language}
+          <div className="post-reading" ref={readingRef}>
+            {currentPost ? (
+              <PostCard
+                key={currentPost.id}
+                post={currentPost}
+                feedSource={feedSource}
+                language={language}
+                t={t}
+                profile={profile}
+                nextPost={posts.length > 1 ? posts[(postIndex + 1) % posts.length] : null}
+                priorityMedia={!pinnedPost}
+              />
+            ) : (
+              <div className="pinned-placeholder feed-empty" role="status">
+                <span>{feedLoading ? t.feedRefreshing : t.feedEmpty}</span>
+                {!feedLoading && (
+                  <a href={profileUrl} target="_blank" rel="noopener noreferrer">
+                    {t.visitX}
+                    <FaArrowRight aria-hidden="true" />
+                  </a>
+                )}
+              </div>
+            )}
+            {posts.length > 1 && (
+              <PostControls postIndex={postIndex} total={posts.length} onChange={changeReadingPost} t={t} />
+            )}
+          </div>
+        </section>
+        <XArticlesSection
+          articles={articles}
+          articleIndex={articleIndex}
+          setArticleIndex={setArticleIndex}
+          articleState={articleState}
+          feedLoading={feedLoading}
+          retryDisabled={retryDisabled}
+          retryFeed={retryFeed}
+          language={language}
+          t={t}
+          profile={profile}
+        />
+        <aside className="reading-invitation" aria-labelledby="reading-invitation-heading" data-reveal>
+          <div>
+            <h2 id="reading-invitation-heading" tabIndex={-1}>
+              {t.readingInvitationHeading}
+            </h2>
+            <p>{t.readingInvitationText}</p>
+          </div>
+          <a href={pagePaths.contact}>
+            {t.readingInvitationCta}
+            <FaArrowRight aria-hidden="true" />
+          </a>
+        </aside>
+      </div>
+      <PostsNavigator
         t={t}
-        profile={profile}
+        pinnedCount={pinnedPost ? 1 : 0}
+        postCount={posts.length}
+        articleCount={articles.length}
+        largeText={largeText}
+        onToggleText={() => setLargeText((value) => !value)}
       />
-      <aside className="reading-invitation" aria-labelledby="reading-invitation-heading">
-        <div>
-          <h2 id="reading-invitation-heading">{t.readingInvitationHeading}</h2>
-          <p>{t.readingInvitationText}</p>
-        </div>
-        <a href={pagePaths.contact}>
-          {t.readingInvitationCta}
-          <FaArrowRight aria-hidden="true" />
-        </a>
-      </aside>
-      <nav className="posts-quick-nav" aria-label={t.postsQuickNavLabel}>
-        <button
-          type="button"
-          className="quick-nav-pill quick-nav-pin"
-          onClick={() => jumpToSection("pinned-posts-heading")}
-        >
-          <PiPushPinFill aria-hidden="true" />
-          <span>{t.quickNavPinned}</span>
-          {pinnedPost && <em className="quick-nav-badge">1</em>}
-        </button>
-        <button type="button" className="quick-nav-pill quick-nav-daily" onClick={() => jumpToSection("latest-posts")}>
-          <HiOutlineSparkles aria-hidden="true" />
-          <span>{t.quickNavDaily}</span>
-          {posts.length > 0 && <em className="quick-nav-badge">{posts.length}</em>}
-        </button>
-        <button type="button" className="quick-nav-pill quick-nav-articles" onClick={() => jumpToSection("x-articles")}>
-          <FiFeather aria-hidden="true" />
-          <span>{t.quickNavArticles}</span>
-          {articles.length > 0 && <em className="quick-nav-badge">{articles.length}</em>}
-        </button>
-        <button
-          type="button"
-          className="quick-nav-pill quick-nav-message"
-          onClick={() => jumpToSection("reading-invitation-heading")}
-        >
-          <span>{t.quickNavMessage}</span>
-          <FaArrowRight aria-hidden="true" />
-        </button>
-      </nav>
     </div>
   );
 }
