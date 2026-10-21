@@ -15,14 +15,19 @@
 .section-heading {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  min-height: 30px;
-  color: #5c82a4;
+  gap: 10px;
+  min-height: 34px;
+  color: #4f7596;
 }
 .section-heading svg {
   flex: 0 0 auto;
-  width: 20px;
-  height: 20px;
+  width: 32px;
+  height: 32px;
+  padding: 6px;
+  border: 1px solid #ffffffcc;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #e7f2fc, #f5eaf9);
+  box-shadow: 0 3px 10px #4c729414;
 }
 .section-heading h2 {
   margin: 0;
@@ -44,5 +49,18 @@
 @media (max-width: 700px) {
   .content-panel {
     border-radius: 26px;
+  }
+  .section-heading {
+    gap: var(--space-2);
+    min-height: 30px;
+  }
+  .section-heading svg {
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
   }
 }

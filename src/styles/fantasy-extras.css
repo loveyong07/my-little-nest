@@ -1,5 +1,5 @@
 /* Loaded with FantasyExtras after the first paint: falling petals, cursor sparkles,
-   the music player and the motion switch. */
+   the music player, the motion switch and the route scroll companion. */
 .nest-atmosphere {
   position: fixed;
   inset: 0;
@@ -43,11 +43,26 @@
   align-items: center;
   gap: 9px;
   max-width: calc(100vw - 32px);
-  padding: 7px;
+  padding: 7px 9px;
   border: 1px solid #fff;
   border-radius: 999px;
-  background: #f9fcfef2;
-  box-shadow: 0 6px 28px #51728f24;
+  background: linear-gradient(135deg, #fffffff2, #f1f8feeb);
+  box-shadow:
+    0 10px 30px #45698826,
+    inset 0 1px 1px #fff;
+  -webkit-backdrop-filter: blur(12px) saturate(1.06);
+  backdrop-filter: blur(12px) saturate(1.06);
+  transition:
+    transform 0.22s var(--ease-spring),
+    box-shadow 0.22s ease;
+}
+@media (min-width: 901px) and (pointer: fine) {
+  .nest-dock:hover {
+    box-shadow:
+      0 14px 34px #45698830,
+      inset 0 1px 1px #fff;
+    transform: translateY(-2px);
+  }
 }
 .mini-player {
   display: flex;
@@ -64,11 +79,15 @@
   border: 7px solid #d9adc2;
   border-radius: 50%;
   background: #fff0f6;
+  box-shadow: 0 2px 8px #b56d8f21;
   color: var(--pastel-pink-ink);
   animation: record-turn 12s linear infinite;
   animation-play-state: paused;
 }
 .is-playing .player-disc {
+  box-shadow:
+    0 0 0 3px #fce4ee,
+    0 4px 12px #b56d8f33;
   animation-play-state: running;
 }
 .player-disc svg {
@@ -87,9 +106,9 @@
   max-width: 170px;
 }
 .player-copy strong {
-  color: var(--color-muted);
+  color: var(--color-ink);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 700;
 }
 /* Small print must stay legible: 11px at >=4.5:1 on the near-white dock. */
 .player-copy small {
@@ -108,10 +127,14 @@
   padding: 0;
   border: 1px solid;
   border-radius: 50%;
+  transition:
+    transform 0.2s var(--ease-spring),
+    background 0.18s ease,
+    box-shadow 0.18s ease;
 }
 .mini-player button {
   border-color: var(--pastel-lavender-line);
-  background: var(--pastel-lavender);
+  background: var(--gradient-lavender);
   color: var(--pastel-lavender-ink);
 }
 .mini-player button svg {
@@ -120,12 +143,18 @@
 }
 .dock-toggle {
   border-color: var(--pastel-mint-line);
-  background: var(--pastel-mint);
+  background: var(--gradient-mint);
   color: var(--pastel-mint-ink);
 }
 .dock-toggle:hover,
 .mini-player button:hover {
   background: var(--surface-blue-strong);
+  box-shadow: 0 4px 12px #4c72941f;
+  transform: scale(1.06);
+}
+.dock-toggle:active,
+.mini-player button:active {
+  transform: scale(0.95);
 }
 .dock-toggle[aria-pressed="true"] {
   background: #cdebdc;
@@ -138,7 +167,89 @@
   accent-color: #8b70b0;
 }
 
+/* Top scroll progress ribbon and floating Back-to-Top companion on route pages. */
+.scroll-progress-track {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 60;
+  height: 3px;
+  overflow: hidden;
+  background: #ffffff26;
+  pointer-events: none;
+}
+.scroll-progress-bar {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #f3a8c6, #b89ce8 52%, #7bb5e8);
+  box-shadow: 0 0 10px #e89ab880;
+  transform-origin: 0 50%;
+}
+.scroll-top-btn {
+  position: fixed;
+  right: 26px;
+  bottom: 20px;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 1px solid #fff;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #fffffff2, #eef6feeb);
+  box-shadow:
+    0 8px 24px #3c628226,
+    inset 0 1px 1px #fff;
+  color: #466b8a;
+  transition:
+    transform 0.22s var(--ease-spring),
+    box-shadow 0.22s ease,
+    color 0.18s ease;
+  animation: nest-card-in 0.24s var(--ease-spring) both;
+}
+.scroll-top-btn:hover {
+  box-shadow:
+    0 12px 28px #3c628233,
+    inset 0 1px 1px #fff;
+  color: #743e59;
+  transform: translateY(-3px) scale(1.04);
+}
+.scroll-top-btn:active {
+  transform: scale(0.95);
+}
+.scroll-top-ring {
+  position: absolute;
+  inset: 2px;
+  width: calc(100% - 4px);
+  height: calc(100% - 4px);
+  fill: none;
+  transform: rotate(-90deg);
+  pointer-events: none;
+}
+.scroll-top-ring-bg {
+  stroke: #dce8f2;
+  stroke-width: 2.2;
+}
+.scroll-top-ring-fill {
+  stroke: #d989ae;
+  stroke-linecap: round;
+  stroke-width: 2.4;
+  transition: stroke-dashoffset 0.12s linear;
+}
+.scroll-top-btn > svg:last-child {
+  position: relative;
+  width: 18px;
+  height: 18px;
+}
+
 @media (max-width: 700px) {
+  .scroll-progress-track,
+  .scroll-top-btn {
+    display: none;
+  }
   .nest-dock {
     bottom: max(12px, env(safe-area-inset-bottom));
     left: 50%;
@@ -162,6 +273,7 @@
   .player-copy strong {
     overflow: hidden;
     font-size: 11px;
+    font-weight: 500;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
@@ -195,7 +307,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .player-disc {
+  .player-disc,
+  .scroll-top-btn {
     animation: none;
   }
 }

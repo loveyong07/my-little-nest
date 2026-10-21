@@ -82,11 +82,21 @@
   border-color: #ffffff80;
   box-shadow: var(--glass-card-shadow);
 }
+@media (min-width: 901px) and (pointer: fine) {
+  .post-card:hover {
+    border-color: #ffffffb3;
+    box-shadow:
+      0 0 16px #ffffff33,
+      0 12px 28px #355b8124,
+      var(--glass-edge-light);
+    transform: translateY(-2px);
+  }
+}
 .contact-tile:hover {
   border-color: #ffffffb3;
   box-shadow:
     0 0 14px #ffffff33,
-    0 9px 22px #355b8121,
+    0 12px 26px #355b8124,
     var(--glass-edge-light);
 }
 .email-row {
@@ -224,10 +234,10 @@
     background: var(--glass-tile-fill);
   }
   .post-index-button:hover {
-    background: #ffffff73;
+    background: #ffffff8c;
   }
   .post-index-button.is-active {
-    background: #e6f0f97a;
+    background: linear-gradient(135deg, #f9e6f080, #e3effca6);
   }
   .post-date,
   .post-month-picker select {
@@ -292,12 +302,16 @@
   .posts-age-badge,
   .posts-age-actions button,
   .posts-age-actions a,
+  .posts-quick-nav,
+  .quick-nav-pill,
   .contact-tile,
   .email-row,
+  .letter-guide li,
   .post-index-button,
   .pinned-placeholder,
   .post-date,
-  .post-month-picker select {
+  .post-month-picker select,
+  .scroll-top-btn {
     background: Canvas;
     border-color: CanvasText;
     box-shadow: none;

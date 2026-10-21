@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FiRefreshCw } from "react-icons/fi";
 import { PiFlowerLight } from "react-icons/pi";
 import { GiStrawberry } from "react-icons/gi";
@@ -8,11 +8,19 @@ export function HomeJournal({ language, t }) {
   const f = fantasyCopy[language];
   const [notice] = useState(() => Math.floor(Math.random() * f.notices.length));
   const [quote, setQuote] = useState(() => Math.floor(Math.random() * f.quotes.length));
+  const [spinning, setSpinning] = useState(false);
+
+  useEffect(() => {
+    if (!spinning) return undefined;
+    const timer = window.setTimeout(() => setSpinning(false), 320);
+    return () => window.clearTimeout(timer);
+  }, [spinning]);
 
   function shuffleQuote() {
     if (f.quotes.length < 2) return;
     const next = Math.floor(Math.random() * (f.quotes.length - 1));
     setQuote(next >= quote ? next + 1 : next);
+    setSpinning(true);
   }
 
   return (
@@ -30,13 +38,19 @@ export function HomeJournal({ language, t }) {
           </ul>
         )}
       </article>
-      <article className="journal-note journal-quote">
+      <article className={`journal-note journal-quote${spinning ? " is-shuffling" : ""}`}>
         <h2>
           <PiFlowerLight aria-hidden="true" />
           {f.quote}
         </h2>
         <p aria-live="polite">{f.quotes[quote]}</p>
-        <button type="button" onClick={shuffleQuote} aria-label={f.shuffle}>
+        <button
+          type="button"
+          className={spinning ? "is-spinning" : undefined}
+          onClick={shuffleQuote}
+          aria-label={f.shuffle}
+          title={f.shuffle}
+        >
           <FiRefreshCw aria-hidden="true" />
         </button>
       </article>

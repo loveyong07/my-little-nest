@@ -221,6 +221,7 @@ export const fantasyCopy = {
     pause: "暂停音乐",
     volume: "音乐音量",
     audioError: "暂时无法播放，请再试一次。",
+    backToTop: "返回顶部",
   },
   ja: {
     chapter: "小さな出会いの一ページ",
@@ -440,6 +441,7 @@ export const fantasyCopy = {
     pause: "音楽を止める",
     volume: "音楽の音量",
     audioError: "再生できませんでした。もう一度お試しください。",
+    backToTop: "上へ戻る",
   },
   en: {
     chapter: "A little page of serendipity",
@@ -659,5 +661,6 @@ export const fantasyCopy = {
     pause: "Pause music",
     volume: "Music volume",
     audioError: "Couldn't play. Please try again.",
+    backToTop: "Back to top",
   },
 };
