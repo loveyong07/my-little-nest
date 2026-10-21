@@ -6,6 +6,7 @@ import { postMonthKey, postMonths } from "../utils/posts.js";
 import { displayXText } from "../utils/x-text.js";
 import { preferredScrollBehavior } from "../utils/motion.js";
 import { ArticlePhoto } from "./ArticlePhoto.jsx";
+import { SectionHeading } from "./SectionHeading.jsx";
 import { articleLinkParts } from "../../shared/article-links.mjs";
 import { xProfileUrl } from "../constants/site.js";
 
@@ -72,10 +73,9 @@ export function XArticlesSection({
   return (
     <section className="posts-group articles-group" id="x-articles" aria-labelledby="x-articles-heading">
       <div className="posts-daily-heading">
-        <div className="section-heading">
-          <FiFeather aria-hidden="true" />
-          <h2 id="x-articles-heading">{t.articlesHeading}</h2>
-        </div>
+        <SectionHeading icon={FiFeather} number="03" kicker="THOUGHTS IN FULL" id="x-articles-heading">
+          {t.articlesHeading}
+        </SectionHeading>
         {months.length > 1 && (
           <label className="post-month-picker">
             <FiCalendar aria-hidden="true" />

@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { FiMenu, FiX } from "react-icons/fi";
+import { FiMenu, FiX, FiHome, FiFeather, FiMail } from "react-icons/fi";
 import { PiFlowerLight } from "react-icons/pi";
 import { LANGUAGES } from "../constants/languages.js";
 import { navIds } from "../constants/site.js";
 import { pagePaths } from "../routes/site-route.js";
+
+const navIcons = [FiHome, FiFeather, FiMail];
 
 export function Header({ page, t, language, changeLanguage }) {
   const [menuPage, setMenuPage] = useState(null);
@@ -41,6 +43,9 @@ export function Header({ page, t, language, changeLanguage }) {
 
   return (
     <header className="site-header" ref={headerRef}>
+      <a className="skip-to-content" href="#page-heading">
+        {t.skipToContent}
+      </a>
       <a className="brand" href={pagePaths.home} aria-label={t.homeLinkLabel} onClick={closeMenuOnNavigation}>
         <span className="brand-script">
           Nest
@@ -49,19 +54,26 @@ export function Header({ page, t, language, changeLanguage }) {
         <span className="brand-caption">{t.homePlaceLabel}</span>
       </a>
       <nav className={"site-nav " + (menuOpen ? "is-open" : "")} id="site-navigation" aria-label={t.navLabel}>
-        {navIds.map((id, index) => (
-          <a
-            key={id}
-            data-page={id}
-            className={page === id ? "active" : ""}
-            href={pagePaths[id]}
-            onClick={closeMenuOnNavigation}
-            aria-current={page === id ? "page" : undefined}
-          >
-            <PiFlowerLight className="nav-active-flower" aria-hidden="true" />
-            {t.nav[index]}
-          </a>
-        ))}
+        {navIds.map((id, index) => {
+          const Icon = navIcons[index];
+          return (
+            <a
+              key={id}
+              data-page={id}
+              className={page === id ? "active" : ""}
+              href={pagePaths[id]}
+              onClick={closeMenuOnNavigation}
+              aria-current={page === id ? "page" : undefined}
+            >
+              <PiFlowerLight className="nav-active-flower" aria-hidden="true" />
+              <span className="nav-page-number" aria-hidden="true">
+                0{index + 1}
+              </span>
+              <Icon className="nav-page-icon" aria-hidden="true" />
+              {t.nav[index]}
+            </a>
+          );
+        })}
       </nav>
       <div className="language-picker" role="group" aria-label={t.languageLabel}>
         {LANGUAGES.map(({ code, label }) => (
