@@ -82,11 +82,11 @@
 
 .desktop-stationery-posts,
 .desktop-stationery-contact {
-  --stationery-panel-width: 1160px;
+  --stationery-panel-width: 1180px;
   --stationery-size: clamp(78px, calc((100vw - var(--stationery-panel-width)) / 2 - 40px), 150px);
 }
 .desktop-stationery-posts {
-  --stationery-panel-width: 980px;
+  --stationery-panel-width: 1060px;
 }
 .site-route .stationery-chime {
   top: 126px;

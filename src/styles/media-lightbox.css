@@ -9,7 +9,9 @@
   padding: 24px;
   overflow: auto;
   overscroll-behavior: contain;
-  background: #18232de8;
+  background: #141f2ae8;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
 }
 .media-lightbox-content {
   --lightbox-controls: 126px;
@@ -29,8 +31,9 @@
   max-width: min(92vw, 1280px);
   max-height: max(140px, calc(100dvh - var(--lightbox-controls) - 56px));
   object-fit: contain;
-  border-radius: 8px;
-  box-shadow: 0 12px 38px #0006;
+  border: 2px solid #ffffff38;
+  border-radius: 14px;
+  box-shadow: 0 18px 48px #00000073;
 }
 .media-lightbox-content video {
   width: min(92vw, 1100px);
@@ -45,7 +48,7 @@
   place-content: center;
   justify-items: center;
   gap: 12px;
-  border-radius: 12px;
+  border-radius: 16px;
   background: #fff;
   color: var(--color-text);
   text-align: center;
@@ -65,13 +68,21 @@
   height: 50px;
   padding: 0;
   place-items: center;
-  border: 1px solid #fff9;
+  border: 1px solid #ffffffb3;
   border-radius: 50%;
-  background: #fff;
+  background: #fffffff2;
+  box-shadow: 0 6px 20px #00000040;
   color: #235787;
+  transition:
+    transform 0.2s var(--ease-spring),
+    background 0.2s ease;
 }
 .media-lightbox-close:hover {
-  background: #eaf6ff;
+  background: #fff;
+  transform: scale(1.06);
+}
+.media-lightbox-close:active {
+  transform: scale(0.95);
 }
 .media-lightbox-close svg {
   width: 28px;
@@ -83,8 +94,18 @@
   align-items: center;
   justify-content: center;
   gap: 12px;
+  padding: 4px 8px;
+  border: 1px solid #ffffff2e;
+  border-radius: 999px;
+  background: #1f314299;
   color: #fff;
   font-size: 13px;
+}
+.media-lightbox-count {
+  min-width: 52px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  text-align: center;
 }
 .media-lightbox-prev,
 .media-lightbox-next {
@@ -93,14 +114,22 @@
   height: 44px;
   padding: 0;
   place-items: center;
-  border: 1px solid #ffffffa8;
+  border: 1px solid #ffffffb3;
   border-radius: 50%;
-  background: #fff;
+  background: #fffffff2;
   color: #235787;
+  transition:
+    transform 0.2s var(--ease-spring),
+    background 0.2s ease;
 }
 .media-lightbox-prev:hover,
 .media-lightbox-next:hover {
   background: #eaf6ff;
+  transform: scale(1.06);
+}
+.media-lightbox-prev:active,
+.media-lightbox-next:active {
+  transform: scale(0.95);
 }
 
 @media (max-width: 425px) {

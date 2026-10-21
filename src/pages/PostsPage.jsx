@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FaArrowRight } from "react-icons/fa6";
-import { FiChevronLeft, FiChevronRight, FiCalendar, FiRefreshCw } from "react-icons/fi";
+import { FiChevronLeft, FiChevronRight, FiCalendar, FiFeather, FiRefreshCw } from "react-icons/fi";
 import { HiOutlineSparkles } from "react-icons/hi2";
 import { PiPushPinFill } from "react-icons/pi";
 import { PostCard } from "../components/PostCard.jsx";
@@ -100,6 +100,11 @@ function PostsContent({ language, t, profile, onFeedReady }) {
     // Keep the start of a new card in reach when leaving a long post halfway down.
     readingRef.current?.scrollIntoView({ block: "start", behavior: preferredScrollBehavior() });
   }
+
+  function jumpToSection(targetId) {
+    document.getElementById(targetId)?.scrollIntoView({ block: "start", behavior: preferredScrollBehavior() });
+  }
+
   const statusText = feedLoading
     ? feedSource === "snapshot"
       ? t.feedLoading
@@ -280,6 +285,35 @@ function PostsContent({ language, t, profile, onFeedReady }) {
           <FaArrowRight aria-hidden="true" />
         </a>
       </aside>
+      <nav className="posts-quick-nav" aria-label={t.postsQuickNavLabel}>
+        <button
+          type="button"
+          className="quick-nav-pill quick-nav-pin"
+          onClick={() => jumpToSection("pinned-posts-heading")}
+        >
+          <PiPushPinFill aria-hidden="true" />
+          <span>{t.quickNavPinned}</span>
+          {pinnedPost && <em className="quick-nav-badge">1</em>}
+        </button>
+        <button type="button" className="quick-nav-pill quick-nav-daily" onClick={() => jumpToSection("latest-posts")}>
+          <HiOutlineSparkles aria-hidden="true" />
+          <span>{t.quickNavDaily}</span>
+          {posts.length > 0 && <em className="quick-nav-badge">{posts.length}</em>}
+        </button>
+        <button type="button" className="quick-nav-pill quick-nav-articles" onClick={() => jumpToSection("x-articles")}>
+          <FiFeather aria-hidden="true" />
+          <span>{t.quickNavArticles}</span>
+          {articles.length > 0 && <em className="quick-nav-badge">{articles.length}</em>}
+        </button>
+        <button
+          type="button"
+          className="quick-nav-pill quick-nav-message"
+          onClick={() => jumpToSection("reading-invitation-heading")}
+        >
+          <span>{t.quickNavMessage}</span>
+          <FaArrowRight aria-hidden="true" />
+        </button>
+      </nav>
     </div>
   );
 }

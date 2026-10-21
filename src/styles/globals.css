@@ -22,6 +22,7 @@
   /* Pastel controls: fill, ink and outline of each colour. */
   --pastel-pink: #fbe1eb;
   --pastel-pink-ink: #743e59;
+  --pastel-pink-line: #e9bed0;
   --pastel-lavender: #eee5fa;
   --pastel-lavender-ink: #654c83;
   --pastel-lavender-line: #d2c0e8;
@@ -33,10 +34,18 @@
   --pastel-yellow-line: #ebd7a5;
   --pastel-blue: #e3effc;
   --pastel-blue-ink: #345d83;
+  --pastel-blue-line: #bad4ed;
+  /* Dreamy desktop gradients and soft glow tokens. */
+  --gradient-sakura: linear-gradient(135deg, #fde4ee 0%, #fbe0ec 52%, #f2defa 100%);
+  --gradient-mint: linear-gradient(135deg, #def4e9 0%, #e2f5ee 54%, #dff0fc 100%);
+  --gradient-lavender: linear-gradient(135deg, #f1e8fc 0%, #e7eefc 100%);
+  --gradient-sky-pill: linear-gradient(135deg, #e5f1fd 0%, #f1eafc 100%);
   --surface-panel: #f9fbfde6;
   --surface-card: #ffffffeb;
   --shadow-card: 0 5px 18px #567a9a10;
+  --shadow-card-hover: 0 14px 32px #3b608021, 0 3px 10px #567a9a12, inset 0 1px 1px #fff;
   --panel-shadow: 0 16px 48px #4967821c, inset 0 1px #fff;
+  --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
   --radius-sm: 16px;
   --radius-md: 23px;
   --card-radius: 32px;
@@ -70,6 +79,7 @@
 }
 html {
   scroll-behavior: smooth;
+  scrollbar-color: #b7cfe4 #f3f8fc;
 }
 body {
   margin: 0;
@@ -101,8 +111,8 @@ input:focus-visible,
   outline-offset: 4px;
 }
 ::selection {
-  background: #deecf7;
-  color: #3a546b;
+  background: #f7dce8;
+  color: #365068;
 }
 .sr-only {
   position: absolute;

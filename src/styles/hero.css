@@ -10,7 +10,7 @@
   position: relative;
   z-index: 2;
   display: grid;
-  grid-template-columns: minmax(0, 510px) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 516px) minmax(0, 1fr);
   gap: 36px;
   width: min(100%, 1380px);
   margin-inline: auto;
@@ -35,15 +35,20 @@
   border-radius: 32px;
   background: linear-gradient(135deg, #f9fcfef2, #f7fafddb);
   box-shadow: var(--panel-shadow);
+  transition:
+    box-shadow 0.28s ease,
+    border-color 0.28s ease;
 }
 .hero-copy::before {
   position: absolute;
   top: -13px;
-  left: calc(50% - 52px);
-  width: 104px;
+  left: calc(50% - 54px);
+  width: 108px;
   height: 25px;
-  border: 1px solid var(--surface-blue);
-  background: repeating-linear-gradient(45deg, #b8d4ebaa 0 5px, #cce0f0aa 5px 10px);
+  border: 1px solid #ffffffcc;
+  border-radius: 4px;
+  background: repeating-linear-gradient(45deg, #bdd8eead 0 6px, #f7dce8a6 6px 12px, #d3e6f6ad 12px 18px);
+  box-shadow: 0 3px 10px #4c72941a;
   content: "";
   transform: rotate(-4deg);
 }
@@ -54,15 +59,20 @@
   display: grid;
   justify-items: center;
   gap: 3px;
+  padding: 6px 8px;
+  border: 1px dashed #a8c4db80;
+  border-radius: 14px;
+  background: #ffffff40;
   color: #527d9b;
-  opacity: 0.65;
+  opacity: 0.78;
   text-shadow: none;
   transform: rotate(9deg);
   pointer-events: none;
 }
 .hero-postmark svg {
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
+  color: #c2789a;
 }
 .hero-postmark span {
   font-family: "Quicksand", sans-serif;
@@ -75,12 +85,15 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  max-width: calc(100% - 76px);
+  max-width: calc(100% - 84px);
   margin: 0 0 14px;
-  padding: 6px 13px 6px 6px;
-  border: 1px solid var(--color-border-soft);
+  padding: 6px 14px 6px 6px;
+  border: 1px solid #ffffffd9;
   border-radius: 999px;
-  background: #f3f8fc;
+  background: linear-gradient(135deg, #ffffffeb, #eef6fceb);
+  box-shadow:
+    0 4px 14px #4d739414,
+    inset 0 1px 1px #fff;
   color: var(--color-muted);
   font-size: 13px;
   font-weight: 400;
@@ -91,12 +104,13 @@
   display: grid;
   flex: 0 0 auto;
   place-items: center;
-  width: 25px;
-  height: 25px;
-  border: 1px solid #c3d6e5;
+  width: 26px;
+  height: 26px;
+  border: 1px solid #c9dceb;
   border-radius: 50%;
-  background: #fff;
-  color: #6287a7;
+  background: linear-gradient(135deg, #fff, #f4eefc);
+  box-shadow: 0 2px 6px #567a9a17;
+  color: #5a82a4;
 }
 .home-place-seal svg {
   width: 15px;
@@ -108,10 +122,20 @@
   stroke-width: 1.45;
 }
 .hero-chapter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   margin: 0 0 12px;
-  color: #6287a7;
+  color: #5b80a0;
   font-size: 12px;
   letter-spacing: 0.1em;
+}
+.hero-chapter::before {
+  width: 18px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #e5b8ce, #8eb6d8);
+  content: "";
 }
 
 .hero-copy h1 {
@@ -188,18 +212,23 @@
   align-items: center;
   gap: 12px;
   width: 100%;
-  margin-top: 21px;
+  margin-top: 20px;
   color: #88a5bf;
 }
 .ornament span {
   flex: 1;
   height: 1px;
-  background: #cadae7;
+  background: linear-gradient(90deg, transparent, #bcd2e4 30%, #e5c6d8 70%, transparent);
 }
 .ornament svg {
   width: 22px;
   height: 22px;
-  stroke-width: 1.3;
+  color: #b884a3;
+  stroke-width: 1.35;
+  transition: transform 0.36s var(--ease-spring);
+}
+.hero-copy:hover .ornament svg {
+  transform: rotate(35deg) scale(1.1);
 }
 
 .profile {
@@ -214,33 +243,60 @@
   height: 68px;
   border: 4px solid #fff;
   border-radius: 50%;
-  outline: 1px dashed #9ab8d0;
+  outline: 1.5px dashed #9ab8d0;
   outline-offset: 3px;
   background: var(--surface-tint) url("/assets/x-avatar.jpg") center / cover no-repeat;
-  box-shadow: 0 6px 15px #6b8eac1f;
+  box-shadow:
+    0 8px 20px #5c83a426,
+    0 0 0 6px #ffffff52;
   object-fit: cover;
+  transition:
+    transform 0.28s var(--ease-spring),
+    box-shadow 0.28s ease;
+}
+.profile:hover img {
+  box-shadow:
+    0 10px 24px #5c83a433,
+    0 0 0 6px #fce4ee80;
+  transform: scale(1.04) rotate(-3deg);
 }
 .profile div {
   display: grid;
+  justify-items: start;
+  gap: 2px;
   min-width: 0;
 }
 .profile strong {
   color: var(--color-ink);
   font-size: 27px;
   font-weight: 400;
-  line-height: 1.3;
+  line-height: 1.25;
   overflow-wrap: anywhere;
 }
 .profile a {
-  color: #6287a7;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border: 1px solid #d5e5f2;
+  border-radius: 999px;
+  background: #f2f8fdcc;
+  color: #507696;
   font-family: "Quicksand", sans-serif;
-  font-size: 15px;
-  line-height: 1.45;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
   text-decoration: none;
   overflow-wrap: anywhere;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s var(--ease-spring);
 }
 .profile a:hover {
-  text-decoration: underline;
+  border-color: #b4cde3;
+  background: #fff;
+  text-decoration: none;
+  transform: translateX(2px);
 }
 .bio {
   margin: 15px 0 0;
@@ -253,20 +309,25 @@
 .motto {
   width: fit-content;
   max-width: 100%;
-  margin: 14px 0 0;
-  color: #5b81a3;
+  margin: 12px 0 0;
+  padding: 3px 12px;
+  border-left: 3px solid #d9a7c0;
+  border-radius: 0 999px 999px 0;
+  background: linear-gradient(90deg, #fce8f173, #e6f2fc4d, transparent);
+  color: #517697;
   font-family: "Quicksand", sans-serif;
   font-size: 14px;
-  letter-spacing: 0.01em;
-  line-height: 1.6;
+  font-weight: 700;
+  letter-spacing: 0.015em;
+  line-height: 1.55;
 }
 
 .hero-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-  margin-top: 23px;
+  gap: 12px;
+  margin-top: 22px;
 }
 .hero-actions a {
   display: inline-flex;
@@ -274,94 +335,144 @@
   justify-content: center;
   gap: 9px;
   min-height: 48px;
-  padding: 11px 18px;
+  padding: 11px 20px;
   border-radius: 999px;
   font-size: 15px;
-  font-weight: 500;
+  font-weight: 700;
   line-height: 1.3;
   text-align: center;
   text-decoration: none;
   transition:
-    transform 0.18s,
-    box-shadow 0.18s;
+    transform 0.22s var(--ease-spring),
+    box-shadow 0.22s ease,
+    filter 0.22s ease;
 }
 .hero-actions a:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 20px #638aac2b;
+  box-shadow:
+    0 10px 24px #567d9f2b,
+    inset 0 1px 1px #fff;
 }
 .hero-actions a:active {
-  transform: translateY(0) scale(0.975);
+  transform: translateY(0) scale(0.97);
 }
 .hero-actions svg {
   flex: 0 0 auto;
   width: 17px;
   height: 17px;
+  transition: transform 0.22s var(--ease-spring);
 }
 .primary-cta {
-  border: 1px solid #dfacc2;
-  background: linear-gradient(115deg, #f9cddd, var(--pastel-pink));
-  color: #713b58;
-  box-shadow: 0 5px 15px #c0789820;
+  border: 1px solid #e2aec4;
+  background: var(--gradient-sakura);
+  color: #6e3754;
+  box-shadow:
+    0 6px 18px #c0789826,
+    inset 0 1px 1px #ffffffd9;
 }
 .primary-cta svg:last-child {
   width: 18px;
 }
+.primary-cta:hover svg:last-child {
+  transform: translateX(3px);
+}
 .secondary-cta {
-  border: 1px solid #a9d1bf;
-  background: var(--pastel-mint);
+  border: 1px solid #abd2c0;
+  background: var(--gradient-mint);
   color: var(--pastel-mint-ink);
+  box-shadow:
+    0 5px 15px #4e8a7417,
+    inset 0 1px 1px #ffffffd9;
+}
+.secondary-cta:hover svg {
+  transform: translateY(-1px) rotate(-6deg);
 }
 
 /* Wide screens only: a quote in the sky and a pinned note beside the character. */
 .sky-quote {
   position: absolute;
-  top: 155px;
-  right: 4.5vw;
-  z-index: 1;
+  top: 152px;
+  right: 4.2vw;
+  z-index: 2;
   max-width: 21vw;
   margin: 0;
-  padding: 16px 20px;
+  padding: 18px 22px 16px;
   border: 1px solid #fff;
-  border-radius: 22px;
-  background: #f5f9fdc7;
-  color: #4a6984;
+  border-radius: 24px;
+  background: linear-gradient(145deg, #ffffffde, #eef6fcdb);
+  box-shadow:
+    0 12px 30px #31567821,
+    inset 0 1px 2px #fff;
+  color: #43647f;
   font-size: 17px;
   letter-spacing: 0.02em;
   line-height: 1.65;
   text-align: center;
   white-space: pre-line;
   transform: rotate(5deg);
+  animation: sky-note-float 7s ease-in-out infinite alternate;
+}
+.sky-quote::before {
+  position: absolute;
+  top: -9px;
+  left: calc(50% - 28px);
+  width: 56px;
+  height: 16px;
+  border: 1px solid #ffffffcc;
+  border-radius: 3px;
+  background: repeating-linear-gradient(-45deg, #f8d5e4b3 0 5px, #d5e8f7b3 5px 10px);
+  content: "";
+  transform: rotate(-4deg);
 }
 .sky-quote svg {
   display: inline;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   margin-left: 7px;
+  color: #c87da1;
   vertical-align: middle;
 }
 .handwritten-note {
   position: absolute;
   right: 3%;
-  bottom: 305px;
-  z-index: 1;
-  width: 164px;
-  min-height: 177px;
-  padding: 13px;
+  bottom: 298px;
+  z-index: 2;
+  width: 172px;
+  min-height: 182px;
+  padding: 16px 15px 14px;
   border: 1px solid #fff;
-  border-radius: 18px;
-  background: #f4f8fced;
-  box-shadow: var(--shadow-card);
+  border-radius: 22px;
+  background: linear-gradient(155deg, #ffffffeb, #f0f7fdeb);
+  box-shadow:
+    0 12px 28px #31567824,
+    inset 0 1px 2px #fff;
   color: var(--color-ink-soft);
-  transform: rotate(7deg);
+  transform: rotate(6.5deg);
+  animation: sky-note-float 8.5s ease-in-out infinite alternate-reverse;
+}
+.handwritten-note::before {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  width: 10px;
+  height: 10px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #e69bb8;
+  box-shadow: 0 2px 6px #9e587440;
+  content: "";
 }
 .handwritten-note p {
-  margin: 3px 0 30px;
+  margin: 4px 0 26px;
+  color: #466682;
   font-size: 15px;
-  line-height: 1.5;
+  line-height: 1.52;
   white-space: pre-line;
 }
 .handwritten-note span {
   display: block;
+  padding-top: 8px;
+  border-top: 1px dashed #c5daea;
   font-size: 12px;
   font-style: italic;
   line-height: 1.45;
@@ -369,51 +480,99 @@
 }
 .handwritten-note time {
   display: block;
+  margin-top: 2px;
+  color: #6284a1;
+  font-style: normal;
+  font-weight: 700;
+}
+@keyframes sky-note-float {
+  from {
+    translate: 0 -3px;
+  }
+  to {
+    translate: 0 4px;
+  }
 }
 
 .home-journal {
   display: grid;
-  grid-template-columns: 0.9fr 1.1fr;
+  grid-template-columns: 0.94fr 1.06fr;
   gap: 14px;
-  margin-top: 22px;
+  margin-top: 20px;
 }
 .journal-note {
   position: relative;
   min-width: 0;
   padding: 18px;
   border: 1px solid #fff;
-  border-radius: 22px;
-  box-shadow: var(--shadow-card);
+  border-radius: 24px;
+  box-shadow:
+    var(--shadow-card),
+    inset 0 1px 1px #fff;
+  transition:
+    transform 0.24s var(--ease-spring),
+    box-shadow 0.24s ease;
   animation: nest-card-in 0.6s both 0.2s;
 }
 .journal-notice {
-  background: #edf4faed;
-  transform: rotate(-1.5deg);
+  background: linear-gradient(145deg, #f3f9feed, #eaf3faeb);
+  box-shadow:
+    inset 0 3px 0 #b3d2eb,
+    var(--shadow-card);
+  transform: rotate(-1.2deg);
 }
 .journal-quote {
-  padding-right: 42px;
-  background: #edf4faea;
+  padding-right: 46px;
+  background: linear-gradient(145deg, #f6f2fced, #ebf3faea);
+  box-shadow:
+    inset 0 3px 0 #d8c2ee,
+    var(--shadow-card);
   animation-delay: 0.3s;
+}
+@media (min-width: 901px) and (pointer: fine) {
+  .journal-note:hover {
+    box-shadow: var(--shadow-card-hover);
+    transform: translateY(-3px) rotate(0deg);
+  }
 }
 .journal-note h2 {
   display: flex;
   align-items: center;
   gap: 7px;
-  margin: 0 0 9px;
-  color: var(--color-muted);
+  margin: 0 0 8px;
+  color: var(--color-ink);
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 700;
 }
 .journal-note h2 svg {
   flex-shrink: 0;
   width: 16px;
   height: 16px;
+  color: #8468a8;
 }
 .journal-note p {
   margin: 0;
-  color: #4c6c88;
+  color: #466580;
   font-size: 13px;
-  line-height: 1.8;
+  line-height: 1.78;
+  transition: opacity 0.18s ease;
+}
+.journal-quote h2 {
+  color: #2d6a54;
+  font-size: 15px;
+}
+.journal-quote h2 svg {
+  width: 18px;
+  height: 18px;
+  color: #3b8469;
+}
+.journal-quote p {
+  color: #2f6f58;
+  font-size: 15.5px;
+  line-height: 1.72;
+}
+.journal-quote.is-shuffling p {
+  opacity: 0.72;
 }
 .journal-note .journal-welcome {
   margin-top: 10px;
@@ -425,28 +584,55 @@
 .journal-sticker {
   position: absolute;
   top: -14px;
-  right: 9px;
+  right: 11px;
   width: 32px;
   height: 32px;
-  color: #77a0c4;
+  color: #d97b9d;
   filter: drop-shadow(0 2px 0 #fff);
   transform: rotate(16deg);
+  transition: transform 0.26s var(--ease-spring);
+}
+.journal-notice:hover .journal-sticker {
+  transform: rotate(24deg) scale(1.1);
 }
 .journal-note button {
   position: absolute;
-  right: 6px;
+  right: 7px;
   bottom: 7px;
   display: grid;
   place-items: center;
   width: 44px;
   height: 44px;
-  border: 0;
+  border: 1px solid var(--pastel-lavender-line);
   border-radius: 50%;
-  background: var(--pastel-lavender);
+  background: var(--gradient-lavender);
+  box-shadow:
+    0 3px 10px #6d52911a,
+    inset 0 1px 1px #fff;
   color: var(--pastel-lavender-ink);
+  transition:
+    transform 0.24s var(--ease-spring),
+    background 0.18s ease,
+    box-shadow 0.18s ease;
 }
 .journal-note button:hover {
-  background: var(--color-border-soft);
+  background: var(--gradient-sakura);
+  box-shadow: 0 5px 14px #9e587c24;
+  transform: scale(1.06) rotate(30deg);
+}
+.journal-note button:active {
+  transform: scale(0.95);
+}
+.journal-note button.is-spinning svg {
+  animation: quote-refresh-spin 0.32s var(--ease-spring);
+}
+@keyframes quote-refresh-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(180deg);
+  }
 }
 .interest-tags {
   display: flex;
@@ -472,7 +658,24 @@
   color: #4e6f8c;
 }
 
-@media (max-width: 1280px) {
+@media (max-width: 1365px) and (min-width: 1181px) {
+  .sky-quote {
+    top: 142px;
+    right: 2.2vw;
+    max-width: 19.5vw;
+    padding: 14px 16px;
+    font-size: 15px;
+  }
+  .handwritten-note {
+    right: 2%;
+    bottom: 265px;
+    width: 156px;
+    min-height: 166px;
+    padding: 13px;
+  }
+}
+
+@media (max-width: 1180px) {
   .sky-quote,
   .handwritten-note {
     display: none;
@@ -523,6 +726,9 @@
     font-size: 11px;
     letter-spacing: 0.04em;
   }
+  .hero-chapter::before {
+    display: none;
+  }
   .hero-copy h1 span:first-child {
     font-size: clamp(34px, 10vw, 43px);
   }
@@ -544,6 +750,9 @@
   .hero-postmark {
     top: 23px;
     right: 22px;
+    padding: 0;
+    border: 0;
+    background: transparent;
   }
   .hero-postmark svg {
     width: 36px;
@@ -560,13 +769,21 @@
     font-size: 25px;
   }
   .profile a {
+    padding: 0;
+    border: 0;
+    background: transparent;
     font-size: 14px;
+    font-weight: 400;
   }
   .bio {
     font-size: 15px;
   }
   .motto {
+    padding: 0;
+    border-left: 0;
+    background: transparent;
     font-size: 12px;
+    font-weight: 400;
   }
   .hero-actions {
     gap: 8px;
@@ -576,6 +793,7 @@
     gap: 6px;
     padding-inline: 13px;
     font-size: 13px;
+    font-weight: 500;
   }
   .primary-cta svg:last-child {
     width: 16px;
@@ -593,6 +811,13 @@
   }
   .journal-note h2 {
     font-size: 12px;
+    font-weight: 500;
+  }
+  .journal-quote h2 {
+    font-size: 13.5px;
+  }
+  .journal-quote p {
+    font-size: 14px;
   }
 }
 
@@ -670,7 +895,9 @@
 @media (prefers-reduced-motion: reduce) {
   .greeting-opening,
   .greeting-line,
-  .journal-note {
+  .journal-note,
+  .sky-quote,
+  .handwritten-note {
     animation: none;
   }
 }

@@ -1003,3 +1003,47 @@ test("posts and Articles navigate independently and retain both identities throu
     await view.unmount();
   }
 });
+
+test("Posts quick navigation pills reflect live section counts and smooth-scroll to target sections", async (context) => {
+  resetDom();
+  window.sessionStorage.setItem("nest-posts-age-confirmed", "18+");
+  const now = Date.now() + 5 * 24 * 60 * 60_000;
+  context.mock.method(Date, "now", () => now);
+  context.mock.method(globalThis, "fetch", async () => ({
+    ok: true,
+    json: async () => ({
+      status: "ok",
+      pinnedPost: { ...SNAPSHOT, id: "pin-1" },
+      pinnedStatus: "ok",
+      posts: [SNAPSHOT],
+      articles: [{ id: "art-1", title: "Article", text: "Body" }],
+      articlesStatus: "ok",
+    }),
+  }));
+  const view = await mount(
+    React.createElement(PostsPage, {
+      language: "zh",
+      t: copy.zh,
+      profile: { username: "loveyong07" },
+      onFeedReady() {},
+    }),
+  );
+  try {
+    await React.act(async () => new Promise((resolvePromise) => setTimeout(resolvePromise, 0)));
+    const quickNav = view.container.querySelector(".posts-quick-nav");
+    assert.ok(quickNav);
+    assert.equal(quickNav.getAttribute("aria-label"), copy.zh.postsQuickNavLabel);
+    const pills = [...quickNav.querySelectorAll(".quick-nav-pill")];
+    assert.equal(pills.length, 4);
+    let scrolled = false;
+    const messageHeading = view.container.querySelector("#reading-invitation-heading");
+    assert.ok(messageHeading);
+    messageHeading.scrollIntoView = () => {
+      scrolled = true;
+    };
+    await React.act(async () => pills.at(-1).click());
+    assert.equal(scrolled, true);
+  } finally {
+    await view.unmount();
+  }
+});

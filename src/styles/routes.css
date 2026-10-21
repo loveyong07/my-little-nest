@@ -16,28 +16,30 @@
   gap: 8px;
 }
 .route-hero-posts .route-page-title {
-  left: max(4vw, calc((100vw - 980px) / 2));
+  left: max(4vw, calc((100vw - 1060px) / 2));
 }
 .route-page-kicker {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
+  gap: 7px;
+  padding: 8px 15px;
   border: 1px solid #fff;
   border-radius: 999px;
-  background: #f4f8fced;
-  box-shadow: inset 0 1px #ffffff40;
-  color: #567a99;
+  background: linear-gradient(135deg, #ffffffeb, #eef6fced);
+  box-shadow:
+    0 6px 18px #19426d29,
+    inset 0 1px 1px #fff;
+  color: #4e7393;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 700;
   letter-spacing: 0.06em;
   line-height: 1;
 }
 .route-page-kicker svg {
-  width: 13px;
-  height: 13px;
-  color: #7697b3;
-  stroke-width: 1.2;
+  width: 14px;
+  height: 14px;
+  color: #c6769b;
+  stroke-width: 1.4;
 }
 .route-page-title h1 {
   margin: 0;
@@ -46,32 +48,36 @@
   font-size: clamp(44px, 5vw, 62px);
   font-weight: 500;
   line-height: 1;
-  text-shadow: 0 2px 14px #19426dc9;
+  text-shadow:
+    0 2px 14px #19426dc9,
+    0 0 28px #26548466;
 }
 
 .route-panel {
   --panel-arrive-duration: 0.34s;
   display: block;
   width: calc(100% - 8vw);
-  max-width: 1160px;
-  margin: -28px auto 35px;
-  padding: 32px;
+  max-width: 1180px;
+  margin: -28px auto 38px;
+  padding: 28px 34px;
   animation: panel-arrive var(--panel-arrive-duration) ease-out backwards;
 }
 /* A strip of washi tape on the panel's top edge. */
 .route-panel::before {
   position: absolute;
   top: -12px;
-  left: 46px;
-  width: 90px;
-  height: 23px;
-  border: 1px solid var(--surface-blue);
-  background: repeating-linear-gradient(45deg, #c4d7e7bd 0 5px, #dae8f4bd 5px 10px);
+  left: 48px;
+  width: 96px;
+  height: 24px;
+  border: 1px solid #ffffffcc;
+  border-radius: 4px;
+  background: repeating-linear-gradient(45deg, #c2d8e9c4 0 6px, #f5dbe7bd 6px 12px, #d7e8f6c4 12px 18px);
+  box-shadow: 0 3px 10px #385c7b1a;
   content: "";
   transform: rotate(-5deg);
 }
 .route-panel-posts {
-  max-width: 980px;
+  max-width: 1060px;
 }
 @keyframes panel-arrive {
   from {
@@ -94,7 +100,8 @@
     height: 234px;
     overflow: visible;
   }
-  .route-page-title {
+  .route-page-title,
+  .route-hero-posts .route-page-title {
     bottom: 40px;
     left: 21px;
     gap: 6px;
@@ -107,6 +114,11 @@
 }
 
 @media (max-width: 700px) {
+  .route-page-kicker {
+    gap: 6px;
+    padding: 8px 14px;
+    font-weight: 500;
+  }
   .route-page-title h1 {
     font-size: 46px;
   }

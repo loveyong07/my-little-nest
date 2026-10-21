@@ -6,14 +6,23 @@
   gap: var(--space-3) var(--space-5);
 }
 .micro-slogan {
-  color: #597e9e;
+  padding: 6px 15px;
+  border: 1px solid #ffffffd9;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ffffffcf, #eef6fcc7);
+  box-shadow:
+    0 4px 14px #456a8a12,
+    inset 0 1px 1px #fff;
+  color: #4b7090;
   font:
-    var(--font-xs) / 1.6 "Quicksand",
+    700 var(--font-xs) / 1.5 "Quicksand",
     sans-serif;
 }
 .contact-intro {
-  max-width: 66ch;
+  max-width: 68ch;
   margin: var(--space-3) 0 0;
+  padding: 4px 0 4px 14px;
+  border-left: 3px solid #bbd3e8;
   color: var(--color-text);
   font-size: var(--font-sm);
   line-height: 1.9;
@@ -22,28 +31,69 @@
 .contact-grid {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: var(--space-3);
-  margin-top: var(--space-5);
+  gap: 14px;
+  margin-top: var(--space-4);
 }
 .contact-tile {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   min-width: 0;
-  min-height: 172px;
-  padding: var(--space-4) var(--space-2) var(--space-3);
+  min-height: 168px;
+  padding: 15px 12px 13px;
   border: 1px solid var(--color-border-soft);
-  border-radius: var(--radius-md);
+  border-radius: 24px;
   background: var(--surface-card);
   box-shadow: var(--shadow-card);
   color: var(--color-text);
   text-align: center;
   text-decoration: none;
+  backface-visibility: hidden;
+  transform: translateZ(0);
   transition:
-    transform 0.18s,
-    border-color 0.18s,
-    box-shadow 0.18s;
+    transform 0.24s var(--ease-spring),
+    border-color 0.22s ease,
+    box-shadow 0.24s ease;
   animation: nest-card-in 0.5s both;
+}
+.contact-tile::before {
+  width: 28px;
+  height: 3px;
+  margin-bottom: 8px;
+  border-radius: 999px;
+  background: var(--tile-accent, #b5cfe6);
+  opacity: 0.75;
+  content: "";
+  transition:
+    width 0.24s var(--ease-spring),
+    opacity 0.24s ease;
+}
+.contact-tile.x {
+  --tile-accent: #6885a2;
+  --tile-pill-bg: #e7f0fa;
+  --tile-pill-ink: #2f5476;
+}
+.contact-tile.line,
+.contact-tile.wechat {
+  --tile-accent: #7ec49f;
+  --tile-pill-bg: #e1f4ea;
+  --tile-pill-ink: #2f634c;
+}
+.contact-tile.telegram {
+  --tile-accent: #7cb4e2;
+  --tile-pill-bg: #e3f0fc;
+  --tile-pill-ink: #2e5c85;
+}
+.contact-tile.whatsapp {
+  --tile-accent: #82c69b;
+  --tile-pill-bg: #e2f4e9;
+  --tile-pill-ink: #326449;
+}
+.contact-tile.qq {
+  --tile-accent: #b79add;
+  --tile-pill-bg: #efe6fb;
+  --tile-pill-ink: #5c437d;
 }
 .contact-tile:nth-child(2) {
   animation-delay: 0.06s;
@@ -62,19 +112,23 @@
 }
 .contact-tile:hover {
   border-color: #a4c3dc;
-  box-shadow: 0 8px 24px #678baa21;
-  transform: translateY(-3px);
+  box-shadow: 0 14px 30px #4b709024;
+  transform: translate3d(0, -5px, 0);
+}
+.contact-tile:hover::before {
+  width: 44px;
+  opacity: 1;
 }
 .contact-tile:active {
   transform: scale(0.97);
 }
 .contact-tile strong {
   font-size: 16px;
-  font-weight: 500;
-  line-height: 1.5;
+  font-weight: 700;
+  line-height: 1.45;
 }
 .contact-tile small {
-  margin-top: var(--space-1);
+  margin-top: 3px;
   color: var(--color-muted);
   font-size: var(--font-xs);
   line-height: 1.5;
@@ -82,11 +136,27 @@
 }
 .contact-action {
   margin-top: auto;
-  padding-top: var(--space-3);
-  color: #597e9e;
-  font-size: var(--font-xs);
+  padding: 5px 13px;
+  border: 1px solid #ffffffcc;
+  border-radius: 999px;
+  background: var(--tile-pill-bg, #eaf3fc);
+  box-shadow: inset 0 1px 1px #fff;
+  color: var(--tile-pill-ink, #44698a);
+  font-size: 11.5px;
   font-weight: 700;
-  line-height: 1.4;
+  line-height: 1.35;
+  transition:
+    transform 0.2s var(--ease-spring),
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.contact-tile:hover .contact-action {
+  background: #fff;
+  box-shadow: 0 3px 10px #456a8a1a;
+}
+.contact-tile.is-copied .contact-action {
+  background: var(--gradient-sakura);
+  color: var(--pastel-pink-ink);
 }
 
 .contact-icon {
@@ -96,10 +166,18 @@
   width: 62px;
   height: 62px;
   margin-bottom: var(--space-2);
-  border: 0;
+  border: 2px solid #ffffffd9;
   border-radius: 50%;
   background: var(--surface-blue-strong);
-  transition: box-shadow 0.18s;
+  box-shadow: 0 6px 16px #4c72941a;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  transition: box-shadow 0.24s ease;
+}
+.contact-tile:hover .contact-icon {
+  box-shadow:
+    0 8px 18px #4c729426,
+    0 0 0 3px #ffffff80;
 }
 .contact-icon svg {
   display: block;
@@ -110,33 +188,33 @@
   color: var(--color-muted);
 }
 .contact-tile.x .contact-icon {
-  background: #111111;
+  background: #141a21;
 }
 .contact-tile.x .contact-icon svg {
   color: #fff;
 }
 .contact-tile.line .contact-icon,
 .contact-tile.wechat .contact-icon {
-  background: #e0f3e6;
+  background: linear-gradient(135deg, #dcf4e5, #c8ecd6);
 }
 .contact-tile.line .contact-icon svg,
 .contact-tile.wechat .contact-icon svg {
-  color: #5a8c73;
+  color: #467d62;
 }
 .contact-tile.telegram .contact-icon {
-  background: var(--pastel-blue);
+  background: linear-gradient(135deg, #e1effd, #cde4fa);
 }
 .contact-tile.telegram .contact-icon svg {
-  color: #5f8caf;
+  color: #49789e;
 }
 .contact-tile.whatsapp .contact-icon {
-  background: #e3f3e8;
+  background: linear-gradient(135deg, #dff4e6, #cbead6);
 }
 .contact-tile.whatsapp .contact-icon svg {
-  color: #477f5d;
+  color: #3f7655;
 }
 .contact-tile.qq .contact-icon {
-  background: var(--pastel-lavender);
+  background: linear-gradient(135deg, #efe6fb, #e2d4f7);
 }
 .contact-tile.qq .contact-icon svg {
   color: var(--pastel-lavender-ink);
@@ -224,30 +302,53 @@
 .email-row {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(170px, 0.8fr) minmax(0, 2.2fr);
+  grid-template-columns: minmax(180px, 0.78fr) minmax(0, 2.22fr);
   align-items: center;
   gap: var(--space-4);
-  margin-top: var(--space-5);
-  padding: var(--space-4) 52px var(--space-4) var(--space-4);
+  margin-top: var(--space-4);
+  padding: 16px 54px 16px 20px;
+  overflow: hidden;
   border: 1px solid #d0dce6;
-  border-radius: var(--radius-md);
+  border-radius: 24px;
   background: linear-gradient(125deg, #edf4faed, #f9fcfef2);
   box-shadow: inset 3px 0 #a4c3dc;
   scroll-margin-top: var(--space-5);
 }
+.email-row::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 4px;
+  background: repeating-linear-gradient(
+    -45deg,
+    #f0b8cd 0 12px,
+    transparent 12px 20px,
+    #9ec4e5 20px 32px,
+    transparent 32px 40px
+  );
+  opacity: 0.85;
+  content: "";
+}
 .email-row h3 {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: 10px;
   margin: 0;
-  color: var(--color-ink-soft);
+  color: var(--color-ink);
   font-size: var(--font-sm);
+  font-weight: 700;
   line-height: 1.6;
 }
 .email-row h3 svg {
   flex: 0 0 auto;
-  width: 19px;
-  height: 19px;
+  width: 34px;
+  height: 34px;
+  padding: 8px;
+  border: 1px solid #ffffffcc;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fce4ee, #e5f1fd);
+  color: #6b4c7b;
 }
 .email-row > div {
   display: grid;
@@ -269,63 +370,85 @@
   justify-content: center;
   gap: var(--space-2);
   min-height: 44px;
-  padding: 8px 14px;
+  padding: 8px 16px;
   border: 1px solid var(--pastel-lavender-line);
   border-radius: 999px;
-  background: var(--pastel-lavender);
+  background: var(--gradient-lavender);
+  box-shadow:
+    0 4px 12px #5e468217,
+    inset 0 1px 1px #fff;
   color: var(--pastel-lavender-ink);
   font-size: var(--font-xs);
+  font-weight: 700;
   line-height: 1.5;
+  transition:
+    transform 0.2s var(--ease-spring),
+    box-shadow 0.2s ease,
+    background 0.2s ease;
 }
 .email-option button svg {
   flex-shrink: 0;
 }
 .email-option button:hover {
-  background: var(--surface-blue-strong);
+  background: var(--gradient-sakura);
+  box-shadow: 0 6px 16px #8f567824;
+  transform: translateY(-2px);
+}
+.email-option button:active {
+  transform: translateY(0) scale(0.97);
 }
 .email-row a {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: var(--space-1);
+  gap: 3px;
   min-width: 0;
-  min-height: 60px;
-  padding: var(--space-2) var(--space-3);
-  border-left: 1px solid var(--color-border);
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-  color: var(--color-ink-soft);
+  min-height: 62px;
+  padding: 10px 16px;
+  border: 1px solid #ffffffb3;
+  border-left: 3px solid #9ec2df;
+  border-radius: 14px;
+  background: #ffffff78;
+  color: var(--color-ink);
   font:
     700 var(--font-sm) / 1.4 "Quicksand",
     sans-serif;
   text-decoration: none;
   transition:
-    color 0.18s,
-    background 0.18s;
+    color 0.18s ease,
+    background 0.18s ease,
+    transform 0.2s var(--ease-spring);
 }
 .email-row a span {
   color: var(--color-ink-soft);
   font-size: var(--font-xs);
-  font-weight: 400;
+  font-weight: 500;
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
 .email-row a:hover {
-  background: #ffffffa8;
+  background: #ffffffcf;
   color: #1f75bd;
+  transform: translateX(2px);
 }
 .email-row > .email-stamp {
   position: absolute;
-  top: 14px;
-  right: 13px;
+  top: 16px;
+  right: 15px;
   display: grid;
   place-items: center;
-  width: 29px;
-  height: 29px;
+  width: 32px;
+  height: 32px;
   border: 1px solid #d8bf82;
   border-radius: 50%;
-  background: #fffaf0;
+  background: linear-gradient(135deg, #fffdf6, #faeed2);
+  box-shadow: 0 3px 10px #9c7c3824;
   color: #a0833e;
   transform: rotate(-10deg);
+  transition: transform 0.3s var(--ease-spring);
+}
+.email-row:hover > .email-stamp {
+  transform: rotate(12deg) scale(1.08);
 }
 .email-stamp svg {
   width: 18px;
@@ -334,37 +457,74 @@
 }
 
 .letter-guide {
-  margin-top: var(--space-5);
-  padding: var(--space-5) 0 var(--space-2);
+  margin-top: var(--space-4);
+  padding: var(--space-4) 0 var(--space-1);
   border-top: 1px dashed #a7c1d7;
 }
 .letter-guide h3 {
-  margin: 0 0 var(--space-4);
+  margin: 0 0 var(--space-3);
   color: var(--color-ink);
-  font-size: var(--font-sm);
-  font-weight: 500;
+  font-size: 0.95rem;
+  font-weight: 700;
 }
 .letter-guide ul {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-5);
+  gap: 14px;
   margin: 0;
   padding: 0;
   list-style: none;
+  counter-reset: letter-step;
 }
 .letter-guide li {
+  position: relative;
   display: flex;
   align-items: flex-start;
   gap: var(--space-3);
   min-width: 0;
+  padding: 13px 15px 12px;
+  border: 1px solid #ffffffcc;
+  border-radius: 20px;
+  background: linear-gradient(145deg, #ffffffa8, #eff6fed4);
+  box-shadow:
+    0 6px 20px #3a5f8014,
+    inset 0 1px 1px #fff;
+  counter-increment: letter-step;
+  transition:
+    transform 0.22s var(--ease-spring),
+    box-shadow 0.22s ease;
+}
+.letter-guide li::after {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  padding: 2px 8px;
+  border: 1px solid #d5e5f2;
+  border-radius: 999px;
+  background: #f2f8fd;
+  color: #6b8fae;
+  content: "0" counter(letter-step);
+  font:
+    700 10.5px/1.3 "Quicksand",
+    sans-serif;
+}
+@media (min-width: 901px) and (pointer: fine) {
+  .letter-guide li:hover {
+    box-shadow:
+      0 12px 26px #3a5f8021,
+      inset 0 1px 1px #fff;
+    transform: translateY(-3px);
+  }
 }
 .letter-guide li > svg {
   flex: 0 0 auto;
-  width: 30px;
-  height: 30px;
-  padding: 6px;
-  border-radius: 9px;
+  width: 34px;
+  height: 34px;
+  padding: 7px;
+  border: 1px solid #ffffffcc;
+  border-radius: 12px;
   background: var(--pastel-blue);
+  box-shadow: 0 3px 10px #4c729414;
   color: var(--pastel-blue-ink);
 }
 .letter-guide li:nth-child(2) > svg {
@@ -376,10 +536,11 @@
   color: var(--pastel-pink-ink);
 }
 .letter-guide h4 {
-  margin: 0 0 var(--space-1);
+  margin: 0 0 4px;
+  padding-right: 36px;
   color: var(--color-ink);
   font-size: var(--font-sm);
-  font-weight: 500;
+  font-weight: 700;
 }
 .letter-guide p {
   margin: 0;
@@ -393,7 +554,7 @@
   grid-template-columns: minmax(0, 1fr) auto 48px;
   align-items: end;
   gap: var(--space-4);
-  margin-top: var(--space-5);
+  margin-top: var(--space-4);
 }
 .footer-script {
   margin: 0 0 var(--space-2) var(--space-3);
@@ -417,6 +578,10 @@
   height: 48px;
   color: #6c8fad;
   stroke-width: 1;
+  transition: transform 0.4s var(--ease-spring);
+}
+.panel-footer:hover .footer-flower {
+  transform: rotate(35deg) scale(1.06);
 }
 
 @media (max-width: 1050px) {
@@ -434,11 +599,39 @@
 
 @media (max-width: 700px) {
   .contact-intro {
+    padding: 0;
+    border-left: 0;
     font-size: 13px;
+  }
+  .letter-guide h3 {
+    font-size: var(--font-sm);
+    font-weight: 500;
   }
   .letter-guide ul {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--space-4);
+  }
+  .letter-guide li {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .letter-guide li::after {
+    display: none;
+  }
+  .letter-guide li > svg {
+    width: 30px;
+    height: 30px;
+    padding: 6px;
+    border: 0;
+    border-radius: 9px;
+    box-shadow: none;
+  }
+  .letter-guide h4 {
+    padding-right: 0;
+    font-weight: 500;
   }
   .email-option {
     flex-wrap: wrap;
@@ -456,12 +649,26 @@
     padding: var(--space-3) var(--space-1);
     border-radius: 18px;
   }
+  .contact-tile::before {
+    display: none;
+  }
   .contact-tile strong {
     font-size: 14px;
+    font-weight: 500;
+  }
+  .contact-action {
+    padding: var(--space-3) 0 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    color: #597e9e;
+    font-size: var(--font-xs);
   }
   .contact-icon {
     width: 52px;
     height: 52px;
+    border: 0;
+    box-shadow: none;
   }
   .contact-icon svg {
     width: 42px;
@@ -471,9 +678,21 @@
   .email-row {
     margin-top: var(--space-4);
     padding: var(--space-4);
+    border-radius: var(--radius-md);
+  }
+  .email-row::before {
+    display: none;
   }
   .email-row h3 {
     padding-right: 30px;
+    font-weight: 500;
+  }
+  .email-row h3 svg {
+    width: 19px;
+    height: 19px;
+    padding: 0;
+    border: 0;
+    background: transparent;
   }
   .email-row > div {
     grid-template-columns: minmax(0, 1fr);
@@ -482,9 +701,10 @@
   .email-row a {
     min-height: 62px;
     padding: var(--space-3) 0;
+    border: 0;
     border-top: 1px solid var(--color-border);
-    border-left: 0;
     border-radius: 0;
+    background: transparent;
   }
   .panel-footer {
     grid-template-columns: minmax(0, 1fr) 38px;
