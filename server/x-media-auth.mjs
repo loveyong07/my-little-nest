@@ -38,7 +38,7 @@ async function signingKey(secret) {
   if (!secret) return null;
   if (secret !== cachedSecret) {
     cachedSecret = secret;
-    cachedKey = (async () => {
+    const pending = (async () => {
       const rootKey = await crypto.subtle.importKey(
         "raw",
         encoder.encode(secret),
@@ -49,6 +49,14 @@ async function signingKey(secret) {
       const derived = await crypto.subtle.sign("HMAC", rootKey, encoder.encode("little-nest/media-signing-key/v1"));
       return crypto.subtle.importKey("raw", derived, { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
     })();
+    cachedKey = pending;
+    void pending.catch(() => {
+      // An older failure must not evict a key derived after a secret rotation.
+      if (cachedKey === pending) {
+        cachedSecret = undefined;
+        cachedKey = undefined;
+      }
+    });
   }
   return cachedKey;
 }
@@ -157,6 +165,9 @@ export async function authorizeFeed(result, options) {
     );
     return {
       ...post,
+      ...(Object.hasOwn(post, "coverUrl")
+        ? { coverUrl: post.coverUrl ? originalPhotoSource(post.coverUrl) : null }
+        : {}),
       ...(blocks ? { blocks } : {}),
       ...(proxy ? { avatarProxy: proxy } : {}),
       ...(media ? { media } : {}),

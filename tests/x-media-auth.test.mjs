@@ -20,6 +20,42 @@ const VIDEO_URL = "https://video.twimg.com/ext_tw_video/123/pu/vid/1280x720/site
 const AVATAR_URL = "https://pbs.twimg.com/profile_images/123/avatar_normal.jpg";
 const POSTER_URL = "https://pbs.twimg.com/amplify_video_thumb/123/pu/img/poster.jpg";
 
+test("a failed key derivation rejects its readers and retries with the same secret", async (t) => {
+  const original = crypto.subtle.importKey.bind(crypto.subtle);
+  let attempts = 0;
+  t.mock.method(crypto.subtle, "importKey", (...args) => {
+    attempts++;
+    return attempts === 1 ? Promise.reject(new Error("transient crypto failure")) : original(...args);
+  });
+  const options = { ...AUTH, secret: "retry-key-derivation" };
+  await assert.rejects(signedMediaUrl(IMAGE_URL, "image", options), /transient crypto failure/);
+  const signed = await signedMediaUrl(IMAGE_URL, "image", options);
+  assert.equal(await isAuthorized(signed, "image", options), true);
+  assert.equal(attempts, 3, "failed import plus the two successful derivation imports");
+});
+
+test("an old failure cannot clear a newer cached Promise, even after rotating back to the same secret", async (t) => {
+  const original = crypto.subtle.importKey.bind(crypto.subtle);
+  let rejectOld;
+  let attempts = 0;
+  t.mock.method(crypto.subtle, "importKey", (...args) => {
+    attempts++;
+    return attempts === 1
+      ? new Promise((_, reject) => {
+          rejectOld = reject;
+        })
+      : original(...args);
+  });
+  const first = { ...AUTH, secret: "rotation-first" };
+  const oldResult = assert.rejects(signedMediaUrl(IMAGE_URL, "image", first), /old failure/);
+  await signedMediaUrl(IMAGE_URL, "image", { ...AUTH, secret: "rotation-second" });
+  const signed = await signedMediaUrl(IMAGE_URL, "image", first);
+  rejectOld(new Error("old failure"));
+  await oldResult;
+  assert.equal(await signedMediaUrl(IMAGE_URL, "image", first), signed);
+  assert.equal(attempts, 5, "the latest cached key survives the older rejection");
+});
+
 function requestFor(value, options) {
   return new Request(new URL(value, "https://site.test"), options);
 }

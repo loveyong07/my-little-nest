@@ -74,6 +74,7 @@ test("reads the official Article shape, full text and cover-first safe media, se
     title: "An Article",
     text: "The complete first paragraph.\n\nThe complete second paragraph.",
     contentKind: "full",
+    coverUrl: "https://pbs.twimg.com/media/cover.jpg",
     created_at: "2026-10-17T00:00:00.000Z",
     author: "初咏",
     avatar: null,
@@ -95,6 +96,20 @@ test("keeps an Article preview readable when the API omits its full body", async
   assert.equal(result.articles[0].text, "A shorter preview.");
   assert.equal(result.articles[0].contentKind, "preview");
 });
+
+for (const coverKey of [undefined, "3_missing", "3_unsafe", "3_video"]) {
+  test(`does not promote an inline photo when the cover is ${String(coverKey)}`, async () => {
+    const { feed } = service(() =>
+      Response.json({
+        data: [article("20", { cover_media: coverKey, media_entities: ["3_inline"] })],
+        includes: { media: [...media, { media_key: "3_video", type: "video", variants: [] }] },
+      }),
+    );
+    const result = (await feed()).articles[0];
+    assert.equal(result.coverUrl, null);
+    assert.equal(result.media[0].url, media[0].url);
+  });
+}
 
 test("keeps Article entity destinations in the feed instead of flattening them into plain text", async () => {
   const { feed } = service(() =>
@@ -401,6 +416,8 @@ test("Article media uses the same signed, original-quality same-origin permissio
   const original = structuredClone(input);
   const options = { secret: "article-signing-secret", now: 1792195200000 };
   const output = await authorizeFeed(input, options);
+  assert.equal(output.articles[0].coverUrl, originalPhotoSource(input.articles[0].coverUrl));
+  assert.equal(output.articles[0].coverUrl, output.articles[0].media[0].url);
   assert.deepEqual(input, original);
   for (const item of output.articles[0].media) {
     const request = new Request(new URL(item.proxyUrl, "https://example.test"));

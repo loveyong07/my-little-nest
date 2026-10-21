@@ -9,7 +9,8 @@ export function ArticlePhoto({ photos, number, t }) {
   const request = useMediaRequest(source);
   const [expanded, setExpanded] = useState(null);
   const [photoIndex, setPhotoIndex] = useState(number - 1);
-  const expandedPhoto = photos[photoIndex];
+  const currentPhotoIndex = Math.min(photoIndex, photos.length - 1);
+  const expandedPhoto = photos[currentPhotoIndex];
   const returnFocusRef = useRef(null);
   const alt = photo.alt || t.postPhotoAlt(number);
 
@@ -56,11 +57,13 @@ export function ArticlePhoto({ photos, number, t }) {
           photo={{
             ...expandedPhoto,
             src: xMediaSrc(expandedPhoto.url, false, expandedPhoto.proxyUrl),
-            number: photoIndex + 1,
+            number: currentPhotoIndex + 1,
           }}
-          photoAlt={t.postPhotoAlt(photoIndex + 1)}
+          photoAlt={t.postPhotoAlt(currentPhotoIndex + 1)}
           photoCount={photos.length}
-          onPhotoChange={setPhotoIndex}
+          onPhotoChange={(next) =>
+            setPhotoIndex((index) => (typeof next === "function" ? next(Math.min(index, photos.length - 1)) : next))
+          }
           t={t}
           onClose={setExpanded}
           returnFocusRef={returnFocusRef}

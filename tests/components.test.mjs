@@ -98,6 +98,118 @@ after(async () => {
   dom.window.close();
 });
 
+test("journal translations have matching keys and nonempty, aligned phrase arrays", async () => {
+  const { fantasyCopy } = await server.ssrLoadModule("/src/constants/fantasy.js");
+  assert.deepEqual(Object.keys(fantasyCopy).sort(), ["en", "ja", "zh"]);
+  for (const [language, phrases] of Object.entries(fantasyCopy)) {
+    assert.deepEqual(Object.keys(phrases).sort(), Object.keys(fantasyCopy.zh).sort(), language);
+    for (const key of ["notices", "quotes"]) {
+      assert.ok(Array.isArray(phrases[key]) && phrases[key].length > 0, `${language}.${key}`);
+      assert.equal(phrases[key].length, fantasyCopy.zh[key].length, `${language}.${key}`);
+      assert.ok(Array.from(phrases[key]).every((item) => typeof item === "string" && item.trim().length > 0));
+    }
+  }
+});
+
+for (const hasCover of [false, true]) {
+  test(`Article photo occurrences retain independent lightbox indices (cover=${hasCover})`, async () => {
+    resetDom();
+    const { XArticlesSection } = await server.ssrLoadModule("/src/components/XArticlesSection.jsx");
+    const media = ["A", "B"].map((id) => ({ type: "photo", url: `https://pbs.twimg.com/media/${id}.jpg` }));
+    const view = await mount(
+      React.createElement(XArticlesSection, {
+        articles: [
+          {
+            id: "20",
+            coverUrl: hasCover ? media[0].url : null,
+            media,
+            blocks: [
+              { type: "text", text: "Before" },
+              ...[media[0], media[1], media[0]].flatMap((photo) => [
+                { type: "photo", url: photo.url },
+                { type: "text", text: "After" },
+              ]),
+            ],
+          },
+        ],
+        articleIndex: 0,
+        articleState: "ok",
+        language: "zh",
+        t: copy.zh,
+        profile: {},
+      }),
+    );
+    const buttons = [...view.container.querySelectorAll(".article-photo-open")];
+    assert.equal(buttons.length, hasCover ? 4 : 3);
+    assert.equal(view.container.querySelectorAll(".article-text .article-photo").length, 3);
+    const expected = hasCover ? ["A", "A", "B", "A"] : ["A", "B", "A"];
+    for (const [index, button] of buttons.entries()) {
+      assert.equal(button.querySelector("img").alt, copy.zh.postPhotoAlt(index + 1));
+      await React.act(async () => button.click());
+      const lightbox = document.querySelector(".media-lightbox");
+      assert.equal(lightbox.querySelector("img").alt, copy.zh.postPhotoAlt(index + 1));
+      await React.act(async () =>
+        document.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true })),
+      );
+      assert.ok(
+        decodeURIComponent(document.querySelector(".media-lightbox img").src).includes(
+          `/media/${expected[(index + 1) % expected.length]}.jpg`,
+        ),
+      );
+      await React.act(async () =>
+        document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })),
+      );
+    }
+    await view.unmount();
+  });
+}
+
+test("an unpositioned body image is never promoted to a cover, including legacy data", async () => {
+  resetDom();
+  const { XArticlesSection } = await server.ssrLoadModule("/src/components/XArticlesSection.jsx");
+  for (const coverUrl of [null, undefined]) {
+    const view = await mount(
+      React.createElement(XArticlesSection, {
+        articles: [
+          {
+            id: "20",
+            text: "Body",
+            coverUrl,
+            media: [{ type: "photo", url: "https://pbs.twimg.com/media/Inline.jpg" }],
+          },
+        ],
+        articleIndex: 0,
+        articleState: "ok",
+        language: "zh",
+        t: copy.zh,
+        profile: {},
+      }),
+    );
+    assert.equal(view.container.querySelectorAll(".article-photo").length, 0);
+    assert.ok(view.container.querySelector(".article-layout-unavailable"));
+    await view.unmount();
+  }
+});
+
+test("an open Article lightbox remains valid when a refresh shrinks its photo list", async () => {
+  resetDom();
+  const { ArticlePhoto } = await server.ssrLoadModule("/src/components/ArticlePhoto.jsx");
+  const photos = ["A", "B", "C", "D"].map((id) => ({ type: "photo", url: `https://pbs.twimg.com/media/${id}.jpg` }));
+  const view = await mount(React.createElement(ArticlePhoto, { photos, number: 1, t: copy.zh }));
+  await React.act(async () => view.container.querySelector(".article-photo-open").click());
+  await React.act(async () =>
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true })),
+  );
+  assert.ok(decodeURIComponent(document.querySelector(".media-lightbox img").src).includes("/D.jpg"));
+  await view.render(React.createElement(ArticlePhoto, { photos: photos.slice(0, 3), number: 1, t: copy.zh }));
+  assert.ok(decodeURIComponent(document.querySelector(".media-lightbox img").src).includes("/C.jpg"));
+  await React.act(async () =>
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true })),
+  );
+  assert.ok(decodeURIComponent(document.querySelector(".media-lightbox img").src).includes("/A.jpg"));
+  await view.unmount();
+});
+
 test("Articles retain all six images, clickable named links and an independent failed-image retry", async () => {
   resetDom();
   const { XArticlesSection } = await server.ssrLoadModule("/src/components/XArticlesSection.jsx");
@@ -111,6 +223,7 @@ test("Articles retain all six images, clickable named links and an independent f
         {
           id: "20",
           title: "关于我",
+          coverUrl: media[0].url,
           text: "TouchGal - 一站式Galgame文化社区! 和 Muse.ai",
           media,
           blocks: [
@@ -160,6 +273,7 @@ test("an Article without verified image positions never collects its body photos
         {
           id: "20",
           text: "Body",
+          coverUrl: "https://pbs.twimg.com/media/Cover.jpg",
           media: [
             { type: "photo", url: "https://pbs.twimg.com/media/Cover.jpg" },
             { type: "photo", url: "https://pbs.twimg.com/media/Inline.jpg" },
@@ -178,6 +292,9 @@ test("an Article without verified image positions never collects its body photos
     view.container.querySelector(".article-layout-unavailable").textContent,
     copy.zh.articleLayoutUnavailable,
   );
+  await React.act(async () => view.container.querySelector(".article-photo-open").click());
+  await React.act(async () => window.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight" })));
+  assert.ok(decodeURIComponent(document.querySelector(".media-lightbox img").src).includes("/Inline.jpg"));
   await view.unmount();
 });
 
