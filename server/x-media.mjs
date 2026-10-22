@@ -1,6 +1,8 @@
 import { authorizedMediaRequest, boundedMediaCache, parseMediaSource, validMediaQuery } from "./x-media-auth.mjs";
 import { mediaContextHeaders } from "./media-request-policy.mjs";
 import { encodeOriginalWebp } from "./x-image-webp.mjs";
+import { createTelemetryEmitter } from "./telemetry.mjs";
+
 const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"]);
 const MAX_IMAGE_BYTES = 12 * 1024 * 1024;
 const CACHE_CONTROL = "public, max-age=86400, stale-while-revalidate=604800";
@@ -101,14 +103,16 @@ function streamLimitedImage(body, onDone, readChunk, abort) {
 export async function proxyXMedia(
   request,
   fetchImpl = globalThis.fetch,
-  authOptions,
+  authOptions = undefined,
   {
     connectTimeoutMs = 10000,
     stallTimeoutMs = 10000,
     totalTimeoutMs = 60000,
     webpEncoder = encodeOriginalWebp,
-    photoCache,
+    photoCache = null,
     defer = (task) => void task.catch(() => {}),
+    onEvent = null,
+    now = Date.now,
   } = {},
 ) {
   if (request.method !== "GET") {
@@ -132,6 +136,8 @@ export async function proxyXMedia(
     return errorResponse(403, "Unsupported image URL");
   }
 
+  const emit = createTelemetryEmitter(onEvent);
+  const requestStartedAt = now();
   const usePhotoCache = photoCache && requestUrl.searchParams.get("format") === "webp";
   const cacheHeaders = {
     "Cache-Control": boundedMediaCache(request, CACHE_CONTROL, authOptions?.now),
@@ -139,6 +145,7 @@ export async function proxyXMedia(
     "X-Content-Type-Options": "nosniff",
     ...mediaContextHeaders(request),
   };
+  let blobError = false;
   if (usePhotoCache) {
     try {
       const cached = await photoCache.read(source.href, { signal: request.signal });
@@ -147,12 +154,21 @@ export async function proxyXMedia(
         cached.image.byteLength <= MAX_IMAGE_BYTES &&
         ["image/webp", "image/jpeg", "image/png"].includes(cached.contentType)
       ) {
+        emit({
+          type: "x_media_proxy",
+          layer: "function_blob",
+          cache: "blob_hit",
+          outcome: "ok",
+          contentType: cached.contentType,
+          durationMs: Math.max(0, now() - requestStartedAt),
+        });
         return new Response(cached.image, {
           headers: { ...cacheHeaders, "Content-Type": cached.contentType, "X-Nest-Photo-Cache": "hit" },
         });
       }
     } catch {
       // A storage failure falls back to the existing upstream path.
+      blobError = true;
     }
   }
 
@@ -184,6 +200,7 @@ export async function proxyXMedia(
   }
   let streamingResponse = false;
   let keepTimeoutForStream = false;
+  const upstreamStartedAt = now();
   try {
     const upstream = await fetchImpl(source.href, {
       headers: { Accept: "image/avif,image/webp,image/png,image/jpeg,image/gif" },
@@ -193,21 +210,48 @@ export async function proxyXMedia(
     clearTimeout(connectTimeout);
     if (!upstream.ok) {
       await upstream.body?.cancel();
+      emit({
+        type: "x_media_proxy",
+        cache: usePhotoCache ? "blob_miss" : "bypass",
+        outcome: "upstream_error",
+        reason: `http_${upstream.status}`,
+        upstreamDurationMs: Math.max(0, now() - upstreamStartedAt),
+        durationMs: Math.max(0, now() - requestStartedAt),
+      });
       return errorResponse(upstream.status === 404 ? 404 : 502, "Image source unavailable");
     }
 
     let contentType = upstream.headers.get("content-type")?.split(";")[0].trim().toLowerCase();
     if (!IMAGE_TYPES.has(contentType)) {
       await upstream.body?.cancel();
+      emit({
+        type: "x_media_proxy",
+        cache: usePhotoCache ? "blob_miss" : "bypass",
+        outcome: "upstream_error",
+        reason: "unsupported_type",
+        upstreamDurationMs: Math.max(0, now() - upstreamStartedAt),
+        durationMs: Math.max(0, now() - requestStartedAt),
+      });
       return errorResponse(415, "Unsupported image type");
     }
     const contentLengthHeader = upstream.headers.get("content-length");
     const contentLength = contentLengthHeader === null ? Number.NaN : Number(contentLengthHeader);
     if (Number.isFinite(contentLength) && contentLength > MAX_IMAGE_BYTES) {
       await upstream.body?.cancel();
+      emit({
+        type: "x_media_proxy",
+        cache: usePhotoCache ? "blob_miss" : "bypass",
+        outcome: "upstream_error",
+        reason: "too_large",
+        upstreamDurationMs: Math.max(0, now() - upstreamStartedAt),
+        durationMs: Math.max(0, now() - requestStartedAt),
+      });
       return errorResponse(413, "Image is too large");
     }
     let responseBody;
+    let upstreamDurationMs = 0;
+    let encodeDurationMs = 0;
+    let encodeFallback = false;
     const convertToWebp =
       requestUrl.searchParams.get("format") === "webp" && ["image/jpeg", "image/png"].includes(contentType);
     const persistableBody = usePhotoCache && ["image/webp", "image/jpeg", "image/png"].includes(contentType);
@@ -219,23 +263,50 @@ export async function proxyXMedia(
       Number.isFinite(contentLength)
     ) {
       streamingResponse = true;
+      upstreamDurationMs = Math.max(0, now() - upstreamStartedAt);
       // The stream can outlive this function, so it owns clearing the timeout and the listener.
       responseBody = streamLimitedImage(upstream.body, cleanup, readChunk, (reason) => controller.abort(reason));
     } else {
       const body = await readLimitedImage(upstream.body, controller.signal, readChunk);
-      if (body?.tooLarge) return errorResponse(413, "Image is too large");
-      if (!body?.image?.byteLength) return errorResponse(502, "Image source unavailable");
+      upstreamDurationMs = Math.max(0, now() - upstreamStartedAt);
+      if (body?.tooLarge) {
+        emit({
+          type: "x_media_proxy",
+          cache: usePhotoCache ? "blob_miss" : "bypass",
+          outcome: "upstream_error",
+          reason: "too_large",
+          upstreamDurationMs,
+          durationMs: Math.max(0, now() - requestStartedAt),
+        });
+        return errorResponse(413, "Image is too large");
+      }
+      if (!body?.image?.byteLength) {
+        emit({
+          type: "x_media_proxy",
+          cache: usePhotoCache ? "blob_miss" : "bypass",
+          outcome: "upstream_error",
+          reason: "empty_body",
+          upstreamDurationMs,
+          durationMs: Math.max(0, now() - requestStartedAt),
+        });
+        return errorResponse(502, "Image source unavailable");
+      }
       responseBody = body.image;
       if (convertToWebp) {
+        const encodeStartedAt = now();
         try {
           const converted = await webpEncoder(body.image);
           if (converted?.byteLength) {
             responseBody = converted;
             contentType = "image/webp";
+          } else {
+            encodeFallback = true;
           }
         } catch {
           // Keep the full-resolution original when conversion is unavailable.
+          encodeFallback = true;
         }
+        encodeDurationMs = Math.max(0, now() - encodeStartedAt);
       }
     }
 
@@ -249,6 +320,17 @@ export async function proxyXMedia(
         // Some local runtimes have no background-task context.
       }
     }
+    emit({
+      type: "x_media_proxy",
+      layer: usePhotoCache ? "function_blob" : "upstream_stream",
+      cache: usePhotoCache ? "blob_miss" : "bypass",
+      outcome: encodeFallback ? "encode_fallback" : "ok",
+      ...(blobError ? { reason: "blob_read_error" } : {}),
+      contentType,
+      upstreamDurationMs,
+      encodeDurationMs,
+      durationMs: Math.max(0, now() - requestStartedAt),
+    });
     const response = new Response(responseBody, {
       status: 200,
       headers: {
@@ -260,6 +342,14 @@ export async function proxyXMedia(
     keepTimeoutForStream = streamingResponse;
     return response;
   } catch {
+    emit({
+      type: "x_media_proxy",
+      cache: usePhotoCache ? "blob_miss" : "bypass",
+      outcome: "upstream_error",
+      reason: request.signal.aborted ? "client_aborted" : "network_or_timeout",
+      upstreamDurationMs: Math.max(0, now() - upstreamStartedAt),
+      durationMs: Math.max(0, now() - requestStartedAt),
+    });
     return errorResponse(502, "Image source unavailable");
   } finally {
     // A returned stream keeps the listener until it finishes or is cancelled.

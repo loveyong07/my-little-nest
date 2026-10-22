@@ -7,6 +7,11 @@ const isSuccess = (result) =>
   /^[A-Za-z0-9_]{1,15}$/.test(result.profile?.username ?? "") &&
   typeof result.profile?.name === "string";
 
+/**
+ * @param {Pick<Storage, "getItem">} storage
+ * @param {number} [now]
+ * @returns {{ savedAt: number, profile: import("../shared/contracts.mjs").ProfileItem } | null}
+ */
 export function readProfileCache(storage, now = Date.now()) {
   try {
     const cached = JSON.parse(storage.getItem(KEY));
@@ -24,6 +29,11 @@ export function readProfileCache(storage, now = Date.now()) {
   }
 }
 
+/**
+ * @param {Pick<Storage, "setItem">} storage
+ * @param {import("../shared/contracts.mjs").ProfileResponse} result
+ * @param {number} [now]
+ */
 export function writeProfileCache(storage, result, now = Date.now()) {
   if (!isSuccess(result)) return;
   try {
@@ -41,6 +51,9 @@ const request = createSharedRequest({
   },
 });
 
+/**
+ * @returns {{ savedAt: number, profile: import("../shared/contracts.mjs").ProfileItem } | null}
+ */
 export function getProfileSnapshot() {
   if (!request.getSnapshot()) {
     try {
@@ -54,6 +67,10 @@ export function getProfileSnapshot() {
   return snapshot ? { savedAt: snapshot.savedAt, profile: snapshot.value.profile } : null;
 }
 
+/**
+ * @param {{ force?: boolean }} [options]
+ * @returns {Promise<import("../shared/contracts.mjs").ProfileResponse>}
+ */
 export function fetchProfile(options) {
   getProfileSnapshot();
   return request.load(options);

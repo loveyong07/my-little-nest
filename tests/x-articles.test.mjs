@@ -439,3 +439,40 @@ for (const articlesStatus of ["ok", "none", "stale", "unavailable", undefined]) 
     );
   });
 }
+
+test("records feed refresh counts, upstream durations and outcomes in server telemetry", async () => {
+  let time = 1_000;
+  let fail = false;
+  const events = [];
+  const { feed } = service(
+    (url) => {
+      time += 25;
+      if (fail) return new Response("unavailable", { status: 503 });
+      if (url.searchParams.has("since_id")) return Response.json({ data: [post("21")], meta: { newest_id: "21" } });
+      return Response.json({ data: [post("20")], meta: { newest_id: "20" } });
+    },
+    { now: () => time, onEvent: (event) => events.push(event) },
+  );
+
+  await feed();
+  assert.equal(events.at(-1).type, "x_feed");
+  assert.equal(events.at(-1).outcome, "full_refresh");
+  assert.equal(events.at(-1).refreshCount, 1);
+  assert.equal(events.at(-1).durationMs, 25);
+
+  await feed();
+  assert.equal(events.at(-1).outcome, "memory_hit");
+  assert.equal(events.at(-1).refreshCount, 1);
+
+  time += 15 * 60 * 1000;
+  await feed();
+  assert.equal(events.at(-1).outcome, "incremental_refresh");
+  assert.equal(events.at(-1).refreshCount, 2);
+
+  time += 15 * 60 * 1000;
+  fail = true;
+  await feed();
+  assert.equal(events.at(-1).outcome, "stale_fallback");
+  assert.equal(events.at(-1).reason, "upstream_error");
+  assert.equal(events.at(-1).refreshCount, 3);
+});

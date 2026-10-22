@@ -15,7 +15,22 @@ export function collectPhotoLinks(feed) {
   return Array.from(photos, ([source, path]) => ({ source, path }));
 }
 
-export async function warmPhotoCache({ origin, cache, fetchImpl = fetch, limit = Infinity, onProgress = () => {} }) {
+/**
+ * @param {{
+ *   origin: string,
+ *   cache: import("../shared/contracts.mjs").PhotoCacheAdapter,
+ *   fetchImpl?: typeof globalThis.fetch,
+ *   limit?: number,
+ *   onProgress?: (progress: { total: number, cached: number, uploaded: number, failed: number, bytes: number }) => void,
+ * }} options
+ */
+export async function warmPhotoCache({
+  origin,
+  cache,
+  fetchImpl = fetch,
+  limit = Infinity,
+  onProgress = (_progress) => {},
+}) {
   if (!cache) throw new Error("Blob storage is not configured");
   const feedResponse = await fetchImpl(new URL("/api/x-posts", origin), { signal: AbortSignal.timeout(60000) });
   if (!feedResponse.ok) throw new Error("Feed unavailable");

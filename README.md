@@ -2,7 +2,7 @@
 
 React / Vite 个人网站，提供首页、动态、联系三个页面，支持中文、日文、英文。联系页唯一邮箱为 `fyh20071004@gmail.com`。
 
-当前重构已统一三语与联系方式配置、按组件整理样式并集中颜色变量；Vercel、Vite 和 Sites 共用 API 路由与媒体规则。卡片和灯箱共用媒体请求状态，保留独立重试、图片切换与键盘焦点。完整检查包含 lint、格式、逻辑测试和构建兼容性。本轮已通过本地验收，后续由生产分支 `master` 触发 Vercel 发布；当前线上版本以该分支最新成功的 Production 部署为准。
+当前重构已统一三语与联系方式配置、按组件整理样式并集中颜色变量；Vercel、Vite 和 Sites 共用 API 路由与媒体规则。卡片和灯箱共用媒体请求状态，保留独立重试、图片切换与键盘焦点。完整检查包含 lint、类型契约检查、格式、逻辑测试和构建兼容性。本轮已通过本地验收，后续由生产分支 `master` 触发 Vercel 发布；当前线上版本以该分支最新成功的 Production 部署为准。
 
 2026-10-20 的代码审核与内容润色已通过本地验收，用户随后授权经 `master` 发布，具体部署结果以对应提交的 Vercel Production 状态为准。首页补充小窝说明，联系页增加来信引导与复制邮箱，动态页末尾增加交流入口；账号目标和脚本断点统一配置，复制交互防止旧请求覆盖新反馈。审核范围与验收边界见 [代码审核与内容润色-2026-10-20.md](代码审核与内容润色-2026-10-20.md)。
 
@@ -27,12 +27,13 @@ npm run dev:proxy -- --host 127.0.0.1 --port 4173 --strictPort
 ```powershell
 npm test              # 逻辑测试，不需要 dist
 npm run lint          # JavaScript、React Hooks 与 CSS 检查，警告也会失败
+npm run typecheck     # TypeScript checkJs 共享契约与服务端/前端缓存边界检查
 npm run lint:css      # Biome 结构检查与 CSS 语法约定检查
 npm run format:check  # 格式检查
 npm run build         # 生成 dist/client、dist/server、dist/.openai
 npm run test:build    # 构建产物检查，必须在上一步之后运行
 npm run test:sites    # Sites/Worker 兼容检查
-npm run check         # lint → 格式 → 逻辑 → 构建 → 构建产物 → Sites，CI 与交付使用
+npm run check         # lint → typecheck → 格式 → 逻辑 → 构建 → 构建产物 → Sites，CI 与交付使用
 git diff --check
 npm audit --audit-level=high
 ```
@@ -63,10 +64,10 @@ CSS、布局或组件结构修改必须另做视觉比较；`npm run check` 不�
 - `src/styles.css`、`src/styles/`：按组件组织样式，颜色变量位于 `globals.css`。
 - `src/styles/glass.css`：参考 ColorOS 桌面/控制中心；首页使用水滴式通透玻璃，动态和联系页保持透明底层，上层卡片逐级增加轻磨砂。高光、底色和磨砂强度集中在这里，大面板与长帖子复用 `scenes.css` 的静态插画。参数与验证范围见 [玻璃质感验收-2026-10-14.md](玻璃质感验收-2026-10-14.md)。
 - 动态照片容器使用独立的 `glass-media-backdrop`：窄图或混合比例轮播的留白透出分层磨砂背景，取代纯浅蓝填充。仅静态场景副本使用桌面 `10px` / 手机 `8px` 模糊，叠加柔白渐变和细亮边；照片仍以原图 `object-fit: contain` 完整显示，切图、放大及视频沿用原有行为。
-- `biome.json`、`scripts/check-css-syntax.mjs`：CSS 结构和语法检查，JavaScript/React Hooks 仍由 ESLint 检查，格式仍由 Prettier 检查。
-- `server/api-handler.mjs`：四个 API 的共享入口；`server/x-feed-service.mjs`：X 资料和动态服务。
+- `biome.json`、`scripts/check-css-syntax.mjs`：CSS 结构和语法检查，`tsconfig.json` 与 `shared/contracts.mjs` 负责第一阶段 `checkJs` 类型契约检查，JavaScript/React Hooks 仍由 ESLint 检查，格式仍由 Prettier 检查。
+- `server/api-handler.mjs`：四个 API 的共享入口；`server/x-feed-service.mjs`：X 资料和动态服务；`server/article-cache.mjs` 与 `server/x-article-document.mjs`：X Article 段落与配图结构解析、24 小时缓存优先与持久兜底；`server/telemetry.mjs`：服务端刷新耗时与缓存命中结构化日志。
 - `api/`、`server/vite-api-plugin.mjs`、`worker/index.js`：Vercel、Vite 与 Sites 的运行环境适配。
-- `shared/`：浏览器和服务端共用的 X 账号与媒体来源规则。
+- `shared/`：浏览器和服务端共用的 X 账号、媒体来源规则与 JSDoc 数据契约。
 - `build/scene-preloads.mjs`：场景预载插件；`build/` 是源码目录。
 - `public/assets/`：在线资源；`archive/`、`design-reference.png`：保留的原始素材及设计参考。
 - `public/assets/audio/SOURCES.md`：音乐来源与使用说明。
@@ -84,6 +85,10 @@ Vercel 的图片函数可连接香港 `hkg1` 私有 Blob，持久保存上述静
 
 `/api/x-profile` 通过稳定用户 ID 查询账号资料；`/api/x-posts` 获取置顶、日常原创帖和 X Articles。文章来自同一次时间线请求的 `article` / `article_title` 字段，与普通长帖分开，响应包含 `articles` 和 `articlesStatus`（`ok` / `none` / `stale` / `unavailable`）。文章优先展示 API 提供的纯文本正文，缺少正文时展示预览，并提供 X 原文链接；封面沿用同源签名媒体代理。前端定期刷新，接口失败时使用已有缓存或明确标注的快照，不代表秒级同步。
 
+Vercel 的 `/api/x-posts` 函数同样连接私有 Blob（`server/article-cache.mjs`），以 `x-articles/document-v1/<id>.json` 持久保存已通过正文、封面与配图完整性校验的 Article 段落结构（`blocks`）。缓存仅保存未签名的原始媒体 URL、结构版本号与校验时间戳，返回响应时由 `authorizeFeed` 重新生成当日媒体签名。未变化的文章在 24 小时校验期内优先使用内存或 Blob 缓存，避免每次刷新重复抓取 X 网页；满 24 小时后重新校验网页以同步可能发生的链接目标或图片位置调整，若网页抓取失败则保留既有有效快照且绝不覆盖持久缓存。
+
+`server/telemetry.mjs` 在 Vercel 运行环境（或设置 `NEST_TELEMETRY=1` 时）输出单行 JSON 观测日志，记录 Feed/Profile 刷新计数、上游耗时、Article 文档缓存命中/重验结果以及图片 Blob 命中与跳过原因。注意 `X-Nest-Photo-Cache: hit | miss` 响应头仅代表函数执行当次的 `function_blob` 查询结果；响应被 Vercel CDN 缓存后该头会被边缘复用，因此不能直接等同于所有访客请求的实时 Blob 命中率，统计时需区分 CDN 与 Blob 两层。
+
 动态页在日常帖子下方显示「随心分享 · X 文章」。文章的日期时间线、月份选择和上一篇／下一篇独立于帖子，后台刷新保留用户手动选择的文章。只有成功确认无文章才显示「X当前没有文章」；同步失败显示不可用状态，已有文章保留并标注过期。旧版缓存缺少文章字段时重新同步，不据此推断文章为空。
 
 资料和动态响应对浏览器使用 `Cache-Control: no-store`，但浏览器应用层仍有内存和 localStorage 缓存。保留当前偏向复用、减少重复查询的策略：Vercel CDN 对完整成功响应使用 `s-maxage=300, stale-while-revalidate=600`；整体过期/不可用，或置顶过期/不可用/状态缺失及异常时使用 `s-maxage=60`。动态只有整体 `ok`、置顶和文章均为 `ok` / `none` 才算完整成功，`none` 表示已确认该部分为空；资料只判断自身状态。异常响应也用短缓存。
@@ -94,7 +99,7 @@ Vercel 的图片函数可连接香港 `hkg1` 私有 Blob，持久保存上述静
 
 文章部分失败同样退避 60 秒，之后合并并发并完整重扫时间线以恢复旧文章。若 X 拒绝可选文章字段，则回退普通帖子字段，保留可用帖子及旧文章的过期状态；整次重试失败不延长原成功缓存的寿命。完整采集成功后按新结果更新帖子和文章。无服务端凭据或整体异常且无缓存时，保留兼容响应 `{status: "unavailable", posts: []}`，前端将缺少的文章状态视为不可用。
 
-共享 handler 表示源码规则相同。四个 Vercel 函数分别创建 handler，动态与资料的内存缓存仅限各自实例；不能假定跨函数、实例或运行环境共享内存。图片函数额外注入私有 Blob 适配器，持久复用已处理配图；动态与资料没有引入外部数据缓存。
+共享 handler 表示源码规则相同。四个 Vercel 函数分别创建 handler，动态与资料的内存缓存仅限各自实例；不能假定跨函数、实例或运行环境共享内存。图片函数和动态函数分别注入私有 Blob 适配器，持久复用已处理配图与已校验的 Article 段落结构；动态与资料主体仍保持单实例内存缓存。
 
 `/api/x-media`、`/api/x-video` 为同源媒体接口。服务端为本站媒体生成签名并校验源地址、类型、有效期和签名；精确旧媒体名单提供缓存兼容。保留原始像素尺寸、视频 Range 和缓存寿命限制。
 
