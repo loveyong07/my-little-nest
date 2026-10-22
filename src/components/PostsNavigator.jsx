@@ -118,6 +118,7 @@ export function PostsNavigator({
           <PiFlowerLight aria-hidden="true" />
           {t.readingSlowNote}
         </p>
+        {desktop && <span className="reading-shortcut-note">{t.keyboardNavHint}</span>}
       </div>
     </nav>
   );

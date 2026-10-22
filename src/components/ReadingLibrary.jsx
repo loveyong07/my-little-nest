@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { FiArrowUpRight, FiBookOpen, FiFeather, FiSearch, FiX } from "react-icons/fi";
 import { PiPushPinFill } from "react-icons/pi";
 import { formatPostDate } from "../utils/date.js";
@@ -20,6 +20,14 @@ export function ReadingLibrary({ t, language, posts, articles, pinnedPost, onCho
     ],
     [posts, articles, pinnedPost],
   );
+  const filterCounts = useMemo(
+    () => ({
+      all: entries.length,
+      posts: (pinnedPost ? 1 : 0) + posts.length,
+      articles: articles.length,
+    }),
+    [entries.length, pinnedPost, posts.length, articles.length],
+  );
   const needle = query.trim().normalize("NFKC").toLocaleLowerCase();
   const results = entries.filter(({ type, item }) => {
     if (filter !== "all" && (filter === "posts" ? type === "articles" : type !== "articles")) return false;
@@ -28,6 +36,24 @@ export function ReadingLibrary({ t, language, posts, articles, pinnedPost, onCho
       .toLocaleLowerCase()
       .includes(needle);
   });
+
+  useEffect(() => {
+    function handleShortcut(event) {
+      if (open || event.key !== "/" || event.metaKey || event.ctrlKey || event.altKey) return;
+      const target = event.target;
+      if (
+        target instanceof HTMLElement &&
+        (target.matches("input, textarea, select, [contenteditable]") || target.closest("dialog, .media-lightbox"))
+      ) {
+        return;
+      }
+      if (document.querySelector(".media-lightbox, dialog[open]")) return;
+      event.preventDefault();
+      setOpen(true);
+    }
+    window.addEventListener("keydown", handleShortcut);
+    return () => window.removeEventListener("keydown", handleShortcut);
+  }, [open]);
 
   useLayoutEffect(() => {
     const dialog = dialogRef.current;
@@ -66,6 +92,9 @@ export function ReadingLibrary({ t, language, posts, articles, pinnedPost, onCho
       <button className="reading-library-trigger" type="button" onClick={() => setOpen(true)} aria-haspopup="dialog">
         <FiSearch aria-hidden="true" />
         <span>{t.libraryOpen}</span>
+        <kbd className="library-shortcut-kbd" aria-hidden="true">
+          /
+        </kbd>
         <FiArrowUpRight aria-hidden="true" />
       </button>
       <dialog
@@ -100,7 +129,8 @@ export function ReadingLibrary({ t, language, posts, articles, pinnedPost, onCho
         <div className="library-filters" role="group" aria-label={t.libraryFilter}>
           {["all", "posts", "articles"].map((id, index) => (
             <button key={id} type="button" aria-pressed={filter === id} onClick={() => setFilter(id)}>
-              {t.libraryFilters[index]}
+              <span>{t.libraryFilters[index]}</span>
+              <small aria-hidden="true">{filterCounts[id]}</small>
             </button>
           ))}
           <span role="status" aria-live="polite">

@@ -11,6 +11,7 @@ import { useDesktopLayout } from "../hooks/useDesktopLayout.js";
 import { useSectionEntrance } from "../hooks/useSectionEntrance.js";
 import { SectionHeading } from "../components/SectionHeading.jsx";
 import { LetterComposer } from "../components/LetterComposer.jsx";
+import { preferredScrollBehavior } from "../utils/motion.js";
 
 const contactIcons = {
   x: FaXTwitter,
@@ -28,10 +29,30 @@ export default function ContactPage({ t, profile }) {
   const [letterBody, setLetterBody] = useState("");
   const desktop = useDesktopLayout();
   const sectionRef = useRef(null);
+  const draftDetailsRef = useRef(null);
   useSectionEntrance(sectionRef);
   const { copiedId, copyFailedId, manualCopyRef, copyId } = useClipboard();
   // The service name belongs in the accessible name of a copy tile, not only in the visible title.
   const copyLabel = (service, account) => `${service} · ${t.copy}: ${account}`;
+
+  function handleGuideAction(index) {
+    if (index === 0) {
+      setChannelFilter("all");
+      const list = document.getElementById("contact-channel-list");
+      list?.scrollIntoView({ block: "center", behavior: preferredScrollBehavior() });
+      list?.querySelector(".contact-tile")?.focus({ preventScroll: true });
+      return;
+    }
+    setLetterTopic(index);
+    if (draftDetailsRef.current) {
+      draftDetailsRef.current.open = true;
+    }
+    window.requestAnimationFrame(() => {
+      const textarea = document.getElementById("letter-draft-body");
+      textarea?.scrollIntoView({ block: "center", behavior: preferredScrollBehavior() });
+      textarea?.focus({ preventScroll: true });
+    });
+  }
 
   const socials = contactChannels.map(({ id, title, titleKey, descriptionKey, href, account }) => {
     const name = titleKey ? t[titleKey] : title;
@@ -130,6 +151,7 @@ export default function ContactPage({ t, profile }) {
               setTopic={setLetterTopic}
               body={letterBody}
               setBody={setLetterBody}
+              detailsRef={draftDetailsRef}
             />
           )}
           <div className="email-options-list">
@@ -178,6 +200,12 @@ export default function ContactPage({ t, profile }) {
                 <div>
                   <h4>{title}</h4>
                   <p>{text}</p>
+                  {desktop && (
+                    <button type="button" className="letter-guide-action" onClick={() => handleGuideAction(index)}>
+                      <span>{t.letterGuideActions[index]}</span>
+                      <FiArrowUpRight aria-hidden="true" />
+                    </button>
+                  )}
                 </div>
               </li>
             );

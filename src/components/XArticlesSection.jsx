@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef } from "react";
 import { FaArrowRight, FaXTwitter } from "react-icons/fa6";
-import { FiCalendar, FiChevronLeft, FiChevronRight, FiFeather } from "react-icons/fi";
+import { FiCalendar, FiCheck, FiChevronLeft, FiChevronRight, FiFeather, FiImage, FiLink } from "react-icons/fi";
 import { formatPostDate } from "../utils/date.js";
 import { postMonthKey, postMonths } from "../utils/posts.js";
 import { displayXText } from "../utils/x-text.js";
 import { preferredScrollBehavior } from "../utils/motion.js";
+import { useClipboard } from "../hooks/useClipboard.js";
+import { useDesktopLayout } from "../hooks/useDesktopLayout.js";
 import { ArticlePhoto } from "./ArticlePhoto.jsx";
 import { SectionHeading } from "./SectionHeading.jsx";
 import { articleLinkParts } from "../../shared/article-links.mjs";
@@ -22,6 +24,8 @@ export function XArticlesSection({
   t,
   profile,
 }) {
+  const desktop = useDesktopLayout();
+  const { copiedId, copyId } = useClipboard();
   const readingRef = useRef(null);
   const timelineRef = useRef(null);
   const currentIndex = Math.min(articleIndex, Math.max(0, articles.length - 1));
@@ -139,6 +143,12 @@ export function XArticlesSection({
             <div className="article-byline">
               <span>{article.author || profile.name}</span>
               <span>@{profile.username}</span>
+              {desktop && sourcePhotos.length > 0 && (
+                <span className="article-photo-badge">
+                  <FiImage aria-hidden="true" />
+                  {t.articlePhotosBadge(sourcePhotos.length)}
+                </span>
+              )}
               <FaXTwitter aria-hidden="true" />
             </div>
             <h3 id="x-article-title">{article.title || t.articleUntitled}</h3>
@@ -186,6 +196,17 @@ export function XArticlesSection({
               </p>
             )}
             <div className="post-bottomline">
+              {desktop && article.permalink && (
+                <button
+                  type="button"
+                  className={`post-copy-link${copiedId === article.permalink ? " is-copied" : ""}`}
+                  onClick={() => copyId(article.permalink)}
+                  aria-label={copiedId === article.permalink ? t.linkCopied : t.copyArticleLink}
+                >
+                  {copiedId === article.permalink ? <FiCheck aria-hidden="true" /> : <FiLink aria-hidden="true" />}
+                  <span>{copiedId === article.permalink ? t.linkCopied : t.copyArticleLink}</span>
+                </button>
+              )}
               <a href={article.permalink} target="_blank" rel="noopener noreferrer">
                 {t.openArticle}
                 <FaArrowRight aria-hidden="true" />
