@@ -926,10 +926,13 @@
     border-color: #ffffffb3;
     border-radius: 24px;
     background: linear-gradient(150deg, #fdfbfff0, #edf6ffeb);
-    box-shadow:
-      0 8px 22px #355b811a,
-      inset 0 1px #fff;
-    text-shadow: none;
+    box-shadow: var(--glass-card-shadow);
+    text-shadow: var(--glass-text-halo);
+  }
+  @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+    .email-row {
+      background: var(--glass-home-fill);
+    }
   }
   .email-row::before {
     height: 5px;
