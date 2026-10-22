@@ -40,7 +40,7 @@ test("long immutable caching matches hashed build files while excluding fixed sc
   assert.equal(pattern.test("/assets/index-1234a_Bc.js"), true);
   assert.equal(pattern.test("/assets/cormorant-garamond-latin-700-italic-1ifP4r4a.woff2"), true);
   for (const name of [
-    "hero-sky-alt-motion-q90.webp",
+    "home-beach-desktop-cadff3fb.webp",
     "contact-sky-letter-v2-clean-q90.webp",
     "x-avatar.jpg",
     "site-favicon-2026-09-29.png",
