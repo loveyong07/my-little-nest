@@ -320,29 +320,39 @@ export function createXFeedService({
 
   async function fetchPinnedPost(author, pinnedId) {
     if (!isId(pinnedId)) return { post: null, status: "none" };
-    function lookup(mode) {
+    function lookup(mode, includeArticles = true) {
+      const articleFields = includeArticles ? ",article,article_title" : "";
       const url = new URL(`${X_API}/tweets/${pinnedId}`);
       if (mode === "tweet") {
         url.searchParams.set(
           "tweet.fields",
-          "created_at,referenced_tweets,author_id,in_reply_to_user_id,note_tweet,attachments,entities,article,article_title",
+          `created_at,referenced_tweets,author_id,in_reply_to_user_id,note_tweet,attachments,entities${articleFields}`,
         );
         url.searchParams.set("expansions", "attachments.media_keys");
       } else {
-        url.searchParams.set("post.fields", "created_at,note_post,attachments,entities,article,article_title");
+        url.searchParams.set("post.fields", `created_at,note_post,attachments,entities${articleFields}`);
         url.searchParams.set("expansions", "attachments.media_keys,author_id");
       }
       url.searchParams.set("media.fields", "media_key,type,url,alt_text,width,height,preview_image_url,variants");
       return getXJson(url, token, fetchImpl);
     }
+    async function lookupForMode(includeArticles) {
+      try {
+        return await lookup(postFieldMode, includeArticles);
+      } catch (error) {
+        if (postFieldMode !== "tweet" || error?.status !== 400) throw error;
+        const json = await lookup("post", includeArticles);
+        postFieldMode = "post";
+        return json;
+      }
+    }
     try {
       let json;
       try {
-        json = await lookup(postFieldMode);
+        json = await lookupForMode(true);
       } catch (error) {
-        if (postFieldMode !== "tweet" || error?.status !== 400) throw error;
-        json = await lookup("post");
-        postFieldMode = "post";
+        if (error?.status !== 400) throw error;
+        json = await lookupForMode(false);
       }
       if (json.data?.id === pinnedId && isArticlePost(json.data)) return { post: null, status: "none" };
       const mediaByKey = new Map(

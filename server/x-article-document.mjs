@@ -233,30 +233,40 @@ export async function enrichArticleDocuments(
     defer = (task) => void Promise.resolve(task).catch(() => {}),
     now = Date.now,
     revalidateMs = ARTICLE_REVALIDATE_TTL_MS,
+    timeoutMs = 6000,
     onEvent = null,
   } = {},
 ) {
   if (!articles.length || (!fetchImpl && !articleCache && !previous?.length)) return articles;
   const emit = createTelemetryEmitter(onEvent);
-  const result = articles.map((article) => {
+  const prepared = articles.map((article) => {
     const copy = { ...article };
     delete copy.blocks;
-    return copy;
+    const old = previous?.find((item) => item.id === copy.id);
+    const memoryBlocks = old && sameArticleIdentity(old, copy) ? sanitizeArticleBlocks(old.blocks, copy) : null;
+    const memoryValidatedAt = memoryBlocks ? validatedAtByBlocks.get(old.blocks) : undefined;
+    if (memoryBlocks && Number.isFinite(memoryValidatedAt)) {
+      validatedAtByBlocks.set(memoryBlocks, memoryValidatedAt);
+    }
+    return {
+      article: copy,
+      memoryBlocks,
+      memoryValidatedAt,
+    };
   });
+  const result = prepared.map(({ article, memoryBlocks }) =>
+    memoryBlocks ? { ...article, blocks: memoryBlocks } : article,
+  );
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 6000);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   let next = 0;
   try {
     await Promise.all(
       Array.from({ length: Math.min(4, result.length) }, async () => {
         while (next < result.length && !controller.signal.aborted) {
           const index = next++;
-          const article = result[index];
+          const { article, memoryBlocks, memoryValidatedAt } = prepared[index];
           const startedAt = now();
-          const old = previous?.find((item) => item.id === article.id);
-          const memoryBlocks =
-            old && sameArticleIdentity(old, article) ? sanitizeArticleBlocks(old.blocks, article) : null;
-          const memoryValidatedAt = memoryBlocks ? validatedAtByBlocks.get(old.blocks) : undefined;
           const checkTime = now();
           if (
             memoryBlocks &&

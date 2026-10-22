@@ -381,10 +381,16 @@ test("timeline Article identity suppresses a pinned detail response that omitted
   const feed = createXFeedService({
     token: "test-token",
     fetchImpl: async (url) => {
-      const { pathname } = new URL(url);
-      if (pathname === `/2/users/${USER_ID}`) return Response.json({ data: { ...author, pinned_tweet_id: "20" } });
-      if (pathname === "/2/tweets/20")
+      const parsed = new URL(url);
+      if (parsed.pathname === `/2/users/${USER_ID}`)
+        return Response.json({ data: { ...author, pinned_tweet_id: "20" } });
+      if (parsed.pathname === "/2/tweets/20") {
+        const fields = (parsed.searchParams.get("tweet.fields") ?? parsed.searchParams.get("post.fields") ?? "").split(
+          ",",
+        );
+        if (fields.includes("article")) return new Response("unsupported field", { status: 400 });
         return Response.json({ data: post("20", { text: "https://x.com/i/article/123" }) });
+      }
       return Response.json({ data: [article("20"), post("19")] });
     },
   });
@@ -392,6 +398,41 @@ test("timeline Article identity suppresses a pinned detail response that omitted
   assert.equal(result.pinnedStatus, "none");
   assert.equal(result.pinnedPost, null);
   assert.equal(result.articles[0].id, "20");
+});
+
+test("ordinary pinned post falls back when optional Article fields are rejected with HTTP 400", async () => {
+  const detailUrls = [];
+  const feed = createXFeedService({
+    token: "test-token",
+    fetchImpl: async (url) => {
+      const parsed = new URL(url);
+      if (parsed.pathname === `/2/users/${USER_ID}`) {
+        return Response.json({ data: { ...author, pinned_tweet_id: "300" } });
+      }
+      const fields = (parsed.searchParams.get("tweet.fields") ?? parsed.searchParams.get("post.fields") ?? "").split(
+        ",",
+      );
+      if (fields.includes("article") || fields.includes("article_title")) {
+        if (parsed.pathname === "/2/tweets/300") detailUrls.push(parsed);
+        return new Response("unsupported field", { status: 400 });
+      }
+      if (parsed.pathname === "/2/tweets/300") {
+        detailUrls.push(parsed);
+        return Response.json({ data: post("300", { text: "Pinned ordinary post" }) });
+      }
+      return Response.json({ data: [post("300", { text: "Pinned ordinary post" }), post("200", { text: "Daily" })] });
+    },
+  });
+  const result = await feed();
+  assert.equal(result.status, "ok");
+  assert.equal(result.pinnedStatus, "ok");
+  assert.equal(result.pinnedPost?.id, "300");
+  assert.deepEqual(
+    result.posts.map((item) => item.id),
+    ["200"],
+  );
+  assert.equal(result.articlesStatus, "unavailable");
+  assert.equal(detailUrls.at(-1).searchParams.get("tweet.fields")?.includes("article"), false);
 });
 
 test("ordinary pinned posts keep working even when their text links to an Article", async () => {

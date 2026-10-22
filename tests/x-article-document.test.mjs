@@ -272,3 +272,36 @@ test("uses cached Article blocks first, revalidates after TTL, and never overwri
     true,
   );
 });
+
+test("retains verified fallback blocks for unqueued Articles when the 4-worker batch hits the shared timeout", async () => {
+  const verifiedBlocks = normalizedArticleDocument(document, article);
+  const item = (id, extra = {}) => ({
+    ...article,
+    id,
+    permalink: `https://x.com/loveyong07/status/${id}`,
+    ...extra,
+  });
+  const articles = [item("1"), item("2"), item("3"), item("4"), item("5"), item("6", { text: "Edited sixth text" })];
+  const previous = [
+    { ...item("5"), blocks: verifiedBlocks },
+    { ...item("6"), blocks: verifiedBlocks },
+  ];
+  let fetchCalls = 0;
+  const result = await enrichArticleDocuments(
+    articles,
+    previous,
+    async (_url, { signal }) => {
+      fetchCalls += 1;
+      await new Promise((resolve) => {
+        if (signal.aborted) resolve();
+        else signal.addEventListener("abort", resolve, { once: true });
+      });
+      throw new Error("aborted");
+    },
+    { timeoutMs: 20 },
+  );
+  assert.equal(fetchCalls, 4, "shared timeout stops queueing articles past the first four workers");
+  assert.equal(result[0].blocks, undefined);
+  assert.deepEqual(result[4].blocks, verifiedBlocks, "fifth article keeps its verified fallback blocks");
+  assert.equal(result[5].blocks, undefined, "edited sixth article still rejects mismatched old blocks");
+});
