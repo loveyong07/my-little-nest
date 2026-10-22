@@ -1,5 +1,19 @@
 import { retainedPostIndex } from "./feed-reading.js";
 
+/**
+ * @typedef {"loading" | "live" | "stale" | "none" | "unavailable"} ArticleReadingState
+ * @typedef {{
+ *   articles: import("../../shared/contracts.mjs").ArticleItem[],
+ *   index: number,
+ *   hasSelectedArticle: boolean,
+ *   state: ArticleReadingState,
+ * }} ArticleReading
+ */
+
+/**
+ * @param {import("../../shared/contracts.mjs").FeedResponse | null | undefined} [feed]
+ * @returns {ArticleReading}
+ */
 export function initialArticleReading(feed) {
   const articles = Array.isArray(feed?.articles) ? feed.articles : [];
   return {
@@ -15,6 +29,11 @@ export function initialArticleReading(feed) {
   };
 }
 
+/**
+ * @param {ArticleReading} current
+ * @param {import("../../shared/contracts.mjs").FeedResponse | null | undefined} feed
+ * @returns {ArticleReading}
+ */
 export function refreshedArticleReading(current, feed) {
   const status = feed?.articlesStatus;
   const articles = Array.isArray(feed?.articles) ? feed.articles : null;
@@ -34,6 +53,10 @@ export function refreshedArticleReading(current, feed) {
   return { ...current, state: current.articles.length ? "stale" : "unavailable" };
 }
 
+/**
+ * @param {import("../../shared/contracts.mjs").FeedResponse | null | undefined} feed
+ * @returns {import("../../shared/contracts.mjs").FeedResponse | null | undefined}
+ */
 export function cacheArticleData(feed) {
   if (!feed || (!Object.hasOwn(feed, "articles") && !Object.hasOwn(feed, "articlesStatus"))) return feed;
   if (feed.articlesStatus === "none") return { ...feed, articles: [] };

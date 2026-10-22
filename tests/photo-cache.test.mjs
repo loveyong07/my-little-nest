@@ -265,3 +265,57 @@ test("prewarming deduplicates Article repetitions and skips avatars and already 
   assert.equal(fetched, 1);
   assert.equal(written, 1);
 });
+
+test("records function-level Blob cache outcomes, reasons and media proxy timings", async () => {
+  const path = await signedMediaUrl(source, "image", { ...auth, format: "webp" });
+  const events = [];
+  let hasBlob = false;
+  const photoCache = createBlobPhotoCache({
+    env,
+    maxBytes: 10,
+    onEvent: (event) => events.push(event),
+    sdk: {
+      get: async () => (hasBlob ? cachedBlob() : null),
+      list: async () => ({ blobs: [{ size: 9 }], hasMore: false }),
+      put: async () => {
+        throw new Error("should not write over budget");
+      },
+    },
+  });
+
+  const tasks = [];
+  const missResponse = await proxyXMedia(request(path), upstream, auth, {
+    photoCache,
+    webpEncoder: async (bytes) => bytes,
+    defer: (task) => tasks.push(task),
+    onEvent: (event) => events.push(event),
+  });
+  await Promise.all(tasks);
+  assert.equal(missResponse.headers.get("x-nest-photo-cache"), "miss");
+  assert.ok(
+    events.some(
+      (e) =>
+        e.type === "x_photo_cache" && e.layer === "function_blob" && e.outcome === "miss" && e.reason === "not_found",
+    ),
+  );
+  assert.ok(
+    events.some(
+      (e) =>
+        e.type === "x_photo_cache" &&
+        e.operation === "write" &&
+        e.outcome === "skipped" &&
+        e.reason === "budget_exceeded",
+    ),
+  );
+  assert.ok(events.some((e) => e.type === "x_media_proxy" && e.cache === "blob_miss" && e.outcome === "ok"));
+
+  events.length = 0;
+  hasBlob = true;
+  const hitResponse = await proxyXMedia(request(path), upstream, auth, {
+    photoCache,
+    onEvent: (event) => events.push(event),
+  });
+  assert.equal(hitResponse.headers.get("x-nest-photo-cache"), "hit");
+  assert.ok(events.some((e) => e.type === "x_photo_cache" && e.layer === "function_blob" && e.outcome === "hit"));
+  assert.ok(events.some((e) => e.type === "x_media_proxy" && e.cache === "blob_hit" && e.outcome === "ok"));
+});

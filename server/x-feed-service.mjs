@@ -3,7 +3,8 @@
 // through server/api-handler.mjs.
 import { mediaDimensions, parseMediaSource } from "../shared/media-sources.mjs";
 import { normalizedArticleLinks } from "../shared/article-links.mjs";
-import { enrichArticleDocuments } from "./x-article-document.mjs";
+import { ARTICLE_REVALIDATE_TTL_MS, enrichArticleDocuments } from "./x-article-document.mjs";
+import { createTelemetryEmitter } from "./telemetry.mjs";
 import { X_USER_ID as USER_ID, X_USERNAME as USERNAME } from "../shared/x-account.mjs";
 
 const X_API = "https://api.x.com/2";
@@ -103,6 +104,7 @@ async function getXJson(url, token, fetchImpl, { allowPartialErrors = false } = 
       signal: controller.signal,
     });
     if (!response.ok) {
+      /** @type {Error & { status?: number }} */
       const error = new Error(`X API returned ${response.status}`);
       error.status = response.status;
       throw error;
@@ -244,8 +246,13 @@ export function createXFeedService({
   fetchImpl = globalThis.fetch,
   // Offline API fixtures opt in with an explicit public-page transport.
   articleFetchImpl = fetchImpl === globalThis.fetch ? globalThis.fetch : null,
+  articleCache = null,
+  articleRevalidateMs = ARTICLE_REVALIDATE_TTL_MS,
+  defer = (task) => void Promise.resolve(task).catch(() => {}),
+  onEvent = null,
   now = Date.now,
 } = {}) {
+  const emit = createTelemetryEmitter(onEvent);
   let user = null;
   let userAt = 0;
   let userInFlight = null;
@@ -264,6 +271,9 @@ export function createXFeedService({
   let cachedProfile = null;
   let profileRetryAt = 0;
   let profileInFlight = null;
+  let refreshCount = 0;
+  let pinnedRetryCount = 0;
+  let profileRefreshCount = 0;
 
   async function lookupUser() {
     async function lookup(mode) {
@@ -460,6 +470,13 @@ export function createXFeedService({
       mergeArticles(foundArticles, articlesAvailable && fullRefresh ? [] : (cached?.articles ?? [])),
       cached?.articles,
       articleFetchImpl,
+      {
+        articleCache,
+        defer,
+        now,
+        revalidateMs: articleRevalidateMs,
+        onEvent,
+      },
     );
     const articlesStatus = articlesAvailable
       ? articles.length
@@ -497,15 +514,31 @@ export function createXFeedService({
   }
 
   async function getProfile() {
-    if (!token?.trim()) return { status: "unavailable" };
+    if (!token?.trim()) {
+      emit({ type: "x_profile", outcome: "unavailable", reason: "missing_token", refreshCount: profileRefreshCount });
+      return { status: "unavailable" };
+    }
     function lastKnown() {
       // Keep the last successful profile, but never report it as a fresh success.
       return cachedProfile ? { ...cachedProfile, status: "stale" } : { status: "unavailable" };
     }
-    if (now() < profileRetryAt) return lastKnown();
+    if (now() < profileRetryAt) {
+      const fallback = lastKnown();
+      emit({
+        type: "x_profile",
+        outcome: "backoff_cached",
+        status: fallback.status,
+        refreshCount: profileRefreshCount,
+        durationMs: 0,
+      });
+      return fallback;
+    }
     // Concurrent profile calls share one lookup instead of one upstream request each.
     if (!profileInFlight) {
       profileInFlight = (async () => {
+        const startedAt = now();
+        const wasUserCached = Boolean(user && startedAt - userAt < USER_CACHE_TTL_MS && cachedProfile);
+        if (!wasUserCached) profileRefreshCount += 1;
         try {
           const current = await getUser();
           cachedProfile = {
@@ -517,11 +550,27 @@ export function createXFeedService({
             },
           };
           profileRetryAt = 0;
+          emit({
+            type: "x_profile",
+            outcome: wasUserCached ? "memory_hit" : "refresh",
+            status: "ok",
+            refreshCount: profileRefreshCount,
+            durationMs: Math.max(0, now() - startedAt),
+          });
           return cachedProfile;
         } catch {
           // A short failure backoff stops a burst of failed lookups from repeating.
           profileRetryAt = now() + ERROR_RETRY_MS;
-          return lastKnown();
+          const fallback = lastKnown();
+          emit({
+            type: "x_profile",
+            outcome: fallback.status === "stale" ? "stale_fallback" : "unavailable",
+            reason: "upstream_error",
+            status: fallback.status,
+            refreshCount: profileRefreshCount,
+            durationMs: Math.max(0, now() - startedAt),
+          });
+          return fallback;
         } finally {
           profileInFlight = null;
         }
@@ -531,18 +580,44 @@ export function createXFeedService({
   }
 
   async function getFeed() {
-    if (!token?.trim()) return unavailable();
+    if (!token?.trim()) {
+      emit({ type: "x_feed", outcome: "unavailable", reason: "missing_token", refreshCount });
+      return unavailable();
+    }
     if (inFlight) return inFlight;
     if (cached && now() - cachedAt < CACHE_TTL_MS) {
       const retryArticles = !["ok", "none"].includes(cached.articlesStatus) && now() >= articlesRetryAt;
       if (!retryArticles) {
-        if (["ok", "none"].includes(cached.pinnedStatus) || now() < pinnedRetryAt) return cached;
+        if (["ok", "none"].includes(cached.pinnedStatus) || now() < pinnedRetryAt) {
+          emit({
+            type: "x_feed",
+            outcome: "memory_hit",
+            refreshCount,
+            durationMs: 0,
+            status: cached.status,
+            pinnedStatus: cached.pinnedStatus,
+            articlesStatus: cached.articlesStatus,
+          });
+          return cached;
+        }
         // Retry only the failed pin. Keep the timeline's original freshness timestamp
         // and author/pin pair, even if the standalone profile lookup has since changed.
+        const pinStartedAt = now();
+        pinnedRetryCount += 1;
         inFlight = fetchPinnedPost(cachedAuthor, cachedPinnedId)
           .then((pinned) => {
             cached = { ...cached, pinnedPost: pinned.post, pinnedStatus: pinned.status };
             pinnedRetryAt = ["ok", "none"].includes(pinned.status) ? 0 : now() + ERROR_RETRY_MS;
+            emit({
+              type: "x_feed",
+              outcome: "pinned_retry",
+              refreshCount,
+              pinnedRetryCount,
+              durationMs: Math.max(0, now() - pinStartedAt),
+              status: cached.status,
+              pinnedStatus: pinned.status,
+              articlesStatus: cached.articlesStatus,
+            });
             return cached;
           })
           .finally(() => {
@@ -561,7 +636,19 @@ export function createXFeedService({
           }
         : unavailable();
     }
-    if (now() < retryAt) return lastKnown();
+    if (now() < retryAt) {
+      const fallback = lastKnown();
+      emit({
+        type: "x_feed",
+        outcome: "backoff_cached",
+        refreshCount,
+        durationMs: 0,
+        status: fallback.status,
+      });
+      return fallback;
+    }
+    const refreshStartedAt = now();
+    refreshCount += 1;
     inFlight = fetchFeed()
       .then(({ result, latestId, pinnedId, author, fullRefresh }) => {
         cached = result;
@@ -573,15 +660,33 @@ export function createXFeedService({
         articlesRetryAt = ["ok", "none"].includes(result.articlesStatus) ? 0 : cachedAt + ERROR_RETRY_MS;
         if (fullRefresh) fullRefreshAt = cachedAt;
         retryAt = 0;
+        emit({
+          type: "x_feed",
+          outcome: fullRefresh ? "full_refresh" : "incremental_refresh",
+          refreshCount,
+          durationMs: Math.max(0, cachedAt - refreshStartedAt),
+          status: result.status,
+          pinnedStatus: result.pinnedStatus,
+          articlesStatus: result.articlesStatus,
+        });
         return result;
       })
       .catch(() => {
-        retryAt = now() + ERROR_RETRY_MS;
+        const failedAt = now();
+        retryAt = failedAt + ERROR_RETRY_MS;
         articlesRetryAt = retryAt;
         // A retry for partial Article data may fail while ordinary posts are still
         // fresh. Retain that successful response without renewing its freshness.
-        if (cached && now() - cachedAt < CACHE_TTL_MS) return cached;
-        return lastKnown();
+        const fallback = cached && failedAt - cachedAt < CACHE_TTL_MS ? cached : lastKnown();
+        emit({
+          type: "x_feed",
+          outcome: fallback.status === "unavailable" ? "unavailable" : "stale_fallback",
+          reason: "upstream_error",
+          refreshCount,
+          durationMs: Math.max(0, failedAt - refreshStartedAt),
+          status: fallback.status,
+        });
+        return fallback;
       })
       .finally(() => {
         inFlight = null;

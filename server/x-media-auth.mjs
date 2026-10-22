@@ -20,6 +20,10 @@ export function signingSecret(env = globalThis.process?.env ?? {}) {
   return env.X_MEDIA_SIGNING_SECRET || env.X_BEARER_TOKEN || "";
 }
 
+/**
+ * @param {Request} request
+ * @returns {boolean}
+ */
 export function validMediaQuery(request) {
   const params = new URL(request.url).searchParams;
   const allowed = new Set(["url", "expires", "signature", "retry", "lightboxRetry", "format"]);
@@ -65,6 +69,12 @@ function payload(kind, source, expires, format = null) {
   return encoder.encode(`little-nest/media/v1\n${kind}\n${expires}\n${source.href}${format ? `\n${format}` : ""}`);
 }
 
+/**
+ * @param {string} value
+ * @param {import("../shared/contracts.mjs").MediaKind} kind
+ * @param {import("../shared/contracts.mjs").MediaSigningOptions} [options]
+ * @returns {Promise<string | null>}
+ */
 export async function signedMediaUrl(value, kind, { secret = signingSecret(), now = Date.now(), format = null } = {}) {
   const source = parseMediaSource(value, kind);
   if (
@@ -84,6 +94,13 @@ export async function signedMediaUrl(value, kind, { secret = signingSecret(), no
   return `/api/x-${kind === "image" ? "media" : "video"}?url=${encodeURIComponent(source.href)}&expires=${expires}&signature=${signature}${format ? `&format=${format}` : ""}`;
 }
 
+/**
+ * @param {Request} request
+ * @param {URL | null} source
+ * @param {import("../shared/contracts.mjs").MediaKind} kind
+ * @param {import("../shared/contracts.mjs").MediaSigningOptions} [options]
+ * @returns {Promise<boolean>}
+ */
 export async function authorizedMediaRequest(
   request,
   source,
@@ -136,12 +153,22 @@ async function avatarProxy(value, options) {
   return normal && highRes ? { normal, highRes } : undefined;
 }
 
+/**
+ * @param {import("../shared/contracts.mjs").ProfileResponse} result
+ * @param {import("../shared/contracts.mjs").MediaSigningOptions} [options]
+ * @returns {Promise<import("../shared/contracts.mjs").ProfileResponse>}
+ */
 export async function authorizeProfile(result, options) {
   if (!result?.profile) return result;
   const proxy = await avatarProxy(result.profile.avatar, options);
   return { ...result, profile: { ...result.profile, ...(proxy ? { avatarProxy: proxy } : {}) } };
 }
 
+/**
+ * @param {import("../shared/contracts.mjs").FeedResponse} result
+ * @param {import("../shared/contracts.mjs").MediaSigningOptions} [options]
+ * @returns {Promise<import("../shared/contracts.mjs").FeedResponse>}
+ */
 export async function authorizeFeed(result, options) {
   async function postWithMedia(post) {
     if (!post) return post;

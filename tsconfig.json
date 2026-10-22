@@ -1,0 +1,40 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "skipLibCheck": true
+  },
+  "include": [
+    "types/**/*.d.ts",
+    "shared/**/*.mjs",
+    "server/api-handler.mjs",
+    "server/article-cache.mjs",
+    "server/media-request-policy.mjs",
+    "server/photo-cache-warm.mjs",
+    "server/photo-cache.mjs",
+    "server/telemetry.mjs",
+    "server/x-article-document.mjs",
+    "server/x-feed-service.mjs",
+    "server/x-image-webp.mjs",
+    "server/x-media-auth.mjs",
+    "server/x-media-legacy.mjs",
+    "server/x-media.mjs",
+    "server/x-video.mjs",
+    "api/*.js",
+    "worker/index.js",
+    "src/request-cache.js",
+    "src/feed-cache.js",
+    "src/profile-cache.js",
+    "src/media-urls.js",
+    "src/utils/article-reading.js",
+    "src/utils/feed-reading.js"
+  ]
+}

@@ -8,6 +8,11 @@ export { canPrefetch };
 const KEY = "little-nest-feed-v7";
 const MAX_AGE = SUCCESS_MAX_AGE_MS;
 
+/**
+ * @param {Pick<Storage, "getItem">} storage
+ * @param {number} [now]
+ * @returns {{ savedAt: number, feed: import("../shared/contracts.mjs").FeedResponse } | null}
+ */
 export function readFeedCache(storage, now = Date.now()) {
   try {
     const cached = JSON.parse(storage.getItem(KEY));
@@ -26,6 +31,11 @@ export function readFeedCache(storage, now = Date.now()) {
   }
 }
 
+/**
+ * @param {Pick<Storage, "setItem">} storage
+ * @param {import("../shared/contracts.mjs").FeedResponse} feed
+ * @param {number} [now]
+ */
 export function writeFeedCache(storage, feed, now = Date.now()) {
   // Never extend the lifetime of stale data after an upstream failure.
   if (feed?.status !== "ok" || !Array.isArray(feed.posts)) return;
@@ -51,6 +61,9 @@ const request = createSharedRequest({
   },
 });
 
+/**
+ * @returns {{ savedAt: number, feed: import("../shared/contracts.mjs").FeedResponse } | null}
+ */
 export function getFeedSnapshot() {
   if (!request.getSnapshot()) {
     try {
@@ -64,6 +77,10 @@ export function getFeedSnapshot() {
   return snapshot ? { savedAt: snapshot.savedAt, feed: cacheArticleData(snapshot.value) } : null;
 }
 
+/**
+ * @param {{ force?: boolean }} [options]
+ * @returns {Promise<import("../shared/contracts.mjs").FeedResponse>}
+ */
 export function fetchFeed(options) {
   getFeedSnapshot();
   return request.load(options);

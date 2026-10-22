@@ -2,11 +2,20 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
 import {
+  ARTICLE_DOCUMENT_VERSION,
+  ARTICLE_REVALIDATE_TTL_MS,
   articleDocumentFromHtml,
   normalizedArticleDocument,
   loadArticleDocument,
   enrichArticleDocuments,
 } from "../server/x-article-document.mjs";
+import {
+  articleCachePath,
+  createBlobArticleCache,
+  parseArticleDocumentRecord,
+  serializeArticleDocumentRecord,
+} from "../server/article-cache.mjs";
+import { authorizeFeed, authorizedMediaRequest, parseMediaSource } from "../server/x-media-auth.mjs";
 
 const document = JSON.parse(readFileSync(new URL("../scripts/qa/fixtures/x-article-document.json", import.meta.url)));
 const media = [document.cover_media_results.result, ...document.media_entities].map((item) => ({
@@ -122,5 +131,144 @@ test("loads only the same public article, without API credentials, and handles u
       })
     )[0].blocks,
     undefined,
+  );
+});
+
+test("persists only verified unsigned Article structures and validates version, text, cover and media identity", async () => {
+  const blocks = normalizedArticleDocument(document, article);
+  assert.equal(articleCachePath(article.id), `x-articles/document-v1/${article.id}.json`);
+  assert.equal(articleCachePath("../bad"), null);
+
+  const bytes = serializeArticleDocumentRecord(article, blocks, 1_700_000_000_000);
+  assert.ok(bytes instanceof Uint8Array);
+  const raw = new TextDecoder().decode(bytes);
+  assert.equal(raw.includes("/api/x-media"), false);
+  const parsed = parseArticleDocumentRecord(raw, article);
+  assert.equal(parsed.version, ARTICLE_DOCUMENT_VERSION);
+  assert.equal(parsed.validatedAt, 1_700_000_000_000);
+  assert.deepEqual(parsed.blocks, blocks);
+
+  assert.equal(parseArticleDocumentRecord(raw, { ...article, text: "Modified text" }), null);
+  assert.equal(parseArticleDocumentRecord(raw, { ...article, coverUrl: null }), null);
+  assert.equal(parseArticleDocumentRecord(raw, { ...article, media: media.slice(0, 4) }), null);
+
+  const wrongVersion = JSON.stringify({ ...JSON.parse(raw), version: ARTICLE_DOCUMENT_VERSION + 1 });
+  assert.equal(parseArticleDocumentRecord(wrongVersion, article), null);
+
+  const signedBlocks = blocks.map((block) =>
+    block.type === "photo" ? { ...block, url: `/api/x-media?url=${encodeURIComponent(block.url)}` } : block,
+  );
+  assert.equal(serializeArticleDocumentRecord(article, signedBlocks, 1_700_000_000_000), null);
+});
+
+test("uses cached Article blocks first, revalidates after TTL, and never overwrites a valid snapshot on failure", async () => {
+  const store = new Map();
+  let time = 1_700_000_000_000;
+  let puts = 0;
+  const events = [];
+  const cache = createBlobArticleCache({
+    env: { BLOB_READ_WRITE_TOKEN: "test-blob-token" },
+    now: () => time,
+    onEvent: (event) => events.push(event),
+    sdk: {
+      get: async (pathname) => {
+        const bytes = store.get(pathname);
+        if (!bytes) return null;
+        return {
+          statusCode: 200,
+          stream: new Response(bytes).body,
+          blob: { size: bytes.byteLength, contentType: "application/json" },
+        };
+      },
+      put: async (pathname, payload, options) => {
+        puts += 1;
+        assert.equal(options.access, "private");
+        assert.equal(options.allowOverwrite, true);
+        assert.equal(options.addRandomSuffix, false);
+        store.set(pathname, payload);
+      },
+    },
+  });
+
+  let htmlCalls = 0;
+  let currentDoc = document;
+  let failHtml = false;
+  const tasks = [];
+  const runEnrich = (previous) =>
+    enrichArticleDocuments(
+      [article],
+      previous,
+      async () => {
+        htmlCalls += 1;
+        if (failHtml) return new Response("Unavailable", { status: 503 });
+        return new Response(htmlFor(currentDoc));
+      },
+      {
+        articleCache: cache,
+        defer: (task) => tasks.push(task),
+        now: () => time,
+        onEvent: (event) => events.push(event),
+      },
+    );
+
+  // 1. Initial miss fetches public HTML and persists unsigned blocks in background.
+  const first = await runEnrich([]);
+  await Promise.all(tasks.splice(0));
+  assert.equal(htmlCalls, 1);
+  assert.equal(puts, 1);
+  assert.equal(first[0].blocks.filter((b) => b.type === "photo").length, 5);
+
+  // 2. Same-instance refresh within 24h uses memory cache without reading Blob or HTML.
+  time += 15 * 60 * 1000;
+  const memoryHit = await runEnrich(first);
+  assert.equal(htmlCalls, 1);
+  assert.deepEqual(memoryHit[0].blocks, first[0].blocks);
+  assert.equal(events.at(-1).outcome, "memory_hit");
+
+  // 3. Cold-start instance within 24h reads Blob snapshot and skips HTML scraping.
+  time += 2 * 60 * 60 * 1000;
+  const blobHit = await runEnrich([]);
+  assert.equal(htmlCalls, 1);
+  assert.deepEqual(blobHit[0].blocks, first[0].blocks);
+  assert.equal(events.at(-1).outcome, "blob_hit");
+
+  // 4. After 24h TTL, a failed HTML revalidation keeps the verified snapshot and does not overwrite Blob.
+  time += ARTICLE_REVALIDATE_TTL_MS;
+  failHtml = true;
+  const fallback = await runEnrich([]);
+  await Promise.all(tasks.splice(0));
+  assert.equal(htmlCalls, 2);
+  assert.equal(puts, 1, "failed revalidation must never overwrite the valid snapshot");
+  assert.deepEqual(fallback[0].blocks, first[0].blocks);
+  assert.equal(events.at(-1).outcome, "stale_fallback");
+
+  // 5. When HTML recovers after TTL, link/position changes are picked up even with identical text and media.
+  failHtml = false;
+  const updatedDoc = structuredClone(document);
+  const linkEntity = updatedDoc.content_state.entity_map.find((item) => item.value?.type === "LINK");
+  linkEntity.value.data.url = "https://www.touchgal.ink/updated";
+  currentDoc = updatedDoc;
+  const revalidated = await runEnrich(fallback);
+  await Promise.all(tasks.splice(0));
+  assert.equal(htmlCalls, 3);
+  assert.equal(puts, 2);
+  assert.equal(events.filter((e) => e.type === "x_article_document").at(-1).outcome, "revalidated");
+  assert.equal(events.filter((e) => e.type === "x_article_cache").at(-1).outcome, "written");
+  assert.ok(revalidated[0].blocks.some((b) => b.links?.some((l) => l.url === "https://www.touchgal.ink/updated")));
+
+  // 6. Unsigned cached blocks receive fresh media signatures on each response day.
+  const dayOne = await authorizeFeed({ status: "ok", posts: [], articles: revalidated }, { secret: "s", now: time });
+  const dayThree = await authorizeFeed(
+    { status: "ok", posts: [], articles: revalidated },
+    { secret: "s", now: time + 3 * 86400 * 1000 },
+  );
+  assert.notEqual(dayOne.articles[0].media[0].proxyUrl, dayThree.articles[0].media[0].proxyUrl);
+  const req = new Request(new URL(dayThree.articles[0].media[0].proxyUrl, "https://nest.test"));
+  assert.equal(
+    await authorizedMediaRequest(req, parseMediaSource(dayThree.articles[0].media[0].url, "image"), "image", {
+      secret: "s",
+      now: time + 3 * 86400 * 1000,
+    }),
+    true,
   );
 });

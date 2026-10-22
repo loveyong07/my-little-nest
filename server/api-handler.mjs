@@ -27,22 +27,55 @@ function json(body, { status = 200, headers = {} } = {}) {
 }
 
 /**
- * @param {Record<string, string | undefined>} env X_BEARER_TOKEN and optional X_MEDIA_SIGNING_SECRET.
+ * @typedef {{
+ *   fetchImpl?: typeof globalThis.fetch,
+ *   articleFetchImpl?: typeof globalThis.fetch | null,
+ *   articleCache?: import("../shared/contracts.mjs").ArticleCacheAdapter | null,
+ *   defer?: (task: Promise<unknown>) => void,
+ *   onEvent?: import("./telemetry.mjs").TelemetryEmitter | null,
+ *   serviceFactory?: typeof createXFeedService,
+ *   mediaOptions?: {
+ *     connectTimeoutMs?: number,
+ *     stallTimeoutMs?: number,
+ *     totalTimeoutMs?: number,
+ *     webpEncoder?: (image: Uint8Array) => Promise<Uint8Array | null>,
+ *     photoCache?: import("../shared/contracts.mjs").PhotoCacheAdapter | null,
+ *     defer?: (task: Promise<unknown>) => void,
+ *     onEvent?: import("./telemetry.mjs").TelemetryEmitter | null,
+ *     now?: () => number,
+ *   },
+ * }} ApiHandlerOptions
+ */
+
+/**
+ * @param {Record<string, string | undefined>} [env] X_BEARER_TOKEN and optional X_MEDIA_SIGNING_SECRET.
+ * @param {ApiHandlerOptions} [options]
  * @returns {(request: Request) => Promise<Response | null>} null for paths outside the API.
  */
 export function createApiHandler(
   env = {},
   {
-    fetchImpl = (...args) => globalThis.fetch(...args),
+    fetchImpl = (input, init) => globalThis.fetch(input, init),
     articleFetchImpl = fetchImpl,
+    articleCache = null,
+    defer = undefined,
+    onEvent = null,
     serviceFactory = createXFeedService,
-    mediaOptions,
+    mediaOptions = undefined,
   } = {},
 ) {
   const authOptions = { secret: signingSecret(env) };
+  const resolvedDefer = defer ?? mediaOptions?.defer;
   let service = null;
   const feedService = () =>
-    (service ??= serviceFactory({ token: env.X_BEARER_TOKEN ?? "", fetchImpl, articleFetchImpl }));
+    (service ??= serviceFactory({
+      token: env.X_BEARER_TOKEN ?? "",
+      fetchImpl,
+      articleFetchImpl,
+      articleCache,
+      ...(resolvedDefer ? { defer: resolvedDefer } : {}),
+      ...(onEvent ? { onEvent } : {}),
+    }));
 
   async function feedRoute(request, route) {
     const empty = route === "posts" ? { status: "unavailable", posts: [] } : { status: "unavailable" };
@@ -58,15 +91,17 @@ export function createApiHandler(
       return json({ ...empty, status: "invalid_request" }, { status: 400 });
     }
     try {
-      const result =
-        route === "posts"
-          ? await authorizeFeed(await feedService()(), authOptions)
-          : await authorizeProfile(await feedService().getProfile(), authOptions);
-      const complete =
-        result?.status === "ok" &&
-        (route === "profile" ||
-          (["ok", "none"].includes(result.pinnedStatus) && ["ok", "none"].includes(result.articlesStatus)));
-      const cdn = complete ? JSON_CDN_CACHE_CONTROL : JSON_CDN_CACHE_CONTROL_RETRY;
+      if (route === "posts") {
+        const result = await authorizeFeed(await feedService()(), authOptions);
+        const complete =
+          result?.status === "ok" &&
+          ["ok", "none"].includes(result.pinnedStatus) &&
+          ["ok", "none"].includes(result.articlesStatus);
+        const cdn = complete ? JSON_CDN_CACHE_CONTROL : JSON_CDN_CACHE_CONTROL_RETRY;
+        return json(result, { headers: { "Vercel-CDN-Cache-Control": cdn } });
+      }
+      const result = await authorizeProfile(await feedService().getProfile(), authOptions);
+      const cdn = result?.status === "ok" ? JSON_CDN_CACHE_CONTROL : JSON_CDN_CACHE_CONTROL_RETRY;
       return json(result, { headers: { "Vercel-CDN-Cache-Control": cdn } });
     } catch {
       // A failed lookup still answers, so no runtime is left with a hanging request.
@@ -76,7 +111,13 @@ export function createApiHandler(
 
   return async function handleApi(request) {
     const { pathname } = new URL(request.url);
-    if (pathname === "/api/x-media") return proxyXMedia(request, fetchImpl, authOptions, mediaOptions);
+    if (pathname === "/api/x-media") {
+      return proxyXMedia(request, fetchImpl, authOptions, {
+        ...mediaOptions,
+        ...(resolvedDefer ? { defer: resolvedDefer } : {}),
+        ...(onEvent && !mediaOptions?.onEvent ? { onEvent } : {}),
+      });
+    }
     if (pathname === "/api/x-video") return proxyXVideo(request, fetchImpl, authOptions);
     if (pathname === "/api/x-posts") return feedRoute(request, "posts");
     if (pathname === "/api/x-profile") return feedRoute(request, "profile");

@@ -1,6 +1,137 @@
 import { safeArticleLink } from "../shared/article-links.mjs";
+import { parseMediaSource } from "../shared/media-sources.mjs";
+import { createTelemetryEmitter } from "./telemetry.mjs";
 
+export const ARTICLE_DOCUMENT_VERSION = 1;
+export const ARTICLE_REVALIDATE_TTL_MS = 24 * 60 * 60 * 1000;
 const MAX_PAGE_BYTES = 2 * 1024 * 1024;
+const validatedAtByBlocks = new WeakMap();
+
+/**
+ * @typedef {import("../shared/contracts.mjs").ArticleLink} ArticleLink
+ * @typedef {import("../shared/contracts.mjs").ArticleBlock} ArticleBlock
+ * @typedef {import("../shared/contracts.mjs").MediaItem} ArticleMediaItem
+ * @typedef {import("../shared/contracts.mjs").ArticleItem} ArticleItem
+ */
+
+/**
+ * Extracts canonical unsigned media descriptors from an Article.
+ * Rejects signed proxy URLs or untrusted hosts.
+ *
+ * @param {ArticleMediaItem[] | undefined} media
+ * @returns {{ type: "photo" | "video", url: string }[] | null}
+ */
+export function canonicalArticleMedia(media = []) {
+  if (!Array.isArray(media)) return null;
+  /** @type {{ type: "photo" | "video", url: string }[]} */
+  const canonical = [];
+  for (const item of media) {
+    /** @type {"photo" | "video" | null} */
+    const type = (item?.type ?? "photo") === "video" ? "video" : (item?.type ?? "photo") === "photo" ? "photo" : null;
+    const kind = type === "video" ? "video" : "image";
+    if (!type || typeof item?.url !== "string" || parseMediaSource(item.url, kind)?.href !== item.url) {
+      return null;
+    }
+    canonical.push({ type, url: item.url });
+  }
+  return canonical;
+}
+
+/**
+ * Verifies that a cached or previous Article snapshot matches the current Article's
+ * identity, text, cover image and unsigned media sequence.
+ *
+ * @param {{ id?: string, text?: string, coverUrl?: string | null, media?: ArticleMediaItem[] } | null | undefined} snapshot
+ * @param {ArticleItem | null | undefined} article
+ * @returns {boolean}
+ */
+export function sameArticleIdentity(snapshot, article) {
+  if (!snapshot || !article || typeof article.id !== "string" || typeof article.text !== "string") return false;
+  if (snapshot.id !== undefined && snapshot.id !== article.id) return false;
+  if (snapshot.text !== article.text) return false;
+  if ((snapshot.coverUrl ?? null) !== (article.coverUrl ?? null)) return false;
+  const left = canonicalArticleMedia(snapshot.media ?? []);
+  const right = canonicalArticleMedia(article.media ?? []);
+  if (!left || !right || left.length !== right.length) return false;
+  return left.every((item, index) => item.type === right[index].type && item.url === right[index].url);
+}
+
+/**
+ * Validates and normalizes Article blocks against the Article's text, cover and media.
+ * Ensures only unsigned source photo URLs and safe HTTP(S) links are accepted.
+ *
+ * @param {unknown} blocks
+ * @param {ArticleItem | null | undefined} article
+ * @returns {ArticleBlock[] | null}
+ */
+export function sanitizeArticleBlocks(blocks, article) {
+  if (!Array.isArray(blocks) || blocks.length === 0 || blocks.length > 5000 || typeof article?.text !== "string") {
+    return null;
+  }
+  const coverUrl = article.coverUrl ?? null;
+  if (coverUrl !== null && parseMediaSource(coverUrl, "image")?.href !== coverUrl) return null;
+  const media = canonicalArticleMedia(article.media ?? []);
+  if (!media) return null;
+  const allowedPhotos = new Set(media.filter((item) => item.type === "photo").map((item) => item.url));
+
+  /** @type {ArticleBlock[]} */
+  const sanitized = [];
+  for (const block of blocks) {
+    if (!block || typeof block !== "object") return null;
+    if (block.type === "divider") {
+      sanitized.push({ type: "divider" });
+      continue;
+    }
+    if (block.type === "photo") {
+      if (typeof block.url !== "string" || !allowedPhotos.has(block.url)) return null;
+      sanitized.push({ type: "photo", url: block.url });
+      continue;
+    }
+    if (block.type === "text" && typeof block.text === "string") {
+      /** @type {ArticleLink[] | undefined} */
+      let links;
+      if (block.links !== undefined) {
+        if (!Array.isArray(block.links) || block.links.length === 0) return null;
+        links = [];
+        for (const link of block.links) {
+          const url = safeArticleLink(link?.url);
+          if (typeof link?.text !== "string" || !link.text || !block.text.includes(link.text) || !url) {
+            return null;
+          }
+          links.push({ text: link.text, url });
+        }
+      }
+      sanitized.push({ type: "text", text: block.text, ...(links ? { links } : {}) });
+      continue;
+    }
+    return null;
+  }
+
+  // An SSR page or cached snapshot may lag behind a fresh API edit. Never apply old
+  // positions to new text, or publish a partial document that omits an attached photo.
+  const normalize = (text) => text.replace(/\s/g, "");
+  if (
+    normalize(
+      sanitized
+        .filter((block) => block.type === "text")
+        .map((block) => block.text)
+        .join("\n"),
+    ) !== normalize(article.text)
+  )
+    return null;
+  const positionedPhotos = new Set(sanitized.filter((block) => block.type === "photo").map((block) => block.url));
+  if ([...allowedPhotos].some((url) => url !== coverUrl && !positionedPhotos.has(url))) return null;
+  return sanitized;
+}
+
+/**
+ * @param {unknown} blocks
+ * @param {ArticleItem | null | undefined} article
+ * @returns {boolean}
+ */
+export function validArticleBlocks(blocks, article) {
+  return sanitizeArticleBlocks(blocks, article) !== null;
+}
 
 // Parse data literals only. The public page's hydration payload is a JSON string
 // inside JavaScript; executing that script would run untrusted remote code.
@@ -61,21 +192,7 @@ export function normalizedArticleDocument(document, article) {
     });
     blocks.push({ type: "text", text: block.text, ...(links.length ? { links } : {}) });
   }
-  // An SSR page may lag behind a fresh API edit. Never apply old positions to new
-  // text, or publish a partial document that omits one of the attached photos.
-  const normalize = (text) => text.replace(/\s/g, "");
-  if (
-    normalize(
-      blocks
-        .filter((block) => block.type === "text")
-        .map((block) => block.text)
-        .join("\n"),
-    ) !== normalize(article.text)
-  )
-    return null;
-  const positionedPhotos = new Set(blocks.filter((block) => block.type === "photo").map((block) => block.url));
-  if ([...allowedPhotos].some((url) => url !== article.coverUrl && !positionedPhotos.has(url))) return null;
-  return blocks;
+  return sanitizeArticleBlocks(blocks, article);
 }
 
 export async function loadArticleDocument(article, fetchImpl, signal) {
@@ -107,27 +224,135 @@ export async function loadArticleDocument(article, fetchImpl, signal) {
   }
 }
 
-export async function enrichArticleDocuments(articles, previous, fetchImpl) {
-  if (!fetchImpl || !articles.length) return articles;
-  const result = [...articles];
+export async function enrichArticleDocuments(
+  articles,
+  previous,
+  fetchImpl,
+  {
+    articleCache = null,
+    defer = (task) => void Promise.resolve(task).catch(() => {}),
+    now = Date.now,
+    revalidateMs = ARTICLE_REVALIDATE_TTL_MS,
+    onEvent = null,
+  } = {},
+) {
+  if (!articles.length || (!fetchImpl && !articleCache && !previous?.length)) return articles;
+  const emit = createTelemetryEmitter(onEvent);
+  const result = articles.map((article) => {
+    const copy = { ...article };
+    delete copy.blocks;
+    return copy;
+  });
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 6000);
   let next = 0;
   try {
     await Promise.all(
-      Array.from({ length: Math.min(4, articles.length) }, async () => {
-        while (next < articles.length && !controller.signal.aborted) {
+      Array.from({ length: Math.min(4, result.length) }, async () => {
+        while (next < result.length && !controller.signal.aborted) {
           const index = next++;
-          const article = articles[index];
-          const blocks = await loadArticleDocument(article, fetchImpl, controller.signal);
+          const article = result[index];
+          const startedAt = now();
           const old = previous?.find((item) => item.id === article.id);
-          const retained =
-            old?.text === article.text &&
-            old?.coverUrl === article.coverUrl &&
-            JSON.stringify(old?.media) === JSON.stringify(article.media)
-              ? old?.blocks
+          const memoryBlocks =
+            old && sameArticleIdentity(old, article) ? sanitizeArticleBlocks(old.blocks, article) : null;
+          const memoryValidatedAt = memoryBlocks ? validatedAtByBlocks.get(old.blocks) : undefined;
+          const checkTime = now();
+          if (
+            memoryBlocks &&
+            Number.isFinite(memoryValidatedAt) &&
+            checkTime >= memoryValidatedAt &&
+            checkTime - memoryValidatedAt < revalidateMs
+          ) {
+            validatedAtByBlocks.set(memoryBlocks, memoryValidatedAt);
+            result[index] = { ...article, blocks: memoryBlocks };
+            emit({
+              type: "x_article_document",
+              articleId: article.id,
+              outcome: "memory_hit",
+              durationMs: Math.max(0, checkTime - startedAt),
+            });
+            continue;
+          }
+
+          let cachedEntry = null;
+          if (articleCache) {
+            try {
+              cachedEntry = await articleCache.read(article, { signal: controller.signal });
+            } catch {
+              cachedEntry = null;
+            }
+          }
+          const cachedBlocks =
+            cachedEntry && sameArticleIdentity(cachedEntry, article)
+              ? sanitizeArticleBlocks(cachedEntry.blocks, article)
               : null;
-          if (blocks || retained) result[index] = { ...article, blocks: blocks ?? retained };
+          const cachedValidatedAt =
+            cachedBlocks && Number.isFinite(cachedEntry.validatedAt) ? cachedEntry.validatedAt : undefined;
+          const afterCacheTime = now();
+          if (
+            cachedBlocks &&
+            Number.isFinite(cachedValidatedAt) &&
+            afterCacheTime >= cachedValidatedAt &&
+            afterCacheTime - cachedValidatedAt < revalidateMs
+          ) {
+            validatedAtByBlocks.set(cachedBlocks, cachedValidatedAt);
+            result[index] = { ...article, blocks: cachedBlocks };
+            emit({
+              type: "x_article_document",
+              articleId: article.id,
+              outcome: "blob_hit",
+              durationMs: Math.max(0, afterCacheTime - startedAt),
+            });
+            continue;
+          }
+
+          const hadVerifiedFallback = Boolean(memoryBlocks || cachedBlocks);
+          const blocks = fetchImpl ? await loadArticleDocument(article, fetchImpl, controller.signal) : null;
+          const finishedAt = now();
+          if (blocks) {
+            validatedAtByBlocks.set(blocks, finishedAt);
+            result[index] = { ...article, blocks };
+            if (articleCache) {
+              const pending = Promise.resolve()
+                .then(() => articleCache.write(article, blocks, { validatedAt: finishedAt }))
+                .catch(() => {});
+              try {
+                defer(pending);
+              } catch {
+                // Some local runtimes have no background-task context.
+              }
+            }
+            emit({
+              type: "x_article_document",
+              articleId: article.id,
+              outcome: hadVerifiedFallback ? "revalidated" : "fetched",
+              durationMs: Math.max(0, finishedAt - startedAt),
+            });
+            continue;
+          }
+
+          const retained = memoryBlocks ?? cachedBlocks;
+          const retainedAt = memoryValidatedAt ?? cachedValidatedAt;
+          if (retained) {
+            if (Number.isFinite(retainedAt)) validatedAtByBlocks.set(retained, retainedAt);
+            result[index] = { ...article, blocks: retained };
+            emit({
+              type: "x_article_document",
+              articleId: article.id,
+              outcome: "stale_fallback",
+              reason: fetchImpl ? "fetch_failed" : "fetch_disabled",
+              durationMs: Math.max(0, finishedAt - startedAt),
+            });
+          } else {
+            emit({
+              type: "x_article_document",
+              articleId: article.id,
+              outcome: "unavailable",
+              reason: fetchImpl ? "fetch_failed" : "fetch_disabled",
+              durationMs: Math.max(0, finishedAt - startedAt),
+            });
+          }
         }
       }),
     );
