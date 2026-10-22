@@ -125,6 +125,10 @@ export function HeroSection({ header, language, t, profile }) {
               {t.homePlaceLabel}
             </p>
             <p className="hero-chapter">{fantasyCopy[language].chapter}</p>
+            <div className="hero-letter-overline" aria-hidden="true">
+              <span>A LITTLE LETTER</span>
+              <span>NO. 01</span>
+            </div>
             <h1 id="page-heading" tabIndex={-1} aria-label={t.homeGreeting.join(language === "en" ? " " : "")}>
               <span className="greeting-opening" aria-hidden="true">
                 {t.homeGreeting[0]}
@@ -139,22 +143,26 @@ export function HeroSection({ header, language, t, profile }) {
               <PiFlowerLight />
               <span />
             </div>
-            <div className="profile">
-              <img
-                src={xMediaSrc(profile.avatar, true, profile.avatarProxy?.highRes) || FALLBACK_AVATAR}
-                data-avatar-low-res={xMediaSrc(profile.avatar, false, profile.avatarProxy?.normal) || undefined}
-                alt={t.profileAlt}
-                onError={handleAvatarError}
-              />
-              <div>
-                <strong>{profile.name}</strong>
-                <a href={xProfileUrl(profile.username)} target="_blank" rel="noopener noreferrer">
-                  @{profile.username}
-                </a>
+            <div className="hero-sender">
+              <div className="profile">
+                <img
+                  src={xMediaSrc(profile.avatar, true, profile.avatarProxy?.highRes) || FALLBACK_AVATAR}
+                  data-avatar-low-res={xMediaSrc(profile.avatar, false, profile.avatarProxy?.normal) || undefined}
+                  alt={t.profileAlt}
+                  onError={handleAvatarError}
+                />
+                <div>
+                  <strong>{profile.name}</strong>
+                  <a href={xProfileUrl(profile.username)} target="_blank" rel="noopener noreferrer">
+                    @{profile.username}
+                  </a>
+                </div>
+              </div>
+              <div className="hero-sender-note">
+                <p className="bio">{t.bio}</p>
+                <p className="motto">{t.motto}</p>
               </div>
             </div>
-            <p className="bio">{t.bio}</p>
-            <p className="motto">{t.motto}</p>
             <div className="hero-actions">
               <a className="primary-cta" href={pagePaths.posts}>
                 <FaXTwitter aria-hidden="true" />
@@ -185,6 +193,15 @@ export function HeroSection({ header, language, t, profile }) {
           <br />
           <time dateTime={formatLocalDate(visitDate)}>— {formatVisitDate(visitDate, language)} ✧</time>
         </span>
+        <a className="sky-letter-link" href={pagePaths.contact}>
+          {t.skyLetterAction}
+          <FaArrowRight aria-hidden="true" />
+        </a>
+      </div>
+      <div className="home-edition" aria-hidden="true">
+        <span>MY LITTLE NEST</span>
+        <span>01 / 03</span>
+        <span>SAME SKY. MORE GOOD FRIENDS.</span>
       </div>
       <DesktopStationery />
     </section>

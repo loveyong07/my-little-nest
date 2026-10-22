@@ -221,7 +221,9 @@ try {
       assert.equal(await quoteTab.getAttribute("aria-selected"), "true");
       assert.equal(await page.locator("#journal-panel-about").isVisible(), false);
       const before = await page.locator(".journal-quote p").textContent();
-      await page.locator(".journal-quote button").click();
+      await page.locator(".journal-copy").click();
+      assert.equal(await page.evaluate(() => window.__copiedText), before);
+      await page.locator(".journal-shuffle").click();
       assert.notEqual(await page.locator(".journal-quote p").textContent(), before);
       await quoteTab.focus();
       await page.keyboard.press("ArrowLeft");
@@ -291,7 +293,7 @@ try {
     try {
       await load(page, "/posts");
       const nav = page.locator(".posts-quick-nav");
-      const large = page.locator(".reading-tools button");
+      const large = page.locator(".reading-text-toggle");
       const before = await page
         .locator(".post-reading .post-text")
         .evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
@@ -337,6 +339,85 @@ try {
           .evaluate((el) => getComputedStyle(el).animationName),
         "none",
       );
+    } finally {
+      await context.close();
+    }
+  });
+  await check("story drawer search, filters, keyboard focus, independent reader selection", async () => {
+    const context = await contextFor(1440, 900);
+    const page = await context.newPage();
+    try {
+      await load(page, "/posts");
+      const trigger = page.locator(".reading-library-trigger");
+      const search = page.locator(".library-search input");
+      await trigger.click();
+      assert.equal(await page.locator(".reading-library").evaluate((el) => el.matches(":modal")), true);
+      assert.equal(await search.evaluate((el) => el === document.activeElement), true);
+      await search.fill("no-match-unique-9462");
+      assert.equal(await page.locator(".library-result").count(), 0);
+      assert.equal(await page.locator(".library-empty").isVisible(), true);
+      await page.locator(".library-empty button").click();
+      assert.equal(await page.locator(".library-result").count(), feed.posts.length + feed.articles.length + 1);
+      await page.locator(".library-filters button").nth(2).click();
+      assert.equal(await page.locator(".library-result").count(), 2);
+      await search.fill("ＳＥＣＯＮＤ");
+      assert.equal(await page.locator(".library-result").count(), 1, "full-width and case-insensitive search");
+      const postBefore = await page.locator(".post-reading .post-text").textContent();
+      await page.locator(".library-result").click();
+      await page.waitForFunction(() => !document.querySelector(".reading-library").open);
+      assert.equal(await page.locator("#x-article-title").textContent(), "A second independent article");
+      assert.equal(await page.locator(".post-reading .post-text").textContent(), postBefore);
+      await trigger.click();
+      await search.fill("");
+      await page.locator(".library-filters button").nth(1).click();
+      assert.equal(await page.locator(".library-result").count(), feed.posts.length + 1);
+      await page.keyboard.press("Escape");
+      assert.equal(await page.locator(".reading-library").isVisible(), false);
+      assert.equal(await trigger.evaluate((el) => el === document.activeElement), true);
+      await trigger.click();
+      for (let index = 0; index < 14; index++) {
+        await page.keyboard.press("Tab");
+        assert.equal(await page.locator(".reading-library").evaluate((el) => el.contains(document.activeElement)), true);
+      }
+      await page.screenshot({ path: path.join(output, "story-drawer.png") });
+      await page.keyboard.press("Escape");
+      const focus = page.locator(".reading-focus-toggle");
+      await focus.click();
+      assert.equal(await focus.getAttribute("aria-pressed"), "true");
+      await focus.click();
+      assert.equal(await focus.getAttribute("aria-pressed"), "false");
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.waitForFunction(() => !document.querySelector(".reading-library"));
+      assert.equal(await trigger.count(), 0, "desktop drawer is absent on mobile");
+    } finally {
+      await context.close();
+    }
+  });
+
+  await check("letter topic and draft produce a correctly encoded email, mobile stays original", async () => {
+    const context = await contextFor(1440, 900);
+    const page = await context.newPage();
+    try {
+      await load(page, "/contact");
+      await page.locator(".letter-topics button").nth(1).click();
+      assert.equal(await page.locator(".letter-topics button").nth(1).getAttribute("aria-pressed"), "true");
+      await page.locator(".letter-draft summary").click();
+      const draft = "你好，初咏。\n关于你的文字：A & B + 100%？";
+      await page.locator("#letter-draft-body").fill(draft);
+      const target = new URL(await page.locator(".mail-compose-link").getAttribute("href"));
+      assert.equal(target.protocol, "mailto:");
+      assert.equal(target.pathname, "fyh20071004@gmail.com");
+      assert.equal(target.searchParams.get("subject"), "读完你的文字，想和你聊聊");
+      assert.equal(target.searchParams.get("body"), draft);
+      await page.screenshot({ path: path.join(output, "letter-draft.png"), fullPage: true });
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.waitForFunction(() => !document.querySelector(".letter-composer"));
+      assert.equal(await page.locator(".contact-tile").count(), 6);
+      assert.equal(await page.locator(".email-option > a").first().getAttribute("href"), "mailto:fyh20071004@gmail.com");
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await page.waitForFunction(() => !!document.querySelector(".letter-composer"));
+      await page.locator(".letter-draft summary").click();
+      assert.equal(await page.locator("#letter-draft-body").inputValue(), draft);
     } finally {
       await context.close();
     }

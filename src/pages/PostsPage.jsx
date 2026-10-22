@@ -7,6 +7,7 @@ import { PostCard } from "../components/PostCard.jsx";
 import { PostsAgeGate } from "../components/PostsAgeGate.jsx";
 import { XArticlesSection } from "../components/XArticlesSection.jsx";
 import { PostsNavigator } from "../components/PostsNavigator.jsx";
+import { ReadingLibrary } from "../components/ReadingLibrary.jsx";
 import { SectionHeading } from "../components/SectionHeading.jsx";
 import { useSectionEntrance } from "../hooks/useSectionEntrance.js";
 import { useXFeed } from "../hooks/useXFeed.js";
@@ -49,6 +50,7 @@ export default function PostsPage(props) {
 
 function PostsContent({ language, t, profile, onFeedReady }) {
   const [largeText, setLargeText] = useState(false);
+  const [focusReading, setFocusReading] = useState(false);
   const sectionRef = useRef(null);
   useSectionEntrance(sectionRef);
   useEffect(() => {
@@ -107,6 +109,18 @@ function PostsContent({ language, t, profile, onFeedReady }) {
     readingRef.current?.scrollIntoView({ block: "start", behavior: preferredScrollBehavior() });
   }
 
+  function chooseFromLibrary(type, index) {
+    if (type === "posts") setPostIndex(index);
+    if (type === "articles") setArticleIndex(index);
+    window.requestAnimationFrame(() => {
+      const target = document.getElementById(
+        type === "pinned" ? "pinned-posts-heading" : type === "articles" ? "x-articles" : "daily-posts-heading",
+      );
+      (target?.matches("h2") ? target : target?.querySelector("h2"))?.focus({ preventScroll: true });
+      target?.scrollIntoView({ block: "start", behavior: preferredScrollBehavior() });
+    });
+  }
+
   const statusText = feedLoading
     ? feedSource === "snapshot"
       ? t.feedLoading
@@ -122,7 +136,11 @@ function PostsContent({ language, t, profile, onFeedReady }) {
   const profileUrl = xProfileUrl(profile.username);
 
   return (
-    <div className={`posts-section${largeText ? " is-reading-large" : ""}`} id="posts" ref={sectionRef}>
+    <div
+      className={`posts-section${largeText ? " is-reading-large" : ""}${focusReading ? " is-reading-focused" : ""}`}
+      id="posts"
+      ref={sectionRef}
+    >
       <div className="posts-flow">
         {statusText && (
           <div className={`feed-status${feedLoading ? " is-loading" : ""}`} role="status">
@@ -296,6 +314,18 @@ function PostsContent({ language, t, profile, onFeedReady }) {
         articleCount={articles.length}
         largeText={largeText}
         onToggleText={() => setLargeText((value) => !value)}
+        focusReading={focusReading}
+        onToggleFocus={() => setFocusReading((value) => !value)}
+        library={
+          <ReadingLibrary
+            t={t}
+            language={language}
+            posts={posts}
+            articles={articles}
+            pinnedPost={pinnedPost}
+            onChoose={chooseFromLibrary}
+          />
+        }
       />
     </div>
   );

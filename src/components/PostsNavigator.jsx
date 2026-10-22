@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { FiArrowUpRight, FiFeather, FiType } from "react-icons/fi";
+import { FiArrowUpRight, FiFeather, FiType, FiBookOpen } from "react-icons/fi";
 import { HiOutlineSparkles } from "react-icons/hi2";
 import { PiPushPinFill, PiFlowerLight } from "react-icons/pi";
 import { useDesktopLayout } from "../hooks/useDesktopLayout.js";
@@ -7,7 +7,17 @@ import { preferredScrollBehavior } from "../utils/motion.js";
 
 const targets = ["pinned-posts-heading", "latest-posts", "x-articles", "reading-invitation-heading"];
 
-export function PostsNavigator({ t, pinnedCount, postCount, articleCount, largeText, onToggleText }) {
+export function PostsNavigator({
+  t,
+  pinnedCount,
+  postCount,
+  articleCount,
+  largeText,
+  onToggleText,
+  focusReading,
+  onToggleFocus,
+  library,
+}) {
   const [activeSection, setActiveSection] = useState(targets[0]);
   const navRef = useRef(null);
   const desktop = useDesktopLayout();
@@ -66,10 +76,12 @@ export function PostsNavigator({ t, pinnedCount, postCount, articleCount, largeT
   return (
     <nav className="posts-quick-nav" ref={navRef} aria-label={t.postsQuickNavLabel}>
       <div className="reading-directory-heading">
+        <FiBookOpen className="directory-cover-icon" aria-hidden="true" />
         <span>THE LITTLE JOURNAL</span>
         <h2>{t.readingDirectory}</h2>
         <p>{t.readingDirectoryText}</p>
       </div>
+      {desktop && library}
       <div className="reading-directory-links">
         {sections.map(({ label, icon: Icon, tone, count }, index) => (
           <button
@@ -90,11 +102,18 @@ export function PostsNavigator({ t, pinnedCount, postCount, articleCount, largeT
       </div>
       <div className="reading-tools">
         <span>{t.readingSettings}</span>
-        <button type="button" aria-pressed={largeText} onClick={onToggleText}>
+        <button type="button" className="reading-text-toggle" aria-pressed={largeText} onClick={onToggleText}>
           <FiType aria-hidden="true" />
           <span>{t.largeReadingText}</span>
           <i aria-hidden="true" />
         </button>
+        {desktop && (
+          <button type="button" className="reading-focus-toggle" aria-pressed={focusReading} onClick={onToggleFocus}>
+            <FiBookOpen aria-hidden="true" />
+            <span>{t.focusReading}</span>
+            <i aria-hidden="true" />
+          </button>
+        )}
         <p>
           <PiFlowerLight aria-hidden="true" />
           {t.readingSlowNote}

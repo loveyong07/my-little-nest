@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { FiRefreshCw } from "react-icons/fi";
+import { FiCheck, FiCopy, FiRefreshCw } from "react-icons/fi";
 import { PiFlowerLight } from "react-icons/pi";
 import { GiStrawberry } from "react-icons/gi";
 import { fantasyCopy, interests } from "../constants/fantasy.js";
 import { useDesktopLayout } from "../hooks/useDesktopLayout.js";
+import { useClipboard } from "../hooks/useClipboard.js";
+import { CopyFallback } from "./ContactTile.jsx";
 
 export function HomeJournal({ language, t }) {
   const f = fantasyCopy[language];
@@ -12,6 +14,7 @@ export function HomeJournal({ language, t }) {
   const [spinning, setSpinning] = useState(false);
   const [activeNote, setActiveNote] = useState("about");
   const desktop = useDesktopLayout();
+  const { copiedId, copyFailedId, manualCopyRef, copyId } = useClipboard();
 
   function moveTab(event) {
     const keys = ["ArrowLeft", "ArrowRight", "Home", "End"];
@@ -96,15 +99,39 @@ export function HomeJournal({ language, t }) {
           {f.quote}
         </h2>
         <p aria-live="polite">{f.quotes[quote]}</p>
+        {desktop && (
+          <span className="journal-page-count" aria-hidden="true">
+            {String(quote + 1).padStart(2, "0")} / {f.quotes.length}
+          </span>
+        )}
+        {desktop && (
+          <button
+            type="button"
+            className="journal-copy"
+            aria-label={copiedId === f.quotes[quote] ? t.copied : t.copyQuote}
+            title={copiedId === f.quotes[quote] ? t.copied : t.copyQuote}
+            onClick={() => copyId(f.quotes[quote])}
+          >
+            {copiedId === f.quotes[quote] ? <FiCheck aria-hidden="true" /> : <FiCopy aria-hidden="true" />}
+          </button>
+        )}
         <button
           type="button"
-          className={spinning ? "is-spinning" : undefined}
+          className={`journal-shuffle${spinning ? " is-spinning" : ""}`}
           onClick={shuffleQuote}
           aria-label={f.shuffle}
           title={f.shuffle}
         >
           <FiRefreshCw aria-hidden="true" />
         </button>
+        {desktop && copiedId === f.quotes[quote] && (
+          <span className="sr-only" role="status">
+            {t.copied}
+          </span>
+        )}
+        {desktop && copyFailedId === f.quotes[quote] && (
+          <CopyFallback value={copyFailedId} message={t.copyFailed} label={t.copyQuote} inputRef={manualCopyRef} />
+        )}
       </article>
     </section>
   );

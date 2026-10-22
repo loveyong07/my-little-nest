@@ -10,6 +10,7 @@ import { useClipboard } from "../hooks/useClipboard.js";
 import { useDesktopLayout } from "../hooks/useDesktopLayout.js";
 import { useSectionEntrance } from "../hooks/useSectionEntrance.js";
 import { SectionHeading } from "../components/SectionHeading.jsx";
+import { LetterComposer } from "../components/LetterComposer.jsx";
 
 const contactIcons = {
   x: FaXTwitter,
@@ -23,6 +24,8 @@ const letterIcons = [FiMessageCircle, FiFeather, FiMail];
 
 export default function ContactPage({ t, profile }) {
   const [channelFilter, setChannelFilter] = useState("all");
+  const [letterTopic, setLetterTopic] = useState(0);
+  const [letterBody, setLetterBody] = useState("");
   const desktop = useDesktopLayout();
   const sectionRef = useRef(null);
   useSectionEntrance(sectionRef);
@@ -120,6 +123,15 @@ export default function ContactPage({ t, profile }) {
             {t.emailHeading}
           </h3>
           <p className="mail-card-note">{t.mailCardNote}</p>
+          {desktop && (
+            <LetterComposer
+              t={t}
+              topic={letterTopic}
+              setTopic={setLetterTopic}
+              body={letterBody}
+              setBody={setLetterBody}
+            />
+          )}
           <div className="email-options-list">
             {mailboxes.map(({ label, address }) => (
               <div className="email-option" key={address}>
@@ -127,7 +139,16 @@ export default function ContactPage({ t, profile }) {
                   {label}
                   <span>{address}</span>
                 </a>
-                <a className="mail-compose-link" href={"mailto:" + address}>
+                <a
+                  className="mail-compose-link"
+                  href={
+                    "mailto:" +
+                    address +
+                    (desktop
+                      ? `?subject=${encodeURIComponent(t.letterSubjects[letterTopic])}&body=${encodeURIComponent(letterBody)}`
+                      : "")
+                  }
+                >
                   {t.mailCardAction}
                   <FiArrowUpRight aria-hidden="true" />
                 </a>
