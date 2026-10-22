@@ -9,6 +9,7 @@ import { XArticlesSection } from "../components/XArticlesSection.jsx";
 import { PostsNavigator } from "../components/PostsNavigator.jsx";
 import { ReadingLibrary } from "../components/ReadingLibrary.jsx";
 import { SectionHeading } from "../components/SectionHeading.jsx";
+import { useDesktopLayout } from "../hooks/useDesktopLayout.js";
 import { useSectionEntrance } from "../hooks/useSectionEntrance.js";
 import { useXFeed } from "../hooks/useXFeed.js";
 import { formatPostDate } from "../utils/date.js";
@@ -51,6 +52,7 @@ export default function PostsPage(props) {
 function PostsContent({ language, t, profile, onFeedReady }) {
   const [largeText, setLargeText] = useState(false);
   const [focusReading, setFocusReading] = useState(false);
+  const desktop = useDesktopLayout();
   const sectionRef = useRef(null);
   useSectionEntrance(sectionRef);
   useEffect(() => {
@@ -102,6 +104,28 @@ function PostsContent({ language, t, profile, onFeedReady }) {
       strip.scrollTo({ left: Math.max(0, left - (strip.clientWidth - selected.offsetWidth) / 2), behavior: "instant" });
     }
   }, [postIndex, posts, language]);
+
+  useEffect(() => {
+    if (!desktop || posts.length < 2) return undefined;
+    function handleKeyNavigation(event) {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      if (document.querySelector(".media-lightbox, dialog[open]")) return;
+      const target = event.target;
+      if (
+        target instanceof HTMLElement &&
+        target.closest("input, textarea, select, [contenteditable], dialog, .media-lightbox")
+      ) {
+        return;
+      }
+      event.preventDefault();
+      setPostIndex((current) =>
+        event.key === "ArrowLeft" ? (current - 1 + posts.length) % posts.length : (current + 1) % posts.length,
+      );
+    }
+    window.addEventListener("keydown", handleKeyNavigation);
+    return () => window.removeEventListener("keydown", handleKeyNavigation);
+  }, [desktop, posts.length, setPostIndex]);
 
   function changeReadingPost(index) {
     setPostIndex(index);

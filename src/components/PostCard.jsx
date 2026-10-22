@@ -1,17 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FaArrowRight, FaXTwitter } from "react-icons/fa6";
-import { FiChevronLeft, FiChevronRight, FiMaximize2 } from "react-icons/fi";
+import { FiCheck, FiChevronLeft, FiChevronRight, FiLink, FiMaximize2 } from "react-icons/fi";
 import { FALLBACK_AVATAR, ASSETS } from "../constants/site.js";
 import { handleAvatarError } from "../utils/profile.js";
 import { formatPostDate } from "../utils/date.js";
 import { mediaDimensions, mediaFrameRatio } from "../utils/posts.js";
 import { xMediaSrc, xVideoSrc } from "../media-urls.js";
+import { useClipboard } from "../hooks/useClipboard.js";
+import { useDesktopLayout } from "../hooks/useDesktopLayout.js";
 import { useMediaRequest } from "../hooks/useMediaRequest.js";
 import { prefetchImage } from "../feed-cache.js";
 import { MediaLightbox } from "./MediaLightbox.jsx";
 import { displayXText } from "../utils/x-text.js";
 
 export function PostCard({ post, feedSource, language, t, label, profile, priorityMedia = false, nextPost }) {
+  const desktop = useDesktopLayout();
+  const { copiedId, copyId } = useClipboard();
   const text = displayXText(post.text);
   const isSnapshot = feedSource === "snapshot";
   const sourceLabel =
@@ -211,6 +215,17 @@ export function PostCard({ post, feedSource, language, t, label, profile, priori
         )}
         <div className="post-bottomline">
           {sourceLabel && <span>{sourceLabel}</span>}
+          {desktop && post.permalink && (
+            <button
+              type="button"
+              className={`post-copy-link${copiedId === post.permalink ? " is-copied" : ""}`}
+              onClick={() => copyId(post.permalink)}
+              aria-label={copiedId === post.permalink ? t.linkCopied : t.copyPostLink}
+            >
+              {copiedId === post.permalink ? <FiCheck aria-hidden="true" /> : <FiLink aria-hidden="true" />}
+              <span>{copiedId === post.permalink ? t.linkCopied : t.copyPostLink}</span>
+            </button>
+          )}
           <a href={post.permalink} target="_blank" rel="noopener noreferrer">
             {t.openPost}
             <FaArrowRight aria-hidden="true" />

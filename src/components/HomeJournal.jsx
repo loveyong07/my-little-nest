@@ -9,9 +9,10 @@ import { CopyFallback } from "./ContactTile.jsx";
 
 export function HomeJournal({ language, t }) {
   const f = fantasyCopy[language];
-  const [notice] = useState(() => Math.floor(Math.random() * f.notices.length));
+  const [notice, setNotice] = useState(() => Math.floor(Math.random() * f.notices.length));
   const [quote, setQuote] = useState(() => Math.floor(Math.random() * f.quotes.length));
   const [spinning, setSpinning] = useState(false);
+  const [noticeSpinning, setNoticeSpinning] = useState(false);
   const [activeNote, setActiveNote] = useState("about");
   const desktop = useDesktopLayout();
   const { copiedId, copyFailedId, manualCopyRef, copyId } = useClipboard();
@@ -31,6 +32,19 @@ export function HomeJournal({ language, t }) {
     const timer = window.setTimeout(() => setSpinning(false), 320);
     return () => window.clearTimeout(timer);
   }, [spinning]);
+
+  useEffect(() => {
+    if (!noticeSpinning) return undefined;
+    const timer = window.setTimeout(() => setNoticeSpinning(false), 320);
+    return () => window.clearTimeout(timer);
+  }, [noticeSpinning]);
+
+  function shuffleNotice() {
+    if (f.notices.length < 2) return;
+    const next = Math.floor(Math.random() * (f.notices.length - 1));
+    setNotice(next >= notice ? next + 1 : next);
+    setNoticeSpinning(true);
+  }
 
   function shuffleQuote() {
     if (f.quotes.length < 2) return;
@@ -67,7 +81,7 @@ export function HomeJournal({ language, t }) {
         </div>
       )}
       <article
-        className="journal-note journal-notice"
+        className={`journal-note journal-notice${noticeSpinning ? " is-shuffling" : ""}`}
         id="journal-panel-about"
         role={desktop ? "tabpanel" : undefined}
         aria-labelledby={desktop ? "journal-tab-about" : undefined}
@@ -77,7 +91,27 @@ export function HomeJournal({ language, t }) {
         <GiStrawberry className="journal-sticker" aria-hidden="true" />
         <h2>{t.homeAboutHeading}</h2>
         <p>{t.homeAboutText}</p>
-        <p className="journal-welcome">{f.notices[notice]}</p>
+        <p className="journal-welcome" aria-live={desktop ? "polite" : undefined}>
+          {f.notices[notice]}
+        </p>
+        {desktop && (
+          <div className="journal-welcome-toolbar">
+            <span className="journal-welcome-badge">
+              <PiFlowerLight aria-hidden="true" />
+              {t.welcomeBadge} · {String(notice + 1).padStart(2, "0")} / {f.notices.length}
+            </span>
+            <button
+              type="button"
+              className={`journal-notice-shuffle${noticeSpinning ? " is-spinning" : ""}`}
+              onClick={shuffleNotice}
+              aria-label={t.shuffleNotice}
+              title={t.shuffleNotice}
+            >
+              <FiRefreshCw aria-hidden="true" />
+              <span>{t.shuffleNotice}</span>
+            </button>
+          </div>
+        )}
         {interests[language].length > 0 && (
           <ul className="interest-tags" aria-label={f.interests}>
             {interests[language].map((tag) => (
@@ -107,12 +141,13 @@ export function HomeJournal({ language, t }) {
         {desktop && (
           <button
             type="button"
-            className="journal-copy"
+            className={`journal-copy${copiedId === f.quotes[quote] ? " is-copied" : ""}`}
             aria-label={copiedId === f.quotes[quote] ? t.copied : t.copyQuote}
             title={copiedId === f.quotes[quote] ? t.copied : t.copyQuote}
             onClick={() => copyId(f.quotes[quote])}
           >
             {copiedId === f.quotes[quote] ? <FiCheck aria-hidden="true" /> : <FiCopy aria-hidden="true" />}
+            <span>{copiedId === f.quotes[quote] ? t.copied : t.copyQuote}</span>
           </button>
         )}
         <button
