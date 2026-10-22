@@ -54,6 +54,11 @@ export function Header({ page, t, language, changeLanguage }) {
         <span className="brand-caption">{t.homePlaceLabel}</span>
       </a>
       <nav className={"site-nav " + (menuOpen ? "is-open" : "")} id="site-navigation" aria-label={t.navLabel}>
+        <span
+          className={`nav-selection nav-selection-${page}`}
+          style={{ "--nav-position": navIds.indexOf(page) }}
+          aria-hidden="true"
+        />
         {navIds.map((id, index) => {
           const Icon = navIcons[index];
           return (
@@ -70,7 +75,10 @@ export function Header({ page, t, language, changeLanguage }) {
                 0{index + 1}
               </span>
               <Icon className="nav-page-icon" aria-hidden="true" />
-              {t.nav[index]}
+              <span className="nav-label-stack">
+                {t.nav[index]}
+                <small>{["THE NEST", "JOURNAL", "SAY HELLO"][index]}</small>
+              </span>
             </a>
           );
         })}
