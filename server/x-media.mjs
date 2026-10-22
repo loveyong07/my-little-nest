@@ -102,7 +102,14 @@ export async function proxyXMedia(
   request,
   fetchImpl = globalThis.fetch,
   authOptions,
-  { connectTimeoutMs = 10000, stallTimeoutMs = 10000, totalTimeoutMs = 60000, webpEncoder = encodeOriginalWebp } = {},
+  {
+    connectTimeoutMs = 10000,
+    stallTimeoutMs = 10000,
+    totalTimeoutMs = 60000,
+    webpEncoder = encodeOriginalWebp,
+    photoCache,
+    defer = (task) => void task.catch(() => {}),
+  } = {},
 ) {
   if (request.method !== "GET") {
     return new Response("Method not allowed", {
@@ -123,6 +130,30 @@ export async function proxyXMedia(
   source = parseMediaSource(source.href, "image");
   if (!source || !(await authorizedMediaRequest(request, source, "image", authOptions))) {
     return errorResponse(403, "Unsupported image URL");
+  }
+
+  const usePhotoCache = photoCache && requestUrl.searchParams.get("format") === "webp";
+  const cacheHeaders = {
+    "Cache-Control": boundedMediaCache(request, CACHE_CONTROL, authOptions?.now),
+    "Vercel-CDN-Cache-Control": boundedMediaCache(request, VERCEL_CDN_CACHE_CONTROL, authOptions?.now),
+    "X-Content-Type-Options": "nosniff",
+    ...mediaContextHeaders(request),
+  };
+  if (usePhotoCache) {
+    try {
+      const cached = await photoCache.read(source.href, { signal: request.signal });
+      if (
+        cached?.image?.byteLength &&
+        cached.image.byteLength <= MAX_IMAGE_BYTES &&
+        ["image/webp", "image/jpeg", "image/png"].includes(cached.contentType)
+      ) {
+        return new Response(cached.image, {
+          headers: { ...cacheHeaders, "Content-Type": cached.contentType, "X-Nest-Photo-Cache": "hit" },
+        });
+      }
+    } catch {
+      // A storage failure falls back to the existing upstream path.
+    }
   }
 
   const controller = new AbortController();
@@ -179,7 +210,14 @@ export async function proxyXMedia(
     let responseBody;
     const convertToWebp =
       requestUrl.searchParams.get("format") === "webp" && ["image/jpeg", "image/png"].includes(contentType);
-    if (!convertToWebp && upstream.body && contentLengthHeader !== null && Number.isFinite(contentLength)) {
+    const persistableBody = usePhotoCache && ["image/webp", "image/jpeg", "image/png"].includes(contentType);
+    if (
+      !convertToWebp &&
+      !persistableBody &&
+      upstream.body &&
+      contentLengthHeader !== null &&
+      Number.isFinite(contentLength)
+    ) {
       streamingResponse = true;
       // The stream can outlive this function, so it owns clearing the timeout and the listener.
       responseBody = streamLimitedImage(upstream.body, cleanup, readChunk, (reason) => controller.abort(reason));
@@ -201,14 +239,22 @@ export async function proxyXMedia(
       }
     }
 
+    if (usePhotoCache && responseBody instanceof Uint8Array) {
+      const pending = Promise.resolve()
+        .then(() => photoCache.write(source.href, responseBody, contentType))
+        .catch(() => {});
+      try {
+        defer(pending);
+      } catch {
+        // Some local runtimes have no background-task context.
+      }
+    }
     const response = new Response(responseBody, {
       status: 200,
       headers: {
         "Content-Type": contentType,
-        "Cache-Control": boundedMediaCache(request, CACHE_CONTROL, authOptions?.now),
-        "Vercel-CDN-Cache-Control": boundedMediaCache(request, VERCEL_CDN_CACHE_CONTROL, authOptions?.now),
-        "X-Content-Type-Options": "nosniff",
-        ...mediaContextHeaders(request),
+        ...cacheHeaders,
+        ...(usePhotoCache ? { "X-Nest-Photo-Cache": "miss" } : {}),
       },
     });
     keepTimeoutForStream = streamingResponse;

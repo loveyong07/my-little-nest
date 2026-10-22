@@ -36,6 +36,7 @@ export function createApiHandler(
     fetchImpl = (...args) => globalThis.fetch(...args),
     articleFetchImpl = fetchImpl,
     serviceFactory = createXFeedService,
+    mediaOptions,
   } = {},
 ) {
   const authOptions = { secret: signingSecret(env) };
@@ -75,7 +76,7 @@ export function createApiHandler(
 
   return async function handleApi(request) {
     const { pathname } = new URL(request.url);
-    if (pathname === "/api/x-media") return proxyXMedia(request, fetchImpl, authOptions);
+    if (pathname === "/api/x-media") return proxyXMedia(request, fetchImpl, authOptions, mediaOptions);
     if (pathname === "/api/x-video") return proxyXVideo(request, fetchImpl, authOptions);
     if (pathname === "/api/x-posts") return feedRoute(request, "posts");
     if (pathname === "/api/x-profile") return feedRoute(request, "profile");

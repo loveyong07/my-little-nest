@@ -41,7 +41,12 @@ test("removed companion assets are not shipped", () => {
 });
 
 test("public artifacts exclude source maps, server code, credentials and environment files", () => {
-  const secrets = [process.env.X_BEARER_TOKEN, process.env.X_MEDIA_SIGNING_SECRET].filter(Boolean);
+  const secrets = [
+    process.env.X_BEARER_TOKEN,
+    process.env.X_MEDIA_SIGNING_SECRET,
+    process.env.BLOB_READ_WRITE_TOKEN,
+    process.env.VERCEL_OIDC_TOKEN,
+  ].filter(Boolean);
   let checked = 0;
   function inspect(directory) {
     for (const entry of readdirSync(directory, { withFileTypes: true })) {
@@ -55,7 +60,9 @@ test("public artifacts exclude source maps, server code, credentials and environ
         const code = readFileSync(file, "utf8");
         assert.ok(!/sourceMappingURL\s*=/.test(code), `Source map reference in ${relative}`);
         assert.ok(
-          !/X_BEARER_TOKEN|X_MEDIA_SIGNING_SECRET|BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY/.test(code),
+          !/X_BEARER_TOKEN|X_MEDIA_SIGNING_SECRET|BLOB_READ_WRITE_TOKEN|VERCEL_OIDC_TOKEN|BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY/.test(
+            code,
+          ),
           `Server-only material in ${relative}`,
         );
         // Never include a credential or artifact contents in a failure message.
