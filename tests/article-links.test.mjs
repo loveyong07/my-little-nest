@@ -44,3 +44,41 @@ test("preserves API Article anchors and rejects unsafe schemes or credential-bea
   const unsafe = "[坏链接](javascript:alert(1)) <script>alert(1)</script>";
   assert.deepEqual(articleLinkParts(unsafe), [{ text: unsafe }]);
 });
+
+test("keeps identical link labels at their own positions and leaves unlinked occurrences alone", () => {
+  const text = "😀 Read more and Read more; Read more";
+  const first = text.indexOf("Read more");
+  const second = text.indexOf("Read more", first + 9);
+  const parts = articleLinkParts(text, [
+    { text: "Read more", url: "https://example.com/global" },
+    { text: "Read more", url: "https://example.com/first", offset: first, length: 9 },
+    { text: "Read more", url: "https://example.com/second", offset: second, length: 9 },
+  ]);
+  assert.deepEqual(
+    parts.filter((part) => part.url).map((part) => part.url),
+    ["https://example.com/first", "https://example.com/second"],
+  );
+  assert.equal(parts.map((part) => part.text).join(""), text);
+  assert.equal(parts.at(-1).text, "; Read more");
+});
+
+test("ambiguous legacy labels and invalid ranges cannot override explicit Markdown or guess destinations", () => {
+  const text = "Read more and Read more";
+  assert.deepEqual(
+    articleLinkParts(text, [
+      { text: "Read more", url: "https://example.com/first" },
+      { text: "Read more", url: "https://example.com/second" },
+    ]),
+    [{ text }],
+  );
+  assert.deepEqual(
+    articleLinkParts(text, [{ text: "Read more", url: "https://example.com/first", offset: 100, length: 9 }]),
+    [{ text }],
+  );
+  assert.equal(
+    articleLinkParts("[Read more](https://example.com/explicit)", [
+      { text: "Read more", url: "https://example.com/fallback" },
+    ])[0].url,
+    "https://example.com/explicit",
+  );
+});

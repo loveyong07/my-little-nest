@@ -98,7 +98,19 @@ export function sanitizeArticleBlocks(blocks, article) {
           if (typeof link?.text !== "string" || !link.text || !block.text.includes(link.text) || !url) {
             return null;
           }
-          links.push({ text: link.text, url });
+          const positioned = link.offset !== undefined || link.length !== undefined;
+          if (
+            positioned &&
+            (!Number.isSafeInteger(link.offset) ||
+              !Number.isSafeInteger(link.length) ||
+              link.offset < 0 ||
+              link.length <= 0 ||
+              link.offset + link.length > block.text.length ||
+              block.text.slice(link.offset, link.offset + link.length) !== link.text)
+          ) {
+            return null;
+          }
+          links.push({ text: link.text, url, ...(positioned ? { offset: link.offset, length: link.length } : {}) });
         }
       }
       sanitized.push({ type: "text", text: block.text, ...(links ? { links } : {}) });
@@ -188,7 +200,16 @@ export function normalizedArticleDocument(document, article) {
     const links = (block.entity_ranges ?? []).flatMap((range) => {
       const entity = entities.get(String(range.key));
       const url = entity?.type === "LINK" ? safeArticleLink(entity.data?.url) : null;
-      return url ? [{ text: block.text.slice(range.offset, range.offset + range.length), url }] : [];
+      return url
+        ? [
+            {
+              text: block.text.slice(range.offset, range.offset + range.length),
+              url,
+              offset: range.offset,
+              length: range.length,
+            },
+          ]
+        : [];
     });
     blocks.push({ type: "text", text: block.text, ...(links.length ? { links } : {}) });
   }
@@ -252,6 +273,8 @@ export async function enrichArticleDocuments(
       article: copy,
       memoryBlocks,
       memoryValidatedAt,
+      cachedBlocks: null,
+      cachedValidatedAt: undefined,
     };
   });
   const result = prepared.map(({ article, memoryBlocks }) =>
@@ -261,11 +284,55 @@ export async function enrichArticleDocuments(
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   let next = 0;
   try {
+    // Recover persisted structures before starting slow public-page requests.
+    // Both phases are bounded, but an HTML timeout must never prevent a later
+    // Article from using an already verified Blob snapshot.
+    if (articleCache) {
+      let cacheNext = 0;
+      await Promise.all(
+        Array.from({ length: Math.min(4, prepared.length) }, async () => {
+          while (cacheNext < prepared.length && !controller.signal.aborted) {
+            const index = cacheNext++;
+            const entry = prepared[index];
+            const { article, memoryBlocks, memoryValidatedAt } = entry;
+            const checkTime = now();
+            if (
+              memoryBlocks &&
+              Number.isFinite(memoryValidatedAt) &&
+              checkTime >= memoryValidatedAt &&
+              checkTime - memoryValidatedAt < revalidateMs
+            )
+              continue;
+            let cachedEntry;
+            try {
+              cachedEntry = await articleCache.read(article, { signal: controller.signal });
+            } catch {
+              continue;
+            }
+            entry.cachedBlocks =
+              cachedEntry && sameArticleIdentity(cachedEntry, article)
+                ? sanitizeArticleBlocks(cachedEntry.blocks, article)
+                : null;
+            entry.cachedValidatedAt =
+              entry.cachedBlocks && Number.isFinite(cachedEntry.validatedAt) ? cachedEntry.validatedAt : undefined;
+            if (
+              entry.cachedBlocks &&
+              (!memoryBlocks || !Number.isFinite(memoryValidatedAt) || entry.cachedValidatedAt > memoryValidatedAt)
+            ) {
+              if (Number.isFinite(entry.cachedValidatedAt)) {
+                validatedAtByBlocks.set(entry.cachedBlocks, entry.cachedValidatedAt);
+              }
+              result[index] = { ...article, blocks: entry.cachedBlocks };
+            }
+          }
+        }),
+      );
+    }
     await Promise.all(
       Array.from({ length: Math.min(4, result.length) }, async () => {
         while (next < result.length && !controller.signal.aborted) {
           const index = next++;
-          const { article, memoryBlocks, memoryValidatedAt } = prepared[index];
+          const { article, memoryBlocks, memoryValidatedAt, cachedBlocks, cachedValidatedAt } = prepared[index];
           const startedAt = now();
           const checkTime = now();
           if (
@@ -285,20 +352,6 @@ export async function enrichArticleDocuments(
             continue;
           }
 
-          let cachedEntry = null;
-          if (articleCache) {
-            try {
-              cachedEntry = await articleCache.read(article, { signal: controller.signal });
-            } catch {
-              cachedEntry = null;
-            }
-          }
-          const cachedBlocks =
-            cachedEntry && sameArticleIdentity(cachedEntry, article)
-              ? sanitizeArticleBlocks(cachedEntry.blocks, article)
-              : null;
-          const cachedValidatedAt =
-            cachedBlocks && Number.isFinite(cachedEntry.validatedAt) ? cachedEntry.validatedAt : undefined;
           const afterCacheTime = now();
           if (
             cachedBlocks &&
@@ -342,8 +395,8 @@ export async function enrichArticleDocuments(
             continue;
           }
 
-          const retained = memoryBlocks ?? cachedBlocks;
-          const retainedAt = memoryValidatedAt ?? cachedValidatedAt;
+          const retained = result[index].blocks;
+          const retainedAt = retained ? validatedAtByBlocks.get(retained) : undefined;
           if (retained) {
             if (Number.isFinite(retainedAt)) validatedAtByBlocks.set(retained, retainedAt);
             result[index] = { ...article, blocks: retained };

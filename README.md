@@ -85,7 +85,7 @@ Vercel 的图片函数可连接香港 `hkg1` 私有 Blob，持久保存上述静
 
 `/api/x-profile` 通过稳定用户 ID 查询账号资料；`/api/x-posts` 获取置顶、日常原创帖和 X Articles。文章来自同一次时间线请求的 `article` / `article_title` 字段，与普通长帖分开，响应包含 `articles` 和 `articlesStatus`（`ok` / `none` / `stale` / `unavailable`）。文章优先展示 API 提供的纯文本正文，缺少正文时展示预览，并提供 X 原文链接；封面沿用同源签名媒体代理。前端定期刷新，接口失败时使用已有缓存或明确标注的快照，不代表秒级同步。
 
-Vercel 的 `/api/x-posts` 函数同样连接私有 Blob（`server/article-cache.mjs`），以 `x-articles/document-v1/<id>.json` 持久保存已通过正文、封面与配图完整性校验的 Article 段落结构（`blocks`）。缓存仅保存未签名的原始媒体 URL、结构版本号与校验时间戳，返回响应时由 `authorizeFeed` 重新生成当日媒体签名。未变化的文章在 24 小时校验期内优先使用内存或 Blob 缓存，避免每次刷新重复抓取 X 网页；满 24 小时后重新校验网页以同步可能发生的链接目标或图片位置调整，若网页抓取失败则保留既有有效快照且绝不覆盖持久缓存。
+Vercel 的 `/api/x-posts` 函数同样连接私有 Blob（`server/article-cache.mjs`），以 `x-articles/document-v1/<id>.json` 持久保存已通过正文、封面与配图完整性校验的 Article 段落结构（`blocks`）。缓存保留段落链接的 `offset` / `length`，区分文字相同但目标不同的链接；旧缓存缺少位置且目标有歧义时保留原文，不猜测地址。媒体仍只保存未签名的原始 URL，并记录结构版本号与校验时间戳，返回响应时由 `authorizeFeed` 重新生成当日媒体签名。未变化的文章在 24 小时校验期内优先使用内存或 Blob 缓存，避免每次刷新重复抓取 X 网页；满 24 小时后重新校验网页以同步可能发生的链接目标或图片位置调整，若网页抓取失败则保留既有有效快照且绝不覆盖持久缓存。缓存恢复先于网页抓取进行，两阶段各限制四个并发任务并共用六秒预算，避免前几篇网页超时阻塞后续已有缓存的文章。
 
 `server/telemetry.mjs` 在 Vercel 运行环境（或设置 `NEST_TELEMETRY=1` 时）输出单行 JSON 观测日志，记录 Feed/Profile 刷新计数、上游耗时、Article 文档缓存命中/重验结果以及图片 Blob 命中与跳过原因。注意 `X-Nest-Photo-Cache: hit | miss` 响应头仅代表函数执行当次的 `function_blob` 查询结果；响应被 Vercel CDN 缓存后该头会被边缘复用，因此不能直接等同于所有访客请求的实时 Blob 命中率，统计时需区分 CDN 与 Blob 两层。
 

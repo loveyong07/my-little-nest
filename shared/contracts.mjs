@@ -5,7 +5,7 @@
  * @typedef {"ok" | "none" | "stale" | "unavailable"} SectionStatus
  * @typedef {"image" | "video"} MediaKind
  * @typedef {{ normal: string, highRes: string }} AvatarProxy
- * @typedef {{ text: string, url: string }} ArticleLink
+ * @typedef {{ text: string, url: string, offset?: number, length?: number }} ArticleLink
  * @typedef {{
  *   type?: "photo" | "video",
  *   url: string,

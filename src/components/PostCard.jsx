@@ -11,11 +11,12 @@ import { useDesktopLayout } from "../hooks/useDesktopLayout.js";
 import { useMediaRequest } from "../hooks/useMediaRequest.js";
 import { prefetchImage } from "../feed-cache.js";
 import { MediaLightbox } from "./MediaLightbox.jsx";
+import { CopyFallback } from "./ContactTile.jsx";
 import { displayXText } from "../utils/x-text.js";
 
 export function PostCard({ post, feedSource, language, t, label, profile, priorityMedia = false, nextPost }) {
   const desktop = useDesktopLayout();
-  const { copiedId, copyId } = useClipboard();
+  const { copiedId, copyFailedId, manualCopyRef, copyId } = useClipboard();
   const text = displayXText(post.text);
   const isSnapshot = feedSource === "snapshot";
   const sourceLabel =
@@ -231,6 +232,14 @@ export function PostCard({ post, feedSource, language, t, label, profile, priori
             <FaArrowRight aria-hidden="true" />
           </a>
         </div>
+        {copyFailedId && copyFailedId === post.permalink && (
+          <CopyFallback
+            value={copyFailedId}
+            message={t.copyLinkFailed}
+            label={t.copyPostLink}
+            inputRef={manualCopyRef}
+          />
+        )}
         <div className="glass-panel-backdrop glass-reading-backdrop" aria-hidden="true" />
       </article>
       {expandedMedia && (expandedMedia === "photo" ? currentPhoto : video) && (

@@ -16,6 +16,7 @@ import {
   serializeArticleDocumentRecord,
 } from "../server/article-cache.mjs";
 import { authorizeFeed, authorizedMediaRequest, parseMediaSource } from "../server/x-media-auth.mjs";
+import { articleLinkParts } from "../shared/article-links.mjs";
 
 const document = JSON.parse(readFileSync(new URL("../scripts/qa/fixtures/x-article-document.json", import.meta.url)));
 const media = [document.cover_media_results.result, ...document.media_entities].map((item) => ({
@@ -304,4 +305,108 @@ test("retains verified fallback blocks for unqueued Articles when the 4-worker b
   assert.equal(result[0].blocks, undefined);
   assert.deepEqual(result[4].blocks, verifiedBlocks, "fifth article keeps its verified fallback blocks");
   assert.equal(result[5].blocks, undefined, "edited sixth article still rejects mismatched old blocks");
+});
+
+test("restores fresh and stale Blob structures before slow HTML requests exhaust the batch", async () => {
+  const time = 1_800_000_000_000;
+  const verifiedBlocks = normalizedArticleDocument(document, article);
+  const articles = Array.from({ length: 7 }, (_, index) => ({
+    ...article,
+    id: String(index + 1),
+    permalink: `https://x.com/loveyong07/status/${index + 1}`,
+  }));
+  const store = new Map();
+  for (const index of [4, 5, 6]) {
+    store.set(
+      articleCachePath(articles[index].id),
+      serializeArticleDocumentRecord(
+        articles[index],
+        verifiedBlocks,
+        index === 5 ? time - ARTICLE_REVALIDATE_TTL_MS - 1 : time,
+      ),
+    );
+  }
+  articles[6] = { ...articles[6], text: "Changed since the stored snapshot" };
+  const reads = [];
+  const cache = createBlobArticleCache({
+    env: { BLOB_READ_WRITE_TOKEN: "test" },
+    now: () => time,
+    sdk: {
+      get: async (pathname) => {
+        reads.push(pathname);
+        const bytes = store.get(pathname);
+        return bytes
+          ? {
+              statusCode: 200,
+              stream: new Response(bytes).body,
+              blob: { size: bytes.byteLength, contentType: "application/json" },
+            }
+          : null;
+      },
+      put: async () => assert.fail("failed HTML must not overwrite a snapshot"),
+    },
+  });
+  let fetches = 0;
+  const result = await enrichArticleDocuments(
+    articles,
+    [],
+    async (_url, { signal }) => {
+      fetches++;
+      await new Promise((resolve) => {
+        if (signal.aborted) resolve();
+        else signal.addEventListener("abort", resolve, { once: true });
+      });
+      throw new Error("simulated timeout");
+    },
+    { articleCache: cache, now: () => time, timeoutMs: 50 },
+  );
+  assert.equal(reads.length, 7);
+  assert.equal(fetches, 4);
+  assert.deepEqual(result[4].blocks, verifiedBlocks, "fresh fifth snapshot survives the HTML queue timeout");
+  assert.deepEqual(result[5].blocks, verifiedBlocks, "stale sixth snapshot is still a verified fallback");
+  assert.equal(result[6].blocks, undefined, "edited text rejects the old seventh snapshot");
+});
+
+test("Article link ranges survive normalization and persistent-cache round trips", () => {
+  const text = "😀 Read more and Read more; Read more";
+  const current = { id: "9001", text, media: [], coverUrl: null };
+  const doc = {
+    content_state: {
+      blocks: [
+        {
+          type: "unstyled",
+          text,
+          entity_ranges: [
+            { offset: 3, length: 9, key: "first" },
+            { offset: 17, length: 9, key: "second" },
+          ],
+        },
+      ],
+      entity_map: {
+        first: { type: "LINK", data: { url: "https://example.com/first" } },
+        second: { type: "LINK", data: { url: "https://example.com/second" } },
+      },
+    },
+    media_entities: [],
+  };
+  const blocks = normalizedArticleDocument(doc, current);
+  assert.deepEqual(
+    blocks[0].links.map(({ offset, length }) => ({ offset, length })),
+    [
+      { offset: 3, length: 9 },
+      { offset: 17, length: 9 },
+    ],
+  );
+  const raw = new TextDecoder().decode(serializeArticleDocumentRecord(current, blocks, 1_800_000_000_000));
+  const restored = parseArticleDocumentRecord(raw, current);
+  assert.deepEqual(restored.blocks, blocks);
+  assert.deepEqual(
+    articleLinkParts(text, restored.blocks[0].links)
+      .filter((part) => part.url)
+      .map((part) => part.url),
+    ["https://example.com/first", "https://example.com/second"],
+  );
+  const invalid = structuredClone(blocks);
+  invalid[0].links[1].offset = 100;
+  assert.equal(serializeArticleDocumentRecord(current, invalid, 1_800_000_000_000), null);
 });
