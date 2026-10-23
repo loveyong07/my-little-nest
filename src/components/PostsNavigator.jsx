@@ -23,7 +23,6 @@ export function PostsNavigator({
   const desktop = useDesktopLayout();
 
   useEffect(() => {
-    if (!desktop) return;
     let frame = 0;
     const update = () => {
       frame = 0;
@@ -56,7 +55,7 @@ export function PostsNavigator({
       window.removeEventListener("scroll", schedule);
       window.removeEventListener("resize", schedule);
     };
-  }, [desktop]);
+  }, []);
 
   function jumpToSection(id) {
     const target = document.getElementById(id);
@@ -81,14 +80,14 @@ export function PostsNavigator({
         <h2>{t.readingDirectory}</h2>
         <p>{t.readingDirectoryText}</p>
       </div>
-      {desktop && library}
+      {library}
       <div className="reading-directory-links">
         {sections.map(({ label, icon: Icon, tone, count }, index) => (
           <button
             type="button"
             className={`quick-nav-pill quick-nav-${tone}${activeSection === targets[index] ? " is-active" : ""}`}
             key={tone}
-            aria-current={desktop && activeSection === targets[index] ? "location" : undefined}
+            aria-current={activeSection === targets[index] ? "location" : undefined}
             onClick={() => jumpToSection(targets[index])}
           >
             <span className="directory-number" aria-hidden="true">

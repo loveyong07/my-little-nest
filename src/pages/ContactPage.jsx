@@ -7,7 +7,6 @@ import { ContactTile, CopyFallback } from "../components/ContactTile.jsx";
 import { ContactPostcard } from "../components/ScrapbookAccents.jsx";
 import { mailboxes, contactChannels, xProfileUrl } from "../constants/site.js";
 import { useClipboard } from "../hooks/useClipboard.js";
-import { useDesktopLayout } from "../hooks/useDesktopLayout.js";
 import { useSectionEntrance } from "../hooks/useSectionEntrance.js";
 import { SectionHeading } from "../components/SectionHeading.jsx";
 import { LetterComposer } from "../components/LetterComposer.jsx";
@@ -27,7 +26,6 @@ export default function ContactPage({ t, profile }) {
   const [channelFilter, setChannelFilter] = useState("all");
   const [letterTopic, setLetterTopic] = useState(0);
   const [letterBody, setLetterBody] = useState("");
-  const desktop = useDesktopLayout();
   const sectionRef = useRef(null);
   const draftDetailsRef = useRef(null);
   useSectionEntrance(sectionRef);
@@ -70,7 +68,7 @@ export default function ContactPage({ t, profile }) {
     };
   });
   const visibleSocials = socials.filter(
-    (social) => !desktop || channelFilter === "all" || (channelFilter === "open" ? social.href : !social.href),
+    (social) => channelFilter === "all" || (channelFilter === "open" ? social.href : !social.href),
   );
 
   return (
@@ -88,26 +86,24 @@ export default function ContactPage({ t, profile }) {
             <h3>{t.contactChannelHeading}</h3>
             <span>06 WAYS TO SAY HELLO</span>
           </div>
-          {desktop && (
-            <div className="contact-filters" role="group" aria-label={t.contactFilterLabel}>
-              {["all", "open", "copy"].map((filter, index) => (
-                <button
-                  key={filter}
-                  type="button"
-                  aria-pressed={channelFilter === filter}
-                  aria-controls="contact-channel-list"
-                  onClick={() => setChannelFilter(filter)}
-                >
-                  {t.contactFilters[index]}
-                  <span aria-hidden="true">
-                    {filter === "all"
-                      ? socials.length
-                      : socials.filter((social) => (filter === "open" ? social.href : !social.href)).length}
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
+          <div className="contact-filters" role="group" aria-label={t.contactFilterLabel}>
+            {["all", "open", "copy"].map((filter, index) => (
+              <button
+                key={filter}
+                type="button"
+                aria-pressed={channelFilter === filter}
+                aria-controls="contact-channel-list"
+                onClick={() => setChannelFilter(filter)}
+              >
+                {t.contactFilters[index]}
+                <span aria-hidden="true">
+                  {filter === "all"
+                    ? socials.length
+                    : socials.filter((social) => (filter === "open" ? social.href : !social.href)).length}
+                </span>
+              </button>
+            ))}
+          </div>
           <div className="contact-grid" id="contact-channel-list">
             {visibleSocials.map((social) => (
               <ContactTile
@@ -119,11 +115,9 @@ export default function ContactPage({ t, profile }) {
               />
             ))}
           </div>
-          {desktop && (
-            <span className="sr-only" role="status">
-              {t.contactFilters[["all", "open", "copy"].indexOf(channelFilter)]} · {visibleSocials.length}
-            </span>
-          )}
+          <span className="sr-only" role="status">
+            {t.contactFilters[["all", "open", "copy"].indexOf(channelFilter)]} · {visibleSocials.length}
+          </span>
         </div>
         <section className="email-row" id="email-options" aria-labelledby="email-options-heading">
           <div className="mail-card-heading" aria-hidden="true">
@@ -144,16 +138,14 @@ export default function ContactPage({ t, profile }) {
             {t.emailHeading}
           </h3>
           <p className="mail-card-note">{t.mailCardNote}</p>
-          {desktop && (
-            <LetterComposer
-              t={t}
-              topic={letterTopic}
-              setTopic={setLetterTopic}
-              body={letterBody}
-              setBody={setLetterBody}
-              detailsRef={draftDetailsRef}
-            />
-          )}
+          <LetterComposer
+            t={t}
+            topic={letterTopic}
+            setTopic={setLetterTopic}
+            body={letterBody}
+            setBody={setLetterBody}
+            detailsRef={draftDetailsRef}
+          />
           <div className="email-options-list">
             {mailboxes.map(({ label, address }) => (
               <div className="email-option" key={address}>
@@ -166,9 +158,7 @@ export default function ContactPage({ t, profile }) {
                   href={
                     "mailto:" +
                     address +
-                    (desktop
-                      ? `?subject=${encodeURIComponent(t.letterSubjects[letterTopic])}&body=${encodeURIComponent(letterBody)}`
-                      : "")
+                    `?subject=${encodeURIComponent(t.letterSubjects[letterTopic])}&body=${encodeURIComponent(letterBody)}`
                   }
                 >
                   {t.mailCardAction}
@@ -200,12 +190,10 @@ export default function ContactPage({ t, profile }) {
                 <div>
                   <h4>{title}</h4>
                   <p>{text}</p>
-                  {desktop && (
-                    <button type="button" className="letter-guide-action" onClick={() => handleGuideAction(index)}>
-                      <span>{t.letterGuideActions[index]}</span>
-                      <FiArrowUpRight aria-hidden="true" />
-                    </button>
-                  )}
+                  <button type="button" className="letter-guide-action" onClick={() => handleGuideAction(index)}>
+                    <span>{t.letterGuideActions[index]}</span>
+                    <FiArrowUpRight aria-hidden="true" />
+                  </button>
                 </div>
               </li>
             );

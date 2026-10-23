@@ -132,7 +132,7 @@ async function verifyLayout(page, label, route, desktop) {
     );
     assert.equal(layout.desktopTabs, true);
   }
-  if (!desktop) assert.equal(layout.desktopTabs, false);
+  if (!desktop) assert.equal(layout.desktopTabs, route === "/");
   results.push({ label, ...layout });
 }
 
@@ -172,6 +172,9 @@ try {
         [820, 1180, true],
         [390, 844, true],
         [360, 740, true],
+        [320, 740, true],
+        [844, 390, true],
+        [1024, 768, true],
       ]) {
     await check(`layout ${width}×${height}`, async () => {
       const context = await contextFor(width, height, "zh", mobile);
@@ -230,15 +233,17 @@ try {
       assert.equal(await page.locator("#journal-tab-about").getAttribute("aria-selected"), "true");
       assert.equal(await page.locator("#journal-tab-about").evaluate((el) => el === document.activeElement), true);
       await page.setViewportSize({ width: 390, height: 844 });
-      await page.waitForFunction(() => !document.querySelector(".journal-tabs"));
+      assert.equal(await page.locator(".journal-tabs").isVisible(), true);
       assert.equal(await page.locator(".journal-notice").isVisible(), true);
+      assert.equal(await page.locator(".journal-quote").isVisible(), false);
+      await quoteTab.click();
       assert.equal(await page.locator(".journal-quote").isVisible(), true);
     } finally {
       await context.close();
     }
   });
 
-  await check("contact filters, clipboard success/failure, mobile keeps every channel", async () => {
+  await check("contact filters, clipboard success/failure, mobile retains selected filter", async () => {
     const context = await contextFor(1440, 900);
     const page = await context.newPage();
     try {
@@ -274,9 +279,11 @@ try {
         true,
       );
       await page.setViewportSize({ width: 390, height: 844 });
-      await page.waitForFunction(() => !document.querySelector(".contact-filters"));
+      assert.equal(await page.locator(".contact-filters").isVisible(), true);
+      assert.equal(await page.locator(".contact-tile").count(), 3);
+      await filters.nth(0).click();
       assert.equal(await page.locator(".contact-tile").count(), 6);
-      assert.equal(await page.locator(".mail-compose-link").isVisible(), false);
+      assert.equal(await page.locator(".mail-compose-link").isVisible(), true);
       await page.getByRole("button", { name: "打开菜单", exact: true }).click();
       const contact = page.locator(".site-nav a[data-page=contact]");
       assert.equal(await contact.isVisible(), true);
@@ -387,14 +394,17 @@ try {
       await focus.click();
       assert.equal(await focus.getAttribute("aria-pressed"), "false");
       await page.setViewportSize({ width: 390, height: 844 });
-      await page.waitForFunction(() => !document.querySelector(".reading-library"));
-      assert.equal(await trigger.count(), 0, "desktop drawer is absent on mobile");
+      assert.equal(await trigger.isVisible(), true);
+      await trigger.click();
+      assert.equal(await page.locator(".reading-library").evaluate((el) => el.matches(":modal")), true);
+      await page.locator(".library-close").click();
+      assert.equal(await trigger.evaluate((el) => el === document.activeElement), true);
     } finally {
       await context.close();
     }
   });
 
-  await check("letter topic and draft produce a correctly encoded email, mobile stays original", async () => {
+  await check("letter topic and draft produce a correctly encoded email across viewport changes", async () => {
     const context = await contextFor(1440, 900);
     const page = await context.newPage();
     try {
@@ -411,17 +421,84 @@ try {
       assert.equal(target.searchParams.get("body"), draft);
       await page.screenshot({ path: path.join(output, "letter-draft.png"), fullPage: true });
       await page.setViewportSize({ width: 390, height: 844 });
-      await page.waitForFunction(() => !document.querySelector(".letter-composer"));
+      assert.equal(await page.locator(".letter-composer").isVisible(), true);
+      assert.equal(await page.locator("#letter-draft-body").inputValue(), draft);
+      assert.equal(new URL(await page.locator(".mail-compose-link").getAttribute("href")).searchParams.get("body"), draft);
       assert.equal(await page.locator(".contact-tile").count(), 6);
       assert.equal(await page.locator(".email-option > a").first().getAttribute("href"), "mailto:fyh20071004@gmail.com");
       await page.setViewportSize({ width: 1440, height: 900 });
       await page.waitForFunction(() => !!document.querySelector(".letter-composer"));
-      await page.locator(".letter-draft summary").click();
       assert.equal(await page.locator("#letter-draft-body").inputValue(), draft);
     } finally {
       await context.close();
     }
   });
+  for (const language of ["zh", "ja", "en"]) {
+    for (const width of [320, 390, 430]) {
+      await check(`touch reading and correspondence ${width}-${language}`, async () => {
+        const context = await contextFor(width, 844, language, true);
+        const page = await context.newPage();
+        const errors = [];
+        page.on("pageerror", (error) => errors.push(error.message));
+        try {
+          await load(page, "/");
+          await verifyLayout(page, `${width}-${language}/`, "/", false);
+          await page.locator(".journal-notice-shuffle").click();
+          await page.locator("#journal-tab-quote").click();
+          await page.locator(".journal-copy").click();
+          assert.equal(await page.evaluate(() => window.__copiedText), await page.locator(".journal-quote p").textContent());
+          await page.locator(".journal-shuffle").click();
+          await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+          await page.screenshot({ path: path.join(output, `home-mobile-${width}-${language}.png`), fullPage: true });
+
+          await load(page, "/posts");
+          await verifyLayout(page, `${width}-${language}/posts`, "/posts", false);
+          const fontSize = () => page.locator(".post-reading .post-text").evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+          const originalSize = await fontSize();
+          await page.locator(".reading-text-toggle").click();
+          assert.ok(await fontSize() > originalSize);
+          await page.locator(".quick-nav-articles").click();
+          await page.waitForFunction(() => document.querySelector(".quick-nav-articles").getAttribute("aria-current") === "location");
+          await page.locator(".reading-library-trigger").click();
+          await page.locator(".library-filters button").nth(2).click();
+          await page.locator(".library-search input").fill("second");
+          assert.equal(await page.locator(".library-result").count(), 1);
+          await page.screenshot({ path: path.join(output, `drawer-mobile-${width}-${language}.png`) });
+          const dailyText = await page.locator(".post-reading .post-text").textContent();
+          await page.locator(".library-result").click();
+          assert.equal(await page.locator("#x-article-title").textContent(), "A second independent article");
+          assert.equal(await page.locator(".post-reading .post-text").textContent(), dailyText);
+          assert.equal(await page.locator(".reading-library").isVisible(), false);
+          await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+          await page.screenshot({ path: path.join(output, `posts-mobile-${width}-${language}.png`) });
+
+          await load(page, "/contact");
+          await verifyLayout(page, `${width}-${language}/contact`, "/contact", false);
+          await page.locator(".contact-filters button").nth(2).click();
+          assert.equal(await page.locator("button.contact-tile").count(), 3);
+          await page.locator(".contact-filters button").nth(0).click();
+          await page.locator(".letter-guide-action").nth(2).click();
+          assert.equal(await page.locator("#letter-draft-body").evaluate((el) => el === document.activeElement), true);
+          await page.locator(".letter-prompt-chip").first().click();
+          assert.ok((await page.locator("#letter-draft-body").inputValue()).length > 0);
+          await page.locator(".letter-draft-clear").click();
+          assert.equal(await page.locator("#letter-draft-body").inputValue(), "");
+          const draft = `你好，${language}。\nA & B + 100%？`;
+          await page.locator("#letter-draft-body").fill(draft);
+          assert.equal(new URL(await page.locator(".mail-compose-link").getAttribute("href")).searchParams.get("body"), draft);
+          await page.locator(".email-row").scrollIntoViewIfNeeded();
+          await page.screenshot({ path: path.join(output, `letter-mobile-${width}-${language}.png`), fullPage: true });
+          const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
+          assert.equal(overflow, false, "expanded draft must fit the screen");
+          const smallControls = await page.evaluate(() => [...document.querySelectorAll(".journal-tabs button, .posts-quick-nav button, .reading-library[open] button, .contact-filters button, .letter-composer button, .letter-draft summary, .mail-compose-link, .letter-guide-action")].filter((el) => el.getClientRects().length && el.getBoundingClientRect().height < 44).map((el) => el.textContent.trim()));
+          assert.deepEqual(smallControls, [], "new mobile controls have 44px tap targets");
+          assert.deepEqual(errors, []);
+        } finally {
+          await context.close();
+        }
+      });
+    }
+  }
 } finally {
   await browser?.close();
   server.kill();
@@ -440,4 +517,4 @@ try {
   );
 }
 assert.equal(failures.length, 0, JSON.stringify(failures, null, 2));
-console.log(`Verified ${results.length} route/viewport/language layouts and all desktop interactions.`);
+console.log(`Verified ${results.length} route/viewport/language layouts and desktop/mobile interactions.`);
