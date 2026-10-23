@@ -8,6 +8,7 @@ import { preferredScrollBehavior } from "../utils/motion.js";
 import { useClipboard } from "../hooks/useClipboard.js";
 import { useDesktopLayout } from "../hooks/useDesktopLayout.js";
 import { ArticlePhoto } from "./ArticlePhoto.jsx";
+import { CopyFallback } from "./ContactTile.jsx";
 import { SectionHeading } from "./SectionHeading.jsx";
 import { articleLinkParts } from "../../shared/article-links.mjs";
 import { xProfileUrl } from "../constants/site.js";
@@ -25,7 +26,7 @@ export function XArticlesSection({
   profile,
 }) {
   const desktop = useDesktopLayout();
-  const { copiedId, copyId } = useClipboard();
+  const { copiedId, copyFailedId, manualCopyRef, copyId } = useClipboard();
   const readingRef = useRef(null);
   const timelineRef = useRef(null);
   const currentIndex = Math.min(articleIndex, Math.max(0, articles.length - 1));
@@ -212,6 +213,14 @@ export function XArticlesSection({
                 <FaArrowRight aria-hidden="true" />
               </a>
             </div>
+            {copyFailedId && copyFailedId === article.permalink && (
+              <CopyFallback
+                value={copyFailedId}
+                message={t.copyLinkFailed}
+                label={t.copyArticleLink}
+                inputRef={manualCopyRef}
+              />
+            )}
             <div className="glass-panel-backdrop glass-reading-backdrop article-frost-backdrop" aria-hidden="true" />
           </article>
           {articles.length > 1 && (

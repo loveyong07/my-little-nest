@@ -27,11 +27,28 @@ export function normalizedArticleLinks(entities) {
 }
 
 export function articleLinkParts(text, links = []) {
-  const definitions = [...links, ...authorLinks].filter((link) => link?.text && safeArticleLink(link.url));
+  const explicit = links.filter((link) => link?.text && safeArticleLink(link.url));
+  const definitions = [...explicit, ...authorLinks.filter((link) => !explicit.some((item) => item.text === link.text))];
   const candidates = [];
-  for (const link of definitions) {
-    for (let start = text.indexOf(link.text); start >= 0; start = text.indexOf(link.text, start + link.text.length)) {
-      candidates.push({ start, end: start + link.text.length, text: link.text, url: safeArticleLink(link.url) });
+  const positionedLabels = new Set();
+  const overlaps = (start, end) => candidates.some((item) => start < item.end && end > item.start);
+  // Document ranges refer to this block's UTF-16 string offsets. Keep each linked
+  // occurrence distinct, even when its label also appears elsewhere as plain text.
+  for (const link of explicit) {
+    if (link.offset === undefined && link.length === undefined) continue;
+    positionedLabels.add(link.text);
+    const start = link.offset;
+    const end = start + link.length;
+    if (
+      Number.isSafeInteger(start) &&
+      Number.isSafeInteger(link.length) &&
+      start >= 0 &&
+      link.length > 0 &&
+      end <= text.length &&
+      text.slice(start, end) === link.text &&
+      !overlaps(start, end)
+    ) {
+      candidates.push({ start, end, text: link.text, url: safeArticleLink(link.url) });
     }
   }
   const pattern =
@@ -39,14 +56,33 @@ export function articleLinkParts(text, links = []) {
   for (const match of text.matchAll(pattern)) {
     const raw = match[2] ?? match[0].replace(/[.,!;:]+$/, "");
     const url = safeArticleLink(raw);
-    if (url)
+    const end = match.index + (match[2] ? match[0].length : raw.length);
+    if (url && !overlaps(match.index, end))
       candidates.push({
         start: match.index,
-        end: match.index + (match[2] ? match[0].length : raw.length),
+        end,
         text: match[1] ?? raw,
         url,
       });
   }
+  // Older caches and plain-text API responses may have no positions. Restore only
+  // unambiguous labels; conflicting destinations cannot safely be assigned by name.
+  const destinations = new Map();
+  for (const link of definitions) {
+    if (positionedLabels.has(link.text)) continue;
+    const urls = destinations.get(link.text) ?? new Set();
+    urls.add(safeArticleLink(link.url));
+    destinations.set(link.text, urls);
+  }
+  const fallback = [];
+  for (const [label, urls] of destinations) {
+    if (urls.size !== 1) continue;
+    for (let start = text.indexOf(label); start >= 0; start = text.indexOf(label, start + label.length)) {
+      const end = start + label.length;
+      if (!overlaps(start, end)) fallback.push({ start, end, text: label, url: [...urls][0] });
+    }
+  }
+  candidates.push(...fallback);
   candidates.sort((a, b) => a.start - b.start || b.end - a.end);
   const parts = [];
   let cursor = 0;

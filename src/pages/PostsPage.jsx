@@ -108,13 +108,23 @@ function PostsContent({ language, t, profile, onFeedReady }) {
   useEffect(() => {
     if (!desktop || posts.length < 2) return undefined;
     function handleKeyNavigation(event) {
-      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (
+        event.defaultPrevented ||
+        event.isComposing ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.altKey ||
+        event.shiftKey
+      )
+        return;
       if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
       if (document.querySelector(".media-lightbox, dialog[open]")) return;
       const target = event.target;
       if (
         target instanceof HTMLElement &&
-        target.closest("input, textarea, select, [contenteditable], dialog, .media-lightbox")
+        target.closest(
+          "a, button, input, textarea, select, video, audio, [contenteditable], [role=slider], [role=tablist], dialog, .media-lightbox, #x-articles",
+        )
       ) {
         return;
       }

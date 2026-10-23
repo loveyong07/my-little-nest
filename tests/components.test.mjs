@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { after, test } from "node:test";
 import { resolve } from "node:path";
 import { JSDOM } from "jsdom";
+import { DESKTOP_FIT_QUERY } from "../src/constants/media-queries.js";
 
 const dom = new JSDOM("<!doctype html><html><body></body></html>", {
   url: "http://localhost/",
@@ -15,6 +16,10 @@ globalThis.Node = dom.window.Node;
 globalThis.Event = dom.window.Event;
 globalThis.MouseEvent = dom.window.MouseEvent;
 globalThis.KeyboardEvent = dom.window.KeyboardEvent;
+globalThis.ResizeObserver = class {
+  observe() {}
+  disconnect() {}
+};
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 let systemReducedMotion = false;
 const mediaListeners = new Set();
@@ -74,6 +79,14 @@ function resetDom() {
   document.documentElement.classList.remove("motion-off");
   window.localStorage.clear();
   window.sessionStorage.clear();
+}
+
+function mockResponsiveLayout(context, wide) {
+  const original = window.matchMedia;
+  context.mock.method(window, "matchMedia", (media) => ({
+    ...original(media),
+    matches: media === DESKTOP_FIT_QUERY ? wide : original(media).matches,
+  }));
 }
 
 async function mount(element) {
@@ -999,6 +1012,162 @@ test("posts and Articles navigate independently and retain both identities throu
     assert.equal(reading.articleState, "unavailable");
     assert.equal(reading.articleLoading, false);
     assert.equal(requests, 6);
+  } finally {
+    await view.unmount();
+  }
+});
+
+for (const wide of [true, false]) {
+  test(`responsive post shortcuts preserve video and control keys (wide=${wide})`, async (context) => {
+    resetDom();
+    mockResponsiveLayout(context, wide);
+    window.sessionStorage.setItem("nest-posts-age-confirmed", "18+");
+    const time = Date.now() + (wide ? 6 : 7) * 24 * 60 * 60_000;
+    context.mock.method(Date, "now", () => time);
+    const posts = [
+      {
+        ...SNAPSHOT,
+        text: "Video post",
+        media: [{ type: "video", url: "https://video.twimg.com/ext_tw_video/1/pu/vid/movie.mp4" }],
+      },
+      { ...SNAPSHOT, id: "9002", text: "Second post", permalink: "https://x.com/loveyong07/status/9002" },
+    ];
+    context.mock.method(globalThis, "fetch", async () => ({
+      ok: true,
+      json: async () => ({
+        status: "ok",
+        pinnedStatus: "none",
+        articlesStatus: "none",
+        posts,
+      }),
+    }));
+    const view = await mount(
+      React.createElement(PostsPage, {
+        language: "zh",
+        t: copy.zh,
+        profile: { username: "loveyong07" },
+        onFeedReady() {},
+      }),
+    );
+    try {
+      const reading = view.container.querySelector(".post-reading");
+      const originalVideo = reading.querySelector("video");
+      assert.ok(originalVideo);
+      for (const target of [
+        originalVideo,
+        reading.querySelector("a"),
+        view.container.querySelector(".post-controls button"),
+      ]) {
+        const event = new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true, cancelable: true });
+        await React.act(async () => target.dispatchEvent(event));
+        assert.equal(event.defaultPrevented, false, "controls retain their native arrow-key behavior");
+        assert.equal(reading.querySelector("video"), originalVideo);
+        assert.equal(reading.querySelector(".post-text").textContent, "Video post");
+      }
+      const handled = new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true, cancelable: true });
+      handled.preventDefault();
+      await React.act(async () => document.body.dispatchEvent(handled));
+      assert.equal(reading.querySelector("video"), originalVideo);
+      const pageArrow = new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true, cancelable: true });
+      await React.act(async () => document.body.dispatchEvent(pageArrow));
+      assert.equal(pageArrow.defaultPrevented, wide);
+      assert.equal(reading.querySelector(".post-text").textContent, wide ? "Second post" : "Video post");
+    } finally {
+      await view.unmount();
+    }
+  });
+}
+
+test("post and Article link copying provides a selected manual fallback and recovers in every locale", async (context) => {
+  resetDom();
+  mockResponsiveLayout(context, true);
+  const { XArticlesSection } = await server.ssrLoadModule("/src/components/XArticlesSection.jsx");
+  const descriptor = Object.getOwnPropertyDescriptor(navigator, "clipboard");
+  let denied = true;
+  Object.defineProperty(navigator, "clipboard", {
+    configurable: true,
+    value: {
+      writeText: async () => {
+        if (denied) throw new Error("Clipboard permission denied");
+      },
+    },
+  });
+  try {
+    for (const language of ["zh", "ja", "en"]) {
+      for (const article of [false, true]) {
+        const item = { ...SNAPSHOT, text: "A note", title: "A note", media: [] };
+        const props = { language, t: copy[language], profile: { username: "loveyong07" } };
+        const view = await mount(
+          article
+            ? React.createElement(XArticlesSection, {
+                ...props,
+                articles: [item],
+                articleIndex: 0,
+                articleState: "live",
+              })
+            : React.createElement(PostCard, { ...props, post: item, feedSource: "live" }),
+        );
+        try {
+          denied = true;
+          await React.act(async () => view.container.querySelector(".post-copy-link").click());
+          const fallback = view.container.querySelector(".contact-copy-fallback");
+          assert.ok(fallback.textContent.includes(copy[language].copyLinkFailed));
+          const input = fallback.querySelector("input");
+          assert.equal(input.value, item.permalink);
+          assert.equal(document.activeElement, input);
+          assert.equal(input.selectionStart, 0);
+          assert.equal(input.selectionEnd, item.permalink.length);
+          denied = false;
+          await React.act(async () => view.container.querySelector(".post-copy-link").click());
+          assert.equal(view.container.querySelector(".contact-copy-fallback"), null);
+          assert.equal(view.container.querySelector(".post-copy-link").textContent, copy[language].linkCopied);
+        } finally {
+          await view.unmount();
+        }
+      }
+    }
+  } finally {
+    if (descriptor) Object.defineProperty(navigator, "clipboard", descriptor);
+    else delete navigator.clipboard;
+  }
+});
+
+test("Articles render equal labels with distinct destinations without linking a third plain occurrence", async () => {
+  resetDom();
+  const { XArticlesSection } = await server.ssrLoadModule("/src/components/XArticlesSection.jsx");
+  const text = "Read more and Read more; Read more";
+  const view = await mount(
+    React.createElement(XArticlesSection, {
+      articles: [
+        {
+          id: "9003",
+          text,
+          links: [{ text: "Read more", url: "https://example.com/global" }],
+          blocks: [
+            {
+              type: "text",
+              text,
+              links: [
+                { text: "Read more", url: "https://example.com/first", offset: 0, length: 9 },
+                { text: "Read more", url: "https://example.com/second", offset: 14, length: 9 },
+              ],
+            },
+          ],
+        },
+      ],
+      articleIndex: 0,
+      articleState: "live",
+      language: "zh",
+      t: copy.zh,
+      profile: {},
+    }),
+  );
+  try {
+    assert.deepEqual(
+      [...view.container.querySelectorAll(".article-text a")].map((link) => link.href),
+      ["https://example.com/first", "https://example.com/second"],
+    );
+    assert.equal(view.container.querySelector(".article-text").textContent, text);
   } finally {
     await view.unmount();
   }
