@@ -1,0 +1,878 @@
+/* A pocket edition of the existing letter desk. The wide, fine-pointer
+   composition remains entirely in desktop-design.css and sky-letter.css. */
+@media (max-width: 900px), (pointer: coarse), (pointer: none) {
+  /* Keep the illustration visible around the letter, with quieter paper inside. */
+  .hero-copy {
+    --glass-home-fill: linear-gradient(145deg, #fafdffc4, #eaf5ff99 62%, #fff4fac2);
+  }
+  .hero-letter-overline {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 16px 0 10px;
+    color: #617c98;
+    font:
+      700 9px/1.5 "Quicksand",
+      sans-serif;
+    letter-spacing: 0.14em;
+  }
+  .hero-letter-overline::after {
+    flex: 1;
+    height: 1px;
+    background: #8caec54d;
+    content: "";
+  }
+  .hero-letter-overline span:last-child {
+    order: 1;
+    color: #927092;
+  }
+  .hero-sender {
+    display: block;
+    padding: 16px;
+    border: 1px solid #ffffffb3;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #ffffff80, #eaf4ff6b);
+  }
+  .hero-sender .profile {
+    margin-top: 0;
+  }
+  .hero-sender .profile img {
+    width: 48px;
+    height: 48px;
+  }
+  .hero-sender .profile strong {
+    font-size: 23px;
+  }
+  .hero-sender .bio {
+    margin-top: 12px;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+  .hero-sender .motto {
+    margin-bottom: 0;
+  }
+
+  /* Two desktop journal pages become one touch-friendly notebook. */
+  .home-journal {
+    display: block;
+    margin-top: 16px;
+    padding: 14px 16px;
+    border: 1px solid #fff;
+    border-radius: 24px;
+    background: linear-gradient(135deg, #fbfdfff2, #f5effbeb 65%, #eaf5fff0);
+    box-shadow: var(--shadow-card);
+    text-shadow: none;
+  }
+  .journal-tabs-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed #c8bad880;
+  }
+  .journal-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #6c4d7a;
+    font-size: 13px;
+  }
+  .journal-label svg {
+    color: #b46f96;
+  }
+  .journal-tabs {
+    display: flex;
+    gap: 3px;
+    padding: 3px;
+    border: 1px solid #fff;
+    border-radius: 18px;
+    background: #e9e7f5b3;
+  }
+  .journal-tabs button {
+    min-height: 44px;
+    padding: 8px 13px;
+    border: 0;
+    border-radius: 14px;
+    background: transparent;
+    color: #536b85;
+    font-size: 12px;
+  }
+  .journal-tabs [aria-selected="true"] {
+    background: linear-gradient(135deg, #fff, #fff4f9);
+    box-shadow: 0 3px 9px #5e487a14;
+    color: #88496a;
+  }
+  .home-journal .journal-note {
+    padding: 14px 0 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    transform: none;
+    animation: none;
+    text-shadow: none;
+  }
+  .home-journal .journal-note[hidden],
+  .home-journal .journal-note h2,
+  .home-journal .journal-sticker {
+    display: none;
+  }
+  .home-journal .journal-note p {
+    font-size: 14px;
+    line-height: 1.85;
+  }
+  .home-journal .journal-welcome {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border: 1px solid #ead8e9;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #fff8fc, #edf6ff);
+    color: #6b527c;
+    font-size: 12px;
+  }
+  .journal-welcome-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .journal-welcome-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #7a6489;
+    font-size: 10px;
+  }
+  .journal-note .journal-notice-shuffle {
+    position: static;
+    display: inline-flex;
+    gap: 6px;
+    width: auto;
+    height: auto;
+    min-height: 44px;
+    padding: 8px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+  }
+  .home-journal .journal-quote {
+    min-height: 148px;
+    padding-bottom: 58px;
+  }
+  .home-journal .journal-quote p {
+    color: #5b4873;
+    font-size: 16px;
+  }
+  .journal-page-count {
+    position: absolute;
+    bottom: 15px;
+    left: 0;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: #eae2f4;
+    color: #705583;
+    font:
+      700 10px/1.5 "Quicksand",
+      sans-serif;
+    letter-spacing: 0.08em;
+  }
+  .journal-note .journal-copy,
+  .journal-note .journal-shuffle {
+    bottom: 0;
+    width: 44px;
+    height: 44px;
+  }
+  .journal-note .journal-copy {
+    right: 52px;
+  }
+  .journal-note .journal-shuffle {
+    right: 0;
+  }
+  .journal-copy span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .journal-note .journal-copy.is-copied {
+    background: var(--gradient-mint);
+    color: #2f6853;
+  }
+  .home-journal .contact-copy-fallback {
+    margin-top: 12px;
+  }
+
+  /* The desktop directory folds into a small, non-sticky reading card. */
+  .posts-quick-nav {
+    position: static;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    width: 100%;
+    max-width: none;
+    margin: 0 0 22px;
+    padding: 14px;
+    border-radius: 22px;
+    background: linear-gradient(145deg, #fff9fce8, #edf5fff0);
+    text-shadow: none;
+  }
+  .reading-directory-heading {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+  }
+  .reading-directory-heading > span {
+    color: #80638c;
+    font:
+      700 8px/1.5 "Quicksand",
+      sans-serif;
+    letter-spacing: 0.08em;
+  }
+  .reading-directory-heading h2 {
+    order: -1;
+    margin: 0;
+    color: #3a5e7c;
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .reading-directory-heading p,
+  .reading-tools > span,
+  .reading-tools > p,
+  .reading-tools i,
+  .library-shortcut-kbd {
+    display: none;
+  }
+  .reading-library-trigger,
+  .reading-text-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-width: 0;
+    min-height: 44px;
+    padding: 9px 10px;
+    border: 1px solid #d6c5e3;
+    border-radius: 14px;
+    background: #fffafde6;
+    color: #6c4d7a;
+    font-size: 12px;
+    line-height: 1.45;
+  }
+  .reading-library-trigger svg {
+    flex-shrink: 0;
+  }
+  .reading-library-trigger svg:last-child {
+    margin-left: auto;
+  }
+  .reading-tools {
+    grid-column: 2;
+    grid-row: 2;
+    display: block;
+    max-width: 126px;
+  }
+  .reading-text-toggle {
+    height: 100%;
+    background: #ecf4ff;
+    color: #3b6080;
+  }
+  .reading-text-toggle[aria-pressed="true"] {
+    border-color: #9979b4;
+    background: #e9dcf6;
+    color: #5c3a73;
+  }
+  .reading-directory-links {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .posts-quick-nav .quick-nav-pill {
+    min-height: 44px;
+    padding: 9px 10px;
+    border-radius: 14px;
+    font-size: 12px;
+    font-weight: 500;
+    text-align: left;
+  }
+  .quick-nav-badge {
+    margin-left: auto;
+    color: inherit;
+    font:
+      700 10px/1.4 "Quicksand",
+      sans-serif;
+  }
+  .posts-quick-nav .quick-nav-pill.is-active {
+    box-shadow: inset 3px 0 #bb82a7;
+  }
+  .is-reading-large .post-text,
+  .is-reading-large .article-text {
+    font-size: 18px;
+    line-height: 1.95;
+  }
+
+  /* An independently scrolling drawer, sized for a phone and its keyboard. */
+  .reading-library {
+    width: min(620px, calc(100% - 24px));
+    max-width: none;
+    max-height: calc(100dvh - 32px);
+    margin: auto;
+    padding: 20px 16px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border: 1px solid #fff;
+    border-radius: 24px;
+    background: linear-gradient(145deg, #fffafe, #f0f7ff);
+    box-shadow: 0 20px 60px #1d3b5866;
+    color: #345775;
+    text-shadow: none;
+  }
+  .reading-library::backdrop {
+    background: #22425e80;
+  }
+  .library-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .desk-eyebrow {
+    color: #8b607e;
+    font:
+      700 9px/1.5 "Quicksand",
+      sans-serif;
+    letter-spacing: 0.12em;
+  }
+  .library-heading h2 {
+    margin: 5px 0 0;
+    font-size: 23px;
+    font-weight: 500;
+  }
+  .library-close {
+    display: grid;
+    place-items: center;
+    flex: 0 0 44px;
+    width: 44px;
+    height: 44px;
+    border: 1px solid #d9c7e5;
+    border-radius: 50%;
+    background: #f4e9f9;
+    color: #725382;
+  }
+  .library-intro {
+    margin: 12px 0 16px;
+    color: #5a738c;
+    font-size: 12px;
+    line-height: 1.8;
+  }
+  .library-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 12px;
+    border: 1px solid #bcd0e5;
+    border-radius: 15px;
+    background: #fff;
+  }
+  .library-search input {
+    width: 100%;
+    min-width: 0;
+    height: 48px;
+    border: 0;
+    background: transparent;
+    color: #345775;
+    font: inherit;
+    font-size: 16px;
+  }
+  .library-filters {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 14px 0;
+  }
+  .library-filters button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 1px solid #ccd9e9;
+    border-radius: 14px;
+    background: #fff;
+    color: #4f6b86;
+    font-size: 12px;
+  }
+  .library-filters [aria-pressed="true"] {
+    border-color: #d3b2cf;
+    background: #f8e7f2;
+    color: #854867;
+  }
+  .library-filters small {
+    color: inherit;
+    font:
+      700 10px/1.5 "Quicksand",
+      sans-serif;
+  }
+  .library-filters > span {
+    flex-basis: 100%;
+    margin-top: 4px;
+    color: #677f95;
+    font-size: 11px;
+  }
+  .library-results ul {
+    display: grid;
+    gap: 9px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .library-result {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 88px;
+    padding: 12px;
+    border: 1px solid #dbe4ef;
+    border-radius: 17px;
+    background: #ffffffd9;
+    color: #3b5d7b;
+    text-align: left;
+  }
+  .library-result-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 32px;
+    height: 38px;
+    border-radius: 11px;
+    background: #e4f0fd;
+  }
+  .library-result-articles {
+    background: #f0e4f8;
+    color: #78518b;
+  }
+  .library-result-pinned {
+    background: #fbe5ef;
+    color: #965b79;
+  }
+  .library-result-copy {
+    display: grid;
+    gap: 5px;
+    min-width: 0;
+  }
+  .library-result-copy strong {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow-wrap: anywhere;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.65;
+  }
+  .library-result-copy small,
+  .library-result-copy time {
+    color: #6d7690;
+    font-size: 10px;
+  }
+  .library-result > svg:last-child {
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+  .library-empty {
+    padding: 26px 12px;
+    font-size: 13px;
+    line-height: 1.8;
+    text-align: center;
+  }
+  .library-empty button {
+    min-height: 44px;
+    padding: 8px 16px;
+    border: 1px solid #d7bfdf;
+    border-radius: 16px;
+    background: #f3e9fa;
+    color: #705381;
+  }
+
+  /* Contact channels and a fold-away draft keep the desktop stationery details. */
+  .contact-channel-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    margin-top: 20px;
+  }
+  .contact-channel-heading h3 {
+    margin: 0;
+    color: #345775;
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .contact-channel-heading > span {
+    color: #705b81;
+    font:
+      700 8px/1.5 "Quicksand",
+      sans-serif;
+    letter-spacing: 0.04em;
+  }
+  .contact-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 12px;
+  }
+  .contact-filters button {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 44px;
+    padding: 8px 10px;
+    border: 1px solid #ffffffd9;
+    border-radius: 15px;
+    background: #eef5ffe0;
+    color: #3e617e;
+    font-size: 12px;
+  }
+  .contact-filters button > span {
+    font:
+      700 10px/1.5 "Quicksand",
+      sans-serif;
+  }
+  .contact-filters [aria-pressed="true"] {
+    border-color: #e5c5dc;
+    background: #fff1f8;
+    color: #834769;
+  }
+  .contact-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .contact-tile {
+    min-height: 136px;
+    padding: 14px 10px;
+    border-radius: 20px;
+    background: linear-gradient(145deg, #ffffffe0, #edf5ffd9);
+    text-shadow: none;
+  }
+  .contact-tile.line,
+  .contact-tile.whatsapp {
+    background: linear-gradient(145deg, #ffffffe0, #e8f8f0d9);
+  }
+  .contact-tile.qq,
+  .contact-tile.wechat {
+    background: linear-gradient(145deg, #ffffffe0, #f5ecfcd9);
+  }
+  .contact-tile::before {
+    display: none;
+  }
+  .contact-icon {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 7px;
+  }
+  .contact-icon svg {
+    width: 34px;
+    height: 34px;
+    padding: 7px;
+  }
+  .contact-tile strong {
+    font-size: 14px;
+  }
+  .contact-tile small {
+    font-size: 11px;
+  }
+  .contact-action {
+    margin-top: 10px;
+    padding: 4px 9px;
+    border-radius: 999px;
+    background: var(--tile-pill-bg);
+    color: var(--tile-pill-ink);
+    font-size: 10px;
+  }
+  .email-row {
+    display: block;
+    margin-top: 20px;
+    padding: 20px 16px;
+    border-radius: 24px;
+    background: linear-gradient(145deg, #fffafcf0, #edf5ffeb);
+    text-shadow: none;
+  }
+  .email-row .mail-card-heading {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+    color: #82678e;
+    font:
+      700 8px/1.6 "Quicksand",
+      sans-serif;
+    letter-spacing: 0.08em;
+  }
+  .email-row h3 {
+    font-size: 20px;
+    font-weight: 500;
+  }
+  .email-row > .email-stamp {
+    display: none;
+  }
+  .email-row .mail-card-note {
+    display: block;
+    margin: 10px 0 0;
+    color: #5a738b;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+  .email-row .letter-composer {
+    display: block;
+    margin-top: 18px;
+  }
+  .letter-topics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  .letter-topics legend {
+    margin-bottom: 10px;
+    padding: 0;
+    color: #536d86;
+    font-size: 12px;
+  }
+  .letter-topics button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 1px solid #ccd8e8;
+    border-radius: 15px;
+    background: #ffffffc9;
+    color: #536c86;
+    font-size: 12px;
+  }
+  .letter-topics [aria-pressed="true"] {
+    border-color: #d4b0cf;
+    background: #fbe7f2;
+    color: #854a6d;
+  }
+  .letter-subject-preview {
+    display: grid;
+    gap: 6px;
+    margin-top: 12px;
+    padding: 10px 12px;
+    border: 1px solid #e3d4ec;
+    border-radius: 14px;
+    background: #ffffffa6;
+    font-size: 12px;
+    line-height: 1.7;
+  }
+  .letter-subject-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #83638f;
+    font-size: 10px;
+  }
+  .letter-subject-preview strong {
+    color: #3b5b77;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+  }
+  .letter-draft {
+    margin-top: 12px;
+    border-block: 1px dashed #c8cfe1;
+  }
+  .letter-draft summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 48px;
+    color: #705382;
+    font-size: 13px;
+    cursor: pointer;
+    list-style: none;
+  }
+  .letter-draft summary::-webkit-details-marker {
+    display: none;
+  }
+  .letter-draft summary svg:last-child {
+    margin-left: auto;
+  }
+  .letter-draft[open] summary svg:last-child {
+    transform: rotate(180deg);
+  }
+  .letter-prompts-label,
+  .letter-draft label {
+    display: block;
+    margin-bottom: 8px;
+    color: #5a6d86;
+    font-size: 12px;
+  }
+  .letter-prompts-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-bottom: 14px;
+  }
+  .letter-prompt-chip,
+  .letter-draft-clear {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 9px 12px;
+    border: 1px dashed #d3bbdf;
+    border-radius: 14px;
+    background: #fff7fc;
+    color: #6d517e;
+    font-size: 12px;
+    line-height: 1.6;
+    text-align: left;
+  }
+  .letter-draft textarea {
+    width: 100%;
+    min-height: 150px;
+    max-height: 320px;
+    padding: 12px;
+    border: 1px solid #b9cfe5;
+    border-radius: 16px;
+    background: #fffffff0;
+    color: #355572;
+    font: inherit;
+    font-size: 16px;
+    line-height: 1.8;
+    resize: vertical;
+    scroll-margin-block: 24px;
+  }
+  .letter-draft-note {
+    display: grid;
+    gap: 8px;
+    margin-block: 8px 12px;
+    color: #5a738b;
+    font-size: 11px;
+    line-height: 1.7;
+  }
+  .letter-draft-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .email-row .email-options-list {
+    margin-top: 16px;
+  }
+  .email-option {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px 8px;
+  }
+  .email-option > a:first-child {
+    grid-column: 1 / -1;
+    min-height: 44px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font-size: 10px;
+  }
+  .email-option > a:first-child span {
+    font-size: 14px;
+  }
+  .email-row .mail-compose-link {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 7px;
+    min-height: 46px;
+    padding: 10px 12px;
+    border: 1px solid #d5b8d8;
+    border-radius: 16px;
+    background: linear-gradient(120deg, #f9e2ef, #e8e4fb, #dff0ff);
+    color: #674775;
+    font-size: 13px;
+  }
+  .email-option button {
+    min-height: 46px;
+    padding: 10px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+  }
+  .letter-guide ul {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .letter-guide li {
+    padding: 14px;
+    border: 1px solid #fff;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #ffffffe6, #f0f6ffdb);
+    box-shadow: var(--shadow-card);
+  }
+  .letter-guide li::after {
+    display: none;
+  }
+  .letter-guide-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    margin-top: 10px;
+    padding: 8px 12px;
+    border: 1px solid #decae7;
+    border-radius: 14px;
+    background: #faf3ff;
+    color: #725382;
+    font-size: 12px;
+  }
+  :is(.home-journal, .posts-quick-nav, .reading-library, .contacts-section)
+    :is(button, a, input, textarea, summary):focus-visible {
+    outline: 2px solid #8866a9;
+    outline-offset: 3px;
+  }
+}
+
+@media (min-width: 701px) and (max-width: 900px) {
+  .reading-directory-links {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .contact-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) and (forced-colors: active), (pointer: coarse) and (forced-colors: active) {
+  .home-journal,
+  .hero-sender,
+  .posts-quick-nav,
+  .reading-library,
+  .library-result,
+  .contact-tile,
+  .email-row,
+  .letter-guide li {
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
+    box-shadow: none;
+  }
+  :is(.journal-tabs, .library-filters, .letter-topics, .contact-filters) button,
+  .reading-text-toggle {
+    border: 1px solid ButtonText;
+  }
+  :is(.journal-tabs, .library-filters, .letter-topics, .contact-filters) button[aria-selected="true"],
+  :is(.library-filters, .letter-topics, .contact-filters) button[aria-pressed="true"],
+  .reading-text-toggle[aria-pressed="true"] {
+    outline: 2px solid Highlight;
+  }
+}
