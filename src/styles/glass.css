@@ -85,11 +85,6 @@
 @media (min-width: 901px) and (pointer: fine) {
   .post-card:hover {
     border-color: #ffffffb3;
-    box-shadow:
-      0 0 16px #ffffff33,
-      0 12px 28px #355b8124,
-      var(--glass-edge-light);
-    transform: translateY(-2px);
   }
 }
 .contact-tile:hover {

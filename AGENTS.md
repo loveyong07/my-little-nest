@@ -19,7 +19,7 @@
 ## Design and wording
 
 - Before making substantial visual changes, use the Product Design plugin's `get-context` skill when the visual source is unclear or no longer matches the current goal.
-- `design-reference.png` is the visual reference for the open blue sky, right-side character artwork, large blue serif greeting, and white rounded social panel. Current explicit wording and contact rules in this file take precedence over text in the reference image.
+- `archive/design-reference.png` is the visual reference for the open blue sky, right-side character artwork, large blue serif greeting, and white rounded social panel. Current explicit wording and contact rules in this file take precedence over text in the reference image.
 - Keep the established illustrations, welcome mood and scrapbook layout. Use clean blue-and-white scene and reading surfaces, with distinct soft pink, blue, mint, lavender and yellow fills for buttons, navigation, language selectors and small controls.
 - The browser tab title is exactly `初咏的小窝`. The homepage glass letter uses the localized heading `把日常，寄给你。` with its small English caption and a subtle `FROM CHUYONG` postage mark; keep the airy scrapbook layout. Do not add a /now or recent-status module.
 - The outer glass panes on Home, Posts and Contact share small blue bouquets at the four corners only. Keep the glass edges clear between corners, scale the bouquets down on mobile, and keep flowers off inner post/media/contact cards.
@@ -61,4 +61,4 @@
 - Improve direct access without adding a proxy. For existing and future pinned, daily and Article static photos, request X's `name=orig` pixels and serve signed WebP at quality 90 without resizing in both cards and enlarged previews. Conversion failure or a runtime without the encoder falls back to original bytes. Keep avatars, video posters, video and animated images on their existing paths; preserve Article block positions when normalizing photo URLs.
 - Prioritize scene loading, cached feed rendering and bounded adjacent-photo prefetch.
 - Keep scrolling smooth on photo posts. Avoid paint-heavy background animation and large live backdrop blur, especially across the full Posts panel. Reuse prerendered particle sprites and bound decorative canvas resolution on high-DPI displays.
-- Keep the signed same-origin X media restrictions, video Range behavior, cache lifetime limits and server-only secret handling described in `README.md`.
+- Keep the signed same-origin X media restrictions, video Range behavior, cache lifetime limits and server-only secret handling described in `docs/maintenance.md`. Keep current setup and file navigation in `README.md`, and dated audit/deployment records in `docs/history/`.

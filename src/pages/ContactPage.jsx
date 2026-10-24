@@ -149,10 +149,10 @@ export default function ContactPage({ t, profile }) {
           <div className="email-options-list">
             {mailboxes.map(({ label, address }) => (
               <div className="email-option" key={address}>
-                <a href={"mailto:" + address} title={address}>
+                <div className="email-address">
                   {label}
                   <span>{address}</span>
-                </a>
+                </div>
                 <a
                   className="mail-compose-link"
                   href={
