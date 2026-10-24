@@ -5,7 +5,6 @@
   border: 1px solid #fff;
   border-radius: var(--card-radius);
   background: var(--surface-panel);
-  box-shadow: var(--panel-shadow);
 }
 .posts-section,
 .contacts-section {

@@ -34,12 +34,10 @@
   --pastel-yellow-line: #ebd7a5;
   --pastel-blue: #e3effc;
   --pastel-blue-ink: #345d83;
-  --pastel-blue-line: #bad4ed;
   /* Dreamy desktop gradients and soft glow tokens. */
   --gradient-sakura: linear-gradient(135deg, #fde4ee 0%, #fbe0ec 52%, #f2defa 100%);
   --gradient-mint: linear-gradient(135deg, #def4e9 0%, #e2f5ee 54%, #dff0fc 100%);
   --gradient-lavender: linear-gradient(135deg, #f1e8fc 0%, #e7eefc 100%);
-  --gradient-sky-pill: linear-gradient(135deg, #e5f1fd 0%, #f1eafc 100%);
   --surface-panel: #f9fbfde6;
   --surface-card: #ffffffeb;
   --shadow-card: 0 5px 18px #567a9a10;

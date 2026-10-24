@@ -697,7 +697,7 @@ test("late clipboard results cannot overwrite the latest account's success or fa
   }
 });
 
-test("email remains a mailto link and offers localized copying with a selectable failure fallback", async () => {
+test("email has one draft-aware mailto link and localized copying with a selectable failure fallback", async () => {
   for (const language of ["zh", "ja", "en"]) {
     for (const fails of [false, true]) {
       resetDom();
@@ -715,7 +715,12 @@ test("email remains a mailto link and offers localized copying with a selectable
         React.createElement(ContactPage, { t: copy[language], profile: { username: "loveyong07" } }),
       );
       const link = view.container.querySelector('.email-row a[href^="mailto:"]');
-      const address = link.getAttribute("href").slice("mailto:".length);
+      assert.equal(view.container.querySelectorAll('.email-row a[href^="mailto:"]').length, 1);
+      const target = new URL(link.getAttribute("href"));
+      const address = target.pathname;
+      assert.equal(target.searchParams.get("subject"), copy[language].letterSubjects[0]);
+      assert.equal(target.searchParams.get("body"), "");
+      assert.equal(view.container.querySelector(".email-address span").textContent, address);
       const button = view.container.querySelector(".email-option button");
       assert.equal(button.getAttribute("aria-label"), `${copy[language].copyEmail}: ${address}`);
       await React.act(async () => button.click());

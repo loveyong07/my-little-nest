@@ -1,6 +1,6 @@
-/* Sky Letter: desktop reading desk, story drawer, and correspondence studio.
-   Small-screen layout remains in the original route styles; added wrappers
-   deliberately have no mobile box. */
+/* Desktop reading desk, story drawer, and correspondence studio.
+   Shared surfaces live in the route/glass styles; touch layouts live in
+   mobile-letter.css. See docs/styles.md for the cascade order. */
 
 @media (min-width: 901px) and (pointer: fine) {
   /* Posts: a sticky reading directory beside the full, independent timelines. */
@@ -1159,7 +1159,7 @@
     flex-wrap: wrap;
     gap: 12px 8px;
   }
-  .email-option > a {
+  .email-option > .email-address {
     flex-basis: 100%;
     min-height: 0;
     padding: 0;
@@ -1168,7 +1168,7 @@
     background: transparent;
     font-size: 10.5px;
   }
-  .email-option > a span {
+  .email-address span {
     margin-top: 3px;
     color: #365a78;
     font-size: 15px;
@@ -1340,7 +1340,7 @@
   .email-row h3 {
     font-size: 24px;
   }
-  .email-option > a span {
+  .email-address span {
     font-size: 13px;
   }
   .letter-guide ul {

@@ -779,7 +779,7 @@
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 12px 8px;
   }
-  .email-option > a:first-child {
+  .email-option > .email-address {
     grid-column: 1 / -1;
     min-height: 44px;
     padding: 0;
@@ -787,7 +787,7 @@
     background: transparent;
     font-size: 10px;
   }
-  .email-option > a:first-child span {
+  .email-address span {
     font-size: 14px;
   }
   .email-row .mail-compose-link {

@@ -199,10 +199,7 @@
   .letter-seaside {
     width: clamp(104px, 10.42vw, 150px);
   }
-  .route-garland {
-    left: max(320px, calc(50% - 260px));
-    width: clamp(200px, 22.92vw, 330px);
-  }
+
   .contact-postcard {
     width: clamp(160px, 16vw, 230px);
   }

@@ -425,7 +425,8 @@ try {
       assert.equal(await page.locator("#letter-draft-body").inputValue(), draft);
       assert.equal(new URL(await page.locator(".mail-compose-link").getAttribute("href")).searchParams.get("body"), draft);
       assert.equal(await page.locator(".contact-tile").count(), 6);
-      assert.equal(await page.locator(".email-option > a").first().getAttribute("href"), "mailto:fyh20071004@gmail.com");
+      assert.equal(await page.locator('.email-option a[href^="mailto:"]').count(), 1);
+      assert.equal(await page.locator(".email-address span").textContent(), "fyh20071004@gmail.com");
       await page.setViewportSize({ width: 1440, height: 900 });
       await page.waitForFunction(() => !!document.querySelector(".letter-composer"));
       assert.equal(await page.locator("#letter-draft-body").inputValue(), draft);

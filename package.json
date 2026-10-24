@@ -31,6 +31,9 @@
     "react-icons": "^5.7.0",
     "sharp": "0.35.5"
   },
+  "overrides": {
+    "zod": "4.6.6"
+  },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
     "@eslint/js": "^10.0.1",

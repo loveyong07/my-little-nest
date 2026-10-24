@@ -34,7 +34,7 @@
   border: 1px solid #fff;
   border-radius: 32px;
   background: linear-gradient(135deg, #f9fcfef2, #f7fafddb);
-  box-shadow: var(--panel-shadow);
+
   transition:
     box-shadow 0.28s ease,
     border-color 0.28s ease;
@@ -126,7 +126,7 @@
   align-items: center;
   gap: 8px;
   margin: 0 0 12px;
-  color: #5b80a0;
+
   font-size: 12px;
   letter-spacing: 0.1em;
 }
@@ -140,11 +140,10 @@
 
 .hero-copy h1 {
   margin: 0;
-  color: #4c6c88;
+
   font-family: "Quicksand", "Nest Letter", "Nest Kuaile", "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
   font-weight: 400;
   letter-spacing: 0.02em;
-  text-shadow: 0 2px #fff;
 }
 .hero-copy h1 span {
   display: block;
@@ -280,7 +279,7 @@
   border: 1px solid #d5e5f2;
   border-radius: 999px;
   background: #f2f8fdcc;
-  color: #507696;
+
   font-family: "Quicksand", sans-serif;
   font-size: 14px;
   font-weight: 700;
@@ -314,7 +313,7 @@
   border-left: 3px solid #d9a7c0;
   border-radius: 0 999px 999px 0;
   background: linear-gradient(90deg, #fce8f173, #e6f2fc4d, transparent);
-  color: #517697;
+
   font-family: "Quicksand", sans-serif;
   font-size: 14px;
   font-weight: 700;
@@ -843,10 +842,6 @@
 
 /* Desktop home fits the viewport: HeroSection.jsx sets --home-fit to scale the cards down. */
 @media (min-width: 901px) and (pointer: fine) {
-  .site:not(.site-route) .hero-layout {
-    padding-top: 18px;
-    padding-bottom: 90px;
-  }
   .site:not(.site-route) .hero-intro-stack {
     transform: scale(var(--home-fit, 1));
     transform-origin: top left;
