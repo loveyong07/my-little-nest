@@ -88,6 +88,20 @@ export function useSiteRoute() {
     if (target.origin === window.location.origin && target.pathname === pagePaths.posts) preloadScene("posts");
   }
 
+  function navigatePage(nextPage) {
+    const destination = { page: nextPage, path: pagePaths[nextPage] };
+    if (!destination.path) return;
+    activateScene(destination.page);
+    const current = window.location.pathname;
+    if (normalizedPath(current) !== destination.path) {
+      window.history.pushState({ page: destination.page }, "", destination.path);
+    } else if (current !== destination.path) {
+      window.history.replaceState({ page: destination.page }, "", destination.path);
+    }
+    setPage(destination.page);
+    if (destination.page !== page) window.scrollTo(0, 0);
+  }
+
   function handleRouteClick(event) {
     const link = event.target.closest("a[href]");
     if (
@@ -106,17 +120,8 @@ export function useSiteRoute() {
     if (!destination) return;
 
     event.preventDefault();
-    activateScene(destination.page);
-    const current = window.location.pathname;
-    if (normalizedPath(current) !== destination.path) {
-      window.history.pushState({ page: destination.page }, "", destination.path);
-    } else if (current !== destination.path) {
-      // Same page, non-canonical path: normalize the address without a new entry.
-      window.history.replaceState({ page: destination.page }, "", destination.path);
-    }
-    setPage(destination.page);
-    if (destination.page !== page) window.scrollTo(0, 0);
+    navigatePage(destination.page);
   }
 
-  return { page, handleRouteClick, preparePosts };
+  return { page, handleRouteClick, preparePosts, navigatePage };
 }

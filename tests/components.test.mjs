@@ -357,6 +357,205 @@ test("route changes close the mobile menu and do not reopen it on browser return
   await view.unmount();
 });
 
+function switchGeometry(control, selector, width = 60) {
+  Object.defineProperty(control, "clientWidth", { configurable: true, value: width * 3 + 12 });
+  for (const [index, item] of [...control.querySelectorAll(selector)].entries()) {
+    for (const [property, value] of Object.entries({
+      offsetLeft: 6 + index * width,
+      offsetTop: 6,
+      offsetWidth: width - 4,
+      offsetHeight: 44,
+    })) {
+      Object.defineProperty(item, property, { configurable: true, value });
+    }
+  }
+}
+
+function switchPointer(target, type, x, y = 20, extra = {}) {
+  const event = new MouseEvent(type, { bubbles: true, cancelable: true, button: 0, clientX: x, clientY: y, ...extra });
+  Object.defineProperty(event, "pointerId", { value: 7 });
+  Object.defineProperty(event, "pointerType", { value: extra.pointerType ?? "mouse" });
+  target.dispatchEvent(event);
+  return event;
+}
+
+const settleSwitch = () => React.act(async () => new Promise((resolve) => setTimeout(resolve, 180)));
+
+test("a swipe can begin on any navigation item, commits once on release, and suppresses its trailing click", async () => {
+  resetDom();
+  const pages = [];
+  const view = await mount(
+    React.createElement(Header, {
+      page: "home",
+      t: copy.zh,
+      language: "zh",
+      changeLanguage() {},
+      onNavigate: (page) => pages.push(page),
+    }),
+  );
+  const nav = view.container.querySelector(".site-nav");
+  const links = nav.querySelectorAll("a");
+  switchGeometry(nav, "a", 120);
+  switchPointer(links[2], "pointerdown", 285);
+  const moving = switchPointer(window, "pointermove", 360);
+  assert.equal(moving.defaultPrevented, true);
+  assert.equal(nav.dataset.swiping, "true");
+  assert.deepEqual(pages, []);
+  assert.ok(parseFloat(nav.style.getPropertyValue("--switch-x")) > 6);
+  switchPointer(window, "pointerup", 360);
+  const trailingClick = new MouseEvent("click", { bubbles: true, cancelable: true, detail: 1 });
+  links[2].dispatchEvent(trailingClick);
+  assert.equal(trailingClick.defaultPrevented, true);
+  await settleSwitch();
+  assert.deepEqual(pages, ["posts"]);
+  await view.unmount();
+});
+
+test("language swipes work in both directions and can cross two options", async () => {
+  for (const [language, delta, expected, width] of [
+    ["zh", 52, "ja", 60],
+    ["en", -52, "ja", 60],
+    ["zh", 140, "en", 60],
+    ["zh", 47, "ja", 44],
+  ]) {
+    resetDom();
+    const chosen = [];
+    const view = await mount(
+      React.createElement(Header, {
+        page: "home",
+        t: copy[language],
+        language,
+        changeLanguage: (value) => chosen.push(value),
+      }),
+    );
+    const picker = view.container.querySelector(".language-picker");
+    switchGeometry(picker, "button", width);
+    switchPointer(picker, "pointerdown", 80, 20, { pointerType: "touch" });
+    switchPointer(window, "pointermove", 80 + delta);
+    switchPointer(window, "pointerup", 80 + delta);
+    await settleSwitch();
+    assert.deepEqual(chosen, [expected]);
+    await view.unmount();
+  }
+});
+
+test("small movements retain click behavior while vertical scrolling and canceled gestures do not switch", async () => {
+  resetDom();
+  const chosen = [];
+  const view = await mount(
+    React.createElement(Header, {
+      page: "home",
+      t: copy.zh,
+      language: "zh",
+      changeLanguage: (value) => chosen.push(value),
+    }),
+  );
+  const picker = view.container.querySelector(".language-picker");
+  switchGeometry(picker, "button");
+  switchPointer(picker, "pointerdown", 30);
+  assert.equal(switchPointer(window, "pointermove", 33).defaultPrevented, false);
+  switchPointer(window, "pointerup", 33);
+  await React.act(async () => picker.querySelector("button").click());
+  assert.deepEqual(chosen, ["zh"]);
+  for (const canceled of [false, true]) {
+    switchPointer(picker, "pointerdown", 30);
+    if (canceled) {
+      switchPointer(window, "pointermove", 90);
+      switchPointer(window, "pointercancel", 90);
+    } else {
+      assert.equal(switchPointer(window, "pointermove", 32, 85).defaultPrevented, false);
+      switchPointer(window, "pointerup", 32, 85);
+    }
+    await settleSwitch();
+    assert.equal(picker.dataset.swiping, undefined);
+    assert.deepEqual(chosen, ["zh"]);
+  }
+  await view.unmount();
+});
+
+test("swiping past an end rebounds without wrapping and a new modified click remains available", async () => {
+  resetDom();
+  const chosen = [];
+  const view = await mount(
+    React.createElement(Header, {
+      page: "home",
+      t: copy.zh,
+      language: "zh",
+      changeLanguage: (value) => chosen.push(value),
+    }),
+  );
+  const picker = view.container.querySelector(".language-picker");
+  switchGeometry(picker, "button");
+  switchPointer(picker, "pointerdown", 100);
+  switchPointer(window, "pointermove", 20);
+  switchPointer(window, "pointerup", 20);
+  await settleSwitch();
+  assert.deepEqual(chosen, []);
+  switchPointer(picker, "pointerdown", 100, 20, { ctrlKey: true });
+  const click = new MouseEvent("click", { bubbles: true, cancelable: true, detail: 1, ctrlKey: true });
+  await React.act(async () => picker.querySelector("button").dispatchEvent(click));
+  assert.equal(click.defaultPrevented, false);
+  assert.deepEqual(chosen, ["zh"]);
+  await view.unmount();
+});
+
+test("Escape and keyboard activation cancel a pending swipe before it can override another choice", async () => {
+  for (const keyboardClick of [false, true]) {
+    resetDom();
+    const chosen = [];
+    const view = await mount(
+      React.createElement(Header, {
+        page: "home",
+        t: copy.zh,
+        language: "zh",
+        changeLanguage: (value) => chosen.push(value),
+      }),
+    );
+    const picker = view.container.querySelector(".language-picker");
+    switchGeometry(picker, "button");
+    switchPointer(picker, "pointerdown", 30);
+    switchPointer(window, "pointermove", 80);
+    switchPointer(window, "pointerup", 80);
+    if (keyboardClick) await React.act(async () => picker.querySelectorAll("button")[2].click());
+    else window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    await settleSwitch();
+    assert.deepEqual(chosen, keyboardClick ? ["en"] : []);
+    await view.unmount();
+  }
+});
+
+test("horizontal trackpad gestures switch once and preserve ordinary page scrolling", async () => {
+  resetDom();
+  const chosen = [];
+  function Harness() {
+    const [language, setLanguage] = React.useState("zh");
+    return React.createElement(Header, {
+      page: "home",
+      t: copy[language],
+      language,
+      changeLanguage: (value) => {
+        chosen.push(value);
+        setLanguage(value);
+      },
+    });
+  }
+  const view = await mount(React.createElement(Harness));
+  const picker = view.container.querySelector(".language-picker");
+  switchGeometry(picker, "button");
+  const vertical = new window.WheelEvent("wheel", { deltaY: 80, bubbles: true, cancelable: true });
+  picker.dispatchEvent(vertical);
+  assert.equal(vertical.defaultPrevented, false);
+  const horizontal = new window.WheelEvent("wheel", { deltaX: 40, bubbles: true, cancelable: true });
+  picker.dispatchEvent(horizontal);
+  assert.equal(horizontal.defaultPrevented, true);
+  await React.act(async () => new Promise((resolve) => setTimeout(resolve, 300)));
+  assert.deepEqual(chosen, ["ja"]);
+  picker.dispatchEvent(new window.WheelEvent("wheel", { deltaX: 10, bubbles: true, cancelable: true }));
+  await settleSwitch();
+  assert.deepEqual(chosen, ["ja"]);
+  await view.unmount();
+});
+
 test("navigation copy has matching keys and three items in every language", () => {
   const languages = [copy.zh, copy.ja, copy.en];
   const keys = Object.keys(copy.zh).sort();

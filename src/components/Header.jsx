@@ -4,10 +4,11 @@ import { PiFlowerLight } from "react-icons/pi";
 import { LANGUAGES } from "../constants/languages.js";
 import { navIds } from "../constants/site.js";
 import { pagePaths } from "../routes/site-route.js";
+import { useSwipeSwitch } from "../hooks/useSwipeSwitch.js";
 
 const navIcons = [FiHome, FiFeather, FiMail];
 
-export function Header({ page, t, language, changeLanguage }) {
+export function Header({ page, t, language, changeLanguage, onNavigate }) {
   const [menuPage, setMenuPage] = useState(null);
   const menuOpen = menuPage === page;
   // A route change closes the menu before paint, including browser back/forward.
@@ -15,6 +16,17 @@ export function Header({ page, t, language, changeLanguage }) {
   const headerRef = useRef(null);
   const menuToggleRef = useRef(null);
   const menuOpenedByKeyboardRef = useRef(false);
+  const navRef = useSwipeSwitch({
+    activeIndex: navIds.indexOf(page),
+    onChange: (index) => onNavigate?.(navIds[index]),
+    itemSelector: "a[data-page]",
+    layoutKey: `${language}-${menuOpen}`,
+  });
+  const languageRef = useSwipeSwitch({
+    activeIndex: LANGUAGES.findIndex(({ code }) => code === language),
+    onChange: (index) => changeLanguage(LANGUAGES[index].code),
+    itemSelector: "button",
+  });
 
   useEffect(() => {
     if (!menuOpen) return undefined;
@@ -53,7 +65,12 @@ export function Header({ page, t, language, changeLanguage }) {
         </span>
         <span className="brand-caption">{t.homePlaceLabel}</span>
       </a>
-      <nav className={"site-nav " + (menuOpen ? "is-open" : "")} id="site-navigation" aria-label={t.navLabel}>
+      <nav
+        className={"site-nav swipe-switch " + (menuOpen ? "is-open" : "")}
+        ref={navRef}
+        id="site-navigation"
+        aria-label={t.navLabel}
+      >
         <span
           className={`nav-selection nav-selection-${page}`}
           style={{ "--nav-position": navIds.indexOf(page) }}
@@ -83,7 +100,8 @@ export function Header({ page, t, language, changeLanguage }) {
           );
         })}
       </nav>
-      <div className="language-picker" role="group" aria-label={t.languageLabel}>
+      <div className="language-picker swipe-switch" ref={languageRef} role="group" aria-label={t.languageLabel}>
+        <span className={`language-selection language-selection-${language}`} aria-hidden="true" />
         {LANGUAGES.map(({ code, label }) => (
           <button
             key={code}
