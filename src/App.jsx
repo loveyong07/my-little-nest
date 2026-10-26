@@ -18,7 +18,7 @@ const FantasyExtras = lazy(() => import("./components/fantasy/FantasyExtras.jsx"
 
 export function App() {
   const { language, t, changeLanguage } = useI18n();
-  const { page, handleRouteClick, preparePosts } = useSiteRoute();
+  const { page, handleRouteClick, preparePosts, navigatePage } = useSiteRoute();
   const [postsReady, setPostsReady] = useState(false);
   const profile = useXProfile(page, page !== "posts" || postsReady);
   const preferences = useFantasyPreferences();
@@ -39,7 +39,9 @@ export function App() {
     };
   }, [page, postsReady, extrasReady]);
   const sceneActive = useSceneActivity(page);
-  const header = <Header page={page} t={t} language={language} changeLanguage={changeLanguage} />;
+  const header = (
+    <Header page={page} t={t} language={language} changeLanguage={changeLanguage} onNavigate={navigatePage} />
+  );
 
   return (
     <main
