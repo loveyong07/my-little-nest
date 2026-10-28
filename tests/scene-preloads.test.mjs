@@ -43,7 +43,7 @@ test("long immutable caching matches hashed build files while excluding fixed sc
     "home-beach-desktop-cadff3fb.webp",
     "contact-sky-letter-v2-clean-q90.webp",
     "x-avatar.jpg",
-    "site-favicon-2026-09-29.png",
+    "site-favicon-chibi-2026-10-28.png",
   ])
     assert.equal(pattern.test(`/assets/${name}`), false);
 });

@@ -28,7 +28,7 @@
 - Keep the Home illustration fixed to the viewport. On fine-pointer viewports wider than 900px, fit the entire homepage, including journal cards, into one viewport. Retain scrolling on mobile and other routes.
 - Keep `src/constants/media-queries.js` and CSS aligned at 700px, 900px / 901px and the fine-pointer condition; update both sides when changing a breakpoint.
 - Keep all three mobile navigation items visible and clickable above page panels when open. On short viewports the menu may scroll; preserve at least 44px tap targets and verify the Contact item's click.
-- Use `public/assets/site-favicon-2026-09-29.png` as the browser favicon. Keep Open Graph / Twitter card tags in `index.html` (preview image `public/assets/og-cover.jpg`, 1200x630) and the `theme-color` blue-and-white.
+- Use `public/assets/site-favicon-chibi-2026-10-28.png` as the browser favicon. Keep Open Graph / Twitter card tags in `index.html` (preview image `public/assets/og-cover.jpg`, 1200x630) and the `theme-color` blue-and-white.
 - `/business` permanently redirects to `/` in `vercel.json`; keep it for old links.
 - Contact artwork should match the blue-and-white Home and Posts backgrounds. Keep hands anatomically natural and hair fixed in all three illustrations; preserve independent background, dove and petal motion without deforming hair.
 - Keep the floating Live2D companion and its show/hide control removed. Retired model assets remain in archive only.
