@@ -39,3 +39,13 @@ Vercel 的 `/api/x-posts` 函数同样连接私有 Blob（`server/article-cache.
 ## 依赖审计
 
 CI 使用 `npm audit --audit-level=high`。`package.json` 将间接依赖 Zod 统一覆盖为同一主版本的 `4.6.6`，用于修复 Vercel CLI 配置包仍固定引用旧版 Zod 的情况；升级上游后需重新检查是否可以移除此覆盖。修复依据见 [Zod 安全公告](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5)。测试依赖使用的 Undici 8.x 同样通过锁文件升级到修复版，相关公告见 [Undici 安全公告](https://github.com/advisories/GHSA-xjj6-f33q-929c)。
+
+## StarryGal metadata relay
+
+`/api/starrygal` provides public TouchGal metadata to the StarryGal desktop launcher. Set `TOUCHGAL_API_TOKEN` as a server-only Vercel environment variable in Production and Preview. Do not prefix it with `VITE_`, commit a real token, or include it in frontend builds. Redeploy after changing it.
+
+The function only calls fixed routes on `https://developer.touchgal.com/api/v1/`. It exposes search, detail, resource and patch metadata, with a sanitized `status` check. It returns no token prefix or account ID. Credentials never appear in response bodies or URLs. Adult-rated metadata requires an explicit `allowNsfw=true`. There are no game download URLs or PVs in the upstream contract.
+
+Success responses use CDN and bounded warm-instance caching, with in-flight deduplication, a 12-second upstream timeout, a 2 MiB response limit, and a best-effort limit of 30 requests per minute per client on each warm instance. TouchGal enforces the shared token quotas globally; warm-instance limiting does not replace a distributed firewall. Upstream errors and rate limits are not cached. Existing X API routes, site pages, media signing and security headers are unchanged.
+
+Run `node --test tests/touchgal-relay.test.mjs` to verify the relay contract and secret redaction.
