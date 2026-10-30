@@ -26,6 +26,7 @@ export const contactChannels = [
   { id: "x", title: "X", descriptionKey: "xSub" },
   { id: "line", title: "LINE", descriptionKey: "lineSub", href: "https://line.me/ti/p/LSaMZQcRLu" },
   { id: "telegram", title: "Telegram", descriptionKey: "telegramSub", href: "https://t.me/loveyong07" },
+  { id: "discord", title: "Discord", descriptionKey: "discordSub", account: "loveyong_07" },
   { id: "whatsapp", title: "WhatsApp", descriptionKey: "whatsappSub", account: WHATSAPP_USERNAME },
   { id: "wechat", titleKey: "wechatTitle", descriptionKey: "wechatSub", account: WECHAT_ID },
   { id: "qq", title: "QQ", descriptionKey: "qqSub", account: QQ_NUMBER },
