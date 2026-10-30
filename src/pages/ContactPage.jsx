@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { FaEnvelope, FaLine, FaQq, FaTelegram, FaWhatsapp, FaWeixin, FaXTwitter } from "react-icons/fa6";
+import { FaDiscord, FaEnvelope, FaLine, FaQq, FaTelegram, FaWhatsapp, FaWeixin, FaXTwitter } from "react-icons/fa6";
 import { HiOutlineSparkles } from "react-icons/hi2";
 import { FiCopy, FiMessageCircle, FiFeather, FiMail, FiArrowUpRight } from "react-icons/fi";
 import { PiFlowerLight } from "react-icons/pi";
@@ -16,6 +16,7 @@ const contactIcons = {
   x: FaXTwitter,
   line: FaLine,
   telegram: FaTelegram,
+  discord: FaDiscord,
   whatsapp: FaWhatsapp,
   wechat: FaWeixin,
   qq: FaQq,
@@ -84,7 +85,7 @@ export default function ContactPage({ t, profile }) {
         <div className="contact-channels">
           <div className="contact-channel-heading">
             <h3>{t.contactChannelHeading}</h3>
-            <span>06 WAYS TO SAY HELLO</span>
+            <span>{String(socials.length).padStart(2, "0")} WAYS TO SAY HELLO</span>
           </div>
           <div className="contact-filters" role="group" aria-label={t.contactFilterLabel}>
             {["all", "open", "copy"].map((filter, index) => (
