@@ -12,6 +12,9 @@ import { CopyFallback } from "./ContactTile.jsx";
 import { SectionHeading } from "./SectionHeading.jsx";
 import { articleLinkParts } from "../../shared/article-links.mjs";
 import { xProfileUrl } from "../constants/site.js";
+import { translatableParts, translatedPartText } from "../utils/translation.js";
+import { useContentTranslation } from "../hooks/useContentTranslation.js";
+import { ContentTranslationControl } from "./ContentTranslationControl.jsx";
 
 export function XArticlesSection({
   articles,
@@ -44,6 +47,24 @@ export function XArticlesSection({
     return { ...block, photoNumber: photo ? photos.push(photo) : null };
   });
   const layoutUnavailable = !blocks?.length && sourcePhotos.some((photo) => photo !== cover);
+  const segments = [];
+  const titleParts = translatableParts([{ text: article?.title ?? "" }], segments);
+  const contentBlocks = (
+    renderedBlocks?.length
+      ? renderedBlocks
+      : text.split(/(?:\r?\n){2,}/).map((paragraph) => ({ type: "text", text: displayXText(paragraph) }))
+  ).map((block) =>
+    block.type === "text"
+      ? {
+          ...block,
+          parts: translatableParts(
+            articleLinkParts(block.text, [...(article?.links ?? []), ...(block.links ?? [])]),
+            segments,
+          ),
+        }
+      : block,
+  );
+  const translation = useContentTranslation(segments);
   const recovering = ["stale", "unavailable"].includes(articleState);
   const message =
     articleState === "loading"
@@ -152,20 +173,20 @@ export function XArticlesSection({
               )}
               <FaXTwitter aria-hidden="true" />
             </div>
-            <h3 id="x-article-title">{article.title || t.articleUntitled}</h3>
+            <h3 id="x-article-title" lang={translation.showing ? translation.targetLanguage : undefined} dir="auto">
+              {translatedPartText(titleParts[0], translation.texts) || t.articleUntitled}
+            </h3>
             {article.created_at && (
               <time className="article-date" dateTime={article.created_at}>
                 <FiCalendar aria-hidden="true" />
                 {formatPostDate(article.created_at, language)}
               </time>
             )}
+            <ContentTranslationControl translation={translation} language={language} t={t} />
             {cover && <ArticlePhoto key={cover.url} photos={photos} number={1} t={t} />}
             {(blocks?.length || text.trim()) && (
               <div className="article-text">
-                {(blocks?.length
-                  ? renderedBlocks
-                  : text.split(/(?:\r?\n){2,}/).map((paragraph) => ({ type: "text", text: paragraph }))
-                ).map((block, index) => {
+                {contentBlocks.map((block, index) => {
                   if (block.type === "divider") return <hr key={index} />;
                   if (block.type === "photo") {
                     return block.photoNumber ? (
@@ -173,17 +194,14 @@ export function XArticlesSection({
                     ) : null;
                   }
                   return (
-                    <p key={index}>
-                      {articleLinkParts(blocks?.length ? block.text : displayXText(block.text), [
-                        ...(article.links ?? []),
-                        ...(block.links ?? []),
-                      ]).map((part, partIndex) =>
+                    <p key={index} lang={translation.showing ? translation.targetLanguage : undefined} dir="auto">
+                      {block.parts.map((part, partIndex) =>
                         part.url ? (
                           <a key={partIndex} href={part.url} target="_blank" rel="noopener noreferrer">
                             {part.text}
                           </a>
                         ) : (
-                          part.text
+                          translatedPartText(part, translation.texts)
                         ),
                       )}
                     </p>

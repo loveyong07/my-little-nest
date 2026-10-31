@@ -38,6 +38,7 @@
 
 ## Home, Posts and Contact behavior
 
+- Offer inline translation for text in pinned posts, original posts, reposts and X Articles through the visitor's current browser's native `LanguageDetector` / `Translator` APIs. Label the idle button only `翻译` / `翻訳` / `Translate`, without the target language. Follow `navigator.languages` for the target, including Traditional Chinese, independently of the site's UI language. Start downloads only after a click; retain original text, links and Article photo positions, and offer an original/translation toggle. Show download progress, cancellation and clear unsupported/failure states; browser menu translation is the fallback when native APIs are unavailable. Do not add a paid translation service without a new user decision.
 - The homepage X avatar, display name and username follow the current X profile using the account's stable X user ID. Retain local fallback content during API outages and prefer the higher-resolution avatar on Home and Posts when available.
 - Show the user's own original X posts in cards, and label decorative art separately from actual post media.
 - Place `我的转帖` between original posts and X Articles, with matching layered glass, an independent date index and reader. Read actual `retweeted` references from the account timeline and expanded original posts/authors; keep replies and quotes out of this section. Preserve original authors, signed same-origin media, and original-post links. Distinguish loading, empty, stale and unavailable data; include reposts in the reading directory and search.
