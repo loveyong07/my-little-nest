@@ -139,6 +139,275 @@ test("all PostCards render normal and Markdown URLs as safe clickable anchors in
   }
 });
 
+function mockBrowserTranslation(context, { target = "zh-TW", translate = (text) => `訳: ${text}` } = {}) {
+  const calls = { detectors: 0, translators: [], texts: [], signals: [] };
+  const overrides = [
+    [window.navigator, "languages", [target]],
+    [
+      window,
+      "LanguageDetector",
+      {
+        async create() {
+          calls.detectors++;
+          return {
+            async detect() {
+              return [{ detectedLanguage: "ja", confidence: 0.99 }];
+            },
+            destroy() {},
+          };
+        },
+      },
+    ],
+    [
+      window,
+      "Translator",
+      {
+        async create(options) {
+          calls.translators.push(options);
+          return {
+            async translate(text, { signal }) {
+              calls.texts.push(text);
+              calls.signals.push(signal);
+              return translate(text);
+            },
+            destroy() {},
+          };
+        },
+      },
+    ],
+  ];
+  for (const [object, key, value] of overrides) {
+    const original = Object.getOwnPropertyDescriptor(object, key);
+    Object.defineProperty(object, key, { configurable: true, value });
+    context.after(() => {
+      if (original) Object.defineProperty(object, key, original);
+      else delete object[key];
+    });
+  }
+  return calls;
+}
+
+test("pinned, original and repost cards translate only on click, follow the system language and toggle without another model call", async (context) => {
+  const calls = mockBrowserTranslation(context);
+  for (const [index, variant] of ["pinned", "original", "repost"].entries()) {
+    resetDom();
+    const props = {
+      post: {
+        ...SNAPSHOT,
+        id: `translation-${variant}`,
+        text: `こんにちは、${variant}のテストです。 [リンク](https://example.test/${variant}) ありがとう。`,
+        ...(variant === "repost" ? { repostId: "test-repost" } : {}),
+      },
+      feedSource: "live",
+      language: "en",
+      t: copy.en,
+      profile: { name: "初咏", username: "loveyong07" },
+    };
+    const view = await mount(React.createElement(PostCard, props));
+    try {
+      const original = view.container.querySelector(".post-text p").textContent;
+      const button = view.container.querySelector(".content-translation-button");
+      assert.equal(button.textContent, copy.en.translationTranslate);
+      assert.equal(calls.detectors, index, "rendering must not start native downloads");
+      await React.act(async () => button.click());
+      assert.equal(button.textContent, copy.en.translationShowOriginal);
+      assert.equal(button.getAttribute("aria-pressed"), "true");
+      assert.equal(view.container.querySelector(".post-text p").lang, "zh-Hant");
+      assert.equal(calls.translators.at(-1).targetLanguage, "zh-Hant");
+      assert.equal(calls.translators.at(-1).sourceLanguage, "ja");
+      assert.equal(view.container.querySelector(".post-text p a").href, `https://example.test/${variant}`);
+      assert.ok(calls.texts.every((text) => !text.includes("https://") && !text.includes("[リンク]")));
+      const translated = view.container.querySelector(".post-text p").textContent;
+      assert.notEqual(translated, original);
+      await React.act(async () => button.click());
+      assert.equal(view.container.querySelector(".post-text p").textContent, original);
+      await React.act(async () => button.click());
+      assert.equal(view.container.querySelector(".post-text p").textContent, translated);
+      assert.equal(calls.detectors, index + 1);
+      assert.equal(calls.translators.length, index + 1);
+      await view.render(React.createElement(PostCard, { ...props, language: "ja", t: copy.ja }));
+      assert.equal(
+        view.container.querySelector(".post-text p").lang,
+        "zh-Hant",
+        "UI language does not change the translation target",
+      );
+      assert.equal(button.textContent, copy.ja.translationShowOriginal);
+    } finally {
+      await view.unmount();
+    }
+  }
+});
+
+test("translated Article titles and paragraphs preserve photo positions, links and the exact original on toggle", async (context) => {
+  resetDom();
+  const calls = mockBrowserTranslation(context, { target: "en-GB" });
+  const { XArticlesSection } = await server.ssrLoadModule("/src/components/XArticlesSection.jsx");
+  const article = {
+    id: "translation-article",
+    title: "日本語の記事の題名",
+    text: "最初の段落。\n\n最後の段落。",
+    permalink: "https://x.com/loveyong07/status/123",
+    author: "初咏",
+    created_at: "2026-10-01T00:00:00Z",
+    media: [{ type: "photo", url: "https://pbs.twimg.com/media/article-translation.jpg" }],
+    blocks: [
+      { type: "text", text: "最初の段落。 [名前付きリンク](https://example.test/article)" },
+      { type: "photo", url: "https://pbs.twimg.com/media/article-translation.jpg" },
+      { type: "divider" },
+      { type: "text", text: "最後の段落。" },
+    ],
+  };
+  const view = await mount(
+    React.createElement(XArticlesSection, {
+      articles: [article],
+      articleIndex: 0,
+      setArticleIndex() {},
+      articleState: "ok",
+      language: "zh",
+      t: copy.zh,
+      profile: { name: "初咏", username: "loveyong07" },
+    }),
+  );
+  try {
+    const order = () =>
+      [...view.container.querySelector(".article-text").children].map(
+        (element) => `${element.tagName}:${element.className}`,
+      );
+    const originalOrder = order();
+    const originalBody = view.container.querySelector(".article-text").textContent;
+    const photo = view.container.querySelector(".article-text .article-photo");
+    const button = view.container.querySelector(".content-translation-button");
+    await React.act(async () => button.click());
+    assert.equal(view.container.querySelector("#x-article-title").textContent, `訳: ${article.title}`);
+    assert.equal(view.container.querySelector("#x-article-title").lang, "en");
+    assert.ok(calls.texts.includes(article.title));
+    assert.deepEqual(order(), originalOrder);
+    assert.equal(view.container.querySelector(".article-text .article-photo"), photo);
+    assert.equal(view.container.querySelector(".article-text a").href, "https://example.test/article");
+    assert.equal(view.container.querySelector(".article-text a").textContent, "名前付きリンク");
+    await React.act(async () => button.click());
+    assert.equal(view.container.querySelector("#x-article-title").textContent, article.title);
+    assert.equal(view.container.querySelector(".article-text").textContent, originalBody);
+    assert.deepEqual(order(), originalOrder);
+  } finally {
+    await view.unmount();
+  }
+});
+
+test("unsupported browsers keep the original readable and give an actionable translation hint", async (context) => {
+  resetDom();
+  mockBrowserTranslation(context);
+  Object.defineProperty(window, "Translator", { configurable: true, value: undefined });
+  const view = await mount(
+    React.createElement(PostCard, {
+      post: { ...SNAPSHOT, text: "サポートのない環境でも原文を読めます。" },
+      feedSource: "live",
+      language: "zh",
+      t: copy.zh,
+      profile: { name: "初咏", username: "loveyong07" },
+    }),
+  );
+  try {
+    const original = view.container.querySelector(".post-text p").textContent;
+    await React.act(async () => view.container.querySelector(".content-translation-button").click());
+    assert.equal(view.container.querySelector(".post-text p").textContent, original);
+    assert.equal(
+      view.container.querySelector(".content-translation-status").textContent,
+      copy.zh.translationErrors.unsupported,
+    );
+    assert.equal(view.container.querySelector(".content-translation-button").disabled, false);
+  } finally {
+    await view.unmount();
+  }
+});
+
+test("changing a reading item or system language cancels stale translations and ignores late native output", async (context) => {
+  resetDom();
+  let finish;
+  const calls = mockBrowserTranslation(context, {
+    target: "en-US",
+    translate: () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  });
+  const props = {
+    post: { ...SNAPSHOT, text: "遅れて届く翻訳のテスト。" },
+    feedSource: "live",
+    language: "zh",
+    t: copy.zh,
+    profile: { name: "初咏", username: "loveyong07" },
+  };
+  const view = await mount(React.createElement(PostCard, props));
+  try {
+    await React.act(async () => view.container.querySelector(".content-translation-button").click());
+    assert.equal(view.container.querySelector(".content-translation-button").disabled, true);
+    assert.ok(view.container.querySelector(".content-translation-cancel"));
+    await view.render(
+      React.createElement(PostCard, { ...props, post: { ...props.post, text: "新しく選んだ投稿です。" } }),
+    );
+    assert.equal(calls.signals[0].aborted, true);
+    await React.act(async () => finish("This is stale output."));
+    assert.equal(view.container.querySelector(".post-text p").textContent, "新しく選んだ投稿です。");
+    assert.equal(view.container.querySelector(".content-translation-button").disabled, false);
+    Object.defineProperty(window.navigator, "languages", { configurable: true, value: ["fr-FR"] });
+    await React.act(async () => window.dispatchEvent(new window.Event("languagechange")));
+    assert.equal(view.container.querySelector(".content-translation-button").textContent, copy.zh.translationTranslate);
+    await React.act(async () => view.container.querySelector(".content-translation-button").click());
+    assert.equal(calls.translators.at(-1).targetLanguage, "fr");
+    await React.act(async () => view.container.querySelector(".content-translation-cancel").click());
+    assert.equal(calls.signals.at(-1).aborted, true);
+    await React.act(async () => finish("Late French output."));
+    assert.equal(view.container.querySelector(".post-text p").textContent, "新しく選んだ投稿です。");
+  } finally {
+    await view.unmount();
+  }
+});
+
+test("a stalled native language-pack download times out and cannot overwrite the original later", async (context) => {
+  resetDom();
+  let finish;
+  let timeout;
+  const setTimeout = window.setTimeout.bind(window);
+  context.mock.method(window, "setTimeout", (callback, delay, ...args) => {
+    if (delay === 120_000) {
+      timeout = callback;
+      return 0;
+    }
+    return setTimeout(callback, delay, ...args);
+  });
+  const calls = mockBrowserTranslation(context, {
+    target: "en",
+    translate: () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  });
+  const view = await mount(
+    React.createElement(PostCard, {
+      post: { ...SNAPSHOT, text: "時間がかかりすぎる翻訳のテスト。" },
+      feedSource: "live",
+      language: "zh",
+      t: copy.zh,
+      profile: { name: "初咏", username: "loveyong07" },
+    }),
+  );
+  try {
+    await React.act(async () => view.container.querySelector(".content-translation-button").click());
+    await React.act(async () => timeout());
+    assert.equal(calls.signals[0].aborted, true);
+    assert.equal(
+      view.container.querySelector(".content-translation-status").textContent,
+      copy.zh.translationErrors.timedOut,
+    );
+    assert.equal(view.container.querySelector(".content-translation-button").disabled, false);
+    await React.act(async () => finish("A translation that arrived too late."));
+    assert.equal(view.container.querySelector(".post-text p").textContent, "時間がかかりすぎる翻訳のテスト。");
+  } finally {
+    await view.unmount();
+  }
+});
+
 test("journal translations have matching keys and nonempty, aligned phrase arrays", async () => {
   const { fantasyCopy } = await server.ssrLoadModule("/src/constants/fantasy.js");
   assert.deepEqual(Object.keys(fantasyCopy).sort(), ["en", "ja", "zh"]);

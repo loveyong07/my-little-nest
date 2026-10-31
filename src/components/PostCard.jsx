@@ -14,11 +14,19 @@ import { MediaLightbox } from "./MediaLightbox.jsx";
 import { CopyFallback } from "./ContactTile.jsx";
 import { displayXText } from "../utils/x-text.js";
 import { textLinkParts } from "../../shared/article-links.mjs";
+import { translatableParts, translatedPartText } from "../utils/translation.js";
+import { useContentTranslation } from "../hooks/useContentTranslation.js";
+import { ContentTranslationControl } from "./ContentTranslationControl.jsx";
 
 export function PostCard({ post, feedSource, language, t, label, profile, priorityMedia = false, nextPost }) {
   const desktop = useDesktopLayout();
   const { copiedId, copyFailedId, manualCopyRef, copyId } = useClipboard();
   const text = displayXText(post.text);
+  const segments = [];
+  const paragraphs = text
+    .split(/(?:\r?\n){2,}/)
+    .map((paragraph) => translatableParts(textLinkParts(paragraph), segments));
+  const translation = useContentTranslation(segments);
   const isSnapshot = feedSource === "snapshot";
   const sourceLabel =
     label ??
@@ -93,17 +101,18 @@ export function PostCard({ post, feedSource, language, t, label, profile, priori
           </time>
           <FaXTwitter className="post-x-mark" aria-hidden="true" />
         </div>
+        <ContentTranslationControl translation={translation} language={language} t={t} className="post-translation" />
         {text.trim() && (
           <div className="post-text">
-            {text.split(/(?:\r?\n){2,}/).map((paragraph, index) => (
-              <p key={index}>
-                {textLinkParts(paragraph).map((part, partIndex) =>
+            {paragraphs.map((parts, index) => (
+              <p key={index} lang={translation.showing ? translation.targetLanguage : undefined} dir="auto">
+                {parts.map((part, partIndex) =>
                   part.url ? (
                     <a key={partIndex} href={part.url} target="_blank" rel="noopener noreferrer">
                       {part.text}
                     </a>
                   ) : (
-                    part.text
+                    translatedPartText(part, translation.texts)
                   ),
                 )}
               </p>

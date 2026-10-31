@@ -1,0 +1,96 @@
+/* Translation controls share the card's reading inset at every breakpoint. */
+.content-translation {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.post-translation {
+  margin: 18px 0 0 60px;
+}
+.post-translation + .post-text {
+  margin-top: 12px;
+}
+.x-article-card > .content-translation {
+  margin-top: 14px;
+  margin-bottom: 0;
+}
+.content-translation-button,
+.content-translation-cancel {
+  display: inline-flex;
+  flex: 0 1 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 44px;
+  max-width: 100%;
+  padding: 7px 14px;
+  border: 1px solid #bfded8;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #edf9f4, #eaf4ff);
+  box-shadow: inset 0 1px 1px #fff;
+  color: #315e66;
+  font: inherit;
+  font-weight: 700;
+  text-align: start;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.content-translation-button:hover:not(:disabled),
+.content-translation-cancel:hover {
+  border-color: #8dbbb4;
+  background: #f5fcff;
+}
+.content-translation-button[aria-pressed="true"] {
+  border-color: #cfc5e5;
+  background: linear-gradient(135deg, #f4efff, #eef6ff);
+  color: #5e5280;
+}
+.content-translation-button:disabled {
+  cursor: progress;
+}
+.content-translation-button svg,
+.content-translation-cancel svg {
+  flex: 0 0 auto;
+  width: 15px;
+  height: 15px;
+}
+.content-translation-cancel {
+  padding-inline: 10px;
+  border-color: #d7e3ee;
+  background: #f7fbff;
+  color: #52677c;
+}
+.content-translation-status {
+  flex: 1 1 160px;
+  min-width: 0;
+  color: #496379;
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+.content-translation-status:empty {
+  display: none;
+}
+@media (width <= 700px), (width >= 901px) and (pointer: fine) {
+  .post-translation {
+    margin-left: 0;
+  }
+}
+@media (forced-colors: active) {
+  .content-translation-button,
+  .content-translation-cancel {
+    border-color: ButtonText;
+    background: ButtonFace;
+    color: ButtonText;
+  }
+  .content-translation-button[aria-pressed="true"] {
+    border-color: Highlight;
+    color: Highlight;
+  }
+  .content-translation-status {
+    color: CanvasText;
+  }
+}
