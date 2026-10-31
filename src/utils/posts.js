@@ -21,7 +21,13 @@ export function isOwnPost(post) {
 }
 
 export function isOriginalPost(post) {
-  return isOwnPost(post) && !post.referenced_tweets?.length && !post.in_reply_to_user_id;
+  return (
+    isOwnPost(post) &&
+    !post.repostId &&
+    !post.referenced_tweets?.length &&
+    !post.referenced_posts?.length &&
+    !post.in_reply_to_user_id
+  );
 }
 
 export function postExcerpt(post, t) {

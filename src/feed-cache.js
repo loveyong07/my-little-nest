@@ -1,11 +1,12 @@
 import { canPrefetch } from "./utils/network.js";
 import { createSharedRequest, SUCCESS_MAX_AGE_MS } from "./request-cache.js";
 import { cacheArticleData } from "./utils/article-reading.js";
+import { cacheRepostData } from "./utils/repost-reading.js";
 
 export { canPrefetch };
 
-// Refetch Articles saved before explicit cover identity was available.
-const KEY = "little-nest-feed-v7";
+// Refetch feeds saved before canonical repost media was resolved.
+const KEY = "little-nest-feed-v8";
 const MAX_AGE = SUCCESS_MAX_AGE_MS;
 
 /**
@@ -25,7 +26,7 @@ export function readFeedCache(storage, now = Date.now()) {
       !Array.isArray(cached.feed.posts)
     )
       return null;
-    return { ...cached, feed: cacheArticleData(cached.feed) };
+    return { ...cached, feed: cacheRepostData(cacheArticleData(cached.feed)) };
   } catch {
     return null;
   }
@@ -40,8 +41,10 @@ export function writeFeedCache(storage, feed, now = Date.now()) {
   // Never extend the lifetime of stale data after an upstream failure.
   if (feed?.status !== "ok" || !Array.isArray(feed.posts)) return;
   // A successful timeline must not keep renewing an old/unverified pin.
-  const savedFeed = cacheArticleData(
-    ["ok", "none"].includes(feed.pinnedStatus) ? feed : { ...feed, pinnedPost: null, pinnedStatus: "unavailable" },
+  const savedFeed = cacheRepostData(
+    cacheArticleData(
+      ["ok", "none"].includes(feed.pinnedStatus) ? feed : { ...feed, pinnedPost: null, pinnedStatus: "unavailable" },
+    ),
   );
   try {
     storage.setItem(KEY, JSON.stringify({ savedAt: now, feed: savedFeed }));
@@ -55,6 +58,7 @@ const request = createSharedRequest({
   isSuccess: (feed) => feed?.status === "ok" && Array.isArray(feed.posts),
   isFresh: (feed) =>
     ["ok", "none"].includes(feed?.pinnedStatus) &&
+    (feed.repostsStatus === "none" || (feed.repostsStatus === "ok" && Array.isArray(feed.reposts))) &&
     (feed.articlesStatus === "none" || (feed.articlesStatus === "ok" && Array.isArray(feed.articles))),
   onSuccess: (feed, savedAt) => {
     if (typeof window !== "undefined") writeFeedCache(window.localStorage, feed, savedAt);
@@ -74,7 +78,7 @@ export function getFeedSnapshot() {
     }
   }
   const snapshot = request.getSnapshot();
-  return snapshot ? { savedAt: snapshot.savedAt, feed: cacheArticleData(snapshot.value) } : null;
+  return snapshot ? { savedAt: snapshot.savedAt, feed: cacheRepostData(cacheArticleData(snapshot.value)) } : null;
 }
 
 /**

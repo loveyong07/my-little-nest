@@ -2,6 +2,7 @@ import { X_USERNAME } from "../../shared/x-account.mjs";
 
 export const ASSETS = "/assets";
 export const STARRY_GAL_REPOSITORY = "https://github.com/loveyong07/loveyong-starrygal";
+export const SAILING_SIGNUP_URL = "https://my.sailingnet.pro/zh/auth/signup?referrer=tCvO65Sn";
 
 export { X_USERNAME };
 // The WeChat ID happens to match the X username; it is a separate account setting.
@@ -20,7 +21,7 @@ export const SNAPSHOT = {
 
 export const navIds = ["home", "posts", "contact"];
 
-export const mailboxes = [{ label: "Gmail", address: "fyh20071004@gmail.com" }];
+export const mailboxes = [{ label: "Gmail", address: "loveyong2007@gmail.com" }];
 
 // Account destinations belong here; components only decide how to present them.
 export const contactChannels = [

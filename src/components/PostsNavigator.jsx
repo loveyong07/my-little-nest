@@ -1,17 +1,18 @@
 import { useEffect, useRef, useState } from "react";
-import { FiArrowUpRight, FiFeather, FiType, FiBookOpen } from "react-icons/fi";
+import { FiArrowUpRight, FiFeather, FiType, FiBookOpen, FiRepeat } from "react-icons/fi";
 import { HiOutlineSparkles } from "react-icons/hi2";
 import { PiPushPinFill, PiFlowerLight } from "react-icons/pi";
 import { useDesktopLayout } from "../hooks/useDesktopLayout.js";
 import { preferredScrollBehavior } from "../utils/motion.js";
 
-const targets = ["pinned-posts-heading", "latest-posts", "x-articles", "reading-invitation-heading"];
+const targets = ["pinned-posts-heading", "latest-posts", "x-reposts", "x-articles", "reading-invitation-heading"];
 
 export function PostsNavigator({
   t,
   pinnedCount,
   postCount,
   articleCount,
+  repostCount,
   largeText,
   onToggleText,
   focusReading,
@@ -68,6 +69,7 @@ export function PostsNavigator({
   const sections = [
     { label: t.quickNavPinned, icon: PiPushPinFill, tone: "pin", count: pinnedCount },
     { label: t.quickNavDaily, icon: HiOutlineSparkles, tone: "daily", count: postCount },
+    { label: t.repostsHeading, icon: FiRepeat, tone: "reposts", count: repostCount },
     { label: t.quickNavArticles, icon: FiFeather, tone: "articles", count: articleCount },
     { label: t.quickNavMessage, icon: FiArrowUpRight, tone: "message" },
   ];

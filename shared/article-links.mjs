@@ -26,9 +26,11 @@ export function normalizedArticleLinks(entities) {
   });
 }
 
-export function articleLinkParts(text, links = []) {
+export function textLinkParts(text, links = [], { authorFallback = false } = {}) {
   const explicit = links.filter((link) => link?.text && safeArticleLink(link.url));
-  const definitions = [...explicit, ...authorLinks.filter((link) => !explicit.some((item) => item.text === link.text))];
+  const definitions = authorFallback
+    ? [...explicit, ...authorLinks.filter((link) => !explicit.some((item) => item.text === link.text))]
+    : explicit;
   const candidates = [];
   const positionedLabels = new Set();
   const overlaps = (start, end) => candidates.some((item) => start < item.end && end > item.start);
@@ -52,10 +54,10 @@ export function articleLinkParts(text, links = []) {
     }
   }
   const pattern =
-    /\[([^\]\n]+)\]\((https?:\/\/(?:[^\s()<>]|\([^\s()<>]*\))+)\)|https?:\/\/(?:[^\s()<>，。！？；、」』】]|\([^\s()<>]*\))+/g;
+    /\[([^\]\n]+)\]\((https?:\/\/(?:[^\s()<>]|\([^\s()<>]*\))+)\)|(?:https?:\/\/|www\.)(?:[^\s()<>，。！？；、」』】]|\([^\s()<>]*\))+/gi;
   for (const match of text.matchAll(pattern)) {
     const raw = match[2] ?? match[0].replace(/[.,!;:]+$/, "");
-    const url = safeArticleLink(raw);
+    const url = safeArticleLink(/^www\./i.test(raw) ? `https://${raw}` : raw);
     const end = match.index + (match[2] ? match[0].length : raw.length);
     if (url && !overlaps(match.index, end))
       candidates.push({
@@ -94,4 +96,8 @@ export function articleLinkParts(text, links = []) {
   }
   if (cursor < text.length) parts.push({ text: text.slice(cursor) });
   return parts;
+}
+
+export function articleLinkParts(text, links = []) {
+  return textLinkParts(text, links, { authorFallback: true });
 }

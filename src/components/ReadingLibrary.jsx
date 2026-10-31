@@ -1,12 +1,12 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { FiArrowUpRight, FiBookOpen, FiFeather, FiSearch, FiX } from "react-icons/fi";
+import { FiArrowUpRight, FiBookOpen, FiFeather, FiRepeat, FiSearch, FiX } from "react-icons/fi";
 import { PiPushPinFill } from "react-icons/pi";
 import { formatPostDate } from "../utils/date.js";
 import { postExcerpt } from "../utils/posts.js";
 
 // The library selects existing readers; it never creates a second feed or changes
 // the independent daily-post and Article reading positions.
-export function ReadingLibrary({ t, language, posts, articles, pinnedPost, onChoose }) {
+export function ReadingLibrary({ t, language, posts, articles, reposts = [], pinnedPost, onChoose }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
@@ -16,21 +16,23 @@ export function ReadingLibrary({ t, language, posts, articles, pinnedPost, onCho
     () => [
       ...(pinnedPost ? [{ type: "pinned", item: pinnedPost, index: 0 }] : []),
       ...posts.map((item, index) => ({ type: "posts", item, index })),
+      ...reposts.map((item, index) => ({ type: "reposts", item, index })),
       ...articles.map((item, index) => ({ type: "articles", item, index })),
     ],
-    [posts, articles, pinnedPost],
+    [posts, articles, reposts, pinnedPost],
   );
   const filterCounts = useMemo(
     () => ({
       all: entries.length,
       posts: (pinnedPost ? 1 : 0) + posts.length,
       articles: articles.length,
+      reposts: reposts.length,
     }),
-    [entries.length, pinnedPost, posts.length, articles.length],
+    [entries.length, pinnedPost, posts.length, articles.length, reposts.length],
   );
   const needle = query.trim().normalize("NFKC").toLocaleLowerCase();
   const results = entries.filter(({ type, item }) => {
-    if (filter !== "all" && (filter === "posts" ? type === "articles" : type !== "articles")) return false;
+    if (filter !== "all" && (filter === "posts" ? !["pinned", "posts"].includes(type) : type !== filter)) return false;
     return `${item.title || ""} ${item.text || ""} ${item.created_at || ""}`
       .normalize("NFKC")
       .toLocaleLowerCase()
@@ -127,7 +129,7 @@ export function ReadingLibrary({ t, language, posts, articles, pinnedPost, onCho
           />
         </label>
         <div className="library-filters" role="group" aria-label={t.libraryFilter}>
-          {["all", "posts", "articles"].map((id, index) => (
+          {["all", "posts", "reposts", "articles"].map((id, index) => (
             <button key={id} type="button" aria-pressed={filter === id} onClick={() => setFilter(id)}>
               <span>{t.libraryFilters[index]}</span>
               <small aria-hidden="true">{filterCounts[id]}</small>
@@ -158,7 +160,14 @@ export function ReadingLibrary({ t, language, posts, articles, pinnedPost, onCho
             <ul>
               {results.map((entry) => {
                 const { type, item } = entry;
-                const Icon = type === "articles" ? FiFeather : type === "pinned" ? PiPushPinFill : FiBookOpen;
+                const Icon =
+                  type === "articles"
+                    ? FiFeather
+                    : type === "reposts"
+                      ? FiRepeat
+                      : type === "pinned"
+                        ? PiPushPinFill
+                        : FiBookOpen;
                 return (
                   <li key={`${type}-${item.id}`}>
                     <button type="button" className="library-result" onClick={() => choose(entry)}>
@@ -171,7 +180,9 @@ export function ReadingLibrary({ t, language, posts, articles, pinnedPost, onCho
                             ? t.quickNavPinned
                             : type === "articles"
                               ? t.quickNavArticles
-                              : t.quickNavDaily}
+                              : type === "reposts"
+                                ? t.repostsHeading
+                                : t.quickNavDaily}
                         </small>
                         <strong>{item.title || postExcerpt(item, t)}</strong>
                         <time dateTime={item.created_at}>{formatPostDate(item.created_at, language)}</time>

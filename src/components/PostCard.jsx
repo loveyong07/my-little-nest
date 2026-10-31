@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FaArrowRight, FaXTwitter } from "react-icons/fa6";
-import { FiCheck, FiChevronLeft, FiChevronRight, FiLink, FiMaximize2 } from "react-icons/fi";
+import { FiCheck, FiChevronLeft, FiChevronRight, FiLink, FiMaximize2, FiRepeat } from "react-icons/fi";
 import { FALLBACK_AVATAR, ASSETS } from "../constants/site.js";
 import { handleAvatarError } from "../utils/profile.js";
 import { formatPostDate } from "../utils/date.js";
@@ -13,6 +13,7 @@ import { prefetchImage } from "../feed-cache.js";
 import { MediaLightbox } from "./MediaLightbox.jsx";
 import { CopyFallback } from "./ContactTile.jsx";
 import { displayXText } from "../utils/x-text.js";
+import { textLinkParts } from "../../shared/article-links.mjs";
 
 export function PostCard({ post, feedSource, language, t, label, profile, priorityMedia = false, nextPost }) {
   const desktop = useDesktopLayout();
@@ -69,6 +70,12 @@ export function PostCard({ post, feedSource, language, t, label, profile, priori
   return (
     <>
       <article className="post-card">
+        {post.repostId && (
+          <p className="post-repost-context">
+            <FiRepeat aria-hidden="true" />
+            {t.repostedBy(profile.name)}
+          </p>
+        )}
         <div className="post-topline">
           <img
             className="post-avatar"
@@ -79,7 +86,7 @@ export function PostCard({ post, feedSource, language, t, label, profile, priori
           />
           <div className="post-author">
             <strong>{post.author || profile.name}</strong>
-            <span>@{profile.username}</span>
+            <span>@{post.username || profile.username}</span>
           </div>
           <time className="post-date" dateTime={post.created_at}>
             {formatPostDate(post.created_at, language)}
@@ -89,7 +96,17 @@ export function PostCard({ post, feedSource, language, t, label, profile, priori
         {text.trim() && (
           <div className="post-text">
             {text.split(/(?:\r?\n){2,}/).map((paragraph, index) => (
-              <p key={index}>{paragraph}</p>
+              <p key={index}>
+                {textLinkParts(paragraph).map((part, partIndex) =>
+                  part.url ? (
+                    <a key={partIndex} href={part.url} target="_blank" rel="noopener noreferrer">
+                      {part.text}
+                    </a>
+                  ) : (
+                    part.text
+                  ),
+                )}
+              </p>
             ))}
           </div>
         )}

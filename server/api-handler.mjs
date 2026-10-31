@@ -96,6 +96,7 @@ export function createApiHandler(
         const complete =
           result?.status === "ok" &&
           ["ok", "none"].includes(result.pinnedStatus) &&
+          ["ok", "none"].includes(result.repostsStatus) &&
           ["ok", "none"].includes(result.articlesStatus);
         const cdn = complete ? JSON_CDN_CACHE_CONTROL : JSON_CDN_CACHE_CONTROL_RETRY;
         return json(result, { headers: { "Vercel-CDN-Cache-Control": cdn } });

@@ -6,6 +6,7 @@ import { PiPushPinFill } from "react-icons/pi";
 import { PostCard } from "../components/PostCard.jsx";
 import { PostsAgeGate } from "../components/PostsAgeGate.jsx";
 import { XArticlesSection } from "../components/XArticlesSection.jsx";
+import { XRepostsSection } from "../components/XRepostsSection.jsx";
 import { PostsNavigator } from "../components/PostsNavigator.jsx";
 import { ReadingLibrary } from "../components/ReadingLibrary.jsx";
 import { SectionHeading } from "../components/SectionHeading.jsx";
@@ -86,6 +87,10 @@ function PostsContent({ language, t, profile, onFeedReady }) {
     articleIndex,
     setArticleIndex,
     articleState,
+    reposts,
+    repostIndex,
+    setRepostIndex,
+    repostState,
   } = useXFeed();
   const readingRef = useRef(null);
   const indexRef = useRef(null);
@@ -123,7 +128,7 @@ function PostsContent({ language, t, profile, onFeedReady }) {
       if (
         target instanceof HTMLElement &&
         target.closest(
-          "a, button, input, textarea, select, video, audio, [contenteditable], [role=slider], [role=tablist], dialog, .media-lightbox, #x-articles",
+          "a, button, input, textarea, select, video, audio, [contenteditable], [role=slider], [role=tablist], dialog, .media-lightbox, #x-articles, #x-reposts",
         )
       ) {
         return;
@@ -146,9 +151,16 @@ function PostsContent({ language, t, profile, onFeedReady }) {
   function chooseFromLibrary(type, index) {
     if (type === "posts") setPostIndex(index);
     if (type === "articles") setArticleIndex(index);
+    if (type === "reposts") setRepostIndex(index);
     window.requestAnimationFrame(() => {
       const target = document.getElementById(
-        type === "pinned" ? "pinned-posts-heading" : type === "articles" ? "x-articles" : "daily-posts-heading",
+        type === "pinned"
+          ? "pinned-posts-heading"
+          : type === "articles"
+            ? "x-articles"
+            : type === "reposts"
+              ? "x-reposts"
+              : "daily-posts-heading",
       );
       (target?.matches("h2") ? target : target?.querySelector("h2"))?.focus({ preventScroll: true });
       target?.scrollIntoView({ block: "start", behavior: preferredScrollBehavior() });
@@ -316,6 +328,18 @@ function PostsContent({ language, t, profile, onFeedReady }) {
             )}
           </div>
         </section>
+        <XRepostsSection
+          reposts={reposts}
+          repostIndex={repostIndex}
+          setRepostIndex={setRepostIndex}
+          repostState={repostState}
+          feedLoading={feedLoading}
+          retryDisabled={retryDisabled}
+          retryFeed={retryFeed}
+          language={language}
+          t={t}
+          profile={profile}
+        />
         <XArticlesSection
           articles={articles}
           articleIndex={articleIndex}
@@ -346,6 +370,7 @@ function PostsContent({ language, t, profile, onFeedReady }) {
         pinnedCount={pinnedPost ? 1 : 0}
         postCount={posts.length}
         articleCount={articles.length}
+        repostCount={reposts.length}
         largeText={largeText}
         onToggleText={() => setLargeText((value) => !value)}
         focusReading={focusReading}
@@ -356,6 +381,7 @@ function PostsContent({ language, t, profile, onFeedReady }) {
             language={language}
             posts={posts}
             articles={articles}
+            reposts={reposts}
             pinnedPost={pinnedPost}
             onChoose={chooseFromLibrary}
           />

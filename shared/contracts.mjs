@@ -22,6 +22,9 @@
  *   text: string,
  *   created_at?: string | null,
  *   author?: string,
+ *   username?: string,
+ *   repostId?: string,
+ *   repostedAt?: string,
  *   avatar?: string | null,
  *   avatarProxy?: AvatarProxy,
  *   permalink?: string,
@@ -49,6 +52,8 @@
  *   pinnedStatus?: SectionStatus,
  *   articles?: ArticleItem[],
  *   articlesStatus?: SectionStatus,
+ *   reposts?: PostItem[],
+ *   repostsStatus?: SectionStatus,
  * }} FeedResponse
  * @typedef {{
  *   name: string,

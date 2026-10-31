@@ -292,25 +292,35 @@
     letter-spacing: 0.02em;
   }
   .hero-copy h1 span:first-child {
-    font-size: clamp(46px, 4.3vw, 60px);
-    line-height: 1.16;
+    font-size: clamp(32px, 3.3vw, 46px);
+    line-height: 1.3;
   }
   .hero-copy h1 span:nth-child(2) {
-    padding-left: 0.72em;
-    font-size: clamp(62px, 5.7vw, 80px);
-    line-height: 1.15;
+    padding-left: 0.3em;
+    font-size: clamp(32px, 3.3vw, 46px);
+    line-height: 1.3;
+  }
+  .hero-copy h1 span:last-child {
+    font-size: clamp(48px, 4.5vw, 64px);
+    line-height: 1.25;
   }
   .language-en .hero-copy h1 span:first-child {
-    font-size: clamp(36px, 3.4vw, 48px);
+    font-size: clamp(29px, 2.7vw, 38px);
   }
   .language-en .hero-copy h1 span:nth-child(2) {
-    font-size: clamp(46px, 4.2vw, 60px);
+    font-size: clamp(29px, 2.7vw, 38px);
+  }
+  .language-en .hero-copy h1 span:last-child {
+    font-size: clamp(44px, 4vw, 58px);
   }
   .language-ja .hero-copy h1 span:first-child {
-    font-size: clamp(32px, 3vw, 44px);
+    font-size: clamp(29px, 2.7vw, 38px);
   }
   .language-ja .hero-copy h1 span:nth-child(2) {
-    font-size: clamp(46px, 4.2vw, 60px);
+    font-size: clamp(29px, 2.7vw, 38px);
+  }
+  .language-ja .hero-copy h1 span:last-child {
+    font-size: clamp(44px, 4vw, 58px);
   }
   .hero-letter-caption {
     margin-top: 10px;
@@ -991,21 +1001,30 @@
     margin-block: 6px 8px;
   }
   .hero-copy h1 span:first-child {
-    font-size: 42px;
-  }
-  .hero-copy h1 span:nth-child(2) {
-    font-size: 56px;
-  }
-  .language-en .hero-copy h1 span:first-child {
     font-size: 34px;
   }
+  .hero-copy h1 span:nth-child(2) {
+    font-size: 34px;
+  }
+  .hero-copy h1 span:last-child {
+    font-size: 48px;
+  }
+  .language-en .hero-copy h1 span:first-child {
+    font-size: 29px;
+  }
   .language-en .hero-copy h1 span:nth-child(2) {
+    font-size: 29px;
+  }
+  .language-en .hero-copy h1 span:last-child {
     font-size: 44px;
   }
   .language-ja .hero-copy h1 span:first-child {
-    font-size: 30px;
+    font-size: 29px;
   }
   .language-ja .hero-copy h1 span:nth-child(2) {
+    font-size: 29px;
+  }
+  .language-ja .hero-copy h1 span:last-child {
     font-size: 44px;
   }
   .hero-letter-caption {

@@ -231,7 +231,10 @@ test("a rejected optional Article field preserves live posts, reports unknown Ar
   assert.deepEqual(result.articles, []);
   assert.equal(result.posts[0].id, "20");
   assert.equal(urls.length, 3);
-  assert.equal(urls.at(-1).searchParams.get("expansions"), "attachments.media_keys");
+  assert.equal(
+    urls.at(-1).searchParams.get("expansions"),
+    "attachments.media_keys,referenced_tweets.id,referenced_tweets.id.author_id",
+  );
   time = 60_000 - 1;
   await Promise.all(Array.from({ length: 8 }, () => feed()));
   assert.equal(urls.length, 3, "no Article retries before the backoff boundary");
@@ -471,7 +474,7 @@ test("Article media uses the same signed, original-quality same-origin permissio
 
 for (const articlesStatus of ["ok", "none", "stale", "unavailable", undefined]) {
   test(`Article ${String(articlesStatus)} controls the complete-feed CDN cache policy`, async () => {
-    const body = { status: "ok", posts: [], articles: [], articlesStatus, pinnedStatus: "none" };
+    const body = { status: "ok", posts: [], articles: [], articlesStatus, pinnedStatus: "none", repostsStatus: "none" };
     const handleApi = createApiHandler({}, { serviceFactory: () => async () => body });
     const response = await handleApi(new Request("https://example.test/api/x-posts"));
     assert.equal(

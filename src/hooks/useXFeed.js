@@ -5,6 +5,7 @@ import { SNAPSHOT } from "../constants/site.js";
 import { isOwnPost, isOriginalPost } from "../utils/posts.js";
 import { retainedPostIndex } from "../utils/feed-reading.js";
 import { initialArticleReading, refreshedArticleReading } from "../utils/article-reading.js";
+import { initialRepostReading, refreshedRepostReading } from "../utils/repost-reading.js";
 import { takeEarlyFeed } from "./useSiteRoute.js";
 
 export function useXFeed() {
@@ -25,6 +26,8 @@ export function useXFeed() {
   const { posts, index: postIndex } = reading;
   const [articleReading, setArticleReading] = useState(() => initialArticleReading(cachedFeed?.feed));
   const { articles, index: articleIndex, state: articleState } = articleReading;
+  const [repostReading, setRepostReading] = useState(() => initialRepostReading(cachedFeed?.feed));
+  const { reposts, index: repostIndex, state: repostState } = repostReading;
   const [feedSource, setFeedSource] = useState(cachedFeed ? "stale" : "snapshot");
   const [feedLoading, setFeedLoading] = useState(!cachedFeed);
   const [feedUpdatedAt, setFeedUpdatedAt] = useState(cachedFeed?.savedAt ?? null);
@@ -53,6 +56,14 @@ export function useXFeed() {
     }));
   }, []);
 
+  const setRepostIndex = useCallback((value) => {
+    setRepostReading((current) => ({
+      ...current,
+      index: typeof value === "function" ? value(current.index) : value,
+      hasSelectedRepost: true,
+    }));
+  }, []);
+
   function alignRetryCooldown() {
     const delay = getFeedRetryAfter();
     if (!delay) return;
@@ -72,6 +83,7 @@ export function useXFeed() {
         const feed = await request;
         if (!mounted) return;
         setArticleReading((current) => refreshedArticleReading(current, feed));
+        setRepostReading((current) => refreshedRepostReading(current, feed));
         const hasPinStatus = ["ok", "stale", "none", "unavailable"].includes(feed.pinnedStatus);
         const nextPinned =
           isOwnPost(feed.pinnedPost) && (!hasPinStatus || ["ok", "stale"].includes(feed.pinnedStatus))
@@ -129,6 +141,7 @@ export function useXFeed() {
           setFeedSource((current) => (current === "live" ? "stale" : current));
           setPinState(pinnedPostRef.current ? "stale" : "unavailable");
           setArticleReading((current) => refreshedArticleReading(current, null));
+          setRepostReading((current) => refreshedRepostReading(current, null));
           alignRetryCooldown();
           setFeedLoading(false);
         }
@@ -166,6 +179,10 @@ export function useXFeed() {
     setArticleIndex,
     articleState,
     articleLoading: articleState === "loading" || feedLoading,
+    reposts,
+    repostIndex,
+    setRepostIndex,
+    repostState,
     retryFeed,
   };
 }
