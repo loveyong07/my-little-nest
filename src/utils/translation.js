@@ -41,12 +41,22 @@ export function translationLanguageName(targetLanguage, uiLanguage) {
   }
 }
 
-// Keep anchors (including named links) verbatim. The model never receives URLs
-// or gets a chance to rewrite destinations, markup, images or document positions.
+// Keep anchors and Unicode hashtags verbatim. Neither reaches the model, so
+// translation cannot rewrite link destinations, topic labels or their positions.
 export function translatableParts(parts, segments) {
-  return parts.map((part) => {
-    if (part.url || !/\p{L}/u.test(part.text)) return part;
-    return { ...part, translationIndex: segments.push(part.text) - 1 };
+  const queueText = (part) =>
+    /\p{L}/u.test(part.text) ? { ...part, translationIndex: segments.push(part.text) - 1 } : part;
+  return parts.flatMap((part) => {
+    if (part.url) return [part];
+    const pieces = [];
+    let cursor = 0;
+    for (const match of part.text.matchAll(/[#＃][\p{L}\p{M}\p{N}_\u200c\u200d]+/gu)) {
+      if (match.index > cursor) pieces.push(queueText({ ...part, text: part.text.slice(cursor, match.index) }));
+      pieces.push({ ...part, text: match[0] });
+      cursor = match.index + match[0].length;
+    }
+    if (cursor < part.text.length) pieces.push(queueText({ ...part, text: part.text.slice(cursor) }));
+    return pieces.length ? pieces : [part];
   });
 }
 
