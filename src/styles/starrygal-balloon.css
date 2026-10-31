@@ -1,0 +1,248 @@
+/* A viewport-wide flight layer; only the little balloon receives pointer input. */
+.starrygal-sky {
+  --balloon-width: 144px;
+  --balloon-height: 230px;
+  --flight-edge: 22px;
+  --flight-start-x: 0.56;
+  --flight-top: calc(104px + env(safe-area-inset-top, 0px));
+  --flight-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
+  --flight-x: max(0px, calc(100vw - var(--balloon-width) - 2 * var(--flight-edge)));
+  --flight-y: max(0px, calc(100svh - var(--balloon-height) - var(--flight-top) - var(--flight-bottom)));
+  position: fixed;
+  z-index: 3;
+  inset: 0;
+  pointer-events: none;
+}
+
+.starrygal-flight {
+  position: absolute;
+  top: var(--flight-top);
+  left: var(--flight-edge);
+  width: var(--balloon-width);
+  transform: translate3d(calc(var(--flight-x) * var(--flight-start-x)), calc(var(--flight-y) * 0.04), 0);
+  animation: starrygal-flight 176s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  will-change: transform;
+}
+
+.starrygal-balloon {
+  display: block;
+  border-radius: 20px;
+  color: var(--pastel-blue-ink);
+  text-decoration: none;
+  pointer-events: auto;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.starrygal-rig {
+  display: block;
+  transform-origin: 50% 25%;
+  animation: starrygal-breeze 7s ease-in-out infinite;
+}
+
+.starrygal-envelope {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 4px 5px #456d9326);
+}
+
+.starrygal-tag {
+  display: block;
+  margin-top: -2px;
+  transform-origin: 50% 0;
+  animation: starrygal-tag-sway 5.5s ease-in-out infinite;
+}
+
+.starrygal-ropes {
+  display: block;
+  width: 100%;
+  height: 16px;
+}
+
+.starrygal-card {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  min-height: 54px;
+  padding: 7px 12px 6px;
+  border: 1px solid #fff;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fffdfb, #edf7ff 65%, #fbe9f1);
+  box-shadow:
+    0 6px 16px #3e68952b,
+    inset 0 0 0 1px #c5daec;
+  transition: box-shadow 0.2s ease;
+}
+
+.starrygal-card::before {
+  position: absolute;
+  inset: 4px;
+  border: 1px dashed #b5cfe2;
+  border-radius: 8px;
+  content: "";
+  pointer-events: none;
+}
+
+.starrygal-card strong {
+  font-family: "Quicksand", sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.015em;
+}
+
+.starrygal-card-caption {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--color-muted);
+  font-size: 10px;
+  line-height: 1.4;
+  letter-spacing: 0.08em;
+}
+
+.starrygal-card-caption svg {
+  width: 10px;
+  height: 10px;
+}
+
+.starrygal-card-caption svg:last-child {
+  width: 8px;
+  height: 8px;
+}
+
+.starrygal-flight:focus-within,
+.starrygal-flight:focus-within .starrygal-rig,
+.starrygal-flight:focus-within .starrygal-tag,
+.scene-paused .starrygal-flight,
+.scene-paused .starrygal-rig,
+.scene-paused .starrygal-tag {
+  animation-play-state: paused;
+}
+
+.starrygal-balloon:focus-visible {
+  outline: 3px solid var(--pastel-blue-ink);
+  outline-offset: 5px;
+}
+
+@media (hover: hover) {
+  .starrygal-flight:hover,
+  .starrygal-flight:hover .starrygal-rig,
+  .starrygal-flight:hover .starrygal-tag {
+    animation-play-state: paused;
+  }
+
+  .starrygal-balloon:hover .starrygal-card {
+    box-shadow:
+      0 8px 22px #3e68953d,
+      inset 0 0 0 1px #8eb8d8;
+  }
+}
+
+@keyframes starrygal-flight {
+  0%,
+  100% {
+    transform: translate3d(calc(var(--flight-x) * var(--flight-start-x)), calc(var(--flight-y) * 0.04), 0);
+  }
+  12.5% {
+    transform: translate3d(calc(var(--flight-x) * 0.18), calc(var(--flight-y) * 0.12), 0);
+  }
+  25% {
+    transform: translate3d(calc(var(--flight-x) * 0.03), calc(var(--flight-y) * 0.74), 0);
+  }
+  37.5% {
+    transform: translate3d(calc(var(--flight-x) * 0.4), calc(var(--flight-y) * 0.98), 0);
+  }
+  50% {
+    transform: translate3d(calc(var(--flight-x) * 0.94), calc(var(--flight-y) * 0.76), 0);
+  }
+  62.5% {
+    transform: translate3d(calc(var(--flight-x) * 0.96), calc(var(--flight-y) * 0.02), 0);
+  }
+  75% {
+    transform: translate3d(calc(var(--flight-x) * 0.62), calc(var(--flight-y) * 0.5), 0);
+  }
+  87.5% {
+    transform: translate3d(calc(var(--flight-x) * 0.32), calc(var(--flight-y) * 0.36), 0);
+  }
+}
+
+@keyframes starrygal-breeze {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(-5px) rotate(2deg);
+  }
+}
+
+@keyframes starrygal-tag-sway {
+  0%,
+  100% {
+    transform: rotate(3deg);
+  }
+  50% {
+    transform: rotate(-3deg);
+  }
+}
+
+@media (max-width: 900px), (pointer: coarse), (pointer: none) {
+  .starrygal-sky {
+    --balloon-width: 112px;
+    --balloon-height: 190px;
+    --flight-edge: 16px;
+    --flight-start-x: 0.08;
+    --flight-top: calc(84px + env(safe-area-inset-top, 0px));
+    --flight-bottom: calc(104px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .starrygal-card {
+    min-height: 48px;
+    padding: 7px 8px 5px;
+  }
+
+  .starrygal-card strong {
+    font-size: 15px;
+  }
+
+  .starrygal-ropes {
+    height: 14px;
+  }
+}
+
+@media (max-height: 480px) {
+  .starrygal-sky {
+    --balloon-width: 92px;
+    --balloon-height: 163px;
+    --flight-top: calc(80px + env(safe-area-inset-top, 0px));
+    --flight-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .starrygal-card strong {
+    font-size: 13px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .starrygal-flight,
+  .starrygal-rig,
+  .starrygal-tag {
+    animation: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .starrygal-card {
+    border: 1px solid LinkText;
+    background: Canvas;
+    color: LinkText;
+  }
+
+  .starrygal-card-caption {
+    color: LinkText;
+  }
+}
