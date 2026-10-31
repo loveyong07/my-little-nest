@@ -14,6 +14,7 @@ import { GlassFlorals } from "./GlassFlorals.jsx";
 import { DesktopStationery } from "./DesktopStationery.jsx";
 import { LetterSeaside } from "./ScrapbookAccents.jsx";
 import { fantasyCopy } from "../constants/fantasy.js";
+import { StarryGalBalloon } from "./StarryGalBalloon.jsx";
 
 export function HeroSection({ header, language, t, profile }) {
   const heroRef = useRef(null);
@@ -204,6 +205,7 @@ export function HeroSection({ header, language, t, profile }) {
         <span>SAME SKY. MORE GOOD FRIENDS.</span>
       </div>
       <DesktopStationery />
+      <StarryGalBalloon t={t} />
     </section>
   );
 }

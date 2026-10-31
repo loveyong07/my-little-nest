@@ -2,6 +2,7 @@ export const copy = {
   zh: {
     homeLabel: "首页区域",
     homeLinkLabel: "初咏的小窝 · 返回首页",
+    starrygalLink: "在 GitHub 打开 StarryGal 仓库（新标签页）",
     navLabel: "主导航",
     languageLabel: "语言",
     openMenu: "打开菜单",
@@ -165,6 +166,7 @@ export const copy = {
   ja: {
     homeLabel: "ホーム",
     homeLinkLabel: "初咏の小さなおうち · ホーム",
+    starrygalLink: "GitHub で StarryGal のリポジトリを開く（新しいタブ）",
     navLabel: "メインナビゲーション",
     languageLabel: "言語",
     openMenu: "メニューを開く",
@@ -332,6 +334,7 @@ export const copy = {
   en: {
     homeLabel: "Home",
     homeLinkLabel: "My little nest · Home",
+    starrygalLink: "Open the StarryGal repository on GitHub (new tab)",
     navLabel: "Main navigation",
     languageLabel: "Language",
     openMenu: "Open menu",

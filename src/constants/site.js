@@ -1,6 +1,7 @@
 import { X_USERNAME } from "../../shared/x-account.mjs";
 
 export const ASSETS = "/assets";
+export const STARRY_GAL_REPOSITORY = "https://github.com/loveyong07/loveyong-starrygal";
 
 export { X_USERNAME };
 // The WeChat ID happens to match the X username; it is a separate account setting.

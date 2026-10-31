@@ -5,7 +5,7 @@
 | 层次 | 文件 | 职责 |
 | --- | --- | --- |
 | 基础 | `globals.css`、`scenes.css`、`hero-scene.css` | 变量、全局约定、场景与背景 |
-| 组件与页面 | `header.css`、`hero.css`、`panels.css`、`posts.css`、`media-lightbox.css`、`contact.css`、`routes.css` | 导航、页面结构、帖子、灯箱与联系交互 |
+| 组件与页面 | `header.css`、`hero.css`、`starrygal-balloon.css`、`panels.css`、`posts.css`、`media-lightbox.css`、`contact.css`、`routes.css` | 导航、首页热气球、页面结构、帖子、灯箱与联系交互 |
 | 材质与装饰 | `glass.css`、`glass-florals.css`、`articles.css`、`desktop-stationery.css` | 共用玻璃效果、花饰、文章和桌面装饰 |
 | 桌面构图 | `desktop-design.css` | 宽屏首页、导航、路由标题与外层面板 |
 | 桌面功能 | `sky-letter.css` | 阅读目录、搜索抽屉、联系方式和信件草稿 |
