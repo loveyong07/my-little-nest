@@ -113,6 +113,37 @@ test("native translation is sequential, preserves link-adjacent whitespace, rele
   assert.equal(calls.translate.length, 2);
 });
 
+test("translation leaves multilingual hashtags intact and excludes them from both native models", async () => {
+  const tags = ["#ゆずソフト", "#中文话题", "#Hello_World", "#cafe\u0301", "#العربية", "#한글", "#123", "＃全角标签"];
+  const original = `今日は楽しい一日です。 ${tags.join(" ")}！\nまた明日お会いしましょう。`;
+  const segments = [];
+  const parts = translatableParts(textLinkParts(original), segments);
+  assert.equal(
+    parts.map((part) => part.text).join(""),
+    original,
+    "preparing a translation must not alter the original",
+  );
+  const { api, calls } = nativeApi({ translate: () => "Translated prose." });
+  const result = await translateSegments(segments, { targetLanguage: "en", api });
+  const output = parts.map((part) => translatedPartText(part, result.segments)).join("");
+  assert.ok(output.includes("Translated prose."));
+  assert.ok(output.includes(tags.join(" ")), "hashtag spelling, scripts, spacing and order stay unchanged");
+  for (const input of [...calls.detect, ...calls.translate.map(([text]) => text)]) {
+    assert.ok(!/[#＃]/u.test(input), "neither language detection nor translation receives a hashtag");
+  }
+});
+
+test("adjacent hashtags, tag-only text, empty titles and URL fragments retain their original content", () => {
+  const segments = [];
+  const original = "#东京#旅行 ＃日本語 #cafe\u0301";
+  const parts = translatableParts(textLinkParts(original), segments);
+  assert.deepEqual(segments, [], "a post consisting only of hashtags needs no translation");
+  assert.equal(parts.map((part) => translatedPartText(part, [])).join(""), original);
+  assert.deepEqual(translatableParts([{ text: "" }], []), [{ text: "" }]);
+  const link = { text: "https://example.test/page#section", url: "https://example.test/page#section" };
+  assert.deepEqual(translatableParts([link], []), [link]);
+});
+
 test("same-language content is identified without creating a translator", async () => {
   const { api, calls } = nativeApi({ sourceLanguage: "en" });
   const result = await translateSegments(["This original is already English."], { targetLanguage: "en", api });

@@ -174,7 +174,7 @@ export function XArticlesSection({
               <FaXTwitter aria-hidden="true" />
             </div>
             <h3 id="x-article-title" lang={translation.showing ? translation.targetLanguage : undefined} dir="auto">
-              {translatedPartText(titleParts[0], translation.texts) || t.articleUntitled}
+              {titleParts.map((part) => translatedPartText(part, translation.texts)).join("") || t.articleUntitled}
             </h3>
             {article.created_at && (
               <time className="article-date" dateTime={article.created_at}>

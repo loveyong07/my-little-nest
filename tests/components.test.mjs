@@ -195,7 +195,7 @@ test("pinned, original and repost cards translate only on click, follow the syst
       post: {
         ...SNAPSHOT,
         id: `translation-${variant}`,
-        text: `こんにちは、${variant}のテストです。 [リンク](https://example.test/${variant}) ありがとう。`,
+        text: `こんにちは、${variant}のテストです。 [リンク](https://example.test/${variant}) ありがとう。 #ゆずソフト #Hello_World`,
         ...(variant === "repost" ? { repostId: "test-repost" } : {}),
       },
       feedSource: "live",
@@ -219,6 +219,8 @@ test("pinned, original and repost cards translate only on click, follow the syst
       assert.ok(calls.texts.every((text) => !text.includes("https://") && !text.includes("[リンク]")));
       const translated = view.container.querySelector(".post-text p").textContent;
       assert.notEqual(translated, original);
+      assert.ok(translated.endsWith("#ゆずソフト #Hello_World"));
+      assert.ok(calls.texts.every((text) => !text.includes("#")));
       await React.act(async () => button.click());
       assert.equal(view.container.querySelector(".post-text p").textContent, original);
       await React.act(async () => button.click());
@@ -244,14 +246,14 @@ test("translated Article titles and paragraphs preserve photo positions, links a
   const { XArticlesSection } = await server.ssrLoadModule("/src/components/XArticlesSection.jsx");
   const article = {
     id: "translation-article",
-    title: "日本語の記事の題名",
+    title: "日本語の記事の題名 #テスト記事",
     text: "最初の段落。\n\n最後の段落。",
     permalink: "https://x.com/loveyong07/status/123",
     author: "初咏",
     created_at: "2026-10-01T00:00:00Z",
     media: [{ type: "photo", url: "https://pbs.twimg.com/media/article-translation.jpg" }],
     blocks: [
-      { type: "text", text: "最初の段落。 [名前付きリンク](https://example.test/article)" },
+      { type: "text", text: "最初の段落。 #ゆずソフト [名前付きリンク](https://example.test/article)" },
       { type: "photo", url: "https://pbs.twimg.com/media/article-translation.jpg" },
       { type: "divider" },
       { type: "text", text: "最後の段落。" },
@@ -280,7 +282,9 @@ test("translated Article titles and paragraphs preserve photo positions, links a
     await React.act(async () => button.click());
     assert.equal(view.container.querySelector("#x-article-title").textContent, `訳: ${article.title}`);
     assert.equal(view.container.querySelector("#x-article-title").lang, "en");
-    assert.ok(calls.texts.includes(article.title));
+    assert.ok(calls.texts.some((text) => text.includes("日本語の記事の題名")));
+    assert.ok(calls.texts.every((text) => !text.includes("#")));
+    assert.ok(view.container.querySelector(".article-text").textContent.includes("#ゆずソフト"));
     assert.deepEqual(order(), originalOrder);
     assert.equal(view.container.querySelector(".article-text .article-photo"), photo);
     assert.equal(view.container.querySelector(".article-text a").href, "https://example.test/article");
