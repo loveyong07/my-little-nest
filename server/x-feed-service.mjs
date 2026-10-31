@@ -1,4 +1,4 @@
-// Reads the account's profile, pinned post, original posts and Articles from the X API, with an
+// Reads the account's profile, pinned post, originals, reposts and Articles from the X API, with an
 // in-memory cache, incremental refreshes and a failure backoff. Shared by every runtime
 // through server/api-handler.mjs.
 import { mediaDimensions, parseMediaSource } from "../shared/media-sources.mjs";
@@ -173,6 +173,18 @@ function normalizedPost(post, user, mediaByKey, { allowReferences = false } = {}
   };
 }
 
+function normalizedRepost(event, author, postsById, usersById, mediaByKey) {
+  if (event.author_id !== author.id || event.in_reply_to_user_id) return null;
+  const reference = (event.referenced_tweets ?? event.referenced_posts ?? []).find((item) => item.type === "retweeted");
+  if (!reference) return null;
+  const original = postsById.get(reference.id);
+  const user = original?.author_id === author.id ? author : usersById.get(original?.author_id);
+  if (!user || user.protected || !/^[A-Za-z0-9_]{1,15}$/.test(user.username ?? "")) return null;
+  const post = normalizedPost(original, user, mediaByKey, { allowReferences: true });
+  if (!post || typeof original.created_at !== "string") return null;
+  return { ...post, username: user.username, repostId: event.id, repostedAt: event.created_at };
+}
+
 // Article metadata comes from the requested article field, never from note_tweet:
 // long ordinary posts and links that mention an Article remain ordinary posts.
 function isArticlePost(post) {
@@ -267,6 +279,7 @@ export function createXFeedService({
   let cachedAuthor = null;
   let pinnedRetryAt = 0;
   let articlesRetryAt = 0;
+  let repostsRetryAt = 0;
   let fullRefreshAt = null;
   let cachedProfile = null;
   let profileRetryAt = 0;
@@ -375,14 +388,21 @@ export function createXFeedService({
   async function fetchOriginalPosts(author, pinnedId) {
     const found = [];
     const foundArticles = [];
+    const foundReposts = [];
+    const repostEvents = [];
+    const repostPostsById = new Map();
+    const repostUsersById = new Map();
+    const repostMediaByKey = new Map();
     const seen = new Set();
     let nextToken = null;
     let includeArticles = true;
     let articlesAvailable = true;
+    let repostsAvailable = true;
     const fullRefresh =
       !cached ||
       cachedPinnedId !== pinnedId ||
       !["ok", "none"].includes(cached.articlesStatus) ||
+      !["ok", "none"].includes(cached.repostsStatus) ||
       fullRefreshAt === null ||
       now() - fullRefreshAt >= FULL_REFRESH_TTL_MS ||
       !newestSeenId;
@@ -390,7 +410,7 @@ export function createXFeedService({
 
     for (let page = 0; page < MAX_PAGES; page += 1) {
       const url = new URL(`${X_API}/users/${author.id}/tweets`);
-      url.searchParams.set("exclude", "replies,retweets");
+      url.searchParams.set("exclude", "replies");
       // The live X API accepted these Article fields and expansions on 2026-10-17.
       url.searchParams.set(
         "tweet.fields",
@@ -399,8 +419,10 @@ export function createXFeedService({
       );
       url.searchParams.set(
         "expansions",
-        "attachments.media_keys" + (includeArticles ? ",article.cover_media,article.media_entities" : ""),
+        "attachments.media_keys,referenced_tweets.id,referenced_tweets.id.author_id" +
+          (includeArticles ? ",article.cover_media,article.media_entities" : ""),
       );
+      url.searchParams.set("user.fields", "name,username,profile_image_url,protected");
       url.searchParams.set("media.fields", "media_key,type,url,alt_text,width,height,preview_image_url,variants");
       url.searchParams.set("max_results", String(PAGE_SIZE));
       if (!fullRefresh) {
@@ -410,7 +432,7 @@ export function createXFeedService({
 
       let json;
       try {
-        json = await getXJson(url, token, fetchImpl);
+        json = await getXJson(url, token, fetchImpl, { allowPartialErrors: true });
       } catch (error) {
         // Optional Article fields must not take the existing post feed down if an
         // X API access tier/version rejects them. A fallback is unknown, not empty.
@@ -421,9 +443,15 @@ export function createXFeedService({
           "tweet.fields",
           "created_at,referenced_tweets,author_id,in_reply_to_user_id,note_tweet,attachments,entities",
         );
-        url.searchParams.set("expansions", "attachments.media_keys");
-        json = await getXJson(url, token, fetchImpl);
+        url.searchParams.set(
+          "expansions",
+          "attachments.media_keys,referenced_tweets.id,referenced_tweets.id.author_id",
+        );
+        json = await getXJson(url, token, fetchImpl, { allowPartialErrors: true });
       }
+      if (json.errors?.length && !Array.isArray(json.data)) throw new Error("X timeline unavailable");
+      // A deleted/private referenced post must not take the ordinary timeline down.
+      if (json.errors?.length) repostsAvailable = false;
       if (json.data !== undefined && !Array.isArray(json.data)) {
         throw new Error("Invalid X posts response");
       }
@@ -433,6 +461,11 @@ export function createXFeedService({
           .filter((media) => typeof media?.media_key === "string")
           .map((media) => [media.media_key, media]),
       );
+      const postsById = new Map((json.includes?.tweets ?? json.includes?.posts ?? []).map((post) => [post.id, post]));
+      const usersById = new Map((json.includes?.users ?? []).map((user) => [user.id, user]));
+      for (const [id, post] of postsById) repostPostsById.set(id, post);
+      for (const [id, user] of usersById) repostUsersById.set(id, user);
+      for (const [key, media] of mediaByKey) repostMediaByKey.set(key, media);
       // A missing requested field can mean X ignored an older/newer field name.
       // Do not label posts as original when quote metadata may also be missing.
       if (pagePosts.some((post) => typeof post.created_at !== "string" || !isId(post.author_id))) {
@@ -442,6 +475,13 @@ export function createXFeedService({
         latestId = json.meta?.newest_id ?? pagePosts[0].id;
       }
       for (const post of pagePosts) {
+        const isRepost = (post.referenced_tweets ?? post.referenced_posts ?? []).some(
+          (reference) => reference.type === "retweeted",
+        );
+        if (isRepost && post.author_id === author.id) {
+          if (!post.in_reply_to_user_id) repostEvents.push(post);
+          continue;
+        }
         if (isArticlePost(post)) {
           const article = normalizedArticle(post, author, mediaByKey);
           if (article) foundArticles.push(article);
@@ -465,6 +505,52 @@ export function createXFeedService({
       if (tokenForNextPage === nextToken) throw new Error("X posts pagination did not advance");
       if (page === MAX_PAGES - 1) throw new Error("X posts exceed the supported timeline window");
       nextToken = tokenForNextPage;
+    }
+
+    // Timeline reference expansions omit media on some originals. Resolve their
+    // canonical details in deduplicated batches so text-only expansions cannot
+    // silently turn illustrated reposts into text-only cards.
+    const referenceOf = (event) =>
+      (event.referenced_tweets ?? event.referenced_posts ?? []).find((reference) => reference.type === "retweeted");
+    const originalIds = [...new Set(repostEvents.map((event) => referenceOf(event)?.id).filter(isId))];
+    const verifiedOriginals = new Set();
+    for (let start = 0; start < originalIds.length; start += PAGE_SIZE) {
+      const ids = originalIds.slice(start, start + PAGE_SIZE);
+      const url = new URL(`${X_API}/tweets`);
+      url.searchParams.set("ids", ids.join(","));
+      url.searchParams.set(
+        "tweet.fields",
+        "created_at,author_id,referenced_tweets,in_reply_to_user_id,note_tweet,attachments,entities",
+      );
+      url.searchParams.set("expansions", "attachments.media_keys,author_id");
+      url.searchParams.set("user.fields", "name,username,profile_image_url,protected");
+      url.searchParams.set("media.fields", "media_key,type,url,alt_text,width,height,preview_image_url,variants");
+      try {
+        const json = await getXJson(url, token, fetchImpl, { allowPartialErrors: true });
+        if (!Array.isArray(json.data)) throw new Error("X repost details unavailable");
+        for (const post of json.data) {
+          if (!ids.includes(post.id)) continue;
+          repostPostsById.set(post.id, post);
+          verifiedOriginals.add(post.id);
+        }
+        for (const user of json.includes?.users ?? []) repostUsersById.set(user.id, user);
+        for (const media of json.includes?.media ?? []) repostMediaByKey.set(media.media_key, media);
+      } catch {
+        // Keep available originals and their last verified media during an outage.
+        repostsAvailable = false;
+      }
+    }
+    for (const event of repostEvents) {
+      const id = referenceOf(event)?.id;
+      const old = cached?.reposts?.find((post) => post.id === id);
+      const verified = verifiedOriginals.has(id);
+      if (!verified) repostsAvailable = false;
+      const repost =
+        !verified && old
+          ? { ...old, repostId: event.id, repostedAt: event.created_at }
+          : normalizedRepost(event, author, repostPostsById, repostUsersById, repostMediaByKey);
+      if (repost) foundReposts.push(repost);
+      else repostsAvailable = false;
     }
 
     const unique = [];
@@ -495,22 +581,37 @@ export function createXFeedService({
       : articles.length
         ? "stale"
         : "unavailable";
-    return { posts: unique, articles, articlesStatus, latestId, fullRefresh };
+    const repostsById = new Map();
+    for (const post of [...foundReposts, ...(repostsAvailable && fullRefresh ? [] : (cached?.reposts ?? []))]) {
+      if (!repostsById.has(post.id)) repostsById.set(post.id, post);
+    }
+    const reposts = [...repostsById.values()].sort((left, right) => {
+      const byDate = (Date.parse(right.repostedAt) || 0) - (Date.parse(left.repostedAt) || 0);
+      return byDate || right.repostId.length - left.repostId.length || right.repostId.localeCompare(left.repostId);
+    });
+    const repostsStatus = repostsAvailable
+      ? reposts.length
+        ? "ok"
+        : "none"
+      : reposts.length
+        ? "stale"
+        : "unavailable";
+    return { posts: unique, articles, articlesStatus, reposts, repostsStatus, latestId, fullRefresh };
   }
 
   async function fetchFeed() {
     const author = await getUser();
     const pinnedId = author.pinned_tweet_id ?? author.pinned_post_id ?? null;
-    const [{ posts, articles, articlesStatus, latestId, fullRefresh }, pinned] = await Promise.all([
-      fetchOriginalPosts(author, pinnedId),
-      fetchPinnedPost(author, pinnedId),
-    ]);
+    const [{ posts, articles, articlesStatus, reposts, repostsStatus, latestId, fullRefresh }, pinned] =
+      await Promise.all([fetchOriginalPosts(author, pinnedId), fetchPinnedPost(author, pinnedId)]);
     return {
       result: {
         status: "ok",
         posts,
         articles,
         articlesStatus,
+        reposts,
+        repostsStatus,
         // The timeline can identify an Article even when a compatibility detail
         // response omitted optional Article fields. Never turn it into a link card.
         pinnedPost: articles.some((article) => article.id === pinnedId) ? null : pinned.post,
@@ -597,7 +698,8 @@ export function createXFeedService({
     if (inFlight) return inFlight;
     if (cached && now() - cachedAt < CACHE_TTL_MS) {
       const retryArticles = !["ok", "none"].includes(cached.articlesStatus) && now() >= articlesRetryAt;
-      if (!retryArticles) {
+      const retryReposts = !["ok", "none"].includes(cached.repostsStatus) && now() >= repostsRetryAt;
+      if (!retryArticles && !retryReposts) {
         if (["ok", "none"].includes(cached.pinnedStatus) || now() < pinnedRetryAt) {
           emit({
             type: "x_feed",
@@ -643,6 +745,7 @@ export function createXFeedService({
             status: "stale",
             pinnedStatus: cached.pinnedPost ? "stale" : cached.pinnedStatus,
             articlesStatus: cached.articles.length ? "stale" : "unavailable",
+            repostsStatus: cached.reposts.length ? "stale" : "unavailable",
           }
         : unavailable();
     }
@@ -668,6 +771,7 @@ export function createXFeedService({
         cachedAuthor = author;
         pinnedRetryAt = ["ok", "none"].includes(result.pinnedStatus) ? 0 : cachedAt + ERROR_RETRY_MS;
         articlesRetryAt = ["ok", "none"].includes(result.articlesStatus) ? 0 : cachedAt + ERROR_RETRY_MS;
+        repostsRetryAt = ["ok", "none"].includes(result.repostsStatus) ? 0 : cachedAt + ERROR_RETRY_MS;
         if (fullRefresh) fullRefreshAt = cachedAt;
         retryAt = 0;
         emit({
@@ -685,6 +789,7 @@ export function createXFeedService({
         const failedAt = now();
         retryAt = failedAt + ERROR_RETRY_MS;
         articlesRetryAt = retryAt;
+        repostsRetryAt = retryAt;
         // A retry for partial Article data may fail while ordinary posts are still
         // fresh. Retain that successful response without renewing its freshness.
         const fallback = cached && failedAt - cachedAt < CACHE_TTL_MS ? cached : lastKnown();

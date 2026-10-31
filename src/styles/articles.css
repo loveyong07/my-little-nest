@@ -1,4 +1,8 @@
 /* Article browsing has its own timeline and controls below the daily posts. */
+.reposts-group > .posts-daily-heading .section-heading > svg {
+  background: linear-gradient(135deg, #dff4ed, #e4effc);
+  color: #426f68;
+}
 .articles-group > .posts-daily-heading .section-heading > svg {
   background: linear-gradient(135deg, #efe7fc, #e4effc);
   color: #63538f;

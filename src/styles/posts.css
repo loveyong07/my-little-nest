@@ -1,4 +1,23 @@
 /* Age confirmation replaces the feed until the visitor explicitly accepts. */
+.site-route-posts a:any-link,
+.posts-section a:any-link,
+.posts-age-gate a:any-link {
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+.post-text a {
+  color: inherit;
+  overflow-wrap: anywhere;
+}
+.post-text a:hover {
+  text-decoration-thickness: 2px;
+}
+.post-text a:focus-visible {
+  border-radius: 2px;
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+}
 .posts-age-gate {
   max-width: 680px;
   margin: var(--space-4) auto;
@@ -152,6 +171,24 @@
   border-color: #d8c8ee;
   background: linear-gradient(135deg, #f0e8fccc, #f8f4ffcc);
   color: #5d457d;
+}
+.quick-nav-reposts {
+  border-color: #bfe0d9;
+  background: linear-gradient(135deg, #e3f6f0cc, #edf6ffcc);
+  color: #386b62;
+}
+.post-repost-context {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+  color: #426f68;
+  font-size: var(--font-sm);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.post-repost-context svg {
+  flex-shrink: 0;
 }
 .quick-nav-message {
   border-color: #bde0cf;

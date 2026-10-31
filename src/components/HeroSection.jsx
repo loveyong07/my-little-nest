@@ -1,9 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { FaArrowRight, FaEnvelope, FaXTwitter } from "react-icons/fa6";
+import { FaArrowRight, FaEnvelope, FaPaperPlane, FaXTwitter } from "react-icons/fa6";
 import { HiOutlineSparkles } from "react-icons/hi2";
 import { PiFlowerLight } from "react-icons/pi";
 import { BsPostageHeart } from "react-icons/bs";
-import { ASSETS, FALLBACK_AVATAR, xProfileUrl } from "../constants/site.js";
+import { ASSETS, FALLBACK_AVATAR, SAILING_SIGNUP_URL, xProfileUrl } from "../constants/site.js";
 import { DESKTOP_FIT_QUERY, MOBILE_QUERY } from "../constants/media-queries.js";
 import { pagePaths } from "../routes/site-route.js";
 import { xMediaSrc } from "../media-urls.js";
@@ -131,12 +131,11 @@ export function HeroSection({ header, language, t, profile }) {
               <span>NO. 01</span>
             </div>
             <h1 id="page-heading" tabIndex={-1} aria-label={t.homeGreeting.join(language === "en" ? " " : "")}>
-              <span className="greeting-opening" aria-hidden="true">
-                {t.homeGreeting[0]}
-              </span>
-              <span className="greeting-line" aria-hidden="true">
-                {t.homeGreeting[1]}
-              </span>
+              {t.homeGreeting.map((line, index) => (
+                <span className={index === 0 ? "greeting-opening" : "greeting-line"} key={line} aria-hidden="true">
+                  {line}
+                </span>
+              ))}
             </h1>
             <p className="hero-letter-caption">Little moments, from me to you.</p>
             <div className="ornament" aria-hidden="true">
@@ -173,6 +172,16 @@ export function HeroSection({ header, language, t, profile }) {
               <a className="secondary-cta" href={pagePaths.contact}>
                 <FaEnvelope aria-hidden="true" />
                 {t.contactCta}
+              </a>
+              <a
+                className="sailing-cta"
+                href={SAILING_SIGNUP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={t.sailingLink}
+              >
+                <FaPaperPlane aria-hidden="true" />
+                风帆Sailing
               </a>
             </div>
             <LetterSeaside />

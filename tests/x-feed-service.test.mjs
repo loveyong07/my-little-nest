@@ -238,6 +238,7 @@ test("returns only original posts and caches successful X responses", async () =
       if (new URL(url).searchParams.get("since_id") === "1") {
         return new Response(JSON.stringify({ data: [] }), { status: 200 });
       }
+      if (new URL(url).pathname === "/2/tweets") return Response.json({ data: [post("9", "Shared original")] });
       return new Response(
         JSON.stringify({
           data: [
@@ -247,13 +248,16 @@ test("returns only original posts and caches successful X responses", async () =
             post("4", "Quote", { referenced_tweets: [{ type: "quoted", id: "9" }] }),
             post("5", "Other author", { author_id: "456" }),
           ],
+          includes: { tweets: [post("9", "Shared original")] },
         }),
         { status: 200 },
       );
     },
   });
 
-  const first = await feed();
+  const { reposts, repostsStatus, ...first } = await feed();
+  assert.equal(repostsStatus, "ok");
+  assert.equal(reposts[0].id, "9");
   assert.deepEqual(first, {
     status: "ok",
     pinnedPost: null,
@@ -271,14 +275,14 @@ test("returns only original posts and caches successful X responses", async () =
       },
     ],
   });
-  assert.equal(new URL(urls[1]).searchParams.get("exclude"), "replies,retweets");
+  assert.equal(new URL(urls[1]).searchParams.get("exclude"), "replies");
   assert.equal(new URL(urls[1]).searchParams.get("max_results"), "100");
   assert.equal((await feed()).posts.length, 1);
-  assert.equal(urls.length, 2);
+  assert.equal(urls.length, 3);
   time += 15 * 60 * 1000;
   assert.deepEqual((await feed()).posts, first.posts);
-  assert.equal(urls.length, 4);
-  assert.equal(new URL(urls[3]).searchParams.get("since_id"), "1");
+  assert.equal(urls.length, 5);
+  assert.equal(new URL(urls[4]).searchParams.get("since_id"), "1");
 });
 
 test("loads photos from the post's media keys in attachment order", async () => {
@@ -333,7 +337,7 @@ test("loads photos from the post's media keys in attachment order", async () => 
   assert.equal(result.status, "ok");
   assert.equal(
     postsUrl.searchParams.get("expansions"),
-    "attachments.media_keys,article.cover_media,article.media_entities",
+    "attachments.media_keys,referenced_tweets.id,referenced_tweets.id.author_id,article.cover_media,article.media_entities",
   );
   assert.ok(postsUrl.searchParams.get("tweet.fields").split(",").includes("attachments"));
   assert.ok(postsUrl.searchParams.get("tweet.fields").split(",").includes("entities"));

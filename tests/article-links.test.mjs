@@ -1,6 +1,26 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { articleLinkParts, normalizedArticleLinks } from "../shared/article-links.mjs";
+import { articleLinkParts, normalizedArticleLinks, textLinkParts } from "../shared/article-links.mjs";
+
+test("all post text recognizes future HTTP, www and Markdown links without guessing named Article destinations", () => {
+  const text =
+    "[原文](https://example.com/a_(b))，www.example.org。HTTPS://EXAMPLE.NET/path。Muse.ai [危险](javascript:alert(1))";
+  const parts = textLinkParts(text);
+  assert.deepEqual(
+    parts.filter((part) => part.url).map((part) => [part.text, part.url]),
+    [
+      ["原文", "https://example.com/a_(b)"],
+      ["www.example.org", "https://www.example.org/"],
+      ["HTTPS://EXAMPLE.NET/path", "https://example.net/path"],
+    ],
+  );
+  assert.ok(
+    parts
+      .map((part) => part.text)
+      .join("")
+      .endsWith("Muse.ai [危险](javascript:alert(1))"),
+  );
+});
 
 test("restores the author's named Article links without linking arbitrary product names", () => {
   const parts = articleLinkParts("TouchGal - 一站式Galgame文化社区! 和 Muse.ai；Grok 保持原文");

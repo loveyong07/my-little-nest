@@ -139,6 +139,7 @@ for (const [status, pinnedStatus, complete] of [
       posts: [],
       articles: [],
       articlesStatus: "none",
+      repostsStatus: "none",
       ...(pinnedStatus === undefined ? {} : { pinnedStatus }),
     };
     const handleApi = createApiHandler({}, { serviceFactory: () => async () => body });

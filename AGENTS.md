@@ -4,7 +4,7 @@
 
 - The site is a personal social calling card with three routes in this order: Home, Posts, Contact. Keep desktop and mobile navigation consistent in Chinese, Japanese and English. Do not hijack the browser's right-click menu.
 - The Business page, its navigation entry, cards and disclaimer have been removed. Do not restore them from historical instructions or design assets.
-- The Contact page has one email address: `fyh20071004@gmail.com`. Preserve the other social contact methods unless the user requests a change.
+- The Contact page has one email address: `loveyong2007@gmail.com`. Preserve the other social contact methods unless the user requests a change.
 - Keep this file limited to current effective conventions. Record durable decisions by updating the relevant rule, rather than appending a dated change log or conflicting superseding instructions.
 
 ## Local development and hosting
@@ -21,7 +21,7 @@
 - Before making substantial visual changes, use the Product Design plugin's `get-context` skill when the visual source is unclear or no longer matches the current goal.
 - `archive/design-reference.png` is the visual reference for the open blue sky, right-side character artwork, large blue serif greeting, and white rounded social panel. Current explicit wording and contact rules in this file take precedence over text in the reference image.
 - Keep the established illustrations, welcome mood and scrapbook layout. Use clean blue-and-white scene and reading surfaces, with distinct soft pink, blue, mint, lavender and yellow fills for buttons, navigation, language selectors and small controls.
-- The browser tab title is exactly `初咏的小窝`. The homepage glass letter uses the localized heading `把日常，寄给你。` with its small English caption and a subtle `FROM CHUYONG` postage mark; keep the airy scrapbook layout. Do not add a /now or recent-status module.
+- The browser tab title is exactly `初咏的小窝`. The homepage glass letter uses the localized three-line heading `一些喜欢的事，一些有趣的人，还有我` with its small English caption and a subtle `FROM CHUYONG` postage mark; keep the airy scrapbook layout. Do not add a /now or recent-status module.
 - The outer glass panes on Home, Posts and Contact share small blue bouquets at the four corners only. Keep the glass edges clear between corners, scale the bouquets down on mobile, and keep flowers off inner post/media/contact cards.
 - Provide Chinese, Japanese and English UI. Preserve supplied wording and translations. Leave personal-interest or recent-status copy blank unless the user supplies it; do not invent personal interests or life events.
 - Render scene images at full opacity without broad white haze overlays. Keep readable translucent cards, with subtle blue shading and white text for exposed route titles and branding.
@@ -40,6 +40,8 @@
 
 - The homepage X avatar, display name and username follow the current X profile using the account's stable X user ID. Retain local fallback content during API outages and prefer the higher-resolution avatar on Home and Posts when available.
 - Show the user's own original X posts in cards, and label decorative art separately from actual post media.
+- Place `我的转帖` between original posts and X Articles, with matching layered glass, an independent date index and reader. Read actual `retweeted` references from the account timeline and expanded original posts/authors; keep replies and quotes out of this section. Preserve original authors, signed same-origin media, and original-post links. Distinguish loading, empty, stale and unavailable data; include reposts in the reading directory and search.
+- All links on Posts must be clickable and underlined. Recognize HTTP(S) URLs, www URLs and Markdown links in pinned, original and repost text as well as Articles, including future synced content. Preserve actual destinations and safe keyboard-accessible anchors; never execute unsafe schemes.
 - On Posts, keep a stationary card for the account's current X pinned post above the daily carousel. Update it when the pin changes and keep it out of the daily carousel. Never present a dated fallback snapshot as a pinned post.
 - A pinned X Article is not a pinned post: show the existing no-pinned-post message in that section and retain the Article only in the independent Articles section. Classify using Article metadata, not merely an Article URL in an ordinary post's text.
 - Show all original posts available from the X user timeline rather than limiting the daily carousel to six.

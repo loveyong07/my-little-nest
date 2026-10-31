@@ -111,6 +111,34 @@ after(async () => {
   dom.window.close();
 });
 
+test("all PostCards render normal and Markdown URLs as safe clickable anchors in their original paragraphs", async () => {
+  resetDom();
+  const view = await mount(
+    React.createElement(PostCard, {
+      post: {
+        ...SNAPSHOT,
+        text: "网址 https://example.com/a。\n\n[原文](https://example.org/b) 和 www.example.net。 [危险](javascript:alert(1))",
+      },
+      feedSource: "live",
+      language: "zh",
+      t: copy.zh,
+      profile: { name: "初咏", username: "loveyong07" },
+    }),
+  );
+  try {
+    const links = [...view.container.querySelectorAll(".post-text a")];
+    assert.deepEqual(
+      links.map((a) => a.href),
+      ["https://example.com/a", "https://example.org/b", "https://www.example.net/"],
+    );
+    assert.ok(links.every((a) => a.target === "_blank" && a.rel === "noopener noreferrer"));
+    assert.equal(view.container.querySelectorAll(".post-text p").length, 2);
+    assert.ok(view.container.querySelector(".post-text").textContent.includes("[危险](javascript:alert(1))"));
+  } finally {
+    await view.unmount();
+  }
+});
+
 test("journal translations have matching keys and nonempty, aligned phrase arrays", async () => {
   const { fantasyCopy } = await server.ssrLoadModule("/src/constants/fantasy.js");
   assert.deepEqual(Object.keys(fantasyCopy).sort(), ["en", "ja", "zh"]);
@@ -970,7 +998,16 @@ test("Age confirmation reveals Posts and persists on return only while the sessi
   let requests = 0;
   context.mock.method(globalThis, "fetch", async () => {
     requests++;
-    return { ok: true, json: async () => ({ status: "ok", posts: [], pinnedStatus: "none", articlesStatus: "none" }) };
+    return {
+      ok: true,
+      json: async () => ({
+        status: "ok",
+        posts: [],
+        pinnedStatus: "none",
+        repostsStatus: "none",
+        articlesStatus: "none",
+      }),
+    };
   });
   const element = () =>
     React.createElement(PostsPage, {
@@ -1005,7 +1042,13 @@ test("Blocked session storage still requires confirmation and allows an explicit
   context.mock.method(Date, "now", () => now);
   context.mock.method(globalThis, "fetch", async () => ({
     ok: true,
-    json: async () => ({ status: "ok", posts: [], pinnedStatus: "none", articlesStatus: "none" }),
+    json: async () => ({
+      status: "ok",
+      posts: [],
+      pinnedStatus: "none",
+      repostsStatus: "none",
+      articlesStatus: "none",
+    }),
   }));
   const storageDescriptor = Object.getOwnPropertyDescriptor(window, "sessionStorage");
   Object.defineProperty(window, "sessionStorage", {
@@ -1096,7 +1139,16 @@ test("Posts opens on the latest feed post and preserves only an explicitly selec
     const complete = respond;
     respond = null;
     await React.act(async () =>
-      complete({ ok: true, json: async () => ({ status: "ok", pinnedStatus: "none", articlesStatus: "none", posts }) }),
+      complete({
+        ok: true,
+        json: async () => ({
+          status: "ok",
+          pinnedStatus: "none",
+          repostsStatus: "none",
+          articlesStatus: "none",
+          posts,
+        }),
+      }),
     );
   };
   const refresh = async (posts) => {
@@ -1139,7 +1191,7 @@ test("Posts opens on the latest feed post and preserves only an explicitly selec
   }
 });
 
-test("posts and Articles navigate independently and retain both identities through reordered refreshes", async (context) => {
+test("originals, reposts and Articles navigate independently and retain their identities through reordered refreshes", async (context) => {
   resetDom();
   let now = Date.now() + 3 * 24 * 60 * 60_000;
   context.mock.method(Date, "now", () => now);
@@ -1155,6 +1207,8 @@ test("posts and Articles navigate independently and retain both identities throu
   });
   const post = (id) => ({ ...SNAPSHOT, id, text: `Post ${id}`, permalink: `https://x.com/loveyong07/status/${id}` });
   const article = (id) => ({ id, title: `Article ${id}`, text: `Article body ${id}` });
+  const repost = (id) => ({ ...post(id), username: "writer", repostId: `${id}0` });
+  let shared = [repost("30"), repost("31")];
   let reading;
   function Harness() {
     reading = useXFeed();
@@ -1168,7 +1222,15 @@ test("posts and Articles navigate independently and retain both identities throu
     await React.act(async () =>
       complete({
         ok: true,
-        json: async () => ({ status: "ok", pinnedStatus: "none", posts, articles, articlesStatus }),
+        json: async () => ({
+          status: "ok",
+          pinnedStatus: "none",
+          posts,
+          articles,
+          articlesStatus,
+          reposts: shared,
+          repostsStatus: shared.length ? "ok" : "none",
+        }),
       }),
     );
   };
@@ -1182,6 +1244,10 @@ test("posts and Articles navigate independently and retain both identities throu
     await deliver([article("10"), article("11")], [post("20"), post("21")]);
     assert.equal(requests, 1, "one shared API response supplies both collections");
     assert.equal(reading.articleState, "live");
+    assert.equal(reading.repostState, "live");
+    await React.act(async () => reading.setRepostIndex(1));
+    assert.equal(reading.postIndex, 0);
+    assert.equal(reading.articleIndex, 0);
     await React.act(async () => reading.setPostIndex(1));
     assert.equal(reading.postIndex, 1);
     assert.equal(reading.articleIndex, 0);
@@ -1189,7 +1255,9 @@ test("posts and Articles navigate independently and retain both identities throu
     assert.equal(reading.postIndex, 1);
     assert.equal(reading.articleIndex, 1);
 
+    shared = [repost("32"), repost("30"), repost("31")];
     await refresh([article("12"), article("11"), article("10")], [post("22"), post("20"), post("21")]);
+    assert.equal(reading.reposts[reading.repostIndex].id, "31");
     assert.equal(reading.posts[reading.postIndex].id, "21");
     assert.equal(reading.articles[reading.articleIndex].id, "11");
     await React.act(async () => reading.setPostIndex(0));
@@ -1206,7 +1274,12 @@ test("posts and Articles navigate independently and retain both identities throu
     await React.act(async () => rejectRequest(new Error("Network unavailable")));
     assert.equal(reading.articleState, "stale");
     assert.equal(reading.articles[reading.articleIndex].id, "10");
+    assert.equal(reading.repostState, "stale");
+    assert.equal(reading.reposts[reading.repostIndex].id, "31");
+    shared = [];
     await refresh([], [post("24")], "none");
+    assert.equal(reading.repostState, "none");
+    assert.deepEqual(reading.reposts, []);
     assert.equal(reading.articleState, "none");
     assert.deepEqual(reading.articles, []);
     assert.equal(reading.articleIndex, 0);
@@ -1241,6 +1314,7 @@ for (const wide of [true, false]) {
       json: async () => ({
         status: "ok",
         pinnedStatus: "none",
+        repostsStatus: "none",
         articlesStatus: "none",
         posts,
       }),
@@ -1407,7 +1481,7 @@ test("Posts quick navigation pills reflect live section counts and smooth-scroll
     assert.ok(quickNav);
     assert.equal(quickNav.getAttribute("aria-label"), copy.zh.postsQuickNavLabel);
     const pills = [...quickNav.querySelectorAll(".quick-nav-pill")];
-    assert.equal(pills.length, 4);
+    assert.equal(pills.length, 5);
     let scrolled = false;
     const messageHeading = view.container.querySelector("#reading-invitation-heading");
     assert.ok(messageHeading);

@@ -12,7 +12,7 @@ function storage() {
   };
 }
 
-test("feeds cached before explicit Article cover identity are refetched", () => {
+test("feeds cached before canonical repost media are refetched", () => {
   const store = storage();
   const feed = { status: "ok", posts: [], pinnedStatus: "none" };
   store.setItem("little-nest-feed-v1", JSON.stringify({ savedAt: 1000, feed }));
@@ -21,6 +21,7 @@ test("feeds cached before explicit Article cover identity are refetched", () => 
   store.setItem("little-nest-feed-v4", JSON.stringify({ savedAt: 1000, feed }));
   store.setItem("little-nest-feed-v5", JSON.stringify({ savedAt: 1000, feed }));
   store.setItem("little-nest-feed-v6", JSON.stringify({ savedAt: 1000, feed }));
+  store.setItem("little-nest-feed-v7", JSON.stringify({ savedAt: 1000, feed }));
   assert.equal(readFeedCache(store, 1001), null);
   writeFeedCache(store, feed, 1002);
   assert.deepEqual(readFeedCache(store, 1003), { savedAt: 1002, feed });
@@ -88,7 +89,14 @@ test("confirmed Articles and confirmed empty collections survive caching", () =>
   assert.deepEqual(readFeedCache(store, 1001).feed.articles, [article]);
   writeFeedCache(
     store,
-    { status: "ok", posts: [], pinnedStatus: "none", articles: [article], articlesStatus: "none" },
+    {
+      status: "ok",
+      posts: [],
+      pinnedStatus: "none",
+      articles: [article],
+      repostsStatus: "none",
+      articlesStatus: "none",
+    },
     2000,
   );
   assert.deepEqual(readFeedCache(store, 2001).feed.articles, []);
@@ -98,7 +106,7 @@ test("confirmed Articles and confirmed empty collections survive caching", () =>
 test("cached partial Article responses cannot become fresh Articles", () => {
   const store = storage();
   store.setItem(
-    "little-nest-feed-v7",
+    "little-nest-feed-v8",
     JSON.stringify({
       savedAt: 1000,
       feed: { status: "ok", posts: [], articles: [{ id: "456" }], articlesStatus: "stale" },
@@ -120,7 +128,16 @@ test("concurrent feed consumers share a request and fresh reads retain its succe
   let calls = 0;
   globalThis.fetch = async () => {
     calls++;
-    return { ok: true, json: async () => ({ status: "ok", posts: [], pinnedStatus: "none", articlesStatus: "none" }) };
+    return {
+      ok: true,
+      json: async () => ({
+        status: "ok",
+        posts: [],
+        pinnedStatus: "none",
+        repostsStatus: "none",
+        articlesStatus: "none",
+      }),
+    };
   };
   try {
     const first = fetchFeed();
@@ -146,7 +163,8 @@ for (const pinnedStatus of ["unavailable", "stale", undefined, "unexpected"]) {
       calls++;
       return {
         ok: true,
-        json: async () => (calls === 1 ? partial : { ...partial, pinnedStatus: "none", articlesStatus: "none" }),
+        json: async () =>
+          calls === 1 ? partial : { ...partial, pinnedStatus: "none", repostsStatus: "none", articlesStatus: "none" },
       };
     };
     Date.now = () => time;
@@ -186,6 +204,7 @@ test("Article failures use the shared recovery cooldown and never renew their in
         posts: [],
         pinnedStatus: "none",
         articles: [{ id: "456" }],
+        repostsStatus: "none",
         articlesStatus: calls === 1 ? "stale" : "ok",
       }),
     };
