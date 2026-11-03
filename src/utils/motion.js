@@ -1,8 +1,7 @@
 import { REDUCED_MOTION_QUERY } from "../constants/media-queries.js";
 
 // One applied motion preference drives CSS animation, CSS scrolling and explicit JS scrolling.
-// The class on <html> is the single applied value: the system setting always wins,
-// and the in-site switch can only turn motion further off.
+// The class on <html> follows the system's reduced-motion setting.
 export const MOTION_OFF_CLASS = "motion-off";
 
 export function systemPrefersReducedMotion() {

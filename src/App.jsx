@@ -24,7 +24,7 @@ export function App() {
   const preferences = useFantasyPreferences();
   const [extrasReady, setExtrasReady] = useState(false);
   useEffect(() => {
-    // A direct feed visit prioritizes its first cards; once mounted, keep music alive across routes.
+    // A direct feed visit prioritizes its first cards before loading decorative extras.
     if (extrasReady || (page === "posts" && !postsReady)) return undefined;
     // Let the initial scene, CSS and fonts finish before requesting extras.
     let timer;

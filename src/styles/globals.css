@@ -136,7 +136,7 @@ input:focus-visible,
   }
 }
 
-/* The in-site motion switch (src/utils/motion.js). It also applies to the element
+/* The applied system motion preference (src/utils/motion.js) also covers the element
    carrying the class: <html> owns scrolling and <main> owns the route background drift. */
 .motion-off,
 .motion-off::before,

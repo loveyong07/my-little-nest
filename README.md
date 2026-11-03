@@ -40,7 +40,7 @@ CSS 或布局修改还需进行修改前后的固定场景对比，方法见 [�
 | `src/constants/` | 三语文案、联系方式、断点与场景资源配置 |
 | `src/styles.css`、`src/styles/` | 按顺序加载的基础、玻璃和响应式样式 |
 | `api/`、`server/`、`shared/` | Vercel 函数、X 数据与媒体服务、共享契约 |
-| `public/assets/` | 实际发布的图片、字体与音频 |
+| `public/assets/` | 实际发布的图片与字体 |
 | `tests/`、`scripts/qa/` | 自动检查与固定场景采集器 |
 | `archive/` | 原始素材、退役资源与设计参考，不发布到站点 |
 | `docs/` | [接口维护](docs/maintenance.md)、[样式说明](docs/styles.md)、[历史记录](docs/history/README.md) |

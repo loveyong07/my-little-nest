@@ -35,9 +35,9 @@ test("built fonts remain same-origin files compatible with production font-src s
   assert.ok(fontCount > 0, "Check the actual built CSS, not an empty asset folder");
 });
 
-test("removed companion assets are not shipped", () => {
+test("removed companion and music assets are not shipped", () => {
   assert.equal(existsSync(path.join(client, "assets/live2d")), false);
-  assert.ok(existsSync(path.join(client, "assets/audio/air-tori-no-uta-piano-uno.mp3")));
+  assert.equal(existsSync(path.join(client, "assets/audio")), false);
 });
 
 test("public artifacts exclude source maps, server code, credentials and environment files", () => {
