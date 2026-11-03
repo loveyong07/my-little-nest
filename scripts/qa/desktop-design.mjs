@@ -65,7 +65,7 @@ async function load(page, route) {
   await page
     .locator(route === "/" ? ".home-journal" : route === "/posts" ? ".post-reading .post-card" : ".contact-grid")
     .waitFor();
-  await page.locator(".nest-dock").waitFor();
+  await page.locator("link[rel='stylesheet'][href*='/FantasyExtras-']").waitFor({ state: "attached" });
   await page.evaluate(async () => {
     await document.fonts.ready;
     for (const animation of document.getAnimations()) {
@@ -106,8 +106,7 @@ async function verifyLayout(page, label, route, desktop) {
   });
   assert.ok(layout.scrollWidth <= layout.width + 1, `${label}: horizontal overflow`);
   assert.ok(layout.main.x >= -1 && layout.main.right <= layout.width + 1, `${label}: main panel outside viewport`);
-  // Small screens retain their existing floating music dock. A control near the
-  // viewport edge must become reachable when scrolled into the reading area.
+  // A control near the viewport edge must become reachable when scrolled into the reading area.
   if (!desktop && layout.occluded.length) {
     layout.initialOccluded = layout.occluded;
     layout.occluded = await page.evaluate((labels) => {
@@ -128,7 +127,7 @@ async function verifyLayout(page, label, route, desktop) {
   if (route === "/" && desktop) {
     assert.ok(
       layout.journal.bottom <= page.viewportSize().height - 65,
-      `${label}: journal clipped or behind music controls`,
+      `${label}: journal clipped`,
     );
     assert.equal(layout.desktopTabs, true);
   }

@@ -876,32 +876,17 @@ test("date index labels use the selected language in all three locales", () => {
   for (const locale of [copy.zh, copy.ja, copy.en]) assert.ok(locale.postsIndexLabel);
 });
 
-test("site motion switch and system reduce preference resolve all motion combinations", async () => {
+test("decorative effects ignore the retired switch and follow the system motion preference", async () => {
   resetDom();
   systemReducedMotion = false;
-  window.localStorage.setItem("nest-effects", "true");
+  window.localStorage.setItem("nest-effects", "false");
   function Harness() {
     const preference = useFantasyPreferences();
-    return React.createElement(
-      "section",
-      { className: preference.motion ? "motion-on" : "motion-off" },
-      React.createElement(
-        "button",
-        { type: "button", "aria-pressed": preference.effects, onClick: () => preference.setEffects((value) => !value) },
-        "Effects",
-      ),
-    );
+    return React.createElement("section", { className: preference.motion ? "motion-on" : "motion-off" });
   }
   const { container, unmount } = await mount(React.createElement(Harness));
-  const toggle = container.querySelector("button");
   assert.equal(container.firstElementChild.className, "motion-on");
   assert.equal(document.documentElement.classList.contains("motion-off"), false);
-
-  await React.act(async () => toggle.click());
-  assert.equal(container.firstElementChild.className, "motion-off");
-  assert.equal(document.documentElement.classList.contains("motion-off"), true);
-  await React.act(async () => toggle.click());
-  assert.equal(container.firstElementChild.className, "motion-on");
 
   await React.act(async () => {
     systemReducedMotion = true;

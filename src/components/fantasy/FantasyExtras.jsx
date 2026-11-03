@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
-import { FaWandMagicSparkles } from "react-icons/fa6";
 import { FiArrowUp } from "react-icons/fi";
 import { fantasyCopy } from "../../constants/fantasy.js";
 import { preferredScrollBehavior } from "../../utils/motion.js";
 import { SakuraCanvas } from "./SakuraCanvas.jsx";
-import { MiniPlayer } from "./MiniPlayer.jsx";
 import "../../styles/fantasy-extras.css";
 
 function ScrollCompanion({ page, label }) {
@@ -74,23 +72,10 @@ function ScrollCompanion({ page, label }) {
 
 export default function FantasyExtras({ language, page, preferences }) {
   const f = fantasyCopy[language];
-  const { effects, setEffects, motion } = preferences;
+  const { motion } = preferences;
   return (
     <>
       {motion && <SakuraCanvas snow={page === "posts"} />}
-      <aside className="nest-dock" aria-label={f.settings}>
-        <MiniPlayer f={f} />
-        <button
-          className="dock-toggle"
-          type="button"
-          aria-label={effects ? f.effectsOn : f.effectsOff}
-          title={effects ? f.effectsOn : f.effectsOff}
-          aria-pressed={effects}
-          onClick={() => setEffects(!effects)}
-        >
-          <FaWandMagicSparkles aria-hidden="true" />
-        </button>
-      </aside>
       <ScrollCompanion page={page} label={f.backToTop} />
     </>
   );

@@ -32,7 +32,8 @@
 - `/business` permanently redirects to `/` in `vercel.json`; keep it for old links.
 - Contact artwork should match the blue-and-white Home and Posts backgrounds. Keep hands anatomically natural and hair fixed in all three illustrations; preserve independent background, dove and petal motion without deforming hair.
 - Keep the floating Live2D companion and its show/hide control removed. Retired model assets remain in archive only.
-- Label the music player `AIR` in all languages and use Uno's piano arrangement of 鳥の詩 as a same-origin audio asset with source attribution.
+- Keep the music player, background music and their audio assets removed.
+- Keep decorative effects enabled without an on-site toggle and ignore retired `nest-effects` values. Preserve system reduced-motion support.
 - When implementing a newly selected generated mock, use that image as the source of truth for layout, anatomy, density, spacing, color, typography, content and hierarchy, subject to the user's current explicit decisions.
 - For iterative visual changes, return a screenshot of the updated page so the user can mark areas for the next revision.
 

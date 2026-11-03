@@ -233,8 +233,8 @@ async function load(page, scenario) {
     // The timeline font stylesheet loads 3 seconds after load; it changes .post-text.
     await page.waitForFunction(() => [...document.fonts].some((font) => font.family.includes("ZCOOL")), null, { timeout: 15000 });
   }
-  // Extras wait for the feed, so a pending feed never shows the dock.
-  if (scenario.feed !== "loading" && !scenario.ageGate) await page.waitForSelector(".nest-dock", { timeout: 15000 });
+  // Extras wait for the feed; use their stylesheet so readiness doesn't depend on controls.
+  if (scenario.feed !== "loading" && !scenario.ageGate) await page.waitForSelector("link[rel='stylesheet'][href*='/FantasyExtras-']", { state: "attached", timeout: 15000 });
   // Bring lazy media into range once so every capture sees loaded images.
   await page.evaluate(async () => {
     window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" });
