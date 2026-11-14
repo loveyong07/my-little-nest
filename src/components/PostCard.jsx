@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FaArrowRight, FaXTwitter } from "react-icons/fa6";
-import { FiCheck, FiChevronLeft, FiChevronRight, FiLink, FiMaximize2, FiRepeat } from "react-icons/fi";
+import { FiCheck, FiLink, FiMaximize2, FiRepeat } from "react-icons/fi";
 import { FALLBACK_AVATAR, ASSETS } from "../constants/site.js";
 import { handleAvatarError } from "../utils/profile.js";
 import { formatPostDate } from "../utils/date.js";
@@ -9,7 +9,7 @@ import { xMediaSrc, xVideoSrc } from "../media-urls.js";
 import { useClipboard } from "../hooks/useClipboard.js";
 import { useDesktopLayout } from "../hooks/useDesktopLayout.js";
 import { useMediaRequest } from "../hooks/useMediaRequest.js";
-import { prefetchImage } from "../feed-cache.js";
+import { PhotoGallery } from "./PhotoGallery.jsx";
 import { MediaLightbox } from "./MediaLightbox.jsx";
 import { CopyFallback } from "./ContactTile.jsx";
 import { displayXText } from "../utils/x-text.js";
@@ -38,7 +38,6 @@ export function PostCard({ post, feedSource, language, t, label, profile, priori
   const photos = Array.isArray(post.media)
     ? post.media
         .filter((media) => (media?.type ?? "photo") === "photo")
-        .slice(0, 4)
         .map((media) => ({ ...media, src: xMediaSrc(media?.url, false, media?.proxyUrl) }))
     : [];
   const video = Array.isArray(post.media) ? post.media.find((media) => media?.type === "video") : null;
@@ -46,20 +45,12 @@ export function PostCard({ post, feedSource, language, t, label, profile, priori
   const [photoIndex, setPhotoIndex] = useState(0);
   const [expandedMedia, setExpandedMedia] = useState(null);
   const returnFocusRef = useRef(null);
-  const photoOpenRef = useRef(null);
-  const photoRetryRef = useRef(null);
   const videoPlayerRef = useRef(null);
   const videoRetryRef = useRef(null);
   const currentPhotoIndex = Math.min(photoIndex, photos.length - 1);
   const currentPhoto = photos[currentPhotoIndex];
-  const photoDimensions = mediaDimensions(currentPhoto);
   const videoDimensions = mediaDimensions(video);
-  const photoRequest = useMediaRequest(currentPhoto?.src);
   const videoRequest = useMediaRequest(videoSrc);
-  const resetPhotoRequest = photoRequest.reset;
-  useEffect(() => {
-    if (photoRequest.retryCount > 0) (photoRequest.unavailable ? photoRetryRef : photoOpenRef).current?.focus();
-  }, [photoRequest.retryCount, photoRequest.unavailable]);
   useEffect(() => {
     if (videoRequest.retryCount > 0) (videoRequest.unavailable ? videoRetryRef : videoPlayerRef).current?.focus();
   }, [videoRequest.retryCount, videoRequest.unavailable]);
@@ -68,13 +59,6 @@ export function PostCard({ post, feedSource, language, t, label, profile, priori
     returnFocusRef.current = event.currentTarget;
     setExpandedMedia(kind);
   }
-  const changePhotoIndex = useCallback(
-    (updater) => {
-      resetPhotoRequest();
-      setPhotoIndex(updater);
-    },
-    [resetPhotoRequest],
-  );
   return (
     <>
       <article className="post-card">
@@ -120,76 +104,16 @@ export function PostCard({ post, feedSource, language, t, label, profile, priori
           </div>
         )}
         {photos.length > 0 && (
-          <div
-            className={`post-media post-media-frame${photos.length === 1 ? " post-media-single" : ""}`}
-            style={{ aspectRatio: mediaFrameRatio(photos) }}
-          >
-            <div className="glass-panel-backdrop glass-media-backdrop" aria-hidden="true" />
-            {photoRequest.unavailable || !photoRequest.src ? (
-              <div className="post-media-unavailable" role="status">
-                <span>{t.photoUnavailable}</span>
-                {photoRequest.src && (
-                  <button ref={photoRetryRef} type="button" onClick={photoRequest.retry}>
-                    {t.retry}
-                  </button>
-                )}
-              </div>
-            ) : (
-              <button
-                ref={photoOpenRef}
-                className="post-media-open"
-                type="button"
-                onClick={(event) => openMedia("photo", event)}
-                aria-label={`${t.enlargePhoto} · ${t.postPhotoAlt(currentPhotoIndex + 1)}`}
-              >
-                <img
-                  key={photoRequest.src}
-                  src={photoRequest.src}
-                  alt={currentPhoto.alt || t.postPhotoAlt(currentPhotoIndex + 1)}
-                  width={photoDimensions?.width}
-                  height={photoDimensions?.height}
-                  loading={priorityMedia ? "eager" : "lazy"}
-                  fetchPriority={priorityMedia ? "high" : undefined}
-                  decoding="async"
-                  referrerPolicy="no-referrer"
-                  onLoad={() => {
-                    photoRequest.onLoad();
-                    const nextPhoto = photos.length > 1 ? photos[(currentPhotoIndex + 1) % photos.length]?.src : null;
-                    prefetchImage(nextPhoto);
-                    const nextPostPhoto = nextPost?.media?.find((media) => (media.type ?? "photo") === "photo");
-                    prefetchImage(xMediaSrc(nextPostPhoto?.url, false, nextPostPhoto?.proxyUrl));
-                  }}
-                  onError={photoRequest.onError}
-                />
-                {!photoRequest.loaded && (
-                  <span className="post-media-loading" role="status">
-                    {t.photoLoading}
-                  </span>
-                )}
-              </button>
-            )}
-            <button
-              className="post-media-nav post-media-prev"
-              type="button"
-              aria-label={t.prevPhoto}
-              onClick={() =>
-                changePhotoIndex((index) => (Math.min(index, photos.length - 1) - 1 + photos.length) % photos.length)
-              }
-            >
-              <FiChevronLeft aria-hidden="true" />
-            </button>
-            <button
-              className="post-media-nav post-media-next"
-              type="button"
-              aria-label={t.nextPhoto}
-              onClick={() => changePhotoIndex((index) => (Math.min(index, photos.length - 1) + 1) % photos.length)}
-            >
-              <FiChevronRight aria-hidden="true" />
-            </button>
-            <span className="post-media-count" aria-live="polite">
-              {t.postNumber(currentPhotoIndex + 1, photos.length)}
-            </span>
-          </div>
+          <PhotoGallery
+            photos={photos}
+            onOpen={(index, event) => {
+              setPhotoIndex(index);
+              openMedia("photo", event);
+            }}
+            priorityMedia={priorityMedia}
+            nextPost={nextPost}
+            t={t}
+          />
         )}
         {video && (
           <div className="post-video post-video-frame" style={{ aspectRatio: mediaFrameRatio(video, 16 / 9) }}>
@@ -271,9 +195,10 @@ export function PostCard({ post, feedSource, language, t, label, profile, priori
       {expandedMedia && (expandedMedia === "photo" ? currentPhoto : video) && (
         <MediaLightbox
           kind={expandedMedia}
-          photo={currentPhoto ? { ...currentPhoto, src: photoRequest.src, number: currentPhotoIndex + 1 } : null}
+          photo={currentPhoto ? { ...currentPhoto, src: currentPhoto.src, number: currentPhotoIndex + 1 } : null}
+          photos={photos}
           photoCount={photos.length}
-          onPhotoChange={changePhotoIndex}
+          onPhotoChange={setPhotoIndex}
           photoAlt={t.postPhotoAlt(currentPhotoIndex + 1)}
           video={video}
           videoSrc={videoRequest.src}
