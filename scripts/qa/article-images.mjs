@@ -48,7 +48,7 @@ try {
       assert.equal(popup.url(), destination);
       await popup.close();
     }
-    assert.equal(await photos.count(), 6, "all six photos must render without the post-card four-photo limit");
+    assert.equal(await photos.count(), 6, "all six Article photos must render in their original positions");
     assert.ok(await photos.nth(1).evaluate((photo) => photo.previousElementSibling.tagName === "P" && photo.nextElementSibling.textContent.includes("第 1 张正文配图后的段落")), "body photos must remain between their original text blocks");
     for (const photo of await photos.all()) await photo.scrollIntoViewIfNeeded();
     const retry = photos.nth(1).getByRole("button");
@@ -56,10 +56,10 @@ try {
     await page.waitForFunction(() => [...document.querySelectorAll(".article-cover")].length === 6 && [...document.querySelectorAll(".article-cover")].every((img) => img.complete && img.naturalWidth > 0));
     assert.match(await photos.nth(1).locator("img").getAttribute("src"), /retry=1/);
     await photos.nth(5).locator("button").click();
-    await page.locator(".media-lightbox img").waitFor();
-    assert.match(await page.locator(".media-lightbox img").getAttribute("src"), /QaArticle6/);
-    await page.keyboard.press("ArrowRight");
-    await page.waitForFunction(() => document.querySelector(".media-lightbox img").src.includes("QaArticle1"));
+    await page.locator('.media-lightbox-slide[aria-hidden="false"] img').waitFor();
+    assert.match(await page.locator('.media-lightbox-slide[aria-hidden="false"] img').getAttribute("src"), /QaArticle6/);
+    await page.keyboard.press("Home");
+    await page.waitForFunction(() => document.querySelector('.media-lightbox-slide[aria-hidden="false"] img').src.includes("QaArticle1"));
     await page.keyboard.press("Escape");
     assert.equal(await page.locator(".media-lightbox").count(), 0);
     assert.ok(await photos.nth(5).locator("button").evaluate((button) => button === document.activeElement));
@@ -92,10 +92,10 @@ try {
       for (let index = 0; index < count; index++) {
         const alt = await buttons.nth(index).locator("img").getAttribute("alt");
         await buttons.nth(index).click();
-        assert.equal(await page.locator(".media-lightbox img").getAttribute("alt"), alt);
-        await page.keyboard.press("ArrowRight");
+        assert.equal(await page.locator('.media-lightbox-slide[aria-hidden="false"] img').getAttribute("alt"), alt);
+        await page.keyboard.press(index + 1 === count ? "Home" : "ArrowRight");
         const nextAlt = await buttons.nth((index + 1) % count).locator("img").getAttribute("alt");
-        await page.waitForFunction((expected) => document.querySelector(".media-lightbox img")?.alt === expected, nextAlt);
+        await page.waitForFunction((expected) => document.querySelector('.media-lightbox-slide[aria-hidden="false"] img')?.alt === expected, nextAlt);
         await page.keyboard.press("Escape");
       }
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));

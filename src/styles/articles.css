@@ -185,27 +185,12 @@
 .article-photo-open {
   display: block;
   width: 100%;
-  padding: 8px;
-  border: 1px solid #d9e7f3;
-  border-radius: 20px;
-  background: #ffffffba;
-  box-shadow:
-    0 6px 20px #3a5f8014,
-    inset 0 1px 1px #fff;
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  box-shadow: none;
   cursor: zoom-in;
-  transition:
-    transform 0.24s var(--ease-spring),
-    box-shadow 0.24s ease,
-    border-color 0.24s ease;
-}
-@media (min-width: 901px) and (pointer: fine) {
-  .article-photo-open:hover {
-    border-color: #b7d0e6;
-    box-shadow:
-      0 12px 28px #3a5f8021,
-      inset 0 1px 1px #fff;
-    transform: translateY(-2.5px);
-  }
 }
 .article-photo-open:focus-visible {
   outline: 3px solid var(--color-primary);

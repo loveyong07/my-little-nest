@@ -264,8 +264,8 @@ async function act(page, scenario) {
   }
   if (scenario.action === "photo" || scenario.action === "photo-keyboard") {
     await page.click(".post-media-open");
-    await page.waitForSelector(".media-lightbox img");
-    await page.evaluate(() => document.querySelector(".media-lightbox img").decode().catch(() => {}));
+    await page.waitForSelector(".media-lightbox-slide[aria-hidden=false] img, .media-lightbox-content-photo > img");
+    await page.evaluate(() => document.querySelector(".media-lightbox-slide[aria-hidden=false] img, .media-lightbox-content-photo > img").decode().catch(() => {}));
     const closeVisible = await page.locator(".media-lightbox-close").evaluate((element) => {
       const rect = element.getBoundingClientRect();
       return rect.top >= 0 && rect.bottom <= innerHeight && rect.left >= 0 && rect.right <= innerWidth
@@ -273,10 +273,10 @@ async function act(page, scenario) {
     });
     assert.ok(closeVisible, "lightbox close button must be fully visible and clickable");
     if (scenario.action === "photo-keyboard") {
-      const before = await page.locator(".media-lightbox img").getAttribute("src");
+      const before = await page.locator(".media-lightbox-slide[aria-hidden=false] img, .media-lightbox-content-photo > img").getAttribute("src");
       await page.locator(".media-lightbox-close").focus();
       await page.keyboard.press("ArrowRight");
-      await page.waitForFunction((src) => document.querySelector(".media-lightbox img")?.getAttribute("src") !== src, before);
+      await page.waitForFunction((src) => document.querySelector(".media-lightbox-slide[aria-hidden=false] img, .media-lightbox-content-photo > img")?.getAttribute("src") !== src, before);
       assert.ok(await page.locator(".media-lightbox-close").evaluate((element) => element === document.activeElement),
         "photo switch must preserve keyboard focus");
       await page.keyboard.press("Escape");

@@ -60,6 +60,7 @@ export function ArticlePhoto({ photos, number, t }) {
             number: currentPhotoIndex + 1,
           }}
           photoAlt={t.postPhotoAlt(currentPhotoIndex + 1)}
+          photos={photos.map((item) => ({ ...item, src: xMediaSrc(item.url, false, item.proxyUrl) }))}
           photoCount={photos.length}
           onPhotoChange={(next) =>
             setPhotoIndex((index) => (typeof next === "function" ? next(Math.min(index, photos.length - 1)) : next))

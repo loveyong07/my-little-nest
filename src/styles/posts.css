@@ -596,13 +596,9 @@
   border-radius: 20px;
 }
 .post-media {
-  isolation: isolate;
-  border-color: #d5e4f0;
-  background: var(--glass-media-fill);
-  box-shadow:
-    inset 0 0 0 1px #ffffff99,
-    0 6px 20px #3b608012,
-    var(--glass-edge-light);
+  background: transparent;
+  border: 0;
+  box-shadow: none;
 }
 .post-video {
   background: #101820;
@@ -622,25 +618,114 @@
   border: 0;
   text-align: left;
 }
-.post-media-frame > .post-media-open {
+.post-photo-carousel {
+  --photo-height: clamp(320px, 48vw, 560px);
+  height: var(--photo-height);
+  max-height: none;
+  border-radius: 0;
+}
+.post-photo-track {
+  position: relative;
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  touch-action: pan-x pan-y pinch-zoom;
+}
+.post-photo-track::-webkit-scrollbar {
+  display: none;
+}
+.post-photo-track.is-dragging {
+  scroll-snap-type: none;
+  cursor: grabbing;
+  user-select: none;
+}
+.post-photo-tile {
+  position: relative;
+  flex: 0 0 auto;
+  width: calc(var(--photo-height) * var(--photo-ratio));
+  max-width: calc(100% - 48px);
+  height: 100%;
+  overflow: hidden;
+  border-radius: 12px;
+  scroll-snap-align: center;
+}
+.post-photo-single {
+  height: auto;
+  max-height: 500px;
+}
+.post-photo-single .post-photo-track {
   position: absolute;
   inset: 0;
+}
+.post-photo-single .post-photo-tile {
+  width: 100%;
+  max-width: 100%;
+}
+.post-photo-tile > .post-media-open {
+  display: block;
   width: 100%;
   height: 100%;
   background: transparent;
   cursor: zoom-in;
 }
-.post-media-frame > .post-media-open img {
+.post-photo-track.is-dragging .post-media-open {
+  cursor: grabbing;
+}
+.post-photo-tile > .post-media-open img {
   display: block;
   width: 100%;
   height: 100%;
   max-height: none;
-  object-fit: contain;
-  transition: transform 0.36s var(--ease-spring);
+  object-fit: cover;
 }
-@media (min-width: 901px) and (pointer: fine) {
-  .post-media-frame:hover > .post-media-open img {
-    transform: scale(1.015);
+.post-photo-single .post-media-open img {
+  object-fit: contain;
+}
+.post-photo-arrow {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #17191ce6;
+  color: #fff;
+  transform: translateY(-50%);
+}
+.post-photo-arrow[hidden] {
+  display: none;
+}
+.post-photo-arrow:hover {
+  background: #34383bef;
+}
+.post-photo-arrow svg {
+  width: 24px;
+  height: 24px;
+}
+.post-photo-previous {
+  left: 12px;
+}
+.post-photo-next {
+  right: 12px;
+}
+@media (max-width: 700px) {
+  .post-photo-carousel {
+    --photo-height: clamp(280px, 90vw, 400px);
+  }
+}
+@media (hover: none) and (pointer: coarse) {
+  .post-photo-arrow {
+    display: none;
   }
 }
 .post-media-open:focus-visible {
@@ -726,58 +811,6 @@
 }
 .post-media-unavailable button:hover {
   background: #eaf6ff;
-}
-.post-media-nav {
-  position: absolute;
-  top: 50%;
-  z-index: 1;
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  border: 1px solid #ffffffeb;
-  border-radius: 50%;
-  background: #fffffff2;
-  box-shadow: 0 4px 14px #1f426133;
-  color: var(--color-ink);
-  transform: translateY(-50%);
-  transition:
-    transform 0.2s var(--ease-spring),
-    background 0.2s ease,
-    box-shadow 0.2s ease;
-}
-.post-media-nav:hover {
-  background: #fff;
-  box-shadow: 0 6px 18px #1f426145;
-  transform: translateY(-50%) scale(1.07);
-}
-.post-media-nav:active {
-  transform: translateY(-50%) scale(0.94);
-}
-.post-media-nav svg {
-  width: 21px;
-  height: 21px;
-}
-.post-media-prev {
-  left: var(--space-3);
-}
-.post-media-next {
-  right: var(--space-3);
-}
-.post-media-count {
-  position: absolute;
-  right: var(--space-3);
-  bottom: var(--space-3);
-  padding: 4px 10px;
-  border: 1px solid #d8e6f2;
-  border-radius: 999px;
-  background: #fffffff2;
-  box-shadow: 0 2px 8px #1f42611f;
-  color: var(--color-ink);
-  font:
-    700 12px/1.3 "Quicksand",
-    sans-serif;
 }
 /* Site artwork shown with the dated snapshot; labelled as not belonging to the post. */
 .post-illustration {

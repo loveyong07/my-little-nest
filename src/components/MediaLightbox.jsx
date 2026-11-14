@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { FiChevronLeft, FiChevronRight, FiX } from "react-icons/fi";
+import { LightboxPhotoStrip } from "./LightboxPhotoStrip.jsx";
 import { xMediaSrc } from "../media-urls.js";
 import { useMediaRequest } from "../hooks/useMediaRequest.js";
 
@@ -8,6 +9,7 @@ export function MediaLightbox({
   kind,
   photo,
   photoAlt,
+  photos,
   photoCount,
   onPhotoChange,
   video,
@@ -18,7 +20,6 @@ export function MediaLightbox({
 }) {
   const dialogRef = useRef(null);
   const closeRef = useRef(null);
-  const photoRequest = useMediaRequest(photo?.src, "lightboxRetry");
   const videoRequest = useMediaRequest(videoSrc, "lightboxRetry");
 
   useEffect(() => {
@@ -36,16 +37,24 @@ export function MediaLightbox({
     function handleKeyDown(event) {
       if (event.key === "Escape") {
         onClose(null);
-      } else if (kind === "photo" && (event.key === "ArrowLeft" || event.key === "ArrowRight")) {
+      } else if (kind === "photo" && ["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) {
         event.preventDefault();
-        onPhotoChange((index) => (index + (event.key === "ArrowLeft" ? -1 : 1) + photoCount) % photoCount);
+        onPhotoChange((index) =>
+          event.key === "Home"
+            ? 0
+            : event.key === "End"
+              ? photoCount - 1
+              : Math.max(0, Math.min(photoCount - 1, index + (event.key === "ArrowLeft" ? -1 : 1))),
+        );
       } else if (event.key === "Tab") {
         if (!dialogRef.current.contains(document.activeElement)) {
           event.preventDefault();
           closeRef.current?.focus();
           return;
         }
-        const focusable = [...dialogRef.current.querySelectorAll("video[controls], button")];
+        const focusable = [...dialogRef.current.querySelectorAll("video[controls], button:not(:disabled)")].filter(
+          (element) => !element.closest('[aria-hidden="true"]'),
+        );
         const first = focusable[0];
         const last = focusable.at(-1);
         if (event.shiftKey && document.activeElement === first) {
@@ -80,49 +89,40 @@ export function MediaLightbox({
       >
         {kind === "photo" ? (
           <>
-            {photoRequest.src && !photoRequest.unavailable ? (
-              <img
-                key={photoRequest.src}
-                src={photoRequest.src}
-                alt={photo.alt || photoAlt}
-                onError={photoRequest.onError}
-              />
-            ) : (
-              <div className="media-lightbox-unavailable" role="status">
-                <span>{t.photoUnavailable}</span>
-                {photo?.src && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      photoRequest.retry();
-                      closeRef.current?.focus();
-                    }}
-                  >
-                    {t.retry}
-                  </button>
-                )}
-              </div>
-            )}
+            <LightboxPhotoStrip
+              photos={photos || [photo]}
+              index={photos ? photo.number - 1 : 0}
+              onChange={photos ? onPhotoChange : undefined}
+              t={t}
+              photoAlt={photoAlt}
+              closeRef={closeRef}
+            />
             <div className="media-lightbox-navigation">
-              <button
-                className="media-lightbox-prev"
-                type="button"
-                aria-label={t.prevPhoto}
-                onClick={() => onPhotoChange((index) => (index - 1 + photoCount) % photoCount)}
-              >
-                <FiChevronLeft aria-hidden="true" />
-              </button>
+              {photoCount > 1 && (
+                <button
+                  type="button"
+                  className="media-lightbox-prev"
+                  aria-label={t.prevPhoto}
+                  disabled={photo.number <= 1}
+                  onClick={() => onPhotoChange((index) => Math.max(0, index - 1))}
+                >
+                  <FiChevronLeft aria-hidden="true" />
+                </button>
+              )}
               <span className="media-lightbox-count" aria-live="polite">
                 {t.postNumber(photo.number, photoCount)}
               </span>
-              <button
-                className="media-lightbox-next"
-                type="button"
-                aria-label={t.nextPhoto}
-                onClick={() => onPhotoChange((index) => (index + 1) % photoCount)}
-              >
-                <FiChevronRight aria-hidden="true" />
-              </button>
+              {photoCount > 1 && (
+                <button
+                  type="button"
+                  className="media-lightbox-next"
+                  aria-label={t.nextPhoto}
+                  disabled={photo.number >= photoCount}
+                  onClick={() => onPhotoChange((index) => Math.min(photoCount - 1, index + 1))}
+                >
+                  <FiChevronRight aria-hidden="true" />
+                </button>
+              )}
             </div>
           </>
         ) : videoRequest.src && !videoRequest.unavailable ? (

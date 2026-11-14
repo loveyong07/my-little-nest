@@ -10,6 +10,40 @@ const post = (id, text, extra = {}) => ({
   ...extra,
 });
 
+test("preserves twenty original and pinned photos in attachment order", async () => {
+  const media = Array.from({ length: 20 }, (_, index) => ({
+    media_key: `photo${index}`,
+    type: "photo",
+    url: `https://pbs.twimg.com/media/Twenty${index}.jpg`,
+    width: 900,
+    height: 1600,
+  }));
+  const keys = media.map((item) => item.media_key).reverse();
+  const feed = createXFeedService({
+    token: "private-test-token",
+    fetchImpl: async (url) => {
+      const pathname = new URL(url).pathname;
+      if (pathname === "/2/users/2061726102180311040")
+        return Response.json({
+          data: { id: "2061726102180311040", username: "loveyong07", pinned_tweet_id: "99" },
+        });
+      const item = post(pathname === "/2/tweets/99" ? "99" : "10", "Twenty photos", {
+        attachments: { media_keys: keys },
+      });
+      return Response.json({ data: pathname === "/2/tweets/99" ? item : [item], includes: { media } });
+    },
+  });
+  const result = await feed();
+  assert.equal(result.status, "ok");
+  for (const item of [result.posts[0], result.pinnedPost]) {
+    assert.equal(item.media.length, 20);
+    assert.deepEqual(
+      item.media.map((photo) => photo.url),
+      [...media].reverse().map((photo) => photo.url),
+    );
+  }
+});
+
 for (const hadPin of [false, true]) {
   for (const errorStatus of [503, 404]) {
     test(`pin-only recovery preserves timeline TTL and coalesces retries (saved=${hadPin}, HTTP=${errorStatus})`, async () => {

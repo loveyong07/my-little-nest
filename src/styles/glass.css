@@ -15,16 +15,11 @@
   --glass-panel-fill: linear-gradient(135deg, #ffffff29, #e8f3ff1a 60%, #ffffff24);
   --glass-tile-fill: linear-gradient(135deg, #ffffff4d, #f4f9ff66);
   --glass-reading-fill: linear-gradient(135deg, #ffffff6b, #f9fcfe80);
-  --glass-media-fill:
-    radial-gradient(ellipse at 0% 0%, #ffffff70, #ffffff00 55%),
-    radial-gradient(ellipse at 100% 100%, #ffffff4d, #ffffff00 50%),
-    linear-gradient(125deg, #ffffff52, #f6f4f826 48%, #ffffff66);
   --glass-control-fill: linear-gradient(135deg, #ffffff94, #f4f9ffad);
   --glass-text-halo: 0 1px 2px #ffffffbf, 0 0 6px #ffffff66;
   --glass-tile-blur: 3px;
   --glass-email-blur: 4px;
   --glass-reading-blur: 6px;
-  --glass-media-blur: 10px;
   --glass-control-blur: 8px;
 }
 
@@ -209,14 +204,6 @@
   .glass-reading-backdrop::after {
     background: var(--glass-reading-fill), var(--glass-panel-fill);
   }
-  /* Letterboxed photos reveal another frosted pane. Only the static scene is
-     blurred; original photos and carousel controls stay above this layer. */
-  .glass-media-backdrop::before {
-    filter: blur(var(--glass-media-blur)) saturate(0.86);
-  }
-  .glass-media-backdrop::after {
-    background: var(--glass-media-fill), var(--glass-reading-fill), var(--glass-panel-fill);
-  }
   /* Successive layers: clear outer pane, translucent cards, then reading controls. */
   .contact-tile,
   .route-panel-posts .pinned-placeholder {
@@ -278,7 +265,6 @@
     --glass-tile-blur: 2.5px;
     --glass-email-blur: 3px;
     --glass-reading-blur: 4.5px;
-    --glass-media-blur: 8px;
     --glass-control-blur: 6px;
   }
 }

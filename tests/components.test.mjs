@@ -461,12 +461,13 @@ for (const hasCover of [false, true]) {
       assert.equal(button.querySelector("img").alt, copy.zh.postPhotoAlt(index + 1));
       await React.act(async () => button.click());
       const lightbox = document.querySelector(".media-lightbox");
-      assert.equal(lightbox.querySelector("img").alt, copy.zh.postPhotoAlt(index + 1));
-      await React.act(async () =>
-        document.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true })),
+      assert.equal(
+        lightbox.querySelector('.media-lightbox-slide[aria-hidden="false"] img').alt,
+        copy.zh.postPhotoAlt(index + 1),
       );
+      await selectPreviewPhoto((index + 1) % expected.length);
       assert.ok(
-        decodeURIComponent(document.querySelector(".media-lightbox img").src).includes(
+        decodeURIComponent(document.querySelector('.media-lightbox-slide[aria-hidden="false"] img').src).includes(
           `/media/${expected[(index + 1) % expected.length]}.jpg`,
         ),
       );
@@ -511,16 +512,18 @@ test("an open Article lightbox remains valid when a refresh shrinks its photo li
   const photos = ["A", "B", "C", "D"].map((id) => ({ type: "photo", url: `https://pbs.twimg.com/media/${id}.jpg` }));
   const view = await mount(React.createElement(ArticlePhoto, { photos, number: 1, t: copy.zh }));
   await React.act(async () => view.container.querySelector(".article-photo-open").click());
-  await React.act(async () =>
-    document.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true })),
+  await selectPreviewPhoto(3);
+  assert.ok(
+    decodeURIComponent(document.querySelector('.media-lightbox-slide[aria-hidden="false"] img').src).includes("/D.jpg"),
   );
-  assert.ok(decodeURIComponent(document.querySelector(".media-lightbox img").src).includes("/D.jpg"));
   await view.render(React.createElement(ArticlePhoto, { photos: photos.slice(0, 3), number: 1, t: copy.zh }));
-  assert.ok(decodeURIComponent(document.querySelector(".media-lightbox img").src).includes("/C.jpg"));
-  await React.act(async () =>
-    document.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true })),
+  assert.ok(
+    decodeURIComponent(document.querySelector('.media-lightbox-slide[aria-hidden="false"] img').src).includes("/C.jpg"),
   );
-  assert.ok(decodeURIComponent(document.querySelector(".media-lightbox img").src).includes("/A.jpg"));
+  await selectPreviewPhoto(0);
+  assert.ok(
+    decodeURIComponent(document.querySelector('.media-lightbox-slide[aria-hidden="false"] img').src).includes("/A.jpg"),
+  );
   await view.unmount();
 });
 
@@ -607,8 +610,12 @@ test("an Article without verified image positions never collects its body photos
     copy.zh.articleLayoutUnavailable,
   );
   await React.act(async () => view.container.querySelector(".article-photo-open").click());
-  await React.act(async () => window.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight" })));
-  assert.ok(decodeURIComponent(document.querySelector(".media-lightbox img").src).includes("/Inline.jpg"));
+  await selectPreviewPhoto(1);
+  assert.ok(
+    decodeURIComponent(document.querySelector('.media-lightbox-slide[aria-hidden="false"] img').src).includes(
+      "/Inline.jpg",
+    ),
+  );
   await view.unmount();
 });
 
@@ -965,19 +972,30 @@ test("lightbox photo retries reset on navigation while keyboard focus stays in p
     });
   }
   const view = await mount(React.createElement(Harness));
-  await React.act(async () => document.querySelector(".media-lightbox img").dispatchEvent(new Event("error")));
+  await React.act(async () =>
+    document.querySelector('.media-lightbox-slide[aria-hidden="false"] img').dispatchEvent(new Event("error")),
+  );
   assert.ok(document.querySelector(".media-lightbox-unavailable"));
   await React.act(async () => document.querySelector(".media-lightbox-unavailable button").click());
-  assert.equal(document.querySelector(".media-lightbox img").getAttribute("src"), `${sources[0]}&lightboxRetry=1`);
+  assert.equal(
+    document.querySelector('.media-lightbox-slide[aria-hidden="false"] img').getAttribute("src"),
+    `${sources[0]}&lightboxRetry=1`,
+  );
 
   const next = document.querySelector(".media-lightbox-next");
   next.focus();
-  await React.act(async () => next.click());
-  assert.equal(document.querySelector(".media-lightbox img").getAttribute("src"), sources[1]);
+  await selectPreviewPhoto(1);
+  assert.equal(
+    document.querySelector('.media-lightbox-slide[aria-hidden="false"] img').getAttribute("src"),
+    sources[1],
+  );
   assert.equal(document.activeElement, next);
   assert.equal(document.body.style.overflow, "hidden");
-  await React.act(async () => window.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft" })));
-  assert.equal(document.querySelector(".media-lightbox img").getAttribute("src"), sources[0]);
+  await selectPreviewPhoto(0);
+  assert.equal(
+    document.querySelector('.media-lightbox-slide[aria-hidden="false"] img').getAttribute("src"),
+    sources[0],
+  );
   assert.equal(document.activeElement, next);
   await view.unmount();
   assert.equal(document.body.style.overflow, "");
@@ -1031,21 +1049,21 @@ test("post photo failures and retries stay separate from a failed video", async 
   await React.act(async () => view.container.querySelector(".post-media img").dispatchEvent(new Event("error")));
   assert.ok(view.container.querySelector(".post-media .post-media-unavailable"));
   await React.act(async () => view.container.querySelector(".post-media-unavailable button").click());
-  let image = view.container.querySelector(".post-media img");
+  let image = view.container.querySelector(".post-photo-tile img");
   assert.equal(new URL(image.src).searchParams.get("retry"), "1");
   assert.equal(document.activeElement, view.container.querySelector(".post-media-open"));
   await React.act(async () => image.dispatchEvent(new Event("error")));
   assert.equal(document.activeElement, view.container.querySelector(".post-media-unavailable button"));
 
-  await React.act(async () => view.container.querySelector(".post-media-next").click());
-  image = view.container.querySelector(".post-media img");
+  image = view.container.querySelectorAll(".post-photo-tile")[1].querySelector("img");
   assert.equal(new URL(image.src).searchParams.get("url"), photos[1].url);
   assert.equal(new URL(image.src).searchParams.has("retry"), false);
-  assert.ok(view.container.querySelector(".post-video .post-media-unavailable"), "photo navigation keeps video error");
-  await React.act(async () => view.container.querySelector(".post-media-prev").click());
-  image = view.container.querySelector(".post-media img");
+  assert.ok(view.container.querySelector(".post-video .post-media-unavailable"), "photo retry keeps video error");
+  assert.ok(view.container.querySelector(".post-photo-tile .post-media-unavailable"));
+  await React.act(async () => view.container.querySelector(".post-photo-tile .post-media-unavailable button").click());
+  image = view.container.querySelector(".post-photo-tile img");
   assert.equal(new URL(image.src).searchParams.get("url"), photos[0].url);
-  assert.equal(new URL(image.src).searchParams.has("retry"), false);
+  assert.equal(new URL(image.src).searchParams.get("retry"), "2");
 
   await React.act(async () => view.container.querySelector(".post-video .post-media-unavailable button").click());
   assert.equal(new URL(view.container.querySelector("video source").src).searchParams.get("retry"), "1");
@@ -1076,6 +1094,47 @@ test("late media events cannot change a newer source or retry attempt", async ()
   await view.unmount();
 });
 
+test("post photo strips retain all twenty photos and enlarge the exact clicked photo", async () => {
+  resetDom();
+  const media = Array.from({ length: 20 }, (_, index) => ({
+    type: "photo",
+    url: `https://pbs.twimg.com/media/Twenty${index + 1}.jpg`,
+    width: 900,
+    height: 1600,
+  }));
+  const view = await mount(
+    React.createElement(PostCard, {
+      post: { ...SNAPSHOT, media },
+      feedSource: "live",
+      language: "en",
+      t: copy.en,
+      profile: { username: "loveyong07" },
+    }),
+  );
+  const buttons = view.container.querySelectorAll(".post-media-open");
+  assert.equal(buttons.length, 20);
+  assert.equal(
+    view.container.querySelectorAll(".post-photo-tile img").length,
+    2,
+    "do not request all twenty thumbnails before the strip is measured or browsed",
+  );
+  assert.equal(view.container.querySelector(".post-photo-grid, .photo-slider, .glass-media-backdrop"), null);
+  await React.act(async () => buttons[19].click());
+  assert.equal(document.querySelector(".media-lightbox-count").textContent, "20 / 20");
+  assert.equal(
+    new URL(document.querySelector('.media-lightbox-slide[aria-hidden="false"] img').src).searchParams.get("url"),
+    media[19].url,
+  );
+  assert.equal(
+    document.querySelectorAll(".media-lightbox-slide img").length,
+    2,
+    "only the selected end photo and its neighbor should load in the enlarged preview",
+  );
+  await React.act(async () => window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })));
+  assert.equal(document.activeElement, buttons[19]);
+  await view.unmount();
+});
+
 test("single-photo navigation preserves its loaded image and usable preview", async () => {
   resetDom();
   const view = await mount(
@@ -1089,7 +1148,8 @@ test("single-photo navigation preserves its loaded image and usable preview", as
   );
   await React.act(async () => view.container.querySelector(".post-media img").dispatchEvent(new Event("load")));
   const image = view.container.querySelector(".post-media img");
-  await React.act(async () => view.container.querySelector(".post-media-next").click());
+  assert.equal(view.container.querySelector(".photo-slider"), null);
+  assert.equal(view.container.querySelector(".glass-media-backdrop"), null);
   assert.equal(view.container.querySelector(".post-media-loading"), null);
   assert.equal(view.container.querySelector(".post-media img"), image);
   await React.act(async () => view.container.querySelector(".post-media-open").click());
@@ -1752,3 +1812,10 @@ test("Posts quick navigation pills reflect live section counts and smooth-scroll
     await view.unmount();
   }
 });
+
+async function selectPreviewPhoto(value) {
+  await React.act(async () => window.dispatchEvent(new KeyboardEvent("keydown", { key: "Home" })));
+  for (let index = 0; index < value; index++) {
+    await React.act(async () => window.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight" })));
+  }
+}
