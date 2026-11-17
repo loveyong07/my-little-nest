@@ -412,6 +412,13 @@
 .sailing-cta:hover svg {
   transform: translate(2px, -2px);
 }
+.sailing-cta .sailing-external-icon {
+  align-self: flex-start;
+  width: 12px;
+  height: 12px;
+  margin-left: -4px;
+  stroke-width: 2;
+}
 
 /* Wide screens only: a quote in the sky and a pinned note beside the character. */
 .sky-quote {

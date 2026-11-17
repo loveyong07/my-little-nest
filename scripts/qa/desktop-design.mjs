@@ -329,12 +329,13 @@ try {
       await page.locator(".media-lightbox").waitFor();
       await page.keyboard.press("Escape");
       assert.equal(await page.locator(".media-lightbox").count(), 0);
-      await page.locator(".quick-nav-message").click();
+      assert.equal(await page.locator(".quick-nav-message, .reading-invitation").count(), 0);
+      await page.locator(".quick-nav-articles").click();
       await page.waitForFunction(
-        () => document.querySelector(".quick-nav-message").getAttribute("aria-current") === "location",
+        () => document.querySelector(".quick-nav-articles").getAttribute("aria-current") === "location",
       );
       assert.equal(
-        await page.locator("#reading-invitation-heading").evaluate((el) => el === document.activeElement),
+        await page.locator("#x-articles h2").evaluate((el) => el === document.activeElement),
         true,
       );
       await page.emulateMedia({ reducedMotion: "reduce" });

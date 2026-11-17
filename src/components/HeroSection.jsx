@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { FaArrowRight, FaEnvelope, FaPaperPlane, FaXTwitter } from "react-icons/fa6";
+import { FiArrowUpRight } from "react-icons/fi";
 import { HiOutlineSparkles } from "react-icons/hi2";
 import { PiFlowerLight } from "react-icons/pi";
 import { BsPostageHeart } from "react-icons/bs";
@@ -182,6 +183,7 @@ export function HeroSection({ header, language, t, profile, extras = null }) {
               >
                 <FaPaperPlane aria-hidden="true" />
                 风帆Sailing
+                <FiArrowUpRight className="sailing-external-icon" aria-hidden="true" />
               </a>
             </div>
             <LetterSeaside />

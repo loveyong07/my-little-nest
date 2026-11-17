@@ -190,11 +190,6 @@
 .post-repost-context svg {
   flex-shrink: 0;
 }
-.quick-nav-message {
-  border-color: #bde0cf;
-  background: linear-gradient(135deg, #e2f5ebcc, #f2fbf6cc);
-  color: #2f5e51;
-}
 .quick-nav-pill:hover {
   background: #fff;
   box-shadow: 0 5px 14px #456a8a1a;
@@ -951,69 +946,6 @@
   text-align: center;
 }
 
-.reading-invitation {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3) var(--space-5);
-  width: 100%;
-  max-width: 860px;
-  margin: var(--space-6) auto 0;
-  padding: 22px 26px;
-  border: 1px solid #ffffffd9;
-  border-radius: 24px;
-  background: linear-gradient(135deg, #f3f9fee6, #fdf1f7d9 52%, #ebfaf3e6);
-  box-shadow:
-    0 10px 26px #42688814,
-    inset 0 1px 1px #fff;
-}
-.reading-invitation h2 {
-  margin: 0;
-  color: var(--color-ink);
-  font-size: 1rem;
-  font-weight: 700;
-}
-.reading-invitation p {
-  margin: 4px 0 0;
-  color: var(--color-muted);
-  font-size: var(--font-xs);
-  line-height: 1.8;
-}
-.reading-invitation a {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  min-height: 44px;
-  padding: 9px 18px;
-  border: 1px solid var(--pastel-mint-line);
-  border-radius: 999px;
-  background: var(--gradient-mint);
-  box-shadow:
-    0 4px 14px #3f7a641a,
-    inset 0 1px 1px #fff;
-  color: var(--pastel-mint-ink);
-  font-size: var(--font-xs);
-  font-weight: 700;
-  text-decoration: none;
-  transition:
-    transform 0.2s var(--ease-spring),
-    box-shadow 0.2s ease,
-    background 0.2s ease;
-}
-.reading-invitation a svg {
-  transition: transform 0.2s var(--ease-spring);
-}
-.reading-invitation a:hover {
-  background: #fff;
-  box-shadow: 0 6px 18px #3f7a6426;
-  transform: translateY(-2px);
-}
-.reading-invitation a:hover svg {
-  transform: translateX(3px);
-}
-
 @media (max-width: 900px) {
   .posts-group + .posts-group {
     margin-top: 20px;
@@ -1126,18 +1058,6 @@
     padding: 0;
     background: transparent;
     font-size: 0.8125rem;
-  }
-  .reading-invitation {
-    padding: var(--space-5) var(--space-2) var(--space-2);
-    border: 0;
-    border-top: 1px dashed #a7c1d7;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
-  }
-  .reading-invitation h2 {
-    font-size: var(--font-sm);
-    font-weight: 500;
   }
 }
 
