@@ -21,8 +21,10 @@
 .contact-intro {
   max-width: 68ch;
   margin: var(--space-3) 0 0;
-  padding: 4px 0 4px 14px;
+  padding: 10px 14px;
   border-left: 3px solid #bbd3e8;
+  border-radius: 0 14px 14px 0;
+  background: linear-gradient(120deg, #fbfdffe6, #f1f8ffb8);
   color: var(--color-text);
   font-size: var(--font-sm);
   line-height: 1.9;

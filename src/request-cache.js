@@ -1,4 +1,6 @@
-export const REQUEST_TIMEOUT_MS = 12_000;
+import { JSON_REQUEST_TIMEOUT_MS } from "../shared/request-budgets.mjs";
+
+export const REQUEST_TIMEOUT_MS = JSON_REQUEST_TIMEOUT_MS;
 export const REQUEST_FRESH_MS = 15 * 60 * 1000;
 export const REQUEST_RETRY_MS = 30_000;
 export const SUCCESS_MAX_AGE_MS = 24 * 60 * 60 * 1000;

@@ -24,9 +24,9 @@ export function XRepostsSection({
   const timelineRef = useRef(null);
   const index = Math.min(repostIndex, Math.max(0, reposts.length - 1));
   const post = reposts[index];
-  const recovering = ["stale", "unavailable"].includes(repostState);
+  const recovering = !feedLoading && ["stale", "unavailable"].includes(repostState);
   const message =
-    repostState === "loading"
+    feedLoading || repostState === "loading"
       ? t.repostsLoading
       : repostState === "none"
         ? t.repostsEmpty
@@ -101,7 +101,7 @@ export function XRepostsSection({
             key={post.id}
             post={post}
             feedSource={repostState}
-            label={repostState === "stale" ? t.repostsStale : undefined}
+            label={repostState === "stale" ? (feedLoading ? t.repostsLoading : t.repostsStale) : undefined}
             language={language}
             t={t}
             profile={profile}

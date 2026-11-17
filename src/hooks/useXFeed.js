@@ -29,7 +29,9 @@ export function useXFeed() {
   const [repostReading, setRepostReading] = useState(() => initialRepostReading(cachedFeed?.feed));
   const { reposts, index: repostIndex, state: repostState } = repostReading;
   const [feedSource, setFeedSource] = useState(cachedFeed ? "stale" : "snapshot");
-  const [feedLoading, setFeedLoading] = useState(!cachedFeed);
+  // A cached first paint still has a refresh in flight. Do not describe that
+  // request as a failure before it has actually finished.
+  const [feedLoading, setFeedLoading] = useState(true);
   const [feedUpdatedAt, setFeedUpdatedAt] = useState(cachedFeed?.savedAt ?? null);
   const [feedRefreshToken, setFeedRefreshToken] = useState(0);
   const [retryDisabled, setRetryDisabled] = useState(false);

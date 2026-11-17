@@ -1164,3 +1164,6 @@
     font-size: 10px;
   }
 }
+.reading-directory-return {
+  display: none;
+}

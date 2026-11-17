@@ -255,6 +255,7 @@ export async function enrichArticleDocuments(
     now = Date.now,
     revalidateMs = ARTICLE_REVALIDATE_TTL_MS,
     timeoutMs = 6000,
+    signal = undefined,
     onEvent = null,
   } = {},
 ) {
@@ -282,6 +283,7 @@ export async function enrichArticleDocuments(
   );
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const abortSignal = signal ? AbortSignal.any([controller.signal, signal]) : controller.signal;
   let next = 0;
   try {
     // Recover persisted structures before starting slow public-page requests.
@@ -291,7 +293,7 @@ export async function enrichArticleDocuments(
       let cacheNext = 0;
       await Promise.all(
         Array.from({ length: Math.min(4, prepared.length) }, async () => {
-          while (cacheNext < prepared.length && !controller.signal.aborted) {
+          while (cacheNext < prepared.length && !abortSignal.aborted) {
             const index = cacheNext++;
             const entry = prepared[index];
             const { article, memoryBlocks, memoryValidatedAt } = entry;
@@ -305,7 +307,7 @@ export async function enrichArticleDocuments(
               continue;
             let cachedEntry;
             try {
-              cachedEntry = await articleCache.read(article, { signal: controller.signal });
+              cachedEntry = await articleCache.read(article, { signal: abortSignal });
             } catch {
               continue;
             }
@@ -330,7 +332,7 @@ export async function enrichArticleDocuments(
     }
     await Promise.all(
       Array.from({ length: Math.min(4, result.length) }, async () => {
-        while (next < result.length && !controller.signal.aborted) {
+        while (next < result.length && !abortSignal.aborted) {
           const index = next++;
           const { article, memoryBlocks, memoryValidatedAt, cachedBlocks, cachedValidatedAt } = prepared[index];
           const startedAt = now();
@@ -371,7 +373,7 @@ export async function enrichArticleDocuments(
           }
 
           const hadVerifiedFallback = Boolean(memoryBlocks || cachedBlocks);
-          const blocks = fetchImpl ? await loadArticleDocument(article, fetchImpl, controller.signal) : null;
+          const blocks = fetchImpl ? await loadArticleDocument(article, fetchImpl, abortSignal) : null;
           const finishedAt = now();
           if (blocks) {
             validatedAtByBlocks.set(blocks, finishedAt);

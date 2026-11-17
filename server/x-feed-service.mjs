@@ -6,6 +6,7 @@ import { normalizedArticleLinks } from "../shared/article-links.mjs";
 import { ARTICLE_REVALIDATE_TTL_MS, enrichArticleDocuments } from "./x-article-document.mjs";
 import { createTelemetryEmitter } from "./telemetry.mjs";
 import { X_USER_ID as USER_ID, X_USERNAME as USERNAME } from "../shared/x-account.mjs";
+import { FEED_REFRESH_TIMEOUT_MS, FEED_ABORT_GRACE_MS } from "../shared/request-budgets.mjs";
 
 const X_API = "https://api.x.com/2";
 const CACHE_TTL_MS = 15 * 60 * 1000;
@@ -91,17 +92,19 @@ function normalizedPostText(text, post, media, username) {
   return media.length ? result.trimEnd() : result;
 }
 
-async function getXJson(url, token, fetchImpl, { allowPartialErrors = false } = {}) {
+async function getXJson(url, token, fetchImpl, { allowPartialErrors = false, signal = undefined } = {}) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
+  const abortSignal = signal ? AbortSignal.any([controller.signal, signal]) : controller.signal;
   try {
+    abortSignal.throwIfAborted();
     const response = await fetchImpl(url, {
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: "application/json",
       },
       redirect: "error",
-      signal: controller.signal,
+      signal: abortSignal,
     });
     if (!response.ok) {
       /** @type {Error & { status?: number }} */
@@ -110,6 +113,7 @@ async function getXJson(url, token, fetchImpl, { allowPartialErrors = false } = 
       throw error;
     }
     const json = await response.json();
+    abortSignal.throwIfAborted();
     if (!json || typeof json !== "object" || (!allowPartialErrors && json.errors?.length)) {
       throw new Error("Invalid X API response");
     }
@@ -130,7 +134,7 @@ function normalizedMedia(keys, mediaByKey) {
     if (media?.type === "photo") {
       const url = safePhotoUrl(media.url);
       if (url) mediaItems.push({ type: "photo", url, alt, ...(mediaDimensions(media) ?? {}) });
-    } else if (media?.type === "video") {
+    } else if (media?.type === "video" || media?.type === "animated_gif") {
       const variants = Array.isArray(media.variants) ? media.variants : [];
       const videoVariants = variants.filter(
         (variant) => variant?.content_type === "video/mp4" && safeVideoUrl(variant.url),
@@ -139,7 +143,14 @@ function normalizedMedia(keys, mediaByKey) {
       const url = videoVariants[0] ? safeVideoUrl(videoVariants[0].url) : null;
       const poster = safePhotoUrl(media.preview_image_url);
       if (url)
-        mediaItems.push({ type: "video", url, ...(poster ? { poster } : {}), alt, ...(mediaDimensions(media) ?? {}) });
+        mediaItems.push({
+          type: "video",
+          ...(media.type === "animated_gif" ? { animated: true } : {}),
+          url,
+          ...(poster ? { poster } : {}),
+          alt,
+          ...(mediaDimensions(media) ?? {}),
+        });
     }
   }
   return mediaItems;
@@ -260,6 +271,7 @@ export function createXFeedService({
   articleFetchImpl = fetchImpl === globalThis.fetch ? globalThis.fetch : null,
   articleCache = null,
   articleRevalidateMs = ARTICLE_REVALIDATE_TTL_MS,
+  refreshTimeoutMs = FEED_REFRESH_TIMEOUT_MS,
   defer = (task) => void Promise.resolve(task).catch(() => {}),
   onEvent = null,
   now = Date.now,
@@ -287,6 +299,22 @@ export function createXFeedService({
   let refreshCount = 0;
   let pinnedRetryCount = 0;
   let profileRefreshCount = 0;
+
+  function withinFeedBudget(operation) {
+    const controller = new AbortController();
+    const timeout = new DOMException("Feed refresh timed out", "TimeoutError");
+    const timer = setTimeout(() => controller.abort(timeout), refreshTimeoutMs);
+    let guardTimer;
+    // Give aborted optional lookups one turn to return usable posts, then enforce
+    // a hard deadline even if a shared lookup/adapter ignores cancellation.
+    const guard = new Promise((_, reject) => {
+      guardTimer = setTimeout(() => reject(timeout), refreshTimeoutMs + FEED_ABORT_GRACE_MS);
+    });
+    return Promise.race([Promise.resolve().then(() => operation(controller.signal)), guard]).finally(() => {
+      clearTimeout(timer);
+      clearTimeout(guardTimer);
+    });
+  }
 
   async function lookupUser() {
     async function lookup(mode) {
@@ -331,7 +359,7 @@ export function createXFeedService({
     return userInFlight;
   }
 
-  async function fetchPinnedPost(author, pinnedId) {
+  async function fetchPinnedPost(author, pinnedId, signal = undefined) {
     if (!isId(pinnedId)) return { post: null, status: "none" };
     function lookup(mode, includeArticles = true) {
       const articleFields = includeArticles ? ",article,article_title" : "";
@@ -347,7 +375,7 @@ export function createXFeedService({
         url.searchParams.set("expansions", "attachments.media_keys,author_id");
       }
       url.searchParams.set("media.fields", "media_key,type,url,alt_text,width,height,preview_image_url,variants");
-      return getXJson(url, token, fetchImpl);
+      return getXJson(url, token, fetchImpl, { signal });
     }
     async function lookupForMode(includeArticles) {
       try {
@@ -385,7 +413,7 @@ export function createXFeedService({
     }
   }
 
-  async function fetchOriginalPosts(author, pinnedId) {
+  async function fetchOriginalPosts(author, pinnedId, signal) {
     const found = [];
     const foundArticles = [];
     const foundReposts = [];
@@ -432,7 +460,7 @@ export function createXFeedService({
 
       let json;
       try {
-        json = await getXJson(url, token, fetchImpl, { allowPartialErrors: true });
+        json = await getXJson(url, token, fetchImpl, { allowPartialErrors: true, signal });
       } catch (error) {
         // Optional Article fields must not take the existing post feed down if an
         // X API access tier/version rejects them. A fallback is unknown, not empty.
@@ -447,7 +475,7 @@ export function createXFeedService({
           "expansions",
           "attachments.media_keys,referenced_tweets.id,referenced_tweets.id.author_id",
         );
-        json = await getXJson(url, token, fetchImpl, { allowPartialErrors: true });
+        json = await getXJson(url, token, fetchImpl, { allowPartialErrors: true, signal });
       }
       if (json.errors?.length && !Array.isArray(json.data)) throw new Error("X timeline unavailable");
       // A deleted/private referenced post must not take the ordinary timeline down.
@@ -526,7 +554,7 @@ export function createXFeedService({
       url.searchParams.set("user.fields", "name,username,profile_image_url,protected");
       url.searchParams.set("media.fields", "media_key,type,url,alt_text,width,height,preview_image_url,variants");
       try {
-        const json = await getXJson(url, token, fetchImpl, { allowPartialErrors: true });
+        const json = await getXJson(url, token, fetchImpl, { allowPartialErrors: true, signal });
         if (!Array.isArray(json.data)) throw new Error("X repost details unavailable");
         for (const post of json.data) {
           if (!ids.includes(post.id)) continue;
@@ -571,6 +599,7 @@ export function createXFeedService({
         defer,
         now,
         revalidateMs: articleRevalidateMs,
+        signal,
         onEvent,
       },
     );
@@ -599,11 +628,12 @@ export function createXFeedService({
     return { posts: unique, articles, articlesStatus, reposts, repostsStatus, latestId, fullRefresh };
   }
 
-  async function fetchFeed() {
+  async function fetchFeed(signal) {
     const author = await getUser();
+    signal.throwIfAborted();
     const pinnedId = author.pinned_tweet_id ?? author.pinned_post_id ?? null;
     const [{ posts, articles, articlesStatus, reposts, repostsStatus, latestId, fullRefresh }, pinned] =
-      await Promise.all([fetchOriginalPosts(author, pinnedId), fetchPinnedPost(author, pinnedId)]);
+      await Promise.all([fetchOriginalPosts(author, pinnedId, signal), fetchPinnedPost(author, pinnedId, signal)]);
     return {
       result: {
         status: "ok",
@@ -716,7 +746,11 @@ export function createXFeedService({
         // and author/pin pair, even if the standalone profile lookup has since changed.
         const pinStartedAt = now();
         pinnedRetryCount += 1;
-        inFlight = fetchPinnedPost(cachedAuthor, cachedPinnedId)
+        inFlight = withinFeedBudget((signal) => fetchPinnedPost(cachedAuthor, cachedPinnedId, signal))
+          .catch(() => ({
+            post: cached.pinnedPost ?? null,
+            status: cached.pinnedPost ? "stale" : "unavailable",
+          }))
           .then((pinned) => {
             cached = { ...cached, pinnedPost: pinned.post, pinnedStatus: pinned.status };
             pinnedRetryAt = ["ok", "none"].includes(pinned.status) ? 0 : now() + ERROR_RETRY_MS;
@@ -762,7 +796,7 @@ export function createXFeedService({
     }
     const refreshStartedAt = now();
     refreshCount += 1;
-    inFlight = fetchFeed()
+    inFlight = withinFeedBudget(fetchFeed)
       .then(({ result, latestId, pinnedId, author, fullRefresh }) => {
         cached = result;
         cachedAt = now();

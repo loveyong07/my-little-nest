@@ -225,7 +225,7 @@ function PostsContent({ language, t, profile, onFeedReady }) {
               language={language}
               t={t}
               profile={profile}
-              label={pinState === "stale" ? t.pinnedStale : undefined}
+              label={pinState === "stale" ? (feedLoading ? t.feedRefreshing : t.pinnedStale) : undefined}
               priorityMedia
             />
           ) : (
@@ -306,6 +306,7 @@ function PostsContent({ language, t, profile, onFeedReady }) {
                 key={currentPost.id}
                 post={currentPost}
                 feedSource={feedSource}
+                label={feedLoading && feedSource === "stale" ? t.feedRefreshing : undefined}
                 language={language}
                 t={t}
                 profile={profile}

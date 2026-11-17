@@ -4,7 +4,7 @@ const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
 // The whole control is a gesture surface. A press still belongs to the original
 // link/button until horizontal intent is clear, so taps and page scrolling work.
-export function useSwipeSwitch({ activeIndex, onChange, itemSelector, layoutKey }) {
+export function useSwipeSwitch({ activeIndex, onChange, itemSelector, layoutKey = undefined }) {
   const ref = useRef(null);
   const changeRef = useRef(onChange);
   const wheelLockRef = useRef(0);

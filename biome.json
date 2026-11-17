@@ -1,18 +1,24 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
-  "files": { "includes": ["src/**/*.css"] },
-  "formatter": { "enabled": false },
-  "assist": { "enabled": false },
+  "$schema": "https://biomejs.dev/schemas/2.6.7/schema.json",
+  "files": {
+    "includes": ["src/**/*.css"]
+  },
+  "formatter": {
+    "enabled": false
+  },
+  "assist": {
+    "enabled": false
+  },
   "linter": {
     "rules": {
-      "recommended": false,
-      "nursery": { "noDuplicateSelectors": "error" },
+      "preset": "none",
       "suspicious": {
         "noDuplicateProperties": "error",
         "noDuplicateCustomProperties": "error",
         "noShorthandPropertyOverrides": "error",
         "noEmptyBlock": "error",
-        "noImportantInKeyframe": "error"
+        "noImportantInKeyframe": "error",
+        "noDuplicateSelectors": "error"
       }
     }
   }

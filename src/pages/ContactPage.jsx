@@ -39,7 +39,8 @@ export default function ContactPage({ t, profile }) {
       setChannelFilter("all");
       const list = document.getElementById("contact-channel-list");
       list?.scrollIntoView({ block: "center", behavior: preferredScrollBehavior() });
-      list?.querySelector(".contact-tile")?.focus({ preventScroll: true });
+      const firstChannel = list?.querySelector(".contact-tile");
+      if (firstChannel instanceof HTMLElement) firstChannel.focus({ preventScroll: true });
       return;
     }
     setLetterTopic(index);

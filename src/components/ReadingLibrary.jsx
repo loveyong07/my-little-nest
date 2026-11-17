@@ -3,6 +3,7 @@ import { FiArrowUpRight, FiBookOpen, FiFeather, FiRepeat, FiSearch, FiX } from "
 import { PiPushPinFill } from "react-icons/pi";
 import { formatPostDate } from "../utils/date.js";
 import { postExcerpt } from "../utils/posts.js";
+import { readingEntryDate, readingEntryMatches } from "../utils/reading-search.js";
 
 // The library selects existing readers; it never creates a second feed or changes
 // the independent daily-post and Article reading positions.
@@ -30,13 +31,9 @@ export function ReadingLibrary({ t, language, posts, articles, reposts = [], pin
     }),
     [entries.length, pinnedPost, posts.length, articles.length, reposts.length],
   );
-  const needle = query.trim().normalize("NFKC").toLocaleLowerCase();
   const results = entries.filter(({ type, item }) => {
     if (filter !== "all" && (filter === "posts" ? !["pinned", "posts"].includes(type) : type !== filter)) return false;
-    return `${item.title || ""} ${item.text || ""} ${item.created_at || ""}`
-      .normalize("NFKC")
-      .toLocaleLowerCase()
-      .includes(needle);
+    return readingEntryMatches({ item }, query, language);
   });
 
   useEffect(() => {
@@ -185,7 +182,9 @@ export function ReadingLibrary({ t, language, posts, articles, reposts = [], pin
                                 : t.quickNavDaily}
                         </small>
                         <strong>{item.title || postExcerpt(item, t)}</strong>
-                        <time dateTime={item.created_at}>{formatPostDate(item.created_at, language)}</time>
+                        <time dateTime={readingEntryDate(type, item)}>
+                          {formatPostDate(readingEntryDate(type, item), language)}
+                        </time>
                       </span>
                       <FiArrowUpRight aria-hidden="true" />
                     </button>

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://loveyong07.top/sitemap.xml

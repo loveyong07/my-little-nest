@@ -1,4 +1,4 @@
-export function SectionHeading({ icon: Icon, number, kicker, id, children }) {
+export function SectionHeading({ icon: Icon, number, kicker, id = undefined, children }) {
   return (
     <div className="section-heading chapter-heading" data-reveal>
       <span className="chapter-number" aria-hidden="true">

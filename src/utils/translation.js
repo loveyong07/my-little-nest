@@ -105,7 +105,14 @@ function modelOptions(signal, onProgress) {
 
 export async function translateSegments(
   segments,
-  { targetLanguage, sourceLanguage, signal, api = globalThis, onProgress = () => {}, onSourceLanguage = () => {} },
+  {
+    targetLanguage,
+    sourceLanguage,
+    signal,
+    api = globalThis,
+    onProgress = /** @type {(state: {stage: string, progress?: number | null}) => void} */ (() => {}),
+    onSourceLanguage = /** @type {(language: string) => void} */ (() => {}),
+  },
 ) {
   checkAbort(signal);
   const key = cacheKey(segments, targetLanguage);

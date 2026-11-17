@@ -3,7 +3,7 @@
 export const MEDIA_SOURCES = {
   image: {
     host: "pbs.twimg.com",
-    paths: ["/media/", "/profile_images/", "/ext_tw_video_thumb/", "/amplify_video_thumb/"],
+    paths: ["/media/", "/profile_images/", "/ext_tw_video_thumb/", "/amplify_video_thumb/", "/tweet_video_thumb/"],
   },
   video: { host: "video.twimg.com", paths: ["/ext_tw_video/", "/amplify_video/", "/tweet_video/"] },
 };

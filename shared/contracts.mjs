@@ -8,6 +8,7 @@
  * @typedef {{ text: string, url: string, offset?: number, length?: number }} ArticleLink
  * @typedef {{
  *   type?: "photo" | "video",
+ *   animated?: boolean,
  *   url: string,
  *   proxyUrl?: string,
  *   poster?: string,

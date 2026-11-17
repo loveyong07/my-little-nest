@@ -13,7 +13,7 @@ try {
     if (await fetch(origin).then((r) => r.ok).catch(() => false)) break;
     await new Promise((resolve) => setTimeout(resolve, 200));
   }
-  browser = await chromium.launch({ channel: "chrome" });
+  browser = await chromium.launch({ channel: process.env.QA_BROWSER || "chrome" });
   const fixture = readFileSync("scripts/qa/fixtures/feed.json");
   const profile = readFileSync("scripts/qa/fixtures/profile.json");
   const image = readFileSync("public/assets/og-cover.jpg");

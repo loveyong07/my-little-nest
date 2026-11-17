@@ -39,6 +39,11 @@ export function App() {
     };
   }, [page, postsReady, extrasReady]);
   const sceneActive = useSceneActivity(page);
+  const extras = extrasReady ? (
+    <Suspense fallback={null}>
+      <FantasyExtras language={language} page={page} preferences={preferences} />
+    </Suspense>
+  ) : null;
   const header = (
     <Header page={page} t={t} language={language} changeLanguage={changeLanguage} onNavigate={navigatePage} />
   );
@@ -65,7 +70,7 @@ export function App() {
         </div>
       )}
       {page === "home" ? (
-        <HeroSection header={header} language={language} t={t} profile={profile} />
+        <HeroSection header={header} language={language} t={t} profile={profile} extras={extras} />
       ) : (
         <>
           <RouteHero page={page} t={t} header={header} />
@@ -93,11 +98,7 @@ export function App() {
           <PageFooter t={t} page={page} />
         </>
       )}
-      {extrasReady && (
-        <Suspense fallback={null}>
-          <FantasyExtras language={language} page={page} preferences={preferences} />
-        </Suspense>
-      )}
+      {page !== "home" && extras}
       {page !== "home" && <DesktopStationery page={page} />}
       <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
         {t.nav[navIds.indexOf(page)]}

@@ -3,6 +3,7 @@ import { canPrefetch } from "../utils/network.js";
 import { pagePaths, resolvePage, siteNavigation } from "../routes/site-route.js";
 import { scenePreloads } from "../routes/scene-assets.js";
 import { hasAgeConfirmation } from "../utils/age-confirmation.js";
+import { syncSiteMetadata } from "../routes/site-metadata.js";
 
 export { pagePaths };
 
@@ -60,6 +61,8 @@ export function takeEarlyFeed() {
 export function useSiteRoute() {
   const [page, setPage] = useState(currentPage);
   const previousPage = useRef(page);
+
+  useEffect(() => syncSiteMetadata(page), [page]);
 
   useEffect(() => {
     if (previousPage.current === page) return;

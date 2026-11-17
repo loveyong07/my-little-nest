@@ -65,9 +65,9 @@ export function XArticlesSection({
       : block,
   );
   const translation = useContentTranslation(segments);
-  const recovering = ["stale", "unavailable"].includes(articleState);
+  const recovering = !feedLoading && ["stale", "unavailable"].includes(articleState);
   const message =
-    articleState === "loading"
+    feedLoading || articleState === "loading"
       ? t.articlesLoading
       : articleState === "none"
         ? t.articlesEmpty

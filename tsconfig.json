@@ -5,6 +5,7 @@
     "moduleResolution": "bundler",
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "allowJs": true,
+    "jsx": "react-jsx",
     "checkJs": true,
     "noEmit": true,
     "strict": false,
@@ -30,11 +31,7 @@
     "server/x-video.mjs",
     "api/*.js",
     "worker/index.js",
-    "src/request-cache.js",
-    "src/feed-cache.js",
-    "src/profile-cache.js",
-    "src/media-urls.js",
-    "src/utils/article-reading.js",
-    "src/utils/feed-reading.js"
+    "src/**/*.js",
+    "src/**/*.jsx"
   ]
 }
