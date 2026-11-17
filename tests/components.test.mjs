@@ -12,6 +12,7 @@ globalThis.window = dom.window;
 globalThis.document = dom.window.document;
 Object.defineProperty(globalThis, "navigator", { configurable: true, value: dom.window.navigator });
 globalThis.HTMLElement = dom.window.HTMLElement;
+globalThis.Element = dom.window.Element;
 globalThis.Node = dom.window.Node;
 globalThis.Event = dom.window.Event;
 globalThis.MouseEvent = dom.window.MouseEvent;
@@ -1071,6 +1072,54 @@ test("post photo failures and retries stay separate from a failed video", async 
   await view.unmount();
 });
 
+test("every video and GIF has independent retries and opens its own preview in all languages", async (context) => {
+  context.mock.method(window.HTMLMediaElement.prototype, "pause", () => {});
+  context.mock.method(window.HTMLMediaElement.prototype, "load", () => {});
+  const previousReducedMotion = systemReducedMotion;
+  systemReducedMotion = true;
+  try {
+    for (const language of ["zh", "ja", "en"]) {
+      resetDom();
+      const media = [1, 2, 3].map((number) => ({
+        type: "video",
+        url: `https://video.twimg.com/ext_tw_video/${number}/pu/vid/movie.mp4`,
+        ...(number === 3 ? { animated: true } : {}),
+      }));
+      const view = await mount(
+        React.createElement(PostCard, {
+          post: { ...SNAPSHOT, media },
+          feedSource: "live",
+          language,
+          t: copy[language],
+          profile: { username: "loveyong07" },
+        }),
+      );
+      const frames = view.container.querySelectorAll(".post-video");
+      assert.equal(frames.length, 3);
+      assert.equal(frames[2].querySelector("video").loop, true);
+      assert.equal(frames[2].querySelector("video").muted, true);
+      assert.equal(frames[2].querySelector("video").autoplay, false, "reduced motion prevents GIF autoplay");
+      const firstSource = frames[0].querySelector("source").src;
+      await React.act(async () => frames[1].querySelector("video").dispatchEvent(new Event("error")));
+      assert.equal(frames[0].querySelector("source").src, firstSource);
+      assert.ok(frames[2].querySelector("video"));
+      await React.act(async () => frames[1].querySelector(".post-media-unavailable button").click());
+      assert.equal(new URL(frames[1].querySelector("source").src).searchParams.get("retry"), "1");
+      assert.equal(new URL(firstSource).searchParams.has("retry"), false);
+      await React.act(async () => frames[1].querySelector(".post-video-open").click());
+      const previewSource = new URL(document.querySelector(".media-lightbox source").src);
+      assert.equal(previewSource.searchParams.get("url"), media[1].url);
+      assert.equal(previewSource.searchParams.get("retry"), "1");
+      await React.act(async () => document.querySelector(".media-lightbox-close").click());
+      assert.equal(document.activeElement, frames[1].querySelector(".post-video-open"));
+      assert.equal(frames[0].querySelector("source").src, firstSource);
+      await view.unmount();
+    }
+  } finally {
+    systemReducedMotion = previousReducedMotion;
+  }
+});
+
 test("late media events cannot change a newer source or retry attempt", async () => {
   resetDom();
   let request;
@@ -1502,6 +1551,12 @@ test("Posts opens on the latest feed post and preserves only an explicitly selec
     now += 16 * 60_000;
     view = await mount(element());
     assert.equal(shownText(), third.text);
+    assert.equal(view.container.querySelector(".feed-status-copy span")?.textContent, copy.en.feedRefreshing);
+    assert.equal(
+      view.container.querySelector(".feed-status-actions"),
+      null,
+      "a pending cache refresh is not a failure",
+    );
     await deliver([fourth, third, second, first, SNAPSHOT]);
     assert.equal(shownText(), fourth.text);
   } finally {

@@ -11,10 +11,12 @@
       "regions": ["hkg1"]
     },
     "api/x-posts.js": {
-      "regions": ["hkg1"]
+      "regions": ["hkg1"],
+      "maxDuration": 30
     },
     "api/x-profile.js": {
-      "regions": ["hkg1"]
+      "regions": ["hkg1"],
+      "maxDuration": 30
     },
     "api/starrygal.js": {
       "regions": ["hkg1"],

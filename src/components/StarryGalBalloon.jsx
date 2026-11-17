@@ -1,12 +1,52 @@
-import { useId } from "react";
+import { useEffect, useId, useRef } from "react";
 import { FaArrowUpRightFromSquare, FaGithub } from "react-icons/fa6";
 import { STARRY_GAL_REPOSITORY } from "../constants/site.js";
+import { DESKTOP_FIT_QUERY } from "../constants/media-queries.js";
 
-export function StarryGalBalloon({ t }) {
+export function StarryGalBalloon({ t, contentRef }) {
   const id = useId();
+  const skyRef = useRef(null);
+  useEffect(() => {
+    const sky = skyRef.current;
+    const content = contentRef.current;
+    const desktop = window.matchMedia(DESKTOP_FIT_QUERY);
+    let frame;
+    const measure = () => {
+      const bounds = content.getBoundingClientRect();
+      const hero = sky.closest(".hero").getBoundingClientRect();
+      const header = sky.closest(".hero").querySelector(".site-header").getBoundingClientRect();
+      const topSpace = bounds.top - header.bottom - 24;
+      const topWidth = Math.min(88, Math.floor((topSpace - 64) / 1.1));
+      const topLane = !desktop.matches && topWidth >= 60;
+      const width = topLane ? topWidth : desktop.matches ? 144 : 88;
+      const left = topLane ? 16 : Math.ceil(bounds.right) + 24;
+      sky.dataset.lane = topLane ? "top" : "side";
+      sky.style.setProperty("--balloon-width", `${width}px`);
+      sky.style.setProperty("--flight-top", `${topLane ? header.bottom - hero.top + 12 : header.bottom + 12}px`);
+      sky.style.setProperty("--flight-left", `${left}px`);
+      if (topLane) sky.style.removeProperty("--flight-x");
+      else sky.style.setProperty("--flight-x", `${Math.max(0, Math.min(120, innerWidth - left - width - 24))}px`);
+      sky.dataset.ready = String(topLane || innerWidth - left - 24 >= width);
+    };
+    const schedule = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(measure);
+    };
+    const observer = new ResizeObserver(schedule);
+    observer.observe(content);
+    window.addEventListener("resize", schedule);
+    desktop.addEventListener("change", schedule);
+    schedule();
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      window.removeEventListener("resize", schedule);
+      desktop.removeEventListener("change", schedule);
+    };
+  }, [contentRef]);
 
   return (
-    <div className="starrygal-sky">
+    <div className="starrygal-sky" ref={skyRef} data-ready="false">
       <div className="starrygal-flight">
         <a
           className="starrygal-balloon"

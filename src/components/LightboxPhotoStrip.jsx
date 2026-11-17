@@ -95,7 +95,12 @@ export function LightboxPhotoStrip({ photos, index, onChange, t, photoAlt, close
       }}
       onPointerDown={(event) => {
         programmaticTarget.current = null;
-        if (event.pointerType !== "mouse" || event.button !== 0 || photos.length < 2 || event.target.closest("button"))
+        if (
+          event.pointerType !== "mouse" ||
+          event.button !== 0 ||
+          photos.length < 2 ||
+          (event.target instanceof Element && event.target.closest("button"))
+        )
           return;
         gesture.current = { x: event.clientX, left: event.currentTarget.scrollLeft, moved: false };
       }}

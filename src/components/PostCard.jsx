@@ -1,15 +1,14 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { FaArrowRight, FaXTwitter } from "react-icons/fa6";
-import { FiCheck, FiLink, FiMaximize2, FiRepeat } from "react-icons/fi";
+import { FiCheck, FiLink, FiRepeat } from "react-icons/fi";
 import { FALLBACK_AVATAR, ASSETS } from "../constants/site.js";
 import { handleAvatarError } from "../utils/profile.js";
 import { formatPostDate } from "../utils/date.js";
-import { mediaDimensions, mediaFrameRatio } from "../utils/posts.js";
-import { xMediaSrc, xVideoSrc } from "../media-urls.js";
+import { xMediaSrc } from "../media-urls.js";
 import { useClipboard } from "../hooks/useClipboard.js";
 import { useDesktopLayout } from "../hooks/useDesktopLayout.js";
-import { useMediaRequest } from "../hooks/useMediaRequest.js";
 import { PhotoGallery } from "./PhotoGallery.jsx";
+import { PostVideo } from "./PostVideo.jsx";
 import { MediaLightbox } from "./MediaLightbox.jsx";
 import { CopyFallback } from "./ContactTile.jsx";
 import { displayXText } from "../utils/x-text.js";
@@ -18,7 +17,16 @@ import { translatableParts, translatedPartText } from "../utils/translation.js";
 import { useContentTranslation } from "../hooks/useContentTranslation.js";
 import { ContentTranslationControl } from "./ContentTranslationControl.jsx";
 
-export function PostCard({ post, feedSource, language, t, label, profile, priorityMedia = false, nextPost }) {
+export function PostCard({
+  post,
+  feedSource,
+  language,
+  t,
+  label = undefined,
+  profile,
+  priorityMedia = false,
+  nextPost = null,
+}) {
   const desktop = useDesktopLayout();
   const { copiedId, copyFailedId, manualCopyRef, copyId } = useClipboard();
   const text = displayXText(post.text);
@@ -40,22 +48,13 @@ export function PostCard({ post, feedSource, language, t, label, profile, priori
         .filter((media) => (media?.type ?? "photo") === "photo")
         .map((media) => ({ ...media, src: xMediaSrc(media?.url, false, media?.proxyUrl) }))
     : [];
-  const video = Array.isArray(post.media) ? post.media.find((media) => media?.type === "video") : null;
-  const videoSrc = video ? xVideoSrc(video.url, video.proxyUrl) : null;
+  const videos = Array.isArray(post.media) ? post.media.filter((media) => media?.type === "video") : [];
   const [photoIndex, setPhotoIndex] = useState(0);
   const [expandedMedia, setExpandedMedia] = useState(null);
   const returnFocusRef = useRef(null);
-  const videoPlayerRef = useRef(null);
-  const videoRetryRef = useRef(null);
   const currentPhotoIndex = Math.min(photoIndex, photos.length - 1);
   const currentPhoto = photos[currentPhotoIndex];
-  const videoDimensions = mediaDimensions(video);
-  const videoRequest = useMediaRequest(videoSrc);
-  useEffect(() => {
-    if (videoRequest.retryCount > 0) (videoRequest.unavailable ? videoRetryRef : videoPlayerRef).current?.focus();
-  }, [videoRequest.retryCount, videoRequest.unavailable]);
   function openMedia(kind, event) {
-    if (kind === "video") event.currentTarget.parentElement.querySelector("video")?.pause();
     returnFocusRef.current = event.currentTarget;
     setExpandedMedia(kind);
   }
@@ -115,49 +114,9 @@ export function PostCard({ post, feedSource, language, t, label, profile, priori
             t={t}
           />
         )}
-        {video && (
-          <div className="post-video post-video-frame" style={{ aspectRatio: mediaFrameRatio(video, 16 / 9) }}>
-            {videoRequest.unavailable || !videoSrc ? (
-              <div className="post-media-unavailable" role="status">
-                <span>{t.videoUnavailable}</span>
-                {videoSrc && (
-                  <button ref={videoRetryRef} type="button" onClick={videoRequest.retry}>
-                    {t.retry}
-                  </button>
-                )}
-              </div>
-            ) : (
-              <>
-                <video
-                  ref={videoPlayerRef}
-                  key={videoRequest.src}
-                  controls
-                  playsInline
-                  preload="none"
-                  tabIndex="0"
-                  poster={xMediaSrc(video.poster, false, video.posterProxyUrl) || undefined}
-                  width={videoDimensions?.width}
-                  height={videoDimensions?.height}
-                  aria-label={video.alt || t.postVideoAlt}
-                  onError={videoRequest.onError}
-                >
-                  <source src={videoRequest.src} type="video/mp4" />
-                </video>
-                <button
-                  className="post-video-open"
-                  type="button"
-                  aria-label={t.enlargeVideo}
-                  onClick={(event) => openMedia("video", event)}
-                >
-                  <span className="post-video-expand">
-                    <FiMaximize2 aria-hidden="true" />
-                    {t.enlargeVideo}
-                  </span>
-                </button>
-              </>
-            )}
-          </div>
-        )}
+        {videos.map((video, index) => (
+          <PostVideo key={`${video.url}-${index}`} video={video} t={t} />
+        ))}
         {isSnapshot && (
           <figure className="post-illustration">
             <img src={`${ASSETS}/post-seaside.webp`} alt={t.imageAlt} loading="lazy" decoding="async" />
@@ -192,7 +151,7 @@ export function PostCard({ post, feedSource, language, t, label, profile, priori
         )}
         <div className="glass-panel-backdrop glass-reading-backdrop" aria-hidden="true" />
       </article>
-      {expandedMedia && (expandedMedia === "photo" ? currentPhoto : video) && (
+      {expandedMedia && currentPhoto && (
         <MediaLightbox
           kind={expandedMedia}
           photo={currentPhoto ? { ...currentPhoto, src: currentPhoto.src, number: currentPhotoIndex + 1 } : null}
@@ -200,8 +159,6 @@ export function PostCard({ post, feedSource, language, t, label, profile, priori
           photoCount={photos.length}
           onPhotoChange={setPhotoIndex}
           photoAlt={t.postPhotoAlt(currentPhotoIndex + 1)}
-          video={video}
-          videoSrc={videoRequest.src}
           t={t}
           onClose={setExpandedMedia}
           returnFocusRef={returnFocusRef}

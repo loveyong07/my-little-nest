@@ -14,7 +14,7 @@
     linear-gradient(135deg, #f9fcfe1f, #e7f4ff0d 60%, #ffffff1a);
   --glass-panel-fill: linear-gradient(135deg, #ffffff29, #e8f3ff1a 60%, #ffffff24);
   --glass-tile-fill: linear-gradient(135deg, #ffffff4d, #f4f9ff66);
-  --glass-reading-fill: linear-gradient(135deg, #ffffff6b, #f9fcfe80);
+  --glass-reading-fill: linear-gradient(135deg, #fbfdffb8, #f4f9ffcc);
   --glass-control-fill: linear-gradient(135deg, #ffffff94, #f4f9ffad);
   --glass-text-halo: 0 1px 2px #ffffffbf, 0 0 6px #ffffff66;
   --glass-tile-blur: 3px;
@@ -261,7 +261,7 @@
       linear-gradient(135deg, #f9fcfe2e, #e7f4ff1f 60%, #ffffff29);
     --glass-panel-fill: linear-gradient(135deg, #ffffff33, #e8f3ff24 60%, #ffffff2e);
     --glass-tile-fill: linear-gradient(135deg, #ffffff5c, #f4f9ff73);
-    --glass-reading-fill: linear-gradient(135deg, #ffffff7a, #f9fcfe8c);
+    --glass-reading-fill: linear-gradient(135deg, #fbfdffcf, #f4f9ffde);
     --glass-tile-blur: 2.5px;
     --glass-email-blur: 3px;
     --glass-reading-blur: 4.5px;

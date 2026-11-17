@@ -150,12 +150,24 @@ const pageHelpers = () => {
 async function settle(page) {
   await page.evaluate(async () => {
     await document.fonts.ready;
-    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-    for (const animation of document.getAnimations()) {
-      if (animation instanceof CSSTransition) animation.finish();
-      else { animation.pause(); animation.currentTime = 0; }
+    // Scroll/resize observers and React can commit on the next frame. Settle the
+    // resulting transitions too, rather than sampling halfway through that work.
+    for (let pass = 0; pass < 2; pass++) {
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      for (const animation of document.getAnimations()) {
+        if (animation instanceof CSSTransition) animation.finish();
+        else { animation.pause(); animation.currentTime = 0; }
+      }
     }
   });
+  await page.waitForFunction(() => {
+    const positions = [scrollX, scrollY, ...[...document.querySelectorAll(".post-photo-track, .post-index, .article-timeline")].flatMap((element) => [element.scrollLeft, element.scrollTop])].join(",");
+    if (window.__qaScrollSample?.positions !== positions) {
+      window.__qaScrollSample = { positions, at: performance.now() };
+      return false;
+    }
+    return performance.now() - window.__qaScrollSample.at >= 100;
+  }, null, { polling: "raf", timeout: 5000 });
 }
 
 async function finishAnimationsForScreenshot(page) {
@@ -188,7 +200,7 @@ async function prepareContext(browser, scenario) {
     "pin-unavailable": { status: 200, body: { ...JSON.parse(feed), pinnedPost: null, pinnedStatus: "unavailable" } },
   };
   await context.route(/\/api\/x-posts(?:\?|$)/, (route) => {
-    // "loading" leaves the request pending; captures finish well before the 12 s client timeout.
+    // "loading" leaves the request pending; captures finish before the client deadline.
     if (scenario.feed === "loading") return;
     const response = feedResponses[scenario.feed];
     return response
@@ -234,16 +246,21 @@ async function load(page, scenario) {
     await page.waitForFunction(() => [...document.fonts].some((font) => font.family.includes("ZCOOL")), null, { timeout: 15000 });
   }
   // Extras wait for the feed; use their stylesheet so readiness doesn't depend on controls.
-  if (scenario.feed !== "loading" && !scenario.ageGate) await page.waitForSelector("link[rel='stylesheet'][href*='/FantasyExtras-']", { state: "attached", timeout: 15000 });
-  // Bring lazy media into range once so every capture sees loaded images.
-  await page.evaluate(async () => {
-    window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" });
-    await new Promise((resolve) => setTimeout(resolve, 150));
-    window.scrollTo({ top: 0, behavior: "instant" });
+  if (scenario.feed !== "loading" && !scenario.ageGate) {
+    await page.waitForSelector("link[rel='stylesheet'][href*='/FantasyExtras-']", { state: "attached", timeout: 15000 });
+    if (scenario.page !== "home") await page.waitForSelector(".scroll-progress-track", { state: "attached" });
+    else if (!scenario.reducedMotion) await page.waitForSelector(".nest-atmosphere", { state: "attached" });
+  }
+  // A single jump to the bottom never visits the middle Article photos. Eagerly
+  // decode the already-mounted fixture images, keeping their URLs and positions.
+  await page.evaluate(() => {
+    for (const image of document.images) image.loading = "eager";
   });
-  await page.waitForFunction(() => !document.querySelector(".post-media-loading"), null, { timeout: 15000 }).catch(() => {});
-  await page.evaluate(() => Promise.all([...document.images].map((image) => image.complete ? null
-    : new Promise((resolve) => { image.addEventListener("load", resolve, { once: true }); image.addEventListener("error", resolve, { once: true }); setTimeout(resolve, 3000); }))));
+  await page.waitForFunction(() => [...document.images].every((image) => image.complete), null, { timeout: 15000 });
+  await page.evaluate(() => Promise.all([...document.images].map((image) => image.decode().catch(() => {}))));
+  await page.waitForFunction(() => [...document.querySelectorAll(".post-media-open")].every((button) =>
+    !button.querySelector("img") || !button.querySelector(".post-media-loading")), null, { timeout: 15000 });
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
   await settle(page);
 }
 
@@ -260,6 +277,7 @@ async function act(page, scenario) {
     assert.ok(hit, "Contact must have a visible, clickable 44px menu target");
     await contact.click();
     await page.waitForURL(ORIGIN + "/contact");
+    await page.waitForSelector(".contacts-section .contact-tile", { timeout: 15000 });
     assert.equal(await page.locator(".menu-toggle").getAttribute("aria-expanded"), "false");
   }
   if (scenario.action === "photo" || scenario.action === "photo-keyboard") {
@@ -389,10 +407,11 @@ async function runScenario(browser, scenario, outDir) {
 // ---------------------------------------------------------------- capture / compare
 
 async function waitForServer() {
+  const expectedEntry = readFileSync(path.join(root, "dist/client/index.html"), "utf8").match(/src="([^"]+\.js)"/)?.[1];
   for (let attempt = 0; attempt < 100; attempt++) {
     try {
       const response = await fetch(ORIGIN + "/");
-      if (response.ok) return;
+      if (response.ok && expectedEntry && (await response.text()).includes(expectedEntry)) return;
     } catch { /* Not listening yet. */ }
     await new Promise((resolve) => setTimeout(resolve, 200));
   }

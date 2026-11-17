@@ -16,7 +16,7 @@ import { LetterSeaside } from "./ScrapbookAccents.jsx";
 import { fantasyCopy } from "../constants/fantasy.js";
 import { StarryGalBalloon } from "./StarryGalBalloon.jsx";
 
-export function HeroSection({ header, language, t, profile }) {
+export function HeroSection({ header, language, t, profile, extras = null }) {
   const heroRef = useRef(null);
   const introRef = useRef(null);
   useLayoutEffect(() => {
@@ -28,8 +28,7 @@ export function HeroSection({ header, language, t, profile }) {
         hero.style.removeProperty("--home-fit");
         return;
       }
-      const headerHeight = hero.querySelector(".site-header").offsetHeight;
-      const available = Math.max(1, innerHeight - headerHeight - 110);
+      const available = Math.max(1, innerHeight - intro.getBoundingClientRect().top - 44);
       hero.style.setProperty("--home-fit", String(Math.min(1, available / intro.offsetHeight)));
     };
     const observer = new ResizeObserver(fit);
@@ -109,6 +108,7 @@ export function HeroSection({ header, language, t, profile }) {
         )}
       </div>
       {header}
+      {extras}
       <div className="hero-layout">
         <div className="hero-intro-stack" ref={introRef}>
           <div className="hero-copy">
@@ -214,7 +214,7 @@ export function HeroSection({ header, language, t, profile }) {
         <span>SAME SKY. MORE GOOD FRIENDS.</span>
       </div>
       <DesktopStationery />
-      <StarryGalBalloon t={t} />
+      <StarryGalBalloon t={t} contentRef={introRef} />
     </section>
   );
 }

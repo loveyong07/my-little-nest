@@ -255,7 +255,7 @@
     mask-image: linear-gradient(to bottom, #0006, #000b 36%, #000 100%);
   }
   .article-frost-backdrop::after {
-    background: linear-gradient(160deg, #ffffff33, #f0f5ff66 55%, #f9fcfe99), var(--glass-panel-fill);
+    background: var(--glass-reading-fill), var(--glass-panel-fill);
   }
 }
 

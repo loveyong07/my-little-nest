@@ -9,7 +9,7 @@ export function useSectionEntrance(scopeRef) {
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
-          if (!entry.isIntersecting) continue;
+          if (!entry.isIntersecting || !(entry.target instanceof HTMLElement)) continue;
           entry.target.dataset.revealed = "true";
           observer.unobserve(entry.target);
         }

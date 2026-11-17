@@ -2,6 +2,24 @@ import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { pagePaths, resolvePage } from "../src/routes/site-route.js";
 import { scenePreloads } from "../src/routes/scene-assets.js";
+import { siteMetadata } from "../src/routes/site-metadata.js";
+
+export function withRouteMetadata(html, page) {
+  const meta = siteMetadata(page);
+  const escape = (value) => value.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+  return html
+    .replace(/<meta\b[^>]*>/g, (tag) => {
+      const value = /(?:name|property)="(?:description|og:description|twitter:description)"/.test(tag)
+        ? meta.description
+        : /property="og:url"/.test(tag)
+          ? meta.url
+          : /name="robots"/.test(tag)
+            ? meta.robots
+            : null;
+      return value === null ? tag : tag.replace(/content="[^"]*"/, `content="${escape(value)}"`);
+    })
+    .replace(/<link\b[^>]*rel="canonical"[^>]*>/, `<link rel="canonical" href="${meta.url}" />`);
+}
 
 export function withScenePreloads(html, page) {
   const links = scenePreloads(page)
@@ -42,7 +60,8 @@ export function scenePreloadPlugin() {
     },
     transformIndexHtml(html, context) {
       const pathname = new URL(context.originalUrl ?? context.path, "http://localhost").pathname;
-      return withFontPreloads(withScenePreloads(html, resolvePage(pathname)), context.bundle);
+      const page = resolvePage(pathname);
+      return withFontPreloads(withScenePreloads(withRouteMetadata(html, page), page), context.bundle);
     },
     closeBundle() {
       if (!building) return;
@@ -50,7 +69,7 @@ export function scenePreloadPlugin() {
       const directory = path.join(outputDirectory, "route-shells");
       mkdirSync(directory, { recursive: true });
       for (const page of Object.keys(pagePaths).filter((page) => page !== "home")) {
-        writeFileSync(path.join(directory, `${page}.html`), withScenePreloads(html, page));
+        writeFileSync(path.join(directory, `${page}.html`), withRouteMetadata(withScenePreloads(html, page), page));
       }
     },
     configurePreviewServer(server) {

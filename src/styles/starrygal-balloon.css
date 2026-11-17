@@ -3,10 +3,11 @@
   --balloon-width: 144px;
   --balloon-height: 230px;
   --flight-edge: 22px;
+  --flight-left: 56vw;
   --flight-start-x: 0.56;
   --flight-top: calc(104px + env(safe-area-inset-top, 0px));
   --flight-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
-  --flight-x: max(0px, calc(100vw - var(--balloon-width) - 2 * var(--flight-edge)));
+  --flight-x: max(0px, calc(100vw - var(--balloon-width) - var(--flight-left) - var(--flight-edge)));
   --flight-y: max(0px, calc(100svh - var(--balloon-height) - var(--flight-top) - var(--flight-bottom)));
   position: fixed;
   z-index: 3;
@@ -14,10 +15,19 @@
   pointer-events: none;
 }
 
+.starrygal-sky[data-ready="false"] {
+  visibility: hidden;
+}
+
+.starrygal-sky[data-lane="top"] {
+  position: absolute;
+  --flight-y: 0px;
+}
+
 .starrygal-flight {
   position: absolute;
   top: var(--flight-top);
-  left: var(--flight-edge);
+  left: var(--flight-left);
   width: var(--balloon-width);
   transform: translate3d(calc(var(--flight-x) * var(--flight-start-x)), calc(var(--flight-y) * 0.04), 0);
   animation: starrygal-flight 176s cubic-bezier(0.45, 0, 0.55, 1) infinite;

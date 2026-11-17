@@ -5,8 +5,8 @@ import { cacheRepostData } from "./utils/repost-reading.js";
 
 export { canPrefetch };
 
-// Refetch feeds saved before canonical repost media was resolved.
-const KEY = "little-nest-feed-v8";
+// Refetch feeds that could have silently omitted GIF attachments or GIF-only posts.
+const KEY = "little-nest-feed-v9";
 const MAX_AGE = SUCCESS_MAX_AGE_MS;
 
 /**

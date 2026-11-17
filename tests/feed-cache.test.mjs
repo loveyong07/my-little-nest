@@ -12,7 +12,7 @@ function storage() {
   };
 }
 
-test("feeds cached before canonical repost media are refetched", () => {
+test("feeds cached before GIF-complete media are refetched", () => {
   const store = storage();
   const feed = { status: "ok", posts: [], pinnedStatus: "none" };
   store.setItem("little-nest-feed-v1", JSON.stringify({ savedAt: 1000, feed }));
@@ -22,6 +22,7 @@ test("feeds cached before canonical repost media are refetched", () => {
   store.setItem("little-nest-feed-v5", JSON.stringify({ savedAt: 1000, feed }));
   store.setItem("little-nest-feed-v6", JSON.stringify({ savedAt: 1000, feed }));
   store.setItem("little-nest-feed-v7", JSON.stringify({ savedAt: 1000, feed }));
+  store.setItem("little-nest-feed-v8", JSON.stringify({ savedAt: 1000, feed }));
   assert.equal(readFeedCache(store, 1001), null);
   writeFeedCache(store, feed, 1002);
   assert.deepEqual(readFeedCache(store, 1003), { savedAt: 1002, feed });
@@ -106,7 +107,7 @@ test("confirmed Articles and confirmed empty collections survive caching", () =>
 test("cached partial Article responses cannot become fresh Articles", () => {
   const store = storage();
   store.setItem(
-    "little-nest-feed-v8",
+    "little-nest-feed-v9",
     JSON.stringify({
       savedAt: 1000,
       feed: { status: "ok", posts: [], articles: [{ id: "456" }], articlesStatus: "stale" },

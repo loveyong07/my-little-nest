@@ -189,7 +189,7 @@ export function PhotoGallery({ photos, onOpen, priorityMedia, nextPost, t }) {
               event.pointerType !== "mouse" ||
               event.button !== 0 ||
               single ||
-              event.target.closest(".post-media-unavailable")
+              (event.target instanceof Element && event.target.closest(".post-media-unavailable"))
             )
               return;
             gesture.current = { x: event.clientX, left: event.currentTarget.scrollLeft, moved: false };
@@ -221,7 +221,7 @@ export function PhotoGallery({ photos, onOpen, priorityMedia, nextPost, t }) {
           }}
           onFocusCapture={(event) => {
             const tile = event.target.closest(".post-photo-tile");
-            if (!tile || !trackRef.current.clientWidth) return;
+            if (!(tile instanceof HTMLElement) || !trackRef.current.clientWidth) return;
             const number = Number(tile.dataset.photoIndex);
             const item = geometryRef.current[number];
             const track = trackRef.current;

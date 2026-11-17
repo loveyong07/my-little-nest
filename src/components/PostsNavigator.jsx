@@ -20,6 +20,7 @@ export function PostsNavigator({
   library,
 }) {
   const [activeSection, setActiveSection] = useState(targets[0]);
+  const [directoryAway, setDirectoryAway] = useState(false);
   const navRef = useRef(null);
   const desktop = useDesktopLayout();
 
@@ -40,6 +41,7 @@ export function PostsNavigator({
         current = targets.at(-1);
       }
       setActiveSection(current);
+      setDirectoryAway((navRef.current?.getBoundingClientRect().bottom ?? 0) < 0);
     };
     const schedule = () => {
       if (!frame) frame = window.requestAnimationFrame(update);
@@ -75,14 +77,28 @@ export function PostsNavigator({
   ];
 
   return (
-    <nav className="posts-quick-nav" ref={navRef} aria-label={t.postsQuickNavLabel}>
+    <nav className="posts-quick-nav" id="posts-reading-directory" ref={navRef} aria-label={t.postsQuickNavLabel}>
       <div className="reading-directory-heading">
         <FiBookOpen className="directory-cover-icon" aria-hidden="true" />
         <span>THE LITTLE JOURNAL</span>
-        <h2>{t.readingDirectory}</h2>
+        <h2 tabIndex={-1}>{t.readingDirectory}</h2>
         <p>{t.readingDirectoryText}</p>
       </div>
       {library}
+      {directoryAway && (
+        <button
+          type="button"
+          className="reading-directory-return"
+          aria-controls="posts-reading-directory"
+          onClick={() => {
+            navRef.current?.querySelector("h2")?.focus({ preventScroll: true });
+            navRef.current?.scrollIntoView({ block: "start", behavior: preferredScrollBehavior() });
+          }}
+        >
+          <FiBookOpen aria-hidden="true" />
+          {t.returnToDirectory}
+        </button>
+      )}
       <div className="reading-directory-links">
         {sections.map(({ label, icon: Icon, tone, count }, index) => (
           <button
