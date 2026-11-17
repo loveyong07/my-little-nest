@@ -54,6 +54,7 @@ function scenarios() {
   for (const page of Object.keys(pages)) add({ vp: "phone", page, reducedMotion: true });
   for (const vp of ["tablet", "phone"]) for (const page of Object.keys(pages)) add({ vp, page, action: "menu", shot: true });
   for (const vp of ["desktop", "phone"]) {
+    for (const lang of ["zh", "ja", "en"]) add({ vp, page: "posts", lang, action: "search", shot: true });
     add({ vp, page: "posts", action: "photo", shot: true });
     add({ vp, page: "posts", action: "video" });
     for (const feed of ["offline", "loading", "empty", "media-error"]) add({ vp, page: "posts", feed, shot: feed === "offline" });
@@ -265,6 +266,10 @@ async function load(page, scenario) {
 }
 
 async function act(page, scenario) {
+  if (scenario.action === "search") {
+    await page.click(".reading-library-trigger");
+    await page.waitForSelector(".reading-library[open] .library-search input:focus");
+  }
   if (scenario.action === "menu") await page.click(".menu-toggle");
   if (scenario.action === "menu-contact") {
     await page.click(".menu-toggle");

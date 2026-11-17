@@ -19,7 +19,6 @@ import { preferredScrollBehavior } from "../utils/motion.js";
 import { canPrefetch } from "../utils/network.js";
 import { hasAgeConfirmation, rememberAgeConfirmation } from "../utils/age-confirmation.js";
 import { xProfileUrl } from "../constants/site.js";
-import { pagePaths } from "../routes/site-route.js";
 
 function PostControls({ postIndex, total, onChange, t }) {
   return (
@@ -353,18 +352,6 @@ function PostsContent({ language, t, profile, onFeedReady }) {
           t={t}
           profile={profile}
         />
-        <aside className="reading-invitation" aria-labelledby="reading-invitation-heading" data-reveal>
-          <div>
-            <h2 id="reading-invitation-heading" tabIndex={-1}>
-              {t.readingInvitationHeading}
-            </h2>
-            <p>{t.readingInvitationText}</p>
-          </div>
-          <a href={pagePaths.contact}>
-            {t.readingInvitationCta}
-            <FaArrowRight aria-hidden="true" />
-          </a>
-        </aside>
       </div>
       <PostsNavigator
         t={t}

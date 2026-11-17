@@ -1854,11 +1854,13 @@ test("Posts quick navigation pills reflect live section counts and smooth-scroll
     assert.ok(quickNav);
     assert.equal(quickNav.getAttribute("aria-label"), copy.zh.postsQuickNavLabel);
     const pills = [...quickNav.querySelectorAll(".quick-nav-pill")];
-    assert.equal(pills.length, 5);
+    assert.equal(pills.length, 4);
+    assert.equal(view.container.querySelector(".reading-invitation"), null);
+    assert.equal(quickNav.querySelector(".quick-nav-message"), null);
     let scrolled = false;
-    const messageHeading = view.container.querySelector("#reading-invitation-heading");
-    assert.ok(messageHeading);
-    messageHeading.scrollIntoView = () => {
+    const articlesSection = view.container.querySelector("#x-articles");
+    assert.ok(articlesSection);
+    articlesSection.scrollIntoView = () => {
       scrolled = true;
     };
     await React.act(async () => pills.at(-1).click());
