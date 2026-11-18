@@ -24,6 +24,25 @@ test("reading search preserves case-insensitive word, title and empty searches",
   assert.equal(normalizeReadingQuery("２０２６/１/２"), "2026-01-02");
 });
 
+test("search uses displayed X text and decodes legacy escape sequences exactly once", () => {
+  const entry = { item: { title: "A&amp;B", text: "&lt;3 &amp;lt;literal" } };
+  for (const query of ["a&b", "<3", "&lt;literal"]) assert.equal(readingEntryMatches(entry, query, "en"), true);
+  assert.equal(readingEntryMatches(entry, "<literal", "en"), false);
+});
+
+test("a date-only snapshot keeps its calendar date west of UTC", () => {
+  const previous = process.env.TZ;
+  process.env.TZ = "America/Los_Angeles";
+  try {
+    const entry = { item: { text: "Snapshot", created_at: "2026-09-25" } };
+    assert.equal(formatPostDate(entry.item.created_at, "zh"), "2026/09/25");
+    assert.equal(readingEntryMatches(entry, "2026/09/25", "zh"), true);
+    assert.equal(readingEntryMatches(entry, "2026/09/24", "zh"), false);
+  } finally {
+    process.env.TZ = previous;
+  }
+});
+
 test("reposts display their repost date and can be found by either timestamp", () => {
   const repost = { ...item, repostedAt: "2026-11-07T00:10:00.000Z" };
   assert.equal(readingEntryDate("reposts", repost), repost.repostedAt);

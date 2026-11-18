@@ -94,7 +94,7 @@ export function Header({ page, t, language, changeLanguage, onNavigate }) {
               <Icon className="nav-page-icon" aria-hidden="true" />
               <span className="nav-label-stack">
                 {t.nav[index]}
-                <small>{["THE NEST", "JOURNAL", "SAY HELLO"][index]}</small>
+                <small aria-hidden="true">{["THE NEST", "JOURNAL", "SAY HELLO"][index]}</small>
               </span>
             </a>
           );

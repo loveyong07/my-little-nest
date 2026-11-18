@@ -100,6 +100,18 @@ function streamLimitedImage(body, onDone, readChunk, abort) {
   });
 }
 
+function streamBufferedImage(image) {
+  let offset = 0;
+  return new ReadableStream({
+    pull(controller) {
+      const end = Math.min(offset + 64 * 1024, image.byteLength);
+      controller.enqueue(image.subarray(offset, end));
+      offset = end;
+      if (offset === image.byteLength) controller.close();
+    },
+  });
+}
+
 export async function proxyXMedia(
   request,
   fetchImpl = globalThis.fetch,
@@ -162,7 +174,7 @@ export async function proxyXMedia(
           contentType: cached.contentType,
           durationMs: Math.max(0, now() - requestStartedAt),
         });
-        return new Response(cached.image, {
+        return new Response(streamBufferedImage(cached.image), {
           headers: { ...cacheHeaders, "Content-Type": cached.contentType, "X-Nest-Photo-Cache": "hit" },
         });
       }
@@ -252,6 +264,7 @@ export async function proxyXMedia(
     let upstreamDurationMs = 0;
     let encodeDurationMs = 0;
     let encodeFallback = false;
+    let retryEncoding = false;
     const convertToWebp =
       requestUrl.searchParams.get("format") === "webp" && ["image/jpeg", "image/png"].includes(contentType);
     const persistableBody = usePhotoCache && ["image/webp", "image/jpeg", "image/png"].includes(contentType);
@@ -296,7 +309,7 @@ export async function proxyXMedia(
         const encodeStartedAt = now();
         try {
           const converted = await webpEncoder(body.image);
-          if (converted?.byteLength) {
+          if (converted?.byteLength && converted.byteLength <= MAX_IMAGE_BYTES) {
             responseBody = converted;
             contentType = "image/webp";
           } else {
@@ -305,12 +318,13 @@ export async function proxyXMedia(
         } catch {
           // Keep the full-resolution original when conversion is unavailable.
           encodeFallback = true;
+          retryEncoding = true;
         }
         encodeDurationMs = Math.max(0, now() - encodeStartedAt);
       }
     }
 
-    if (usePhotoCache && responseBody instanceof Uint8Array) {
+    if (usePhotoCache && !retryEncoding && responseBody instanceof Uint8Array) {
       const pending = Promise.resolve()
         .then(() => photoCache.write(source.href, responseBody, contentType))
         .catch(() => {});
@@ -325,20 +339,24 @@ export async function proxyXMedia(
       layer: usePhotoCache ? "function_blob" : "upstream_stream",
       cache: usePhotoCache ? "blob_miss" : "bypass",
       outcome: encodeFallback ? "encode_fallback" : "ok",
-      ...(blobError ? { reason: "blob_read_error" } : {}),
+      ...(retryEncoding ? { reason: "encode_exception" } : blobError ? { reason: "blob_read_error" } : {}),
       contentType,
       upstreamDurationMs,
       encodeDurationMs,
       durationMs: Math.max(0, now() - requestStartedAt),
     });
-    const response = new Response(responseBody, {
-      status: 200,
-      headers: {
-        "Content-Type": contentType,
-        ...cacheHeaders,
-        ...(usePhotoCache ? { "X-Nest-Photo-Cache": "miss" } : {}),
+    const response = new Response(
+      responseBody instanceof Uint8Array ? streamBufferedImage(responseBody) : responseBody,
+      {
+        status: 200,
+        headers: {
+          "Content-Type": contentType,
+          ...cacheHeaders,
+          ...(retryEncoding ? { "Cache-Control": "no-store", "Vercel-CDN-Cache-Control": "no-store" } : {}),
+          ...(usePhotoCache ? { "X-Nest-Photo-Cache": "miss" } : {}),
+        },
       },
-    });
+    );
     keepTimeoutForStream = streamingResponse;
     return response;
   } catch {

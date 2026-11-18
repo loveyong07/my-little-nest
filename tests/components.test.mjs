@@ -212,7 +212,8 @@ test("pinned, original and repost cards translate only on click, follow the syst
       assert.equal(calls.detectors, index, "rendering must not start native downloads");
       await React.act(async () => button.click());
       assert.equal(button.textContent, copy.en.translationShowOriginal);
-      assert.equal(button.getAttribute("aria-pressed"), "true");
+      assert.equal(button.hasAttribute("aria-pressed"), false);
+      assert.ok(button.classList.contains("is-showing-translation"));
       assert.equal(view.container.querySelector(".post-text p").lang, "zh-Hant");
       assert.equal(calls.translators.at(-1).targetLanguage, "zh-Hant");
       assert.equal(calls.translators.at(-1).sourceLanguage, "ja");
@@ -1027,6 +1028,31 @@ test("post cards render X entities once as plain text for live and cached posts 
   }
 });
 
+test("post links use persisted X offsets after entity decoding and paragraph breaks", async () => {
+  resetDom();
+  const url = "https://example.com/a日本語";
+  const raw = "上一段\n\nA&amp;B " + url + "很好看";
+  const post = {
+    ...SNAPSHOT,
+    text: raw,
+    links: [{ text: url, url, offset: raw.indexOf(url), length: url.length }],
+  };
+  const view = await mount(
+    React.createElement(PostCard, {
+      post,
+      feedSource: "stale",
+      language: "zh",
+      t: copy.zh,
+      profile: { username: "loveyong07" },
+    }),
+  );
+  const anchor = view.container.querySelector(".post-text a");
+  assert.equal(anchor.textContent, url);
+  assert.equal(anchor.href, new URL(url).href);
+  assert.equal(anchor.parentElement.textContent, "A&B " + url + "很好看");
+  await view.unmount();
+});
+
 test("post photo failures and retries stay separate from a failed video", async () => {
   resetDom();
   const photos = ["One", "Two"].map((name) => ({ type: "photo", url: `https://pbs.twimg.com/media/Test${name}.jpg` }));
@@ -1162,6 +1188,7 @@ test("post photo strips retain all twenty photos and enlarge the exact clicked p
   );
   const buttons = view.container.querySelectorAll(".post-media-open");
   assert.equal(buttons.length, 20);
+  assert.equal(view.container.querySelectorAll('.post-photo-browser [role="status"]').length, 1);
   assert.equal(
     view.container.querySelectorAll(".post-photo-tile img").length,
     2,

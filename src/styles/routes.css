@@ -113,6 +113,22 @@
   }
 }
 
+@media (max-width: 900px), (pointer: coarse), (pointer: none) {
+  .route-page-title h1 {
+    position: relative;
+    isolation: isolate;
+    text-shadow: 0 1px 4px #1a3c5f;
+  }
+  .route-page-title h1::before {
+    position: absolute;
+    z-index: -1;
+    inset: -4px -7px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #234c76c0, #285581b8);
+    content: "";
+  }
+}
+
 @media (max-width: 700px) {
   .route-page-kicker {
     gap: 6px;

@@ -120,6 +120,7 @@ export async function authorizedMediaRequest(
   const expiresText = params.get("expires");
   const signature = params.get("signature");
   if (expiresText === null && signature === null) return !format && (legacy[kind]?.has(source.href) ?? false);
+  if (params.get("url") !== source.href) return false;
   if (!/^\d{10}$/.test(expiresText ?? "") || !/^[a-f0-9]{64}$/.test(signature ?? "")) return false;
   const expires = Number(expiresText);
   const nowSeconds = Math.floor(now / 1000);

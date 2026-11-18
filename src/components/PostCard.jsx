@@ -17,6 +17,35 @@ import { translatableParts, translatedPartText } from "../utils/translation.js";
 import { useContentTranslation } from "../hooks/useContentTranslation.js";
 import { ContentTranslationControl } from "./ContentTranslationControl.jsx";
 
+function postParagraphs(post, segments) {
+  const links = Array.isArray(post.links) ? post.links : [];
+  const paragraphs = [];
+  let end = 0;
+  for (const [index, raw] of post.text.split(/((?:\r?\n){2,})/).entries()) {
+    const start = end;
+    end += raw.length;
+    if (index % 2 !== 0) continue;
+    // Server positions refer to raw post text. Decode each prefix and label
+    // once so their positions still match the displayed paragraph.
+    const positionedLinks = links.flatMap((link) => {
+      if (
+        !Number.isSafeInteger(link?.offset) ||
+        !Number.isSafeInteger(link?.length) ||
+        link.offset < start ||
+        link.length < 1 ||
+        link.offset + link.length > end
+      )
+        return [];
+      const offset = link.offset - start;
+      if (raw.slice(offset, offset + link.length) !== link.text) return [];
+      const text = displayXText(link.text);
+      return [{ ...link, text, offset: displayXText(raw.slice(0, offset)).length, length: text.length }];
+    });
+    paragraphs.push(translatableParts(textLinkParts(displayXText(raw), positionedLinks), segments));
+  }
+  return paragraphs;
+}
+
 export function PostCard({
   post,
   feedSource,
@@ -31,9 +60,7 @@ export function PostCard({
   const { copiedId, copyFailedId, manualCopyRef, copyId } = useClipboard();
   const text = displayXText(post.text);
   const segments = [];
-  const paragraphs = text
-    .split(/(?:\r?\n){2,}/)
-    .map((paragraph) => translatableParts(textLinkParts(paragraph), segments));
+  const paragraphs = postParagraphs(post, segments);
   const translation = useContentTranslation(segments);
   const isSnapshot = feedSource === "snapshot";
   const sourceLabel =

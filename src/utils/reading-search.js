@@ -1,4 +1,5 @@
-import { formatLocalDate, formatPostDate } from "./date.js";
+import { formatLocalDate, formatPostDate, isCalendarDate } from "./date.js";
+import { displayXText } from "./x-text.js";
 
 export function readingEntryDate(type, item) {
   return (type === "reposts" && item.repostedAt) || item.created_at;
@@ -21,8 +22,10 @@ export function readingEntryMatches({ item }, query, language) {
   // Match both timestamps for reposts, including the visitor's displayed local
   // date. Raw ISO dates remain searchable for readers who use that format.
   const dates = [item.created_at, item.repostedAt].filter(Boolean).flatMap((value) => {
+    if (isCalendarDate(value)) return [value, formatPostDate(value, language)];
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? [] : [value, formatLocalDate(date), formatPostDate(value, language)];
   });
-  return normalizeReadingQuery([item.title, item.text, ...dates].filter(Boolean).join(" ")).includes(needle);
+  const text = [item.title, item.text].filter((value) => typeof value === "string").map(displayXText);
+  return normalizeReadingQuery([...text, ...dates].join(" ")).includes(needle);
 }

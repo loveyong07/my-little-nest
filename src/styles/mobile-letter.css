@@ -43,6 +43,9 @@
   .hero-sender .profile strong {
     font-size: 23px;
   }
+  .hero-sender .profile a {
+    min-height: 44px;
+  }
   .hero-sender .bio {
     margin-top: 12px;
     font-size: 14px;

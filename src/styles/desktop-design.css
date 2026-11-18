@@ -762,6 +762,12 @@
     letter-spacing: 0.03em;
     text-shadow: 0 2px 10px #19426de6;
   }
+  .route-hero-posts .route-page-intro {
+    padding: 4px 10px;
+    border-radius: 9px;
+    background: #193956c4;
+    text-shadow: none;
+  }
   .route-garland {
     top: 122px;
     left: clamp(410px, 44vw, 660px);

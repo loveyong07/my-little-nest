@@ -24,8 +24,8 @@ jobs:
           X_MEDIA_SIGNING_SECRET: BUILD_ONLY_MEDIA_SECRET_CANARY_20261013
           BLOB_READ_WRITE_TOKEN: BUILD_ONLY_BLOB_TOKEN_CANARY_20261022
         run: npm run check
-      - name: Fail on moderate or higher dependency advisories
-        run: npm audit --audit-level=moderate
+      - name: Audit production and development dependencies
+        run: npm run audit:ci
       - name: Install browser for interaction checks
         run: npx playwright-core install --with-deps chrome
       - name: Browser interaction and Article image checks

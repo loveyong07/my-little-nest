@@ -5,7 +5,7 @@ import { useMediaRequest } from "../hooks/useMediaRequest.js";
 import { prefetchImage } from "../feed-cache.js";
 import { xMediaSrc } from "../media-urls.js";
 
-function PhotoSlide({ photo, number, priorityMedia, enabled, onOpen, onLoad, t }) {
+function PhotoSlide({ photo, number, priorityMedia, enabled, onOpen, onLoad, onStatus, t }) {
   const request = useMediaRequest(photo.src);
   const openRef = useRef(null);
   const retryRef = useRef(null);
@@ -22,10 +22,17 @@ function PhotoSlide({ photo, number, priorityMedia, enabled, onOpen, onLoad, t }
       style={{ "--photo-ratio": dimensions ? dimensions.width / dimensions.height : 4 / 3 }}
     >
       {request.unavailable || !request.src ? (
-        <div className="post-media-unavailable" role="status">
+        <div className="post-media-unavailable">
           <span>{t.photoUnavailable}</span>
           {request.src && (
-            <button ref={retryRef} type="button" onClick={request.retry}>
+            <button
+              ref={retryRef}
+              type="button"
+              onClick={() => {
+                onStatus("loading");
+                request.retry();
+              }}
+            >
               {t.retry}
             </button>
           )}
@@ -51,13 +58,17 @@ function PhotoSlide({ photo, number, priorityMedia, enabled, onOpen, onLoad, t }
               referrerPolicy="no-referrer"
               onLoad={() => {
                 request.onLoad();
+                onStatus("loaded");
                 onLoad();
               }}
-              onError={request.onError}
+              onError={() => {
+                request.onError();
+                onStatus("failed");
+              }}
             />
           )}
           {!request.loaded && (
-            <span className="post-media-loading" role="status">
+            <span className="post-media-loading" aria-hidden="true">
               {t.photoLoading}
             </span>
           )}
@@ -76,7 +87,18 @@ export function PhotoGallery({ photos, onOpen, priorityMedia, nextPost, t }) {
   const targetRef = useRef(0);
   const programmatic = useRef(false);
   const [view, setView] = useState({ previous: false, next: photos.length > 1, first: 0, last: 1 });
+  const [statuses, setStatuses] = useState([]);
   const single = photos.length === 1;
+  const visibleStatuses = photos.slice(view.first, view.last + 1).map((photo, offset) => {
+    if (!photo.src) return "failed";
+    const saved = statuses[view.first + offset];
+    return saved?.source === photo.src ? saved.status : "loading";
+  });
+  const announcement = visibleStatuses.includes("loading")
+    ? t.photoLoading
+    : visibleStatuses.includes("failed")
+      ? t.photoUnavailable
+      : "";
 
   function readPosition() {
     const track = trackRef.current;
@@ -166,6 +188,9 @@ export function PhotoGallery({ photos, onOpen, priorityMedia, nextPost, t }) {
 
   return (
     <div className="post-photo-browser">
+      <span className="sr-only" role="status">
+        {announcement}
+      </span>
       <div
         className={`post-media post-media-frame post-photo-carousel${single ? " post-photo-single" : ""}`}
         style={single ? { aspectRatio: mediaFrameRatio(photos) } : undefined}
@@ -251,6 +276,13 @@ export function PhotoGallery({ photos, onOpen, priorityMedia, nextPost, t }) {
               priorityMedia={priorityMedia && number === 0}
               t={t}
               onOpen={(event) => onOpen(number, event)}
+              onStatus={(status) => {
+                setStatuses((current) => {
+                  const next = [...current];
+                  next[number] = { source: photo.src, status };
+                  return next;
+                });
+              }}
               onLoad={() => {
                 if (number !== 0) return;
                 const next = nextPost?.media?.find((media) => (media.type ?? "photo") === "photo");

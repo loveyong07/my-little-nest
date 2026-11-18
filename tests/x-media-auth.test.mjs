@@ -192,6 +192,19 @@ test("duplicate and unexpected proxy parameters cannot bypass authorization", as
   }
 });
 
+test("signed image and video requests require the canonical source spelling", async () => {
+  for (const [source, kind] of [
+    [IMAGE_URL, "image"],
+    [VIDEO_URL, "video"],
+  ]) {
+    const path = await signedMediaUrl(source, kind, AUTH);
+    assert.equal(await isAuthorized(path, kind), true);
+    const noncanonical = new URL(path, "https://site.test");
+    noncanonical.searchParams.set("url", source.replace("https:", "HTTPS:"));
+    assert.equal(await isAuthorized(noncanonical, kind), false);
+  }
+});
+
 test("normal browser requests and bounded image/lightbox retries retain their signatures", async () => {
   const signedUrl = new URL(await signedMediaUrl(IMAGE_URL, "image", AUTH), "https://site.test");
   signedUrl.searchParams.set("retry", "1");

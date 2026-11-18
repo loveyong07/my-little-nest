@@ -116,7 +116,6 @@
   flex-direction: column;
 }
 .posts-quick-nav {
-  order: -2;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -326,7 +325,7 @@
 .post-month-picker select {
   min-width: 0;
   max-width: 100%;
-  min-height: 36px;
+  min-height: 44px;
   padding: 4px 12px;
   border: 1px solid var(--color-border);
   border-radius: 999px;
@@ -984,7 +983,6 @@
   }
   .post-month-picker select {
     flex: 1;
-    min-height: 44px;
     padding: var(--space-2) var(--space-3);
     border-radius: var(--radius-sm);
     font-weight: 500;

@@ -28,12 +28,10 @@ export function ContentTranslationControl({ translation, language, t, className 
   return (
     <div className={`content-translation ${className}`.trim()}>
       <button
-        className="content-translation-button"
+        className={`content-translation-button${translation.showing ? " is-showing-translation" : ""}`}
         type="button"
         onClick={translation.toggleTranslation}
         disabled={busy}
-        aria-pressed={translation.showing}
-        aria-label={label}
       >
         <FiGlobe aria-hidden="true" />
         <span>{label}</span>

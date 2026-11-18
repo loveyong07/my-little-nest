@@ -299,7 +299,7 @@
     padding: 2px;
   }
   .language-picker button {
-    min-width: 42px;
+    min-width: 44px;
     min-height: 44px;
     padding: 0 4px;
     font-size: 12px;
@@ -355,7 +355,6 @@
     margin-right: 5px;
   }
   .language-picker button {
-    min-width: 33px;
     padding-inline: 2px;
     font-size: 10px;
   }

@@ -7,6 +7,11 @@ const pending = new Map();
 const visitors = new Map();
 const MAX_CACHE_ENTRIES = 500;
 const MAX_VISITORS = 2000;
+const VISITOR_LIMIT = 30;
+const VISITOR_WINDOW_MS = 60000;
+// Once the per-address table is full, previously unseen visitors share fixed
+// counters. Existing visitors keep their limits and extra state stays bounded.
+const overflowVisitors = new Array(128);
 const allowedParameters = new Set(["action", "keyword", "uniqueId", "allowNsfw", "page"]);
 const string = (value) => (typeof value === "string" ? value : "");
 const strings = (value) => (Array.isArray(value) ? value.filter((item) => typeof item === "string").slice(0, 100) : []);
@@ -159,12 +164,18 @@ function visitorAllowed(req) {
   const now = Date.now();
   for (const [id, value] of visitors) if (value.until <= now) visitors.delete(id);
   let item = visitors.get(key);
-  if (!item) {
-    if (visitors.size >= MAX_VISITORS) return false;
-    item = { until: now + 60000, count: 0 };
-    visitors.set(key, item);
+  if (item) return ++item.count <= VISITOR_LIMIT;
+  if (visitors.size < MAX_VISITORS) {
+    visitors.set(key, { until: now + VISITOR_WINDOW_MS, count: 1 });
+    return true;
   }
-  return ++item.count <= 30;
+  const bucket = Number.parseInt(key.slice(0, 2), 16) % overflowVisitors.length;
+  item = overflowVisitors[bucket];
+  if (!item || item.until <= now) {
+    item = { until: now + VISITOR_WINDOW_MS, count: 0 };
+    overflowVisitors[bucket] = item;
+  }
+  return ++item.count <= VISITOR_LIMIT;
 }
 
 export function createHandler({ fetchImpl = fetch, token = () => process.env.TOUCHGAL_API_TOKEN } = {}) {

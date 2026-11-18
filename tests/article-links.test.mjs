@@ -50,6 +50,40 @@ test("renders Markdown, raw URLs, punctuation and balanced URL parentheses witho
   assert.equal(parts.map((part) => part.text).join(""), "看示例，再看 https://example.com/?a=1&b=2。谢谢");
 });
 
+test("a bare link leaves adjacent CJK text, punctuation and closing quotes outside the anchor", () => {
+  for (const [before, after] of [
+    ["看这里", "很好看"],
+    ["（详见 ", "）后面"],
+    ['看 "', '"'],
+    ["「", "はこちら」"],
+    ["", "カタカナ…"],
+  ]) {
+    const url = "https://example.com/a";
+    const parts = textLinkParts(before + url + after);
+    assert.deepEqual(
+      parts.filter((part) => part.url),
+      [{ text: url, url }],
+    );
+    assert.deepEqual(
+      parts.filter((part) => !part.url).map((part) => part.text),
+      [before, after].filter(Boolean),
+    );
+  }
+});
+
+test("internationalized paths remain intact when explicit or start with a URL delimiter", () => {
+  const url = "https://example.com/a日本語";
+  const text = url + "后面";
+  assert.deepEqual(textLinkParts(text, [{ text: url, url, offset: 0, length: url.length }]), [
+    { text: url, url: new URL(url).href },
+    { text: "后面" },
+  ]);
+  assert.equal(textLinkParts("[文章](" + url + ")")[0].url, new URL(url).href);
+  for (const bare of ["https://例え.テスト/文章", "https://example.com/文章", "https://example.com/a_%E6%96%87"]) {
+    assert.equal(textLinkParts(bare)[0].url, new URL(bare).href);
+  }
+});
+
 test("preserves API Article anchors and rejects unsafe schemes or credential-bearing destinations", () => {
   const links = normalizedArticleLinks({
     urls: [

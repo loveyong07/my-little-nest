@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { Component, lazy, Suspense, useEffect, useState } from "react";
 import { Header } from "./components/Header.jsx";
 import { HeroSection } from "./components/HeroSection.jsx";
 import { GlassFlorals } from "./components/GlassFlorals.jsx";
@@ -16,9 +16,37 @@ const PostsPage = lazy(() => import("./pages/PostsPage.jsx"));
 const ContactPage = lazy(() => import("./pages/ContactPage.jsx"));
 const FantasyExtras = lazy(() => import("./components/fantasy/FantasyExtras.jsx"));
 
+/** @extends {Component<{ fallback: import("react").ReactNode, children?: import("react").ReactNode }>} */
+class LazyRegionBoundary extends Component {
+  state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  render() {
+    return this.state.failed ? this.props.fallback : this.props.children;
+  }
+}
+
+function RouteLoadError({ t }) {
+  return (
+    <div className="feed-status">
+      <div className="feed-status-copy" role="alert">
+        <span>{t.routeLoadError}</span>
+      </div>
+      <div className="feed-status-actions">
+        <button type="button" onClick={() => window.location.reload()}>
+          {t.routeReload}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function App() {
   const { language, t, changeLanguage } = useI18n();
-  const { page, handleRouteClick, preparePosts, navigatePage } = useSiteRoute();
+  const { page, handleRouteClick, preparePosts, navigatePage, historyReading, rememberReading } = useSiteRoute();
   const [postsReady, setPostsReady] = useState(false);
   const profile = useXProfile(page, page !== "posts" || postsReady);
   const preferences = useFantasyPreferences();
@@ -40,9 +68,11 @@ export function App() {
   }, [page, postsReady, extrasReady]);
   const sceneActive = useSceneActivity(page);
   const extras = extrasReady ? (
-    <Suspense fallback={null}>
-      <FantasyExtras language={language} page={page} preferences={preferences} />
-    </Suspense>
+    <LazyRegionBoundary fallback={null}>
+      <Suspense fallback={null}>
+        <FantasyExtras language={language} page={page} preferences={preferences} />
+      </Suspense>
+    </LazyRegionBoundary>
   ) : null;
   const header = (
     <Header page={page} t={t} language={language} changeLanguage={changeLanguage} onNavigate={navigatePage} />
@@ -80,19 +110,28 @@ export function App() {
             aria-label={page === "posts" ? t.postsHeading : t.contactsHeading}
           >
             <GlassFlorals />
-            <Suspense
-              fallback={
-                <div className="pinned-placeholder" role="status">
-                  {page === "posts" ? t.feedLoading : t.contactsHeading}
-                </div>
-              }
-            >
-              {page === "posts" ? (
-                <PostsPage language={language} t={t} profile={profile} onFeedReady={setPostsReady} />
-              ) : (
-                <ContactPage t={t} profile={profile} />
-              )}
-            </Suspense>
+            <LazyRegionBoundary fallback={<RouteLoadError t={t} />}>
+              <Suspense
+                fallback={
+                  <div className="pinned-placeholder" role="status">
+                    {page === "posts" ? t.feedLoading : t.contactsHeading}
+                  </div>
+                }
+              >
+                {page === "posts" ? (
+                  <PostsPage
+                    language={language}
+                    t={t}
+                    profile={profile}
+                    onFeedReady={setPostsReady}
+                    historyReading={historyReading}
+                    rememberReading={rememberReading}
+                  />
+                ) : (
+                  <ContactPage t={t} profile={profile} />
+                )}
+              </Suspense>
+            </LazyRegionBoundary>
             <div className="glass-panel-backdrop" aria-hidden="true" />
           </section>
           <PageFooter t={t} page={page} />

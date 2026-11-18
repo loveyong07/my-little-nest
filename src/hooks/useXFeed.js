@@ -3,12 +3,12 @@ import { getFeedSnapshot, getFeedRetryAfter, fetchFeed } from "../feed-cache.js"
 import { REQUEST_RETRY_MS, startVisibleRefresh } from "../request-cache.js";
 import { SNAPSHOT } from "../constants/site.js";
 import { isOwnPost, isOriginalPost } from "../utils/posts.js";
-import { retainedPostIndex } from "../utils/feed-reading.js";
+import { restoreReadingIndex, retainedPostIndex } from "../utils/feed-reading.js";
 import { initialArticleReading, refreshedArticleReading } from "../utils/article-reading.js";
 import { initialRepostReading, refreshedRepostReading } from "../utils/repost-reading.js";
 import { takeEarlyFeed } from "./useSiteRoute.js";
 
-export function useXFeed() {
+export function useXFeed(historyReading = null) {
   const [cachedFeed] = useState(getFeedSnapshot);
   const cachedPin =
     cachedFeed && ["ok", "stale"].includes(cachedFeed.feed.pinnedStatus) && isOwnPost(cachedFeed.feed.pinnedPost)
@@ -16,17 +16,25 @@ export function useXFeed() {
       : null;
   // Posts and the reading index move together: one state keeps them consistent for
   // a background refresh that reads the committed values between renders.
-  const [reading, setReading] = useState(() => ({
-    posts: cachedFeed
+  const [reading, setReading] = useState(() => {
+    const posts = cachedFeed
       ? cachedFeed.feed.posts.filter((post) => isOriginalPost(post) && post.id !== cachedPin?.id)
-      : [SNAPSHOT],
-    index: 0,
-    hasSelectedPost: false,
-  }));
+      : [SNAPSHOT];
+    const index = restoreReadingIndex(posts, historyReading?.postId);
+    return { posts, index: Math.max(0, index), hasSelectedPost: index >= 0 };
+  });
   const { posts, index: postIndex } = reading;
-  const [articleReading, setArticleReading] = useState(() => initialArticleReading(cachedFeed?.feed));
+  const [articleReading, setArticleReading] = useState(() => {
+    const initial = initialArticleReading(cachedFeed?.feed);
+    const index = restoreReadingIndex(initial.articles, historyReading?.articleId);
+    return { ...initial, index: Math.max(0, index), hasSelectedArticle: index >= 0 };
+  });
   const { articles, index: articleIndex, state: articleState } = articleReading;
-  const [repostReading, setRepostReading] = useState(() => initialRepostReading(cachedFeed?.feed));
+  const [repostReading, setRepostReading] = useState(() => {
+    const initial = initialRepostReading(cachedFeed?.feed);
+    const index = restoreReadingIndex(initial.reposts, historyReading?.repostId, "repostId");
+    return { ...initial, index: Math.max(0, index), hasSelectedRepost: index >= 0 };
+  });
   const { reposts, index: repostIndex, state: repostState } = repostReading;
   const [feedSource, setFeedSource] = useState(cachedFeed ? "stale" : "snapshot");
   // A cached first paint still has a refresh in flight. Do not describe that
@@ -185,6 +193,9 @@ export function useXFeed() {
     repostIndex,
     setRepostIndex,
     repostState,
+    selectedPostId: reading.hasSelectedPost ? posts[postIndex]?.id : null,
+    selectedArticleId: articleReading.hasSelectedArticle ? articles[articleIndex]?.id : null,
+    selectedRepostId: repostReading.hasSelectedRepost ? reposts[repostIndex]?.repostId : null,
     retryFeed,
   };
 }

@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { JSON_REQUEST_TIMEOUT_MS } from "../../shared/request-budgets.mjs";
 import { canPrefetch } from "../utils/network.js";
 import { pagePaths, resolvePage, siteNavigation } from "../routes/site-route.js";
 import { scenePreloads } from "../routes/scene-assets.js";
@@ -14,6 +15,51 @@ function currentPage() {
 // "/posts/" and "/posts" are the same page; keep history free of no-op entries.
 function normalizedPath(pathname) {
   return pathname.replace(/\/+$/, "") || "/";
+}
+
+let entrySequence = 0;
+function newEntryKey() {
+  return Date.now() + "-" + ++entrySequence;
+}
+
+function currentEntryKey() {
+  const state = window.history.state;
+  if (state?.nestEntry) return state.nestEntry;
+  const nestEntry = newEntryKey();
+  window.history.replaceState({ ...state, nestEntry }, "");
+  return nestEntry;
+}
+
+function restoreScroll(top) {
+  const scroll = () => window.scrollTo({ top, behavior: "instant" });
+  const canReach = () => top <= document.documentElement.scrollHeight - window.innerHeight;
+  if (top === 0 || canReach() || typeof ResizeObserver === "undefined") {
+    scroll();
+    return undefined;
+  }
+
+  // A lazy panel or a cached feed may initially be shorter than its last view.
+  window.scrollTo({ top: 0, behavior: "instant" });
+  const input = new AbortController();
+  const observer = new ResizeObserver(() => {
+    if (!canReach()) return;
+    scroll();
+    stop();
+  });
+  const timeout = window.setTimeout(() => {
+    scroll();
+    stop();
+  }, JSON_REQUEST_TIMEOUT_MS);
+  function stop() {
+    input.abort();
+    observer.disconnect();
+    window.clearTimeout(timeout);
+  }
+  observer.observe(document.getElementById("root") ?? document.body);
+  for (const event of ["wheel", "pointerdown", "touchstart", "keydown"]) {
+    window.addEventListener(event, stop, { passive: true, signal: input.signal });
+  }
+  return stop;
 }
 
 function preloadScene(page) {
@@ -59,10 +105,27 @@ export function takeEarlyFeed() {
 }
 
 export function useSiteRoute() {
-  const [page, setPage] = useState(currentPage);
+  const [route, setRoute] = useState(() => ({ page: currentPage(), scrollTop: null, reading: null }));
+  const { page } = route;
   const previousPage = useRef(page);
+  const activeEntry = useRef(null);
+  const positions = useRef(new Map());
+  const reading = useRef(null);
+
+  const savePosition = useCallback(() => {
+    if (activeEntry.current) {
+      positions.current.set(activeEntry.current, { top: window.scrollY, reading: reading.current });
+    }
+  }, []);
+  const rememberReading = useCallback((selection) => {
+    reading.current = selection;
+  }, []);
 
   useEffect(() => syncSiteMetadata(page), [page]);
+
+  useLayoutEffect(() => {
+    return route.scrollTop === null ? undefined : restoreScroll(route.scrollTop);
+  }, [route]);
 
   useEffect(() => {
     if (previousPage.current === page) return;
@@ -73,16 +136,29 @@ export function useSiteRoute() {
     return () => window.cancelAnimationFrame(frame);
   }, [page]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    const previousRestoration = window.history.scrollRestoration;
+    window.history.scrollRestoration = "manual";
+    activeEntry.current = currentEntryKey();
     function handleHistoryNavigation() {
+      savePosition();
+      activeEntry.current = currentEntryKey();
+      const saved = positions.current.get(activeEntry.current);
       const nextPage = currentPage();
+      reading.current = saved?.reading ?? null;
       activateScene(nextPage);
-      setPage(nextPage);
-      window.scrollTo(0, 0);
+      setRoute({
+        page: nextPage,
+        scrollTop: window.location.hash ? null : (saved?.top ?? 0),
+        reading: reading.current,
+      });
     }
     window.addEventListener("popstate", handleHistoryNavigation);
-    return () => window.removeEventListener("popstate", handleHistoryNavigation);
-  }, []);
+    return () => {
+      window.history.scrollRestoration = previousRestoration;
+      window.removeEventListener("popstate", handleHistoryNavigation);
+    };
+  }, [savePosition]);
 
   function preparePosts(event) {
     const link = event.target.closest("a[href]");
@@ -97,12 +173,14 @@ export function useSiteRoute() {
     activateScene(destination.page);
     const current = window.location.pathname;
     if (normalizedPath(current) !== destination.path) {
-      window.history.pushState({ page: destination.page }, "", destination.path);
+      savePosition();
+      activeEntry.current = newEntryKey();
+      window.history.pushState({ page: destination.page, nestEntry: activeEntry.current }, "", destination.path);
+      reading.current = null;
+      setRoute({ page: destination.page, scrollTop: 0, reading: null });
     } else if (current !== destination.path) {
-      window.history.replaceState({ page: destination.page }, "", destination.path);
+      window.history.replaceState({ ...window.history.state, page: destination.page }, "", destination.path);
     }
-    setPage(destination.page);
-    if (destination.page !== page) window.scrollTo(0, 0);
   }
 
   function handleRouteClick(event) {
@@ -126,5 +204,5 @@ export function useSiteRoute() {
     navigatePage(destination.page);
   }
 
-  return { page, handleRouteClick, preparePosts, navigatePage };
+  return { page, handleRouteClick, preparePosts, navigatePage, historyReading: route.reading, rememberReading };
 }

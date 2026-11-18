@@ -4,5 +4,6 @@ archive/
 qa/
 public/
 node_modules/
+vendor/picomatch/
 package-lock.json
 *.md

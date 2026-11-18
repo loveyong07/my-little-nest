@@ -147,3 +147,25 @@ test("in-flight requests are deduplicated and each warm instance bounds repeated
   for (let i = 0; i < 29; i++) await handler(req("/api/starrygal", "dedupe-test"), second);
   assert.equal(second.statusCode, 429);
 });
+
+test("a full address table gives new clients a bounded shared allowance", async (t) => {
+  const start = Date.now() + 120000;
+  let now = start;
+  t.mock.method(Date, "now", () => now);
+  const handler = createHandler({
+    token: () => "overflow-test-token",
+    fetchImpl: async () => Response.json({ success: true, data: { minuteLimit: 60 } }),
+  });
+  async function statusFor(index) {
+    const result = response();
+    await handler(req("/api/starrygal", "fixture-address-" + index), result);
+    return result.statusCode;
+  }
+  for (let index = 0; index < 2000; index++) assert.equal(await statusFor(index), 200);
+  for (let visit = 1; visit < 30; visit++) assert.equal(await statusFor(0), 200);
+  assert.equal(await statusFor(0), 429);
+  for (let visit = 0; visit < 30; visit++) assert.equal(await statusFor(2000), 200);
+  assert.equal(await statusFor(2000), 429);
+  now = start + 60000;
+  assert.equal(await statusFor(2000), 200);
+});

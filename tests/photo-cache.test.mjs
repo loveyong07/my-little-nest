@@ -81,6 +81,61 @@ test("storage failures preserve original-byte fallback and background writes do 
   await Promise.all(tasks);
 });
 
+test("a temporary encode failure neither persists nor caches its original response", async () => {
+  const path = await signedMediaUrl(source, "image", { ...auth, format: "webp" });
+  const deferred = [];
+  let cached = null;
+  let attempts = 0;
+  const options = {
+    photoCache: {
+      read: async () => cached,
+      write: async (_source, bytes, contentType) => {
+        cached = { image: bytes, contentType };
+        return "written";
+      },
+    },
+    defer: (task) => deferred.push(task),
+    webpEncoder: async () => {
+      if (++attempts === 1) throw new Error("Temporary fixture error");
+      return image;
+    },
+  };
+  const fallback = await proxyXMedia(request(path), upstream, auth, options);
+  assert.deepEqual(new Uint8Array(await fallback.arrayBuffer()), image);
+  assert.equal(fallback.headers.get("content-type"), "image/jpeg");
+  assert.equal(fallback.headers.get("cache-control"), "no-store");
+  assert.equal(fallback.headers.get("vercel-cdn-cache-control"), "no-store");
+  assert.equal(deferred.length, 0);
+  const converted = await proxyXMedia(request(path), upstream, auth, options);
+  await Promise.all(deferred);
+  assert.equal(converted.headers.get("content-type"), "image/webp");
+  assert.equal(cached.contentType, "image/webp");
+  assert.equal(attempts, 2);
+});
+
+test("large Blob hits, WebPs and fallback originals send complete bodies in multiple chunks", async () => {
+  const path = await signedMediaUrl(source, "image", { ...auth, format: "webp" });
+  const large = new Uint8Array(5 * 1024 * 1024).map((_, index) => (index + Math.floor(index / 65536)) % 251);
+  for (const [contentType, read, encode] of [
+    ["image/webp", async () => ({ image: large, contentType: "image/webp" }), async () => assert.fail("Blob hit")],
+    ["image/webp", async () => null, async () => large],
+    ["image/jpeg", async () => null, async () => null],
+  ]) {
+    const response = await proxyXMedia(
+      request(path),
+      async () => new Response(large, { headers: { "Content-Type": "image/jpeg" } }),
+      auth,
+      { photoCache: { read }, webpEncoder: encode },
+    );
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get("content-type"), contentType);
+    const chunks = [];
+    for await (const chunk of response.body) chunks.push(chunk);
+    assert.ok(chunks.length > 1);
+    assert.deepEqual(Buffer.concat(chunks), Buffer.from(large));
+  }
+});
+
 test("avatar and poster requests retain their existing streaming path", async () => {
   for (const url of [
     "https://pbs.twimg.com/profile_images/1/avatar.jpg",
@@ -133,7 +188,7 @@ test("an upstream WebP is also persisted without re-encoding its original bytes"
 test("cache keys are deterministic and exclude avatars, small variants and animation", async () => {
   const key = await photoCachePath(source);
   assert.equal(key, await photoCachePath(source));
-  assert.match(key, /^x-photos\/original-q90-v1\/[a-f0-9]{64}\.image$/);
+  assert.match(key, /^x-photos\/original-q90-v2\/[a-f0-9]{64}\.image$/);
   for (const value of [
     source.replace("name=orig", "name=small"),
     source.replace("format=jpg", "format=gif"),
@@ -141,6 +196,21 @@ test("cache keys are deterministic and exclude avatars, small variants and anima
   ])
     assert.equal(await photoCachePath(value), null);
   assert.equal(createBlobPhotoCache({ env: {} }), null);
+});
+
+test("legacy WebPs stay readable while legacy original bytes can be encoded again", async () => {
+  let contentType = "image/webp";
+  const key = await photoCachePath(source);
+  const legacy = key.replace("q90-v2", "q90-v1");
+  const cache = createBlobPhotoCache({
+    env,
+    sdk: {
+      get: async (pathname) => (pathname === legacy ? cachedBlob(image, { contentType }) : null),
+    },
+  });
+  assert.deepEqual(await cache.read(source), { image, contentType: "image/webp" });
+  contentType = "image/jpeg";
+  assert.equal(await cache.read(source), null);
 });
 
 test("private reads validate type and size; stalled body reads are cancelled", async () => {
@@ -202,7 +272,7 @@ test("writes stop at the storage budget, deduplicate concurrency and contain out
   const cache = createBlobPhotoCache({ env, sdk, maxBytes: 20 });
   assert.deepEqual(
     await Promise.all([cache.write(source, image, "image/webp"), cache.write(source, image, "image/webp")]),
-    [true, true],
+    ["written", "written"],
   );
   assert.equal(puts, 1);
   assert.equal(putOptions.access, "private");
@@ -231,6 +301,26 @@ test("writes stop at the storage budget, deduplicate concurrency and contain out
   assert.deepEqual(await readOnly.read(source), { image, contentType: "image/webp" });
 });
 
+test("a concurrent create satisfies the same key and leaves later Blob writes available", async () => {
+  const first = await photoCachePath(source);
+  const next = source.replace("Persistent", "Another");
+  const cache = createBlobPhotoCache({
+    env,
+    sdk: {
+      list: async () => ({ blobs: [], hasMore: false }),
+      put: async (pathname) => {
+        if (pathname === first) throw new Error("Fixture: concurrently created");
+      },
+      head: async (pathname) => {
+        assert.equal(pathname, first);
+        return { pathname, contentType: "image/webp", size: image.length };
+      },
+    },
+  });
+  assert.equal(await cache.write(source, image, "image/webp"), "exists");
+  assert.equal(await cache.write(next, image, "image/webp"), "written");
+});
+
 test("prewarming deduplicates Article repetitions and skips avatars and already cached photos", async () => {
   const first = await signedMediaUrl(source, "image", { ...auth, format: "webp" });
   const nextSource = source.replace("Persistent?", "Next?");
@@ -251,7 +341,7 @@ test("prewarming deduplicates Article repetitions and skips avatars and already 
       read: async (url) => (url === source ? { image } : null),
       write: async () => {
         written++;
-        return true;
+        return "written";
       },
     },
     fetchImpl: async (url) => {
@@ -264,6 +354,33 @@ test("prewarming deduplicates Article repetitions and skips avatars and already 
   assert.deepEqual(result, { total: 2, cached: 1, uploaded: 1, failed: 0, bytes: 3 });
   assert.equal(fetched, 1);
   assert.equal(written, 1);
+});
+
+test("prewarming counts a concurrently written object and skips temporary fallback bytes", async () => {
+  const fallbackSource = source.replace("Persistent", "TryAgain");
+  const signed = await Promise.all(
+    [source, fallbackSource].map((url) => signedMediaUrl(url, "image", { ...auth, format: "webp" })),
+  );
+  const result = await warmPhotoCache({
+    origin: "https://site.test",
+    cache: {
+      read: async () => null,
+      write: async (url) => {
+        assert.equal(url, source);
+        return "exists";
+      },
+    },
+    fetchImpl: async (url) => {
+      if (url.pathname === "/api/x-posts") return Response.json({ status: "ok", posts: signed });
+      return new Response(image, {
+        headers: {
+          "Content-Type": "image/jpeg",
+          "Cache-Control": url.searchParams.get("url") === fallbackSource ? "no-store" : "public",
+        },
+      });
+    },
+  });
+  assert.deepEqual(result, { total: 2, cached: 1, uploaded: 0, failed: 1, bytes: 0 });
 });
 
 test("records function-level Blob cache outcomes, reasons and media proxy timings", async () => {

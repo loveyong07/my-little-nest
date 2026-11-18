@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { FaArrowRight } from "react-icons/fa6";
 import { FiChevronLeft, FiChevronRight, FiCalendar, FiRefreshCw } from "react-icons/fi";
 import { HiOutlineSparkles } from "react-icons/hi2";
@@ -49,9 +49,9 @@ export default function PostsPage(props) {
   return confirmed ? <PostsContent {...props} /> : <PostsAgeGate t={props.t} onConfirm={confirmAge} />;
 }
 
-function PostsContent({ language, t, profile, onFeedReady }) {
-  const [largeText, setLargeText] = useState(false);
-  const [focusReading, setFocusReading] = useState(false);
+function PostsContent({ language, t, profile, onFeedReady, historyReading = null, rememberReading = undefined }) {
+  const [largeText, setLargeText] = useState(() => Boolean(historyReading?.largeText));
+  const [focusReading, setFocusReading] = useState(() => Boolean(historyReading?.focusReading));
   const desktop = useDesktopLayout();
   const sectionRef = useRef(null);
   useSectionEntrance(sectionRef);
@@ -90,11 +90,23 @@ function PostsContent({ language, t, profile, onFeedReady }) {
     repostIndex,
     setRepostIndex,
     repostState,
-  } = useXFeed();
+    selectedPostId,
+    selectedRepostId,
+    selectedArticleId,
+  } = useXFeed(historyReading);
   const readingRef = useRef(null);
   const indexRef = useRef(null);
   const currentPost = posts[Math.min(postIndex, Math.max(0, posts.length - 1))];
   const months = useMemo(() => postMonths(posts, language), [posts, language]);
+  useLayoutEffect(() => {
+    rememberReading?.({
+      postId: selectedPostId,
+      repostId: selectedRepostId,
+      articleId: selectedArticleId,
+      largeText,
+      focusReading,
+    });
+  }, [rememberReading, selectedPostId, selectedRepostId, selectedArticleId, largeText, focusReading]);
   useEffect(() => {
     if (!feedLoading) onFeedReady(true);
   }, [feedLoading, onFeedReady]);
@@ -186,6 +198,28 @@ function PostsContent({ language, t, profile, onFeedReady }) {
       id="posts"
       ref={sectionRef}
     >
+      <PostsNavigator
+        t={t}
+        pinnedCount={pinnedPost ? 1 : 0}
+        postCount={posts.length}
+        articleCount={articles.length}
+        repostCount={reposts.length}
+        largeText={largeText}
+        onToggleText={() => setLargeText((value) => !value)}
+        focusReading={focusReading}
+        onToggleFocus={() => setFocusReading((value) => !value)}
+        library={
+          <ReadingLibrary
+            t={t}
+            language={language}
+            posts={posts}
+            articles={articles}
+            reposts={reposts}
+            pinnedPost={pinnedPost}
+            onChoose={chooseFromLibrary}
+          />
+        }
+      />
       <div className="posts-flow">
         {statusText && (
           <div className={`feed-status${feedLoading ? " is-loading" : ""}`} role="status">
@@ -353,28 +387,6 @@ function PostsContent({ language, t, profile, onFeedReady }) {
           profile={profile}
         />
       </div>
-      <PostsNavigator
-        t={t}
-        pinnedCount={pinnedPost ? 1 : 0}
-        postCount={posts.length}
-        articleCount={articles.length}
-        repostCount={reposts.length}
-        largeText={largeText}
-        onToggleText={() => setLargeText((value) => !value)}
-        focusReading={focusReading}
-        onToggleFocus={() => setFocusReading((value) => !value)}
-        library={
-          <ReadingLibrary
-            t={t}
-            language={language}
-            posts={posts}
-            articles={articles}
-            reposts={reposts}
-            pinnedPost={pinnedPost}
-            onChoose={chooseFromLibrary}
-          />
-        }
-      />
     </div>
   );
 }
