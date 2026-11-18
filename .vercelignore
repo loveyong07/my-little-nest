@@ -9,6 +9,9 @@
 !server/**
 !shared
 !shared/**
+!vendor
+!vendor/picomatch
+!vendor/picomatch/**
 !build
 !build/**
 !scripts
