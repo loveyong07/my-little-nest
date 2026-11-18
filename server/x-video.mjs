@@ -75,7 +75,7 @@ export async function proxyXVideo(
 
   const range = request.headers.get("range");
   if (!validSingleByteRange(range)) {
-    return errorResponse(416, "Unsupported byte range", { "Accept-Ranges": "bytes", "Content-Range": "bytes */*" });
+    return errorResponse(416, "Unsupported byte range", { "Accept-Ranges": "bytes" });
   }
 
   const controller = new AbortController();
@@ -115,14 +115,16 @@ export async function proxyXVideo(
     clearTimeout(connectTimeout);
 
     if (!upstream.ok) {
-      const contentRange = upstream.headers.get("content-range");
       await upstream.body?.cancel();
       cleanup();
-      return errorResponse(
-        upstream.status === 404 ? 404 : upstream.status === 416 ? 416 : 502,
-        "Video source unavailable",
-        contentRange ? { "Content-Range": contentRange, "Accept-Ranges": "bytes" } : {},
-      );
+      if (upstream.status === 416) {
+        const contentRange = upstream.headers.get("content-range");
+        return errorResponse(416, "Video range unavailable", {
+          "Accept-Ranges": "bytes",
+          ...(/^bytes \*\/\d+$/i.test(contentRange ?? "") ? { "Content-Range": contentRange } : {}),
+        });
+      }
+      return errorResponse(upstream.status === 404 ? 404 : 502, "Video source unavailable");
     }
 
     const contentType = upstream.headers.get("content-type")?.split(";")[0].trim().toLowerCase();

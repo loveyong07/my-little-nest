@@ -3,7 +3,7 @@ import globals from "globals";
 import reactHooks from "eslint-plugin-react-hooks";
 
 export default [
-  { ignores: ["dist/", ".vercel/", "archive/", "qa/", "node_modules/"] },
+  { ignores: ["dist/", ".vercel/", "archive/", "qa/", "node_modules/", "vendor/picomatch/"] },
   js.configs.recommended,
   {
     files: ["**/*.{js,jsx,mjs}"],

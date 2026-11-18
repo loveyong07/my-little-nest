@@ -44,7 +44,7 @@
   border-color: #8dbbb4;
   background: #f5fcff;
 }
-.content-translation-button[aria-pressed="true"] {
+.content-translation-button.is-showing-translation {
   border-color: #cfc5e5;
   background: linear-gradient(135deg, #f4efff, #eef6ff);
   color: #5e5280;
@@ -86,7 +86,7 @@
     background: ButtonFace;
     color: ButtonText;
   }
-  .content-translation-button[aria-pressed="true"] {
+  .content-translation-button.is-showing-translation {
     border-color: Highlight;
     color: Highlight;
   }

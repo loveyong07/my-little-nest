@@ -50,11 +50,18 @@ export async function warmPhotoCache({
           },
           signal: AbortSignal.timeout(60000),
         });
+        if (!response.ok || /\bno-store\b/i.test(response.headers.get("cache-control") ?? "")) {
+          await response.body?.cancel();
+          throw new Error("Photo response cannot be cached");
+        }
         const contentType = response.headers.get("content-type")?.split(";")[0];
         const image = new Uint8Array(await response.arrayBuffer());
-        if (!response.ok || !(await cache.write(source, image, contentType))) throw new Error("Photo not cached");
-        result.uploaded++;
-        result.bytes += image.byteLength;
+        const outcome = await cache.write(source, image, contentType);
+        if (outcome === "exists") result.cached++;
+        else if (outcome === "written") {
+          result.uploaded++;
+          result.bytes += image.byteLength;
+        } else throw new Error("Photo not cached");
       }
     } catch {
       result.failed++;

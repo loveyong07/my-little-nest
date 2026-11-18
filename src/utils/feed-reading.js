@@ -1,6 +1,7 @@
 export function retainedPostIndex(previousPosts, previousIndex, nextPosts) {
-  const currentId = previousPosts[previousIndex]?.id;
-  if (!currentId) return 0;
-  const index = nextPosts.findIndex((post) => post.id === currentId);
-  return index < 0 ? 0 : index;
+  return Math.max(0, restoreReadingIndex(nextPosts, previousPosts[previousIndex]?.id));
+}
+
+export function restoreReadingIndex(items, id, key = "id") {
+  return id ? items.findIndex((item) => item[key] === id) : -1;
 }

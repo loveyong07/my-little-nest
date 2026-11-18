@@ -332,6 +332,98 @@ async function multipleAttachments(video) {
   }
 }
 
+async function routeAndAccessibility(video) {
+  const context = await browser.newContext({
+    viewport: { width: 320, height: 740 },
+    isMobile: true,
+    hasTouch: true,
+    locale: "zh-CN",
+    reducedMotion: "no-preference",
+  });
+  const feed = feedData();
+  feed.posts.push(fixture.posts.at(-1));
+  await setup(context, feed, video);
+  const page = await context.newPage();
+  try {
+    await page.goto(origin);
+    for (const size of [{ width: 320, height: 740 }, { width: 390, height: 844 }]) {
+      await page.setViewportSize(size);
+      const targets = await page.locator(".language-picker button, .hero-sender .profile a").evaluateAll((elements) =>
+        elements.map((element) => ({ width: element.offsetWidth, height: element.offsetHeight })),
+      );
+      assert.equal(targets.length, 4);
+      assert.ok(targets.every(({ width, height }) => width >= 44 && height >= 44));
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    }
+    await page.goto(origin + "/posts");
+    await page.locator(".reading-library-trigger").waitFor();
+    await page.locator(".feed-status").waitFor({ state: "hidden" });
+    await page.locator("#page-heading").press("Tab");
+    assert.equal(await page.locator(".reading-library-trigger").evaluate((element) => element === document.activeElement), true);
+
+    const selection = page.locator("#latest-posts .post-index-button").filter({ hasText: "Hongkong" });
+    await selection.click();
+    const article = page.locator("#latest-posts .post-reading .post-text");
+    assert.match(await article.textContent(), /Hongkong/);
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+      window.scrollTo({ top: 800, behavior: "instant" });
+    });
+    const previousScroll = await page.evaluate(() => scrollY);
+    assert.ok(previousScroll >= 750);
+    // Dispatch the route click without scrolling the header into view first.
+    await page.locator('#site-navigation [data-page="contact"]').dispatchEvent("click", { button: 0 });
+    await page.waitForURL(origin + "/contact");
+    assert.equal(await page.evaluate(() => scrollY), 0);
+    await page.goBack();
+    await article.waitFor();
+    assert.match(await article.textContent(), /Hongkong/);
+    await page.waitForFunction((previous) => Math.abs(scrollY - previous) <= 2, previousScroll);
+    await page.goForward();
+    await page.locator(".contacts-section").waitFor();
+    assert.equal(await page.evaluate(() => scrollY), 0);
+    await page.goBack();
+    await page.setViewportSize({ width: 844, height: 390 });
+    assert.ok((await page.locator(".post-month-picker select").boundingBox()).height >= 44);
+    console.log("PASS history restores the post and scroll position, phone Tab order and 44px touch targets");
+  } finally {
+    await context.close();
+  }
+}
+
+async function lazyFailures() {
+  const context = await browser.newContext({ locale: "zh-CN" });
+  await setup(context, feedData(), Buffer.alloc(0));
+  const page = await context.newPage();
+  try {
+    const decoration = /\/assets\/FantasyExtras-[^/]+\.js$/;
+    await context.route(decoration, (route) => route.abort());
+    const rejected = page.waitForEvent("requestfailed", (request) => decoration.test(request.url()));
+    await page.goto(origin);
+    await rejected;
+    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    assert.equal(await page.locator("#page-heading").isVisible(), true);
+    assert.equal(await page.locator(".nest-atmosphere").count(), 0);
+    await context.unroute(decoration);
+
+    for (const [routeName, chunk, content] of [
+      ["/posts", /\/assets\/PostsPage-[^/]+\.js$/, ".posts-flow"],
+      ["/contact", /\/assets\/ContactPage-[^/]+\.js$/, ".contacts-section"],
+    ]) {
+      await context.route(chunk, (route) => route.abort());
+      await page.goto(origin + routeName);
+      await page.getByRole("alert").filter({ hasText: copy.zh.routeLoadError }).waitFor();
+      assert.equal(await page.locator(".site-header .brand").isVisible(), true);
+      await context.unroute(chunk);
+      await page.getByRole("button", { name: copy.zh.routeReload, exact: true }).click();
+      await page.locator(content).waitFor();
+    }
+    console.log("PASS each lazy region survives a failed chunk and route content can reload");
+  } finally {
+    await context.close();
+  }
+}
+
 async function homeLayouts() {
   const sizes = [
     [1440, 900, false],
@@ -432,6 +524,8 @@ try {
   const video = await recordVideo();
   await interactions(video);
   await multipleAttachments(video);
+  await routeAndAccessibility(video);
+  await lazyFailures();
   await homeLayouts();
 } finally {
   await browser?.close();

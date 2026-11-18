@@ -88,8 +88,18 @@ function normalizedPostText(text, post, media, username) {
   }
   // Match each complete short link once; never replace prefixes or recursively
   // expand a destination. No requests to external destinations are necessary.
-  const result = text.replace(/https:\/\/t\.co\/[A-Za-z0-9]+/g, (link) => replacements.get(link) ?? link);
-  return media.length ? result.trimEnd() : result;
+  const links = [];
+  let delta = 0;
+  const result = text.replace(/https:\/\/t\.co\/[A-Za-z0-9]+/g, (link, start) => {
+    const replacement = replacements.get(link);
+    if (replacement === undefined) return link;
+    if (replacement) {
+      links.push({ text: replacement, url: replacement, offset: start + delta, length: replacement.length });
+    }
+    delta += replacement.length - link.length;
+    return replacement;
+  });
+  return { text: media.length ? result.trimEnd() : result, ...(links.length ? { links } : {}) };
 }
 
 async function getXJson(url, token, fetchImpl, { allowPartialErrors = false, signal = undefined } = {}) {
@@ -166,16 +176,16 @@ function normalizedPost(post, user, mediaByKey, { allowReferences = false } = {}
     Array.isArray(post.attachments?.media_keys) ? post.attachments.media_keys : [],
     mediaByKey,
   );
-  const text = normalizedPostText(
+  const content = normalizedPostText(
     post.note_tweet?.text || post.note_post?.text || post.text,
     post,
     mediaItems,
     user.username,
   );
-  if (!text.trim() && mediaItems.length === 0) return null;
+  if (!content.text.trim() && mediaItems.length === 0) return null;
   return {
     id: post.id,
-    text,
+    ...content,
     created_at: post.created_at ?? null,
     author: user.name || USERNAME,
     avatar: safeAvatar(user.profile_image_url),

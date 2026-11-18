@@ -1,0 +1,12 @@
+{
+  "name": "@little-nest/picomatch-backport",
+  "version": "4.0.7",
+  "private": true,
+  "description": "Local picomatch 4.0.7 security backport for GHSA-fc5q-39xc-vjpf",
+  "license": "MIT",
+  "main": "index.js",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=12"
+  }
+}

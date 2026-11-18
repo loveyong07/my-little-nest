@@ -1,6 +1,8 @@
 // Lazy Node-only encoder: workers without native sharp keep serving the original.
 // Never resize: the signed source explicitly requests X's original pixel size.
 export async function encodeOriginalWebp(image) {
+  const runtime = /** @type {{ versions?: { node?: string } }} */ (/** @type {unknown} */ (globalThis.process));
+  if (!runtime?.versions?.node) return null;
   const { default: sharp } = await import("sharp");
   const pipeline = sharp(image, { limitInputPixels: 40_000_000 });
   const metadata = await pipeline.metadata();

@@ -21,8 +21,17 @@ export function formatPostDate(value, language) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
   const locale = intlLocale(language);
-  const dateText = new Intl.DateTimeFormat(locale, { year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
+  const dateText = new Intl.DateTimeFormat(locale, {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    ...(isCalendarDate(value) ? { timeZone: "UTC" } : {}),
+  }).format(date);
   if (!String(value).includes("T")) return dateText;
   const timeText = new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit", hour12: false }).format(date);
   return `${dateText} ${timeText}`;
+}
+
+export function isCalendarDate(value) {
+  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value);
 }

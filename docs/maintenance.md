@@ -6,7 +6,7 @@
 
 置顶、日常帖子、转帖和文章的现有及后续静态配图统一请求 X 的 `name=orig` 原始像素，卡片与放大预览通过同源签名 URL 的 `format=webp` 输出高质量 WebP（quality 90，不缩放）；该输出格式也绑定在签名中，不能随意追加或移除。转换失败或运行环境没有原生编码器时返回原尺寸原图。头像、视频封面、视频和动图不重新编码。文章里的图片位置引用随原图 URL 一同规范化，保留原文图文顺序。
 
-Vercel 的图片函数可连接香港 `hkg1` 私有 Blob，持久保存上述静态配图已经处理好的实际响应字节，包括转换失败时的原图。每次仍先校验本站来源和媒体签名，再读取存储；浏览器只请求原来的同源 `/api/x-media`，不会拿到 Blob 凭据或私有地址。存储键使用原图 URL 摘要与编码版本，不随每日签名变化。读取有 1.5 秒期限，存储故障回到原回源路径；新图未命中时按现有规则处理，并通过 Vercel `waitUntil` 在后台保存，后台上传不阻塞图片响应。其他运行环境没有注入该适配器，继续使用原路径。
+Vercel 的图片函数可连接香港 `hkg1` 私有 Blob，持久保存成功编码的 WebP 和已确定无法转码的原图。编码抛异常时仍返回原图，浏览器、CDN、后台上传和预热脚本均跳过缓存，下一次请求可重新转码。每次先校验本站来源和媒体签名，再读取存储。新写入使用 `x-photos/original-q90-v2/` 下的原图 URL 摘要，继续复用 v1 的 WebP。v1 的原图缺少失败原因，按缓存未命中处理，之后有机会重新转码。读取共用 1.5 秒期限，未命中或存储故障时回源。新图通过 Vercel `waitUntil` 在后台保存。写入报错后若存储确认同键对象已存在，视为已缓存并继续处理下一张图。
 
 首次导入现有图片可运行 `node --env-file=.env.local scripts/warm-photo-cache.mjs`，加 `--limit 3` 只导入三个样本；本地文件需要已经连接存储后的服务端 Blob 凭据。脚本从当前成功同步的公开动态中去重收集配图，保留完整像素与实际格式，不处理头像、封面或视频。它不是持续同步任务；后续新图首次请求仍可能需要回源，随后自动持久缓存。缓存写入前检查用量，默认在约 800 MB 的软预算处停止新增，不自动删除旧文件；实例间并发和一分钟的用量快照存在偏差，这个预算不能代替 Vercel 的账户用量限制。存储、流量或操作配额不足时保留现有回源回退。
 
@@ -18,7 +18,7 @@ Vercel 的 `/api/x-posts` 函数同样连接私有 Blob（`server/article-cache.
 
 动态页在日常帖子和文章之间显示「我的转帖」。同一次时间线请求保留转帖，展开 `referenced_tweets.id` 与原作者，只有 `retweeted` 引用进入 `reposts`，回复和引用帖仍不混入原创或转帖。时间线展开数据可能缺少原帖附件，因此对原帖 ID 去重后，通过批量详情接口读取完整的 `attachments.media_keys` 与媒体数据；故障时保留既有已核实的配图。原作者、完整正文、图片、视频和原文链接沿用同源签名媒体链路；转发时间用于排序和独立日期索引。`repostsStatus` 区分成功、空、过期和不可用，缺失原帖或原作者时不猜测内容；部分失败按 60 秒退避重扫时间线，定期完整核对会移除取消的转发。前端选择、上一条／下一条和后台保留独立于原创帖、文章，目录与搜索同步支持转帖。浏览器 Feed 缓存使用 v9，旧缓存及缺少转帖状态的内容会重新同步；成功原创时间线不会延长过期转帖缓存。构建后可运行 `node scripts/qa/reposts.mjs` 检查三语、响应式布局、按钮链接、独立阅读、玻璃材质、图片预览和搜索。
 
-动态页的置顶帖、原创帖、转帖和文章正文统一识别 HTTP(S)、www 和 Markdown 链接，使用可通过键盘访问的真实链接并加下划线；新同步内容自动沿用。文章仍保留作者提供的命名链接与各段落的具体目标，不在普通帖子中猜测命名链接目标。
+动态页的置顶帖、原创帖、转帖和文章正文统一识别 HTTP(S)、www 和 Markdown 链接，使用可通过键盘访问的真实链接并加下划线。动态接口展开 X 短链时保留精确起止范围，正文按解码后的位置渲染。旧缓存和没有实体信息的裸链接按文本边界识别。文章仍保留作者提供的命名链接与各段落的具体目标。
 
 这些内容的文字还支持卡片内翻译。`src/utils/translation.js` 直接调用访客当前浏览器提供的 `LanguageDetector` / `Translator`，不上传到本站或外部翻译服务，也不需要密钥。目标按 `navigator.languages` 的首选语言确定，保留简繁中文区别，与站点界面语言独立；浏览器报告语言变化时更新。浏览器未开放接口、语言组合不可用、识别失败或下载失败时保留原文并显示提示。浏览器菜单翻译是接口缺失时的手动后备。
 
@@ -36,9 +36,9 @@ Vercel 的 `/api/x-posts` 函数同样连接私有 Blob（`server/article-cache.
 
 共享 handler 表示源码规则相同。四个 Vercel 函数分别创建 handler，动态与资料的内存缓存仅限各自实例；不能假定跨函数、实例或运行环境共享内存。图片函数和动态函数分别注入私有 Blob 适配器，持久复用已处理配图与已校验的 Article 段落结构；动态与资料主体仍保持单实例内存缓存。
 
-`/api/x-media`、`/api/x-video` 为同源媒体接口。服务端为本站媒体生成签名并校验源地址、类型、有效期和签名；精确旧媒体名单提供缓存兼容。保留原始像素尺寸、视频 Range 和缓存寿命限制。
+`/api/x-media`、`/api/x-video` 为同源媒体接口。服务端校验规范形式的签名源地址、类型、有效期和签名，精确旧媒体名单提供缓存兼容。视频支持单段 Range。`416` 仅在已知视频完整长度时包含 `Content-Range`。
 
-图片代理的连接超时为 10 秒，每次等待上游数据的空闲超时为 10 秒，总请求时限为 60 秒；持续传输可超过 10 秒，客户端背压不计为空闲读取超时，但仍受总时限和 12 MiB 大小限制。响应结束、失败或取消后释放计时器和断开监听，客户端取消时中止上游请求。
+图片代理的连接超时为 10 秒，每次等待上游数据的空闲超时为 10 秒，总请求时限为 60 秒。持续传输可超过 10 秒，客户端背压不计为空闲读取超时。图片大小上限为 12 MiB，编码结果、回退原图和 Blob 命中均以字节流发送。响应结束、失败或取消后释放计时器和断开监听，客户端取消时中止上游请求。
 
 媒体来源策略集中在 `server/media-request-policy.mjs`：现代浏览器只接受 `Sec-Fetch-Site: same-origin` 或直接导航的 `none`，不把兄弟子域的 `same-site` 视作同源。成功响应带 `Vary: Sec-Fetch-Site`，避免同源缓存被跨站请求复用，并保留 `Cross-Origin-Resource-Policy: same-origin`。无 Fetch Metadata 时检查存在的 Origin / Referer 是否与请求 URL 严格同源；没有来源头仍可直接访问，但该类成功响应对浏览器和 Vercel CDN 均为 `no-store`，避免回退规则被缓存跳过，也避免按完整 Referer 分裂缓存。普通浏览器的原缓存期限不变。非浏览器客户端可伪造这些头，因此这不是身份认证、限流或费用上限。
 
@@ -50,7 +50,9 @@ Vercel 的 `/api/x-posts` 函数同样连接私有 Blob（`server/article-cache.
 
 ## 依赖审计
 
-CI 使用 `npm audit --audit-level=moderate`。`package.json` 将间接依赖 Zod 统一覆盖为同一主版本的 `4.6.6`，用于修复 Vercel CLI 配置包仍固定引用旧版 Zod 的情况；升级上游后需重新检查是否可以移除此覆盖。修复依据见 [Zod 安全公告](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5)。测试依赖使用的 Undici 8.x 同样通过锁文件升级到修复版，相关公告见 [Undici 安全公告](https://github.com/advisories/GHSA-xjj6-f33q-929c)。
+CI 使用 `npm run audit:ci` 运行完整的 `npm audit --audit-level=moderate`，覆盖生产和开发依赖。Vite 8 与 React 插件 6 使用 Rolldown 构建，移除了内嵌旧 picomatch 的 Rollup。Vite、tinyglobby 和 fdir 共用基于 picomatch `4.0.7` 的[本地安全补丁](../vendor/picomatch/README.md)，修复 [GHSA-fc5q-39xc-vjpf](https://github.com/advisories/GHSA-fc5q-39xc-vjpf)。CI 单独查询这个上游基线的公告。已回补的公告会标记为已处理，其余 moderate 及以上公告会使检查失败。
+
+`package.json` 将间接依赖 Zod 统一覆盖为同一主版本的 `4.6.6`，用于修复 Vercel CLI 配置包仍固定引用旧版 Zod 的情况；升级上游后需重新检查是否可以移除此覆盖。修复依据见 [Zod 安全公告](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5)。测试依赖使用的 Undici 8.x 同样通过锁文件升级到修复版，相关公告见 [Undici 安全公告](https://github.com/advisories/GHSA-xjj6-f33q-929c)。
 
 ## StarryGal metadata relay
 
@@ -58,6 +60,6 @@ CI 使用 `npm audit --audit-level=moderate`。`package.json` 将间接依赖 Zo
 
 The function only calls fixed routes on `https://developer.touchgal.com/api/v1/`. It exposes search, detail, resource and patch metadata, with a sanitized `status` check. It returns no token prefix or account ID. Credentials never appear in response bodies or URLs. Adult-rated metadata requires an explicit `allowNsfw=true`. There are no game download URLs or PVs in the upstream contract.
 
-Success responses use CDN and bounded warm-instance caching, with in-flight deduplication, a 12-second upstream timeout, a 2 MiB response limit, and a best-effort limit of 30 requests per minute per client on each warm instance. TouchGal enforces the shared token quotas globally; warm-instance limiting does not replace a distributed firewall. Upstream errors and rate limits are not cached. Existing X API routes, site pages, media signing and security headers are unchanged.
+Success responses use CDN and bounded warm-instance caching, with in-flight deduplication, a 12-second upstream timeout, a 2 MiB response limit, and a best-effort limit of 30 requests per minute per client on each warm instance. When the 2,000-address table fills, new clients share 128 additional counters with the same one-minute quota per counter. TouchGal enforces the shared token quotas globally. Upstream errors and rate limits are not cached.
 
 Run `node --test tests/touchgal-relay.test.mjs` to verify the relay contract and secret redaction.

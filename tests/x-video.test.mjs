@@ -77,10 +77,26 @@ test("rejects invalid or multiple byte ranges before requesting upstream", async
         },
       );
       assert.equal(response.status, 416);
-      assert.equal(response.headers.get("content-range"), "bytes */*");
+      assert.equal(response.headers.get("content-range"), null);
       assert.equal(response.headers.get("accept-ranges"), "bytes");
       assert.equal(response.headers.get("cache-control"), "no-store");
     });
+  }
+});
+
+test("upstream 416 responses only expose a known complete byte length", async () => {
+  for (const [incoming, expected] of [
+    ["bytes */512", "bytes */512"],
+    ["bytes */*", null],
+    [null, null],
+  ]) {
+    const response = await proxyXVideo(
+      videoRequest(VIDEO_URL, { headers: { Range: "bytes=1024-" } }),
+      async () => new Response(null, { status: 416, headers: incoming ? { "Content-Range": incoming } : {} }),
+    );
+    assert.equal(response.status, 416);
+    assert.equal(response.headers.get("accept-ranges"), "bytes");
+    assert.equal(response.headers.get("content-range"), expected);
   }
 });
 

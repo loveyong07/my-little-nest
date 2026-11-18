@@ -21,6 +21,7 @@
  * @typedef {{
  *   id: string,
  *   text: string,
+ *   links?: ArticleLink[],
  *   created_at?: string | null,
  *   author?: string,
  *   username?: string,
@@ -73,7 +74,7 @@
  * }} MediaSigningOptions
  * @typedef {{
  *   read: (source: string, options?: { signal?: AbortSignal }) => Promise<{ image: Uint8Array, contentType: string } | null>,
- *   write?: (source: string, image: Uint8Array, contentType: string) => Promise<boolean | void>,
+ *   write?: (source: string, image: Uint8Array, contentType: string) => Promise<"written" | "exists" | false | void>,
  * }} PhotoCacheAdapter
  * @typedef {{
  *   read: (article: ArticleItem, options?: { signal?: AbortSignal }) => Promise<{

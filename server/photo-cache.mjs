@@ -1,11 +1,18 @@
-import { get, list, put } from "@vercel/blob";
+import { get, head, list, put } from "@vercel/blob";
 import { parseMediaSource } from "../shared/media-sources.mjs";
 import { createTelemetryEmitter } from "./telemetry.mjs";
 
-export const PHOTO_CACHE_PREFIX = "x-photos/original-q90-v1/";
+export const PHOTO_CACHE_PREFIX = "x-photos/original-q90-v2/";
+const legacyPhotoCachePrefix = "x-photos/original-q90-v1/";
 export const PHOTO_CACHE_MAX_BYTES = 800_000_000;
 export const MAX_PHOTO_BYTES = 12 * 1024 * 1024;
 const TYPES = new Set(["image/webp", "image/jpeg", "image/png"]);
+
+function validPhotoBlob(blob) {
+  return (
+    TYPES.has(blob?.contentType) && Number.isSafeInteger(blob?.size) && blob.size > 0 && blob.size <= MAX_PHOTO_BYTES
+  );
+}
 
 export function cacheablePhoto(value) {
   const source = parseMediaSource(value, "image");
@@ -27,7 +34,7 @@ export async function photoCachePath(value) {
 // existing source/encoder path and never load the Blob SDK or its credentials.
 export function createBlobPhotoCache({
   env = process.env,
-  sdk = { get, list, put },
+  sdk = { get, head, list, put },
   maxBytes = PHOTO_CACHE_MAX_BYTES,
   readTimeoutMs = 1500,
   writeTimeoutMs = 15000,
@@ -95,7 +102,13 @@ export function createBlobPhotoCache({
       let complete = false;
       const cancel = () => void reader?.cancel().catch(() => {});
       try {
-        const cached = await sdk.get(pathname, { ...credentials, access: "private", abortSignal });
+        /** @type {import("@vercel/blob").GetCommandOptions} */
+        const options = { ...credentials, access: "private", abortSignal };
+        const current = await sdk.get(pathname, options);
+        // Older WebPs are reusable. Original bytes written by v1 have no record
+        // of why encoding was skipped, so give them a new conversion attempt.
+        const cached =
+          current ?? (await sdk.get(pathname.replace(PHOTO_CACHE_PREFIX, legacyPhotoCachePrefix), options));
         if (!cached) {
           emit({
             type: "x_photo_cache",
@@ -110,11 +123,9 @@ export function createBlobPhotoCache({
         const contentType = cached.blob.contentType;
         if (
           cached.statusCode !== 200 ||
-          !TYPES.has(contentType) ||
-          !cached.stream ||
-          !Number.isFinite(cached.blob.size) ||
-          cached.blob.size <= 0 ||
-          cached.blob.size > MAX_PHOTO_BYTES
+          !validPhotoBlob(cached.blob) ||
+          (!current && contentType !== "image/webp") ||
+          !cached.stream
         ) {
           await cached.stream?.cancel();
           emit({
@@ -122,33 +133,31 @@ export function createBlobPhotoCache({
             layer: "function_blob",
             operation: "read",
             outcome: "miss",
-            reason: Number(cached.statusCode) === 404 ? "not_found" : "invalid_blob",
+            reason:
+              !current && contentType !== "image/webp"
+                ? "legacy_original"
+                : Number(cached.statusCode) === 404
+                  ? "not_found"
+                  : "invalid_blob",
             durationMs: Math.max(0, now() - startedAt),
           });
           return null;
         }
         reader = cached.stream.getReader();
         abortSignal.addEventListener("abort", cancel, { once: true });
-        const chunks = [];
+        const image = new Uint8Array(cached.blob.size);
         let size = 0;
         while (true) {
           abortSignal.throwIfAborted();
           const { done, value } = await reader.read();
           abortSignal.throwIfAborted();
           if (done) break;
-          size += value.byteLength;
-          if (size > MAX_PHOTO_BYTES) {
-            emit({
-              type: "x_photo_cache",
-              layer: "function_blob",
-              operation: "read",
-              outcome: "miss",
-              reason: "invalid_blob",
-              durationMs: Math.max(0, now() - startedAt),
-            });
-            return null;
+          if (size + value.byteLength > image.byteLength) {
+            size += value.byteLength;
+            break;
           }
-          chunks.push(value);
+          image.set(value, size);
+          size += value.byteLength;
         }
         if (size !== cached.blob.size) {
           emit({
@@ -160,12 +169,6 @@ export function createBlobPhotoCache({
             durationMs: Math.max(0, now() - startedAt),
           });
           return null;
-        }
-        const image = new Uint8Array(size);
-        let offset = 0;
-        for (const chunk of chunks) {
-          image.set(chunk, offset);
-          offset += chunk.byteLength;
         }
         complete = true;
         emit({
@@ -264,15 +267,34 @@ export function createBlobPhotoCache({
             });
             return false;
           }
-          await sdk.put(pathname, image, {
-            ...credentials,
-            access: "private",
-            contentType,
-            addRandomSuffix: false,
-            allowOverwrite: false,
-            cacheControlMaxAge: 86400,
-            abortSignal,
-          });
+          try {
+            await sdk.put(pathname, image, {
+              ...credentials,
+              access: "private",
+              contentType,
+              addRandomSuffix: false,
+              allowOverwrite: false,
+              cacheControlMaxAge: 86400,
+              abortSignal,
+            });
+          } catch (error) {
+            // Another writer may have completed the same immutable key. Verify
+            // the object in storage without depending on the SDK's error text.
+            const existing = abortSignal.aborted
+              ? null
+              : await sdk.head?.(pathname, { ...credentials, abortSignal }).catch(() => null);
+            if (existing?.pathname !== pathname || !validPhotoBlob(existing)) throw error;
+            usage = undefined;
+            emit({
+              type: "x_photo_cache",
+              layer: "function_blob",
+              operation: "write",
+              outcome: "exists",
+              contentType: existing.contentType,
+              durationMs: Math.max(0, now() - startedAt),
+            });
+            return "exists";
+          }
           usage += image.byteLength;
           emit({
             type: "x_photo_cache",
@@ -283,9 +305,9 @@ export function createBlobPhotoCache({
             bytes: image.byteLength,
             durationMs: Math.max(0, now() - startedAt),
           });
-          return true;
+          return "written";
         } catch {
-          // Quota, outages and concurrent creates must never break photo delivery.
+          // Quota and outages must never break photo delivery.
           usage = undefined;
           writeUnavailableUntil = now() + 60000;
           emit({

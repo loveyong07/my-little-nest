@@ -422,6 +422,14 @@ for (const source of ["text", "note_tweet", "note_post"]) {
       result.posts[0].text,
       "https://loveyong07.top\n&gt;_&lt; https://example.com/?a=1&b=2 https://t.co/siteExtra https://t.co/unsafe https://t.co/missing",
     );
+    assert.deepEqual(
+      result.posts[0].links.map(({ text, url, offset, length }) => [
+        text,
+        url,
+        result.posts[0].text.slice(offset, offset + length),
+      ]),
+      ["https://loveyong07.top", "https://example.com/?a=1&b=2"].map((url) => [url, url, url]),
+    );
     assert.equal(calls, 2);
   });
 }

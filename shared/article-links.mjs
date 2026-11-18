@@ -26,6 +26,29 @@ export function normalizedArticleLinks(entities) {
   });
 }
 
+function bareLinkText(value) {
+  // Plain text has no authoritative end offset. Split a CJK suffix on an
+  // ASCII-looking URL, while allowing an international domain or a Unicode
+  // segment that begins immediately after a URL delimiter.
+  const boundary = value.search(
+    /[\p{Script_Extensions=Han}\p{Script_Extensions=Hiragana}\p{Script_Extensions=Katakana}]/u,
+  );
+  if (boundary > 0) {
+    const stem = value.slice(0, boundary);
+    const [, host, path] = /^(?:https?:\/\/|www\.)([^/?#]+)([/?#].*)?$/i.exec(stem) ?? [];
+    const remainingHost = value.slice(boundary).split(/[/?#]/, 1)[0];
+    if (
+      /^[a-z\d.-]+(?::\d+)?$/i.test(host ?? "") &&
+      /^[!-~]+$/.test(stem) &&
+      !/[/?#=&]$/.test(stem) &&
+      (path || !remainingHost.includes("."))
+    ) {
+      value = stem;
+    }
+  }
+  return value.replace(/[.,!?;:"']+$/, "");
+}
+
 export function textLinkParts(text, links = [], { authorFallback = false } = {}) {
   const explicit = links.filter((link) => link?.text && safeArticleLink(link.url));
   const definitions = authorFallback
@@ -33,7 +56,8 @@ export function textLinkParts(text, links = [], { authorFallback = false } = {})
     : explicit;
   const candidates = [];
   const positionedLabels = new Set();
-  const overlaps = (start, end) => candidates.some((item) => start < item.end && end > item.start);
+  const overlaps = (start, end, except = -1) =>
+    candidates.some((item, index) => index !== except && start < item.end && end > item.start);
   // Document ranges refer to this block's UTF-16 string offsets. Keep each linked
   // occurrence distinct, even when its label also appears elsewhere as plain text.
   for (const link of explicit) {
@@ -54,18 +78,20 @@ export function textLinkParts(text, links = [], { authorFallback = false } = {})
     }
   }
   const pattern =
-    /\[([^\]\n]+)\]\((https?:\/\/(?:[^\s()<>]|\([^\s()<>]*\))+)\)|(?:https?:\/\/|www\.)(?:[^\s()<>，。！？；、」』】]|\([^\s()<>]*\))+/gi;
+    /\[([^\]\n]+)\]\((https?:\/\/(?:[^\s()<>]|\([^\s()<>]*\))+)\)|(?:https?:\/\/|www\.)(?:[^\s()<>"，。！？；、：）］｝》〉」』】（［｛《〈「『【“”‘’…]|\([^\s()<>"\u3000]*\))+/giu;
   for (const match of text.matchAll(pattern)) {
-    const raw = match[2] ?? match[0].replace(/[.,!;:]+$/, "");
+    const raw = match[2] ?? bareLinkText(match[0]);
     const url = safeArticleLink(/^www\./i.test(raw) ? `https://${raw}` : raw);
     const end = match.index + (match[2] ? match[0].length : raw.length);
-    if (url && !overlaps(match.index, end))
-      candidates.push({
-        start: match.index,
-        end,
-        text: match[1] ?? raw,
-        url,
-      });
+    // An expanded X entity inside Markdown supplies the authoritative href.
+    const destination = match[2]
+      ? candidates.findIndex((item) => item.start === end - raw.length - 1 && item.end === end - 1)
+      : -1;
+    if (url && !overlaps(match.index, end, destination)) {
+      const candidate = { start: match.index, end, text: match[1] ?? raw, url: candidates[destination]?.url ?? url };
+      if (destination < 0) candidates.push(candidate);
+      else candidates[destination] = candidate;
+    }
   }
   // Older caches and plain-text API responses may have no positions. Restore only
   // unambiguous labels; conflicting destinations cannot safely be assigned by name.
