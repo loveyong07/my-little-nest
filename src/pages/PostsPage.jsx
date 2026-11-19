@@ -19,6 +19,7 @@ import { preferredScrollBehavior } from "../utils/motion.js";
 import { canPrefetch } from "../utils/network.js";
 import { hasAgeConfirmation, rememberAgeConfirmation } from "../utils/age-confirmation.js";
 import { xProfileUrl } from "../constants/site.js";
+import "../styles/posts-route.css";
 
 function PostControls({ postIndex, total, onChange, t }) {
   return (
@@ -26,7 +27,7 @@ function PostControls({ postIndex, total, onChange, t }) {
       <button type="button" onClick={() => onChange((postIndex - 1 + total) % total)} aria-label={t.prevPost}>
         <FiChevronLeft aria-hidden="true" />
       </button>
-      <span className="post-position" aria-live="off">
+      <span className="post-position" aria-live="polite">
         {t.postNumber(postIndex + 1, total)}
       </span>
       <button type="button" onClick={() => onChange((postIndex + 1) % total)} aria-label={t.nextPost}>

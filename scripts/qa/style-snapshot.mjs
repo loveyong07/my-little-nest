@@ -49,15 +49,17 @@ function scenarios() {
   const list = [];
   const add = (scenario) => list.push({ lang: "zh", ...scenario });
   for (const vp of baseViewports) for (const page of Object.keys(pages)) add({ vp, page, shot: true });
-  for (const vp of ["desktop", "phone"]) for (const lang of ["ja", "en"]) for (const page of Object.keys(pages)) add({ vp, page, lang });
-  for (const vp of ["desktop", "phone"]) for (const page of Object.keys(pages)) add({ vp, page, effects: false });
+  for (const vp of ["desktop", "phone"])
+    for (const lang of ["ja", "en"]) for (const page of Object.keys(pages)) add({ vp, page, lang });
   for (const page of Object.keys(pages)) add({ vp: "phone", page, reducedMotion: true });
-  for (const vp of ["tablet", "phone"]) for (const page of Object.keys(pages)) add({ vp, page, action: "menu", shot: true });
+  for (const vp of ["tablet", "phone"])
+    for (const page of Object.keys(pages)) add({ vp, page, action: "menu", shot: true });
   for (const vp of ["desktop", "phone"]) {
     for (const lang of ["zh", "ja", "en"]) add({ vp, page: "posts", lang, action: "search", shot: true });
     add({ vp, page: "posts", action: "photo", shot: true });
     add({ vp, page: "posts", action: "video" });
-    for (const feed of ["offline", "loading", "empty", "media-error"]) add({ vp, page: "posts", feed, shot: feed === "offline" });
+    for (const feed of ["offline", "loading", "empty", "media-error"])
+      add({ vp, page: "posts", feed, shot: feed === "offline" });
   }
   add({ vp: "desktop", page: "posts", feed: "pin-unavailable" });
   add({ vp: "desktop", page: "contact", action: "copy" });
@@ -70,13 +72,24 @@ function scenarios() {
   add({ vp: "short-phone", page: "home", action: "menu-contact", shot: true });
   for (const vp of ["desktop", "phone"]) add({ vp, page: "posts", action: "photo-keyboard", shot: true });
   for (const vp of baseViewports) add({ vp, page: "posts", ageGate: true, shot: true });
-  for (const vp of ["desktop", "phone"]) for (const lang of ["ja", "en"]) add({ vp, page: "posts", lang, ageGate: true, shot: true });
+  for (const vp of ["desktop", "phone"])
+    for (const lang of ["ja", "en"]) add({ vp, page: "posts", lang, ageGate: true, shot: true });
   add({ vp: "phone", page: "posts", ageGate: true, forcedColors: true, shot: true });
   return list.map((scenario) => ({
     ...scenario,
-    name: [scenario.page, scenario.vp, scenario.lang, scenario.effects === false && "effects-off",
-      scenario.reducedMotion && "reduced", scenario.ageGate && "age-confirmation",
-      scenario.forcedColors && "forced-colors", scenario.feed, scenario.action].filter(Boolean).join("-"),
+    name: [
+      scenario.page,
+      scenario.vp,
+      scenario.lang,
+      scenario.effects === false && "effects-off",
+      scenario.reducedMotion && "reduced",
+      scenario.ageGate && "age-confirmation",
+      scenario.forcedColors && "forced-colors",
+      scenario.feed,
+      scenario.action,
+    ]
+      .filter(Boolean)
+      .join("-"),
   }));
 }
 
@@ -111,11 +124,19 @@ const pageHelpers = () => {
     const offset = fixed ? [0, 0] : [scrollX, scrollY];
     return {
       k: keyOf(element),
-      cls: typeof element.className === "string" ? element.className : element.getAttribute("class") ?? "",
+      cls: typeof element.className === "string" ? element.className : (element.getAttribute("class") ?? ""),
       attrs: [...element.attributes].map(({ name, value }) => [name, value]),
-      text: [...element.childNodes].filter((node) => node.nodeType === 3).map((node) => node.data).join("").trim(),
-      rect: element.getClientRects().length === 0 ? [0, 0, 0, 0]
-        : [rect.x + offset[0], rect.y + offset[1], rect.width, rect.height].map((value) => Math.round(value * 100) / 100),
+      text: [...element.childNodes]
+        .filter((node) => node.nodeType === 3)
+        .map((node) => node.data)
+        .join("")
+        .trim(),
+      rect:
+        element.getClientRects().length === 0
+          ? [0, 0, 0, 0]
+          : [rect.x + offset[0], rect.y + offset[1], rect.width, rect.height].map(
+              (value) => Math.round(value * 100) / 100,
+            ),
       s: styleOf(element),
       before: styleOf(element, "::before"),
       after: styleOf(element, "::after"),
@@ -140,7 +161,8 @@ const pageHelpers = () => {
     captureElement(element) {
       const elements = [];
       let inFixed = false;
-      for (let node = element.parentElement; node && !inFixed; node = node.parentElement) inFixed = getComputedStyle(node).position === "fixed";
+      for (let node = element.parentElement; node && !inFixed; node = node.parentElement)
+        inFixed = getComputedStyle(node).position === "fixed";
       walk(element, elements, inFixed);
       return { props, values: [...values.keys()], elements };
     },
@@ -157,18 +179,32 @@ async function settle(page) {
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
       for (const animation of document.getAnimations()) {
         if (animation instanceof CSSTransition) animation.finish();
-        else { animation.pause(); animation.currentTime = 0; }
+        else {
+          animation.pause();
+          animation.currentTime = 0;
+        }
       }
     }
   });
-  await page.waitForFunction(() => {
-    const positions = [scrollX, scrollY, ...[...document.querySelectorAll(".post-photo-track, .post-index, .article-timeline")].flatMap((element) => [element.scrollLeft, element.scrollTop])].join(",");
-    if (window.__qaScrollSample?.positions !== positions) {
-      window.__qaScrollSample = { positions, at: performance.now() };
-      return false;
-    }
-    return performance.now() - window.__qaScrollSample.at >= 100;
-  }, null, { polling: "raf", timeout: 5000 });
+  await page.waitForFunction(
+    () => {
+      const positions = [
+        scrollX,
+        scrollY,
+        ...[...document.querySelectorAll(".post-photo-track, .post-index, .article-timeline")].flatMap((element) => [
+          element.scrollLeft,
+          element.scrollTop,
+        ]),
+      ].join(",");
+      if (window.__qaScrollSample?.positions !== positions) {
+        window.__qaScrollSample = { positions, at: performance.now() };
+        return false;
+      }
+      return performance.now() - window.__qaScrollSample.at >= 100;
+    },
+    null,
+    { polling: "raf", timeout: 5000 },
+  );
 }
 
 async function finishAnimationsForScreenshot(page) {
@@ -208,31 +244,46 @@ async function prepareContext(browser, scenario) {
       ? route.fulfill({ status: response.status, contentType: "application/json", body: JSON.stringify(response.body) })
       : route.fulfill({ status: 200, contentType: "application/json", body: feed });
   });
-  await context.route(/\/api\/x-profile(?:\?|$)/, (route) => route.fulfill({ status: 200, contentType: "application/json", body: profile }));
-  await context.route(/\/api\/x-media\?/, (route) => scenario.feed === "media-error"
-    ? route.fulfill({ status: 404, body: "" })
-    : route.fulfill({ status: 200, contentType: "image/jpeg", body: image }));
+  await context.route(/\/api\/x-profile(?:\?|$)/, (route) =>
+    route.fulfill({ status: 200, contentType: "application/json", body: profile }),
+  );
+  await context.route(/\/api\/x-media\?/, (route) =>
+    scenario.feed === "media-error"
+      ? route.fulfill({ status: 404, body: "" })
+      : route.fulfill({ status: 200, contentType: "image/jpeg", body: image }),
+  );
   await context.route(/\/api\/x-video\?/, (route) => route.fulfill({ status: 404, body: "" }));
-  await context.route(/\.mp3(?:\?|$)/, (route) => route.abort());
-  await context.addInitScript(({ lang, effects, copy, ageGate }) => {
-    let seed = 20261011;
-    Math.random = () => {
-      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
-      return seed / 4294967296;
-    };
-    try {
-      localStorage.setItem("hello-nice-site-language", lang);
-      localStorage.setItem("nest-effects", String(effects));
-      // Existing reading scenarios compare the feed after age confirmation.
-      if (!ageGate) sessionStorage.setItem("nest-posts-age-confirmed", "18+");
-    } catch { /* Storage is optional. */ }
-    if (copy) {
-      Object.defineProperty(navigator, "clipboard", {
+  await context.addInitScript(
+    ({ lang, copy, ageGate }) => {
+      Object.defineProperty(navigator, "connection", {
         configurable: true,
-        value: { writeText: () => copy === "ok" ? Promise.resolve() : Promise.reject(new Error("denied")) },
+        value: { effectiveType: "4g", saveData: false },
       });
-    }
-  }, { lang: scenario.lang, effects: scenario.effects !== false, ageGate: scenario.ageGate, copy: scenario.action === "copy" ? "ok" : scenario.action === "copy-fail" ? "fail" : null });
+      let seed = 20261011;
+      Math.random = () => {
+        seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+        return seed / 4294967296;
+      };
+      try {
+        localStorage.setItem("hello-nice-site-language", lang);
+        // Existing reading scenarios compare the feed after age confirmation.
+        if (!ageGate) sessionStorage.setItem("nest-posts-age-confirmed", "18+");
+      } catch {
+        /* Storage is optional. */
+      }
+      if (copy) {
+        Object.defineProperty(navigator, "clipboard", {
+          configurable: true,
+          value: { writeText: () => (copy === "ok" ? Promise.resolve() : Promise.reject(new Error("denied"))) },
+        });
+      }
+    },
+    {
+      lang: scenario.lang,
+      ageGate: scenario.ageGate,
+      copy: scenario.action === "copy" ? "ok" : scenario.action === "copy-fail" ? "fail" : null,
+    },
+  );
   return context;
 }
 
@@ -242,13 +293,21 @@ async function load(page, scenario) {
   await page.goto(ORIGIN + pages[scenario.page], { waitUntil: "load" });
   if (scenario.ageGate) await page.waitForSelector(".posts-age-gate", { timeout: 15000 });
   else if (scenario.page === "posts") {
-    await page.waitForSelector(scenario.feed === "loading" ? ".pinned-placeholder-loading" : ".post-reading .post-card, .feed-empty", { timeout: 15000 });
+    await page.waitForSelector(
+      scenario.feed === "loading" ? ".pinned-placeholder-loading" : ".post-reading .post-card, .feed-empty",
+      { timeout: 15000 },
+    );
     // The timeline font stylesheet loads 3 seconds after load; it changes .post-text.
-    await page.waitForFunction(() => [...document.fonts].some((font) => font.family.includes("ZCOOL")), null, { timeout: 15000 });
+    await page.waitForFunction(() => [...document.fonts].some((font) => font.family.includes("ZCOOL")), null, {
+      timeout: 15000,
+    });
   }
   // Extras wait for the feed; use their stylesheet so readiness doesn't depend on controls.
   if (scenario.feed !== "loading" && !scenario.ageGate) {
-    await page.waitForSelector("link[rel='stylesheet'][href*='/FantasyExtras-']", { state: "attached", timeout: 15000 });
+    await page.waitForSelector("link[rel='stylesheet'][href*='/FantasyExtras-']", {
+      state: "attached",
+      timeout: 15000,
+    });
     if (scenario.page !== "home") await page.waitForSelector(".scroll-progress-track", { state: "attached" });
     else if (!scenario.reducedMotion) await page.waitForSelector(".nest-atmosphere", { state: "attached" });
   }
@@ -259,8 +318,14 @@ async function load(page, scenario) {
   });
   await page.waitForFunction(() => [...document.images].every((image) => image.complete), null, { timeout: 15000 });
   await page.evaluate(() => Promise.all([...document.images].map((image) => image.decode().catch(() => {}))));
-  await page.waitForFunction(() => [...document.querySelectorAll(".post-media-open")].every((button) =>
-    !button.querySelector("img") || !button.querySelector(".post-media-loading")), null, { timeout: 15000 });
+  await page.waitForFunction(
+    () =>
+      [...document.querySelectorAll(".post-media-open")].every(
+        (button) => !button.querySelector("img") || !button.querySelector(".post-media-loading"),
+      ),
+    null,
+    { timeout: 15000 },
+  );
   await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
   await settle(page);
 }
@@ -277,7 +342,10 @@ async function act(page, scenario) {
     await contact.scrollIntoViewIfNeeded();
     const hit = await contact.evaluate((element) => {
       const rect = element.getBoundingClientRect();
-      return rect.height >= 44 && element.contains(document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2));
+      return (
+        rect.height >= 44 &&
+        element.contains(document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2))
+      );
     });
     assert.ok(hit, "Contact must have a visible, clickable 44px menu target");
     await contact.click();
@@ -288,24 +356,49 @@ async function act(page, scenario) {
   if (scenario.action === "photo" || scenario.action === "photo-keyboard") {
     await page.click(".post-media-open");
     await page.waitForSelector(".media-lightbox-slide[aria-hidden=false] img, .media-lightbox-content-photo > img");
-    await page.evaluate(() => document.querySelector(".media-lightbox-slide[aria-hidden=false] img, .media-lightbox-content-photo > img").decode().catch(() => {}));
+    await page.evaluate(() =>
+      document
+        .querySelector(".media-lightbox-slide[aria-hidden=false] img, .media-lightbox-content-photo > img")
+        .decode()
+        .catch(() => {}),
+    );
     const closeVisible = await page.locator(".media-lightbox-close").evaluate((element) => {
       const rect = element.getBoundingClientRect();
-      return rect.top >= 0 && rect.bottom <= innerHeight && rect.left >= 0 && rect.right <= innerWidth
-        && element.contains(document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2));
+      return (
+        rect.top >= 0 &&
+        rect.bottom <= innerHeight &&
+        rect.left >= 0 &&
+        rect.right <= innerWidth &&
+        element.contains(document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2))
+      );
     });
     assert.ok(closeVisible, "lightbox close button must be fully visible and clickable");
     if (scenario.action === "photo-keyboard") {
-      const before = await page.locator(".media-lightbox-slide[aria-hidden=false] img, .media-lightbox-content-photo > img").getAttribute("src");
+      const before = await page
+        .locator(".media-lightbox-slide[aria-hidden=false] img, .media-lightbox-content-photo > img")
+        .getAttribute("src");
       await page.locator(".media-lightbox-close").focus();
       await page.keyboard.press("ArrowRight");
-      await page.waitForFunction((src) => document.querySelector(".media-lightbox-slide[aria-hidden=false] img, .media-lightbox-content-photo > img")?.getAttribute("src") !== src, before);
-      assert.ok(await page.locator(".media-lightbox-close").evaluate((element) => element === document.activeElement),
-        "photo switch must preserve keyboard focus");
+      await page.waitForFunction(
+        (src) =>
+          document
+            .querySelector(".media-lightbox-slide[aria-hidden=false] img, .media-lightbox-content-photo > img")
+            ?.getAttribute("src") !== src,
+        before,
+      );
+      assert.ok(
+        await page.locator(".media-lightbox-close").evaluate((element) => element === document.activeElement),
+        "photo switch must preserve keyboard focus",
+      );
       await page.keyboard.press("Escape");
       await page.waitForSelector(".media-lightbox", { state: "detached" });
-      assert.ok(await page.locator(".post-media-open").first().evaluate((element) => element === document.activeElement),
-        "closing must return focus to the opener");
+      assert.ok(
+        await page
+          .locator(".post-media-open")
+          .first()
+          .evaluate((element) => element === document.activeElement),
+        "closing must return focus to the opener",
+      );
     }
   }
   if (scenario.action === "video") {
@@ -324,9 +417,11 @@ async function act(page, scenario) {
 }
 
 async function captureHover(page) {
-  const targets = await page.evaluate(() => [...document.querySelectorAll("a[href], button, select, input, .contact-tile, .post-index-button")]
-    .filter((element) => !element.closest(".nest-atmosphere") && element.getClientRects().length > 0)
-    .map((element) => window.__qa.keyOf(element)));
+  const targets = await page.evaluate(() =>
+    [...document.querySelectorAll("a[href], button, select, input, .contact-tile, .post-index-button")]
+      .filter((element) => !element.closest(".nest-atmosphere") && element.getClientRects().length > 0)
+      .map((element) => window.__qa.keyOf(element)),
+  );
   const results = {};
   for (const key of targets) {
     const box = await page.evaluate((target) => {
@@ -379,12 +474,11 @@ async function runScenario(browser, scenario, outDir) {
     // Only suppress the exact network failures deliberately supplied by fixtures.
     // Runtime errors from the app remain failures, even in the recovery scenarios.
     const networkFailure = text.startsWith("Failed to load resource:");
-    const expected = networkFailure && (
-      /\.mp3(?:\?|$)/.test(url) ||
-      (text.includes("status of 404") && /\/api\/x-video\?/.test(url)) ||
-      (scenario.feed === "offline" && text.includes("status of 503") && /\/api\/x-posts(?:\?|$)/.test(url)) ||
-      (scenario.feed === "media-error" && text.includes("status of 404") && /\/api\/x-media\?/.test(url))
-    );
+    const expected =
+      networkFailure &&
+      ((text.includes("status of 404") && /\/api\/x-video\?/.test(url)) ||
+        (scenario.feed === "offline" && text.includes("status of 503") && /\/api\/x-posts(?:\?|$)/.test(url)) ||
+        (scenario.feed === "media-error" && text.includes("status of 404") && /\/api\/x-media\?/.test(url)));
     if (!expected) errors.push(`console: ${text} (${url})`);
   });
   try {
@@ -396,12 +490,19 @@ async function runScenario(browser, scenario, outDir) {
       await act(page, scenario);
       captures = { page: await page.evaluate(() => window.__qa.capture()) };
     }
-    writeFileSync(path.join(outDir, `${scenario.name}.json.gz`), gzipSync(JSON.stringify({ scenario, errors, captures })));
+    writeFileSync(
+      path.join(outDir, `${scenario.name}.json.gz`),
+      gzipSync(JSON.stringify({ scenario, errors, captures })),
+    );
     if (scenario.shot) {
       await finishAnimationsForScreenshot(page);
       // The atmosphere spans the viewport: masking its box would hide the whole page.
       // Hide particles and cursor sparkles, leaving the scene and controls visible.
-      await page.screenshot({ path: path.join(outDir, `${scenario.name}.png`), fullPage: true, style: ".nest-atmosphere { visibility: hidden !important; }" });
+      await page.screenshot({
+        path: path.join(outDir, `${scenario.name}.png`),
+        fullPage: true,
+        style: ".nest-atmosphere { visibility: hidden !important; }",
+      });
     }
     return { name: scenario.name, errors };
   } finally {
@@ -417,7 +518,9 @@ async function waitForServer() {
     try {
       const response = await fetch(ORIGIN + "/");
       if (response.ok && expectedEntry && (await response.text()).includes(expectedEntry)) return;
-    } catch { /* Not listening yet. */ }
+    } catch {
+      /* Not listening yet. */
+    }
     await new Promise((resolve) => setTimeout(resolve, 200));
   }
   throw new Error(`Preview server did not start on ${ORIGIN}`);
@@ -441,7 +544,9 @@ function hashInputs(base, inputs) {
 }
 
 function readdirSafe(absolute) {
-  try { return readdirSync(absolute); } catch (error) {
+  try {
+    return readdirSync(absolute);
+  } catch (error) {
     if (error.code === "ENOTDIR") return null;
     throw error;
   }
@@ -452,28 +557,61 @@ function provenance(browser) {
   return {
     sourceRevision: process.env.QA_SOURCE_REVISION || git("rev-parse", "HEAD"),
     sourceState: process.env.QA_SOURCE_STATE || git("status", "--short"),
-    sourceHash: hashInputs(root, ["src", "shared", "server", "api", "worker", "build", "public", "index.html", "vite.config.mjs", "package.json", "package-lock.json", ".openai"]),
+    sourceHash: hashInputs(root, [
+      "src",
+      "shared",
+      "server",
+      "api",
+      "worker",
+      "build",
+      "public",
+      "index.html",
+      "vite.config.mjs",
+      "package.json",
+      "package-lock.json",
+      ".openai",
+    ]),
     buildHash: hashInputs(root, ["dist/client"]),
     collectorHash: createHash("sha256").update(readFileSync(scriptPath)).digest("hex"),
     fixtureHash: hashInputs(fixtures, readdirSync(fixtures).sort()),
-    imageFixtureHash: createHash("sha256").update(readFileSync(path.join(scriptRoot, "public/assets/og-cover.jpg"))).digest("hex"),
+    imageFixtureHash: createHash("sha256")
+      .update(readFileSync(path.join(scriptRoot, "public/assets/og-cover.jpg")))
+      .digest("hex"),
     browser: browser.version(),
     channel: process.env.QA_BROWSER || "chrome",
     fixedTime: FIXED_TIME.toISOString(),
-    locale: "zh-CN", timezoneId: "Asia/Shanghai", deviceScaleFactor: 1,
+    locale: "zh-CN",
+    timezoneId: "Asia/Shanghai",
+    deviceScaleFactor: 1,
   };
 }
 
 async function capture(outDir) {
   if (!existsSync(path.join(root, "dist/client/index.html"))) throw new Error("Run `npm run build` first.");
   mkdirSync(outDir, { recursive: true });
-  const server = spawn(process.execPath, [path.join(root, "node_modules/vite/bin/vite.js"), "preview", "--host", "127.0.0.1", "--port", String(PORT), "--strictPort"],
-    { cwd: root, stdio: "ignore", env: { ...process.env, X_BEARER_TOKEN: "", X_MEDIA_SIGNING_SECRET: "" } });
+  const server = spawn(
+    process.execPath,
+    [
+      path.join(root, "node_modules/vite/bin/vite.js"),
+      "preview",
+      "--host",
+      "127.0.0.1",
+      "--port",
+      String(PORT),
+      "--strictPort",
+    ],
+    { cwd: root, stdio: "ignore", env: { ...process.env, X_BEARER_TOKEN: "", X_MEDIA_SIGNING_SECRET: "" } },
+  );
   let browser;
   try {
     await waitForServer();
-    browser = await chromium.launch({ channel: process.env.QA_BROWSER || "chrome", args: ["--autoplay-policy=user-gesture-required"] });
-    const queue = scenarios().filter((scenario) => !process.env.QA_SCENARIO_PATTERN || new RegExp(process.env.QA_SCENARIO_PATTERN).test(scenario.name));
+    browser = await chromium.launch({
+      channel: process.env.QA_BROWSER || "chrome",
+      args: ["--autoplay-policy=user-gesture-required"],
+    });
+    const queue = scenarios().filter(
+      (scenario) => !process.env.QA_SCENARIO_PATTERN || new RegExp(process.env.QA_SCENARIO_PATTERN).test(scenario.name),
+    );
     const results = [];
     const worker = async () => {
       for (let scenario = queue.shift(); scenario; scenario = queue.shift()) {
@@ -483,10 +621,23 @@ async function capture(outDir) {
       }
     };
     await Promise.all(Array.from({ length: CONCURRENCY }, worker));
-    writeFileSync(path.join(outDir, "manifest.json"), JSON.stringify({ capturedAt: new Date().toISOString(), ...provenance(browser), scenarios: results.map((result) => result.name).sort() }, null, 2));
+    writeFileSync(
+      path.join(outDir, "manifest.json"),
+      JSON.stringify(
+        {
+          capturedAt: new Date().toISOString(),
+          ...provenance(browser),
+          scenarios: results.map((result) => result.name).sort(),
+        },
+        null,
+        2,
+      ),
+    );
     const failing = results.filter((result) => result.errors.length);
     for (const result of failing) console.log(`\n${result.name}:\n  ${result.errors.join("\n  ")}`);
-    console.log(`\nCaptured ${results.length} scenarios into ${path.relative(root, outDir)}${failing.length ? ` (${failing.length} with page errors)` : ""}.`);
+    console.log(
+      `\nCaptured ${results.length} scenarios into ${path.relative(root, outDir)}${failing.length ? ` (${failing.length} with page errors)` : ""}.`,
+    );
     if (failing.length) process.exitCode = 1;
   } finally {
     await browser?.close();
@@ -497,7 +648,8 @@ async function capture(outDir) {
 function expand(data) {
   const map = new Map();
   for (const element of data.elements) {
-    const style = (indices) => indices && Object.fromEntries(indices.map((value, position) => [data.props[position], data.values[value]]));
+    const style = (indices) =>
+      indices && Object.fromEntries(indices.map((value, position) => [data.props[position], data.values[value]]));
     map.set(element.k, { ...element, s: style(element.s), before: style(element.before), after: style(element.after) });
   }
   return map;
@@ -510,17 +662,29 @@ function diffCapture(label, before, after, report) {
     const left = a.get(key);
     const right = b.get(key);
     const where = `${label} ${key.split(">").slice(-3).join(">")} .${(left ?? right).cls.split(/\s+/).filter(Boolean).join(".")}`;
-    if (!left || !right) { report.push(`${where}: element ${left ? "removed" : "added"}`); continue; }
-    if (JSON.stringify(left.attrs) !== JSON.stringify(right.attrs)) report.push(`${where}: attributes ${JSON.stringify(left.attrs)} -> ${JSON.stringify(right.attrs)}`);
-    if (left.text !== right.text) report.push(`${where}: text ${JSON.stringify(left.text)} -> ${JSON.stringify(right.text)}`);
-    if (left.rect.join() !== right.rect.join()) report.push(`${where}: rect ${left.rect.join(",")} -> ${right.rect.join(",")}`);
+    if (!left || !right) {
+      report.push(`${where}: element ${left ? "removed" : "added"}`);
+      continue;
+    }
+    if (JSON.stringify(left.attrs) !== JSON.stringify(right.attrs))
+      report.push(`${where}: attributes ${JSON.stringify(left.attrs)} -> ${JSON.stringify(right.attrs)}`);
+    if (left.text !== right.text)
+      report.push(`${where}: text ${JSON.stringify(left.text)} -> ${JSON.stringify(right.text)}`);
+    if (left.rect.join() !== right.rect.join())
+      report.push(`${where}: rect ${left.rect.join(",")} -> ${right.rect.join(",")}`);
     for (const part of ["s", "before", "after"]) {
       const x = left[part];
       const y = right[part];
       if (!x && !y) continue;
-      if (!x || !y) { report.push(`${where}${part === "s" ? "" : "::" + part}: pseudo ${x ? "removed" : "added"}`); continue; }
+      if (!x || !y) {
+        report.push(`${where}${part === "s" ? "" : "::" + part}: pseudo ${x ? "removed" : "added"}`);
+        continue;
+      }
       for (const name of new Set([...Object.keys(x), ...Object.keys(y)])) {
-        if (x[name] !== y[name]) report.push(`${where}${part === "s" ? "" : "::" + part}: ${name} ${JSON.stringify(x[name])} -> ${JSON.stringify(y[name])}`);
+        if (x[name] !== y[name])
+          report.push(
+            `${where}${part === "s" ? "" : "::" + part}: ${name} ${JSON.stringify(x[name])} -> ${JSON.stringify(y[name])}`,
+          );
       }
     }
   }
@@ -529,7 +693,17 @@ function diffCapture(label, before, after, report) {
 function compare(beforeDir, afterDir) {
   const beforeManifest = JSON.parse(readFileSync(path.join(beforeDir, "manifest.json"), "utf8"));
   const afterManifest = JSON.parse(readFileSync(path.join(afterDir, "manifest.json"), "utf8"));
-  for (const field of ["collectorHash", "fixtureHash", "imageFixtureHash", "browser", "channel", "fixedTime", "locale", "timezoneId", "deviceScaleFactor"]) {
+  for (const field of [
+    "collectorHash",
+    "fixtureHash",
+    "imageFixtureHash",
+    "browser",
+    "channel",
+    "fixedTime",
+    "locale",
+    "timezoneId",
+    "deviceScaleFactor",
+  ]) {
     assert.ok(beforeManifest[field] !== undefined, `baseline is missing ${field}; recapture with provenance`);
     assert.deepEqual(afterManifest[field], beforeManifest[field], `capture conditions differ: ${field}`);
   }
@@ -538,21 +712,33 @@ function compare(beforeDir, afterDir) {
   const report = [];
   let pixelReport = [];
   for (const name of names) {
-    if (!afterNames.has(name)) { report.push(`${name}: missing in ${afterDir}`); continue; }
+    if (!afterNames.has(name)) {
+      report.push(`${name}: missing in ${afterDir}`);
+      continue;
+    }
     const before = JSON.parse(gunzipSync(readFileSync(path.join(beforeDir, name))));
     const after = JSON.parse(gunzipSync(readFileSync(path.join(afterDir, name))));
     const label = name.replace(/\.json\.gz$/, "");
     const newErrors = after.errors.filter((error) => !before.errors.includes(error));
     for (const error of newErrors) report.push(`${label}: new ${error}`);
     for (const key of new Set([...Object.keys(before.captures), ...Object.keys(after.captures)])) {
-      if (!before.captures[key] || !after.captures[key]) { report.push(`${label} [${key}]: capture ${before.captures[key] ? "missing" : "added"}`); continue; }
-      diffCapture(`${label} [${key.split(">").slice(-2).join(">")}]`, before.captures[key], after.captures[key], report);
+      if (!before.captures[key] || !after.captures[key]) {
+        report.push(`${label} [${key}]: capture ${before.captures[key] ? "missing" : "added"}`);
+        continue;
+      }
+      diffCapture(
+        `${label} [${key.split(">").slice(-2).join(">")}]`,
+        before.captures[key],
+        after.captures[key],
+        report,
+      );
     }
     const png = name.replace(/\.json\.gz$/, ".png");
     if (existsSync(path.join(beforeDir, png)) && existsSync(path.join(afterDir, png))) {
       const x = PNG.sync.read(readFileSync(path.join(beforeDir, png)));
       const y = PNG.sync.read(readFileSync(path.join(afterDir, png)));
-      if (x.width !== y.width || x.height !== y.height) pixelReport.push(`${png}: size ${x.width}x${x.height} -> ${y.width}x${y.height}`);
+      if (x.width !== y.width || x.height !== y.height)
+        pixelReport.push(`${png}: size ${x.width}x${x.height} -> ${y.width}x${y.height}`);
       else {
         const diff = new PNG({ width: x.width, height: x.height });
         const changed = pixelmatch(x.data, y.data, diff.data, x.width, x.height, { threshold: 0.1 });
@@ -568,17 +754,29 @@ function compare(beforeDir, afterDir) {
   if (report.length) {
     console.log(`\n${report.length} style/DOM differences:`);
     for (const line of report.slice(0, Number(process.env.QA_MAX_LINES || 400))) console.log("  " + line);
-    if (report.length > Number(process.env.QA_MAX_LINES || 400)) console.log(`  … ${report.length - Number(process.env.QA_MAX_LINES || 400)} more`);
+    if (report.length > Number(process.env.QA_MAX_LINES || 400))
+      console.log(`  … ${report.length - Number(process.env.QA_MAX_LINES || 400)} more`);
   }
   if (pixelReport.length) {
     console.log(`\n${pixelReport.length} screenshots differ:`);
     for (const line of pixelReport) console.log("  " + line);
   }
-  if (!report.length && !pixelReport.length) console.log("No differences: computed styles, layout, DOM and screenshots match.");
-  writeFileSync(path.join(afterDir, "comparison.json"), JSON.stringify({
-    before: beforeManifest, after: afterManifest, comparedScenarios: names.length,
-    styleDifferences: report, screenshotDifferences: pixelReport,
-  }, null, 2));
+  if (!report.length && !pixelReport.length)
+    console.log("No differences: computed styles, layout, DOM and screenshots match.");
+  writeFileSync(
+    path.join(afterDir, "comparison.json"),
+    JSON.stringify(
+      {
+        before: beforeManifest,
+        after: afterManifest,
+        comparedScenarios: names.length,
+        styleDifferences: report,
+        screenshotDifferences: pixelReport,
+      },
+      null,
+      2,
+    ),
+  );
   process.exitCode = report.length || pixelReport.length ? 1 : 0;
 }
 

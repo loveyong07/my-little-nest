@@ -1,31 +1,103 @@
-import { useEffect, useState } from "react";
-import { copy } from "../constants/locales.js";
-import { DEFAULT_LANGUAGE, LANGUAGE_STORAGE_KEY, htmlLang } from "../constants/languages.js";
+import { useEffect, useRef, useState } from "react";
+import zhLocale from "../constants/locales/zh.js";
+import zhFantasy from "../constants/fantasy/zh.js";
+import { DEFAULT_LANGUAGE, LANGUAGES, LANGUAGE_STORAGE_KEY, htmlLang } from "../constants/languages.js";
 
-function readStoredLanguage() {
+const VALID_LANGUAGES = new Set(LANGUAGES.map(({ code }) => code));
+const localeCache = { zh: zhLocale };
+const fantasyCache = { zh: zhFantasy };
+const inflight = new Map();
+
+const loaders = {
+  ja: () => Promise.all([import("../constants/locales/ja.js"), import("../constants/fantasy/ja.js")]),
+  en: () => Promise.all([import("../constants/locales/en.js"), import("../constants/fantasy/en.js")]),
+};
+
+export function readStoredLanguage() {
   try {
     const saved = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
-    return Object.hasOwn(copy, saved) ? saved : DEFAULT_LANGUAGE;
+    return VALID_LANGUAGES.has(saved) ? saved : DEFAULT_LANGUAGE;
   } catch {
     return DEFAULT_LANGUAGE;
   }
 }
 
+export function isLanguageLoaded(code) {
+  return Boolean(localeCache[code] && fantasyCache[code]);
+}
+
+export function preloadLanguage(code) {
+  if (isLanguageLoaded(code)) return Promise.resolve();
+  const load = loaders[code];
+  if (!load) return Promise.resolve();
+  if (!inflight.has(code)) {
+    const pending = load()
+      .then(([localeMod, fantasyMod]) => {
+        localeCache[code] = localeMod.default;
+        fantasyCache[code] = fantasyMod.default;
+      })
+      .finally(() => {
+        inflight.delete(code);
+      });
+    inflight.set(code, pending);
+  }
+  return inflight.get(code);
+}
+
 export function useI18n() {
-  const [language, setLanguage] = useState(readStoredLanguage);
+  const initial = readStoredLanguage();
+  const [state, setState] = useState(() => ({
+    language: isLanguageLoaded(initial) ? initial : DEFAULT_LANGUAGE,
+    requested: initial,
+  }));
+  const requestIdRef = useRef(0);
 
   useEffect(() => {
-    document.documentElement.lang = htmlLang(language);
-  }, [language]);
+    document.documentElement.lang = htmlLang(state.language);
+  }, [state.language]);
+
+  useEffect(() => {
+    if (state.language === state.requested) return undefined;
+    let active = true;
+    const target = state.requested;
+    preloadLanguage(target)
+      .then(() => {
+        if (active && isLanguageLoaded(target)) {
+          setState((current) => (current.requested === target ? { language: target, requested: target } : current));
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [state.language, state.requested]);
 
   function changeLanguage(nextLanguage) {
-    setLanguage(nextLanguage);
+    if (!VALID_LANGUAGES.has(nextLanguage)) return;
     try {
       window.localStorage.setItem(LANGUAGE_STORAGE_KEY, nextLanguage);
     } catch {
       /* Storage is optional. */
     }
+    const id = ++requestIdRef.current;
+    if (isLanguageLoaded(nextLanguage)) {
+      setState({ language: nextLanguage, requested: nextLanguage });
+      return;
+    }
+    setState((current) => ({ ...current, requested: nextLanguage }));
+    preloadLanguage(nextLanguage)
+      .then(() => {
+        if (requestIdRef.current === id && isLanguageLoaded(nextLanguage)) {
+          setState({ language: nextLanguage, requested: nextLanguage });
+        }
+      })
+      .catch(() => {});
   }
 
-  return { language, t: copy[language], changeLanguage };
+  return {
+    language: state.language,
+    t: localeCache[state.language] ?? zhLocale,
+    f: fantasyCache[state.language] ?? zhFantasy,
+    changeLanguage,
+  };
 }

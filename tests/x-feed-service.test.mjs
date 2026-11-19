@@ -1174,3 +1174,27 @@ test("keeps the daily feed live when user lookup has a partial pin expansion err
   assert.equal(result.pinnedStatus, "unavailable");
   assert.equal(urls[0].searchParams.has("expansions"), false);
 });
+
+test("429 responses honor retry-after and x-rate-limit-reset instead of probing every 60 seconds", async () => {
+  let now = 1_700_000_000_000;
+  let calls = 0;
+  const feed = createXFeedService({
+    token: "private-test-token",
+    now: () => now,
+    fetchImpl: async () => {
+      calls++;
+      return new Response("rate limited", {
+        status: 429,
+        headers: { "x-rate-limit-reset": String(Math.floor((now + 5 * 60_000) / 1000)) },
+      });
+    },
+  });
+  assert.equal((await feed()).status, "unavailable");
+  assert.equal(calls, 1);
+  now += 2 * 60_000;
+  assert.equal((await feed()).status, "unavailable");
+  assert.equal(calls, 1, "must stay backed off past 60s until reset window");
+  now += 3 * 60_000 + 1000;
+  await feed();
+  assert.equal(calls, 2);
+});

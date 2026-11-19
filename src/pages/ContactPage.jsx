@@ -11,6 +11,7 @@ import { useSectionEntrance } from "../hooks/useSectionEntrance.js";
 import { SectionHeading } from "../components/SectionHeading.jsx";
 import { LetterComposer } from "../components/LetterComposer.jsx";
 import { preferredScrollBehavior } from "../utils/motion.js";
+import "../styles/contact-route.css";
 
 const contactIcons = {
   x: FaXTwitter,
@@ -109,7 +110,7 @@ export default function ContactPage({ t, profile }) {
           <div className="contact-grid" id="contact-channel-list">
             {visibleSocials.map((social) => (
               <ContactTile
-                key={social.title}
+                key={social.className}
                 {...social}
                 failureMessage={t.copyFailed}
                 manualCopyLabel={t.manualCopyId}
@@ -187,7 +188,7 @@ export default function ContactPage({ t, profile }) {
           {t.letterGuide.map(({ title, text }, index) => {
             const Icon = letterIcons[index];
             return (
-              <li key={title} data-reveal>
+              <li key={index} data-reveal>
                 <Icon aria-hidden="true" />
                 <div>
                   <h4>{title}</h4>

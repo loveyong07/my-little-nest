@@ -400,25 +400,6 @@
 .secondary-cta:hover svg {
   transform: translateY(-1px) rotate(-6deg);
 }
-.sailing-cta {
-  border: 1px solid #b7cfea;
-  background: linear-gradient(125deg, #e3f2ffcc, #eee9ffb3);
-  color: #3d6086;
-  box-shadow:
-    0 5px 15px #507ba51a,
-    inset 0 1px 1px #ffffffd9;
-  white-space: nowrap;
-}
-.sailing-cta:hover svg {
-  transform: translate(2px, -2px);
-}
-.sailing-cta .sailing-external-icon {
-  align-self: flex-start;
-  width: 12px;
-  height: 12px;
-  margin-left: -4px;
-  stroke-width: 2;
-}
 
 /* Wide screens only: a quote in the sky and a pinned note beside the character. */
 .sky-quote {
@@ -513,7 +494,7 @@
 .handwritten-note time {
   display: block;
   margin-top: 2px;
-  color: #6284a1;
+  color: #48647f;
   font-style: normal;
   font-weight: 700;
 }
@@ -665,29 +646,6 @@
   to {
     transform: rotate(180deg);
   }
-}
-.interest-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-  margin: 12px 0 0;
-  padding: 0;
-  list-style: none;
-}
-.interest-tags li {
-  padding: 3px 11px;
-  border-radius: 999px;
-  background: #d9f2e4;
-  color: #456c62;
-  font-size: 12px;
-}
-.interest-tags li:nth-child(2n) {
-  background: #dcecff;
-  color: #526d8c;
-}
-.interest-tags li:nth-child(3n) {
-  background: var(--surface-blue-strong);
-  color: #4e6f8c;
 }
 
 @media (max-width: 1365px) and (min-width: 1181px) {

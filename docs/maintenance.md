@@ -8,7 +8,7 @@
 
 Vercel 的图片函数可连接香港 `hkg1` 私有 Blob，持久保存成功编码的 WebP 和已确定无法转码的原图。编码抛异常时仍返回原图，浏览器、CDN、后台上传和预热脚本均跳过缓存，下一次请求可重新转码。每次先校验本站来源和媒体签名，再读取存储。新写入使用 `x-photos/original-q90-v2/` 下的原图 URL 摘要，继续复用 v1 的 WebP。v1 的原图缺少失败原因，按缓存未命中处理，之后有机会重新转码。读取共用 1.5 秒期限，未命中或存储故障时回源。新图通过 Vercel `waitUntil` 在后台保存。写入报错后若存储确认同键对象已存在，视为已缓存并继续处理下一张图。
 
-首次导入现有图片可运行 `node --env-file=.env.local scripts/warm-photo-cache.mjs`，加 `--limit 3` 只导入三个样本；本地文件需要已经连接存储后的服务端 Blob 凭据。脚本从当前成功同步的公开动态中去重收集配图，保留完整像素与实际格式，不处理头像、封面或视频。它不是持续同步任务；后续新图首次请求仍可能需要回源，随后自动持久缓存。缓存写入前检查用量，默认在约 800 MB 的软预算处停止新增，不自动删除旧文件；实例间并发和一分钟的用量快照存在偏差，这个预算不能代替 Vercel 的账户用量限制。存储、流量或操作配额不足时保留现有回源回退。
+首次导入现有图片可运行 `node --env-file=.env.local scripts/warm-photo-cache.mjs`，加 `--limit 3` 只导入三个样本；本地文件需要已经连接存储后的服务端 Blob 凭据。脚本从当前成功同步的公开动态中去重收集配图，保留完整像素与实际格式，不处理头像、封面或视频。它不是持续同步任务；后续新图首次请求仍可能需要回源，随后自动持久缓存。缓存写入前检查用量（每 5 分钟复用盘点结果，若库中已无 `v1` 旧图则跳过 `v1` 双查），触及 800 MB 软预算时优先按上传时间淘汰最旧配图腾出空间（每次至多 16 条），无法回收时再停止新增；实例间并发和盘点快照仍存在偏差，这个预算不能代替 Vercel 的账户用量限制。存储、流量或操作配额不足时保留现有回源回退。同实例对同一张未缓存 `format=webp` 原图的并发请求会合并为一次回源与一次编码，避免突发并发放大内存。
 
 `/api/x-profile` 通过稳定用户 ID 查询账号资料；`/api/x-posts` 获取置顶、日常原创帖、转帖和 X Articles。文章来自同一次时间线请求的 `article` / `article_title` 字段，与普通长帖分开，响应包含 `articles` 和 `articlesStatus`（`ok` / `none` / `stale` / `unavailable`）。文章优先展示 API 提供的纯文本正文，缺少正文时展示预览，并提供 X 原文链接；封面沿用同源签名媒体代理。前端定期刷新，接口失败时使用已有缓存或明确标注的快照，不代表秒级同步。
 
@@ -34,9 +34,9 @@ Vercel 的 `/api/x-posts` 函数同样连接私有 Blob（`server/article-cache.
 
 文章部分失败同样退避 60 秒，之后合并并发并完整重扫时间线以恢复旧文章。若 X 拒绝可选文章字段，则回退普通帖子字段，保留可用帖子及旧文章的过期状态；整次重试失败不延长原成功缓存的寿命。完整采集成功后按新结果更新帖子和文章。无服务端凭据或整体异常且无缓存时，保留兼容响应 `{status: "unavailable", posts: []}`，前端将缺少的文章状态视为不可用。
 
-共享 handler 表示源码规则相同。四个 Vercel 函数分别创建 handler，动态与资料的内存缓存仅限各自实例；不能假定跨函数、实例或运行环境共享内存。图片函数和动态函数分别注入私有 Blob 适配器，持久复用已处理配图与已校验的 Article 段落结构；动态与资料主体仍保持单实例内存缓存。
+共享 handler（`server/api-handler.mjs`）统一承载全部 5 条 API 路由（4 个 X 接口与 `/api/starrygal`）。Vercel 侧由 `api/` 下的五个函数分别托管，并由 `vercel.json` 显式配置各函数 `maxDuration` 与流式响应；Sites 侧由 `worker/index.js` 共用 `shared/hosting-policy.mjs` 注入与 Vercel 一致的安全响应头（CSP、HSTS、Permissions-Policy、COOP、X-Frame-Options、nosniff）、`/route-shells/*.html` 路由壳（保证 `/posts` 的 `noindex, follow`）、`/business` 308 跳转与静态资源缓存策略，`scripts/prepare-sites-build.mjs` 自动剔除仅 Vercel 使用的 Blob 存储模块。动态与资料接口统一输出 `X-Robots-Tag: noindex, nofollow`，`public/robots.txt` 禁止抓取 `/api/`。X API 明确返回的永久对象级错误（原帖已删或作者设私）会跳过该条转帖而不污染 `repostsStatus`；收到 `429` 时遵循 `retry-after` / `x-rate-limit-reset` 退避（60 秒至 15 分钟）。
 
-`/api/x-media`、`/api/x-video` 为同源媒体接口。服务端校验规范形式的签名源地址、类型、有效期和签名，精确旧媒体名单提供缓存兼容。视频支持单段 Range。`416` 仅在已知视频完整长度时包含 `Content-Range`。
+`/api/x-media`、`/api/x-video` 为同源媒体接口。服务端校验规范形式的签名源地址、类型、有效期和签名（支持通过 `X_MEDIA_SIGNING_SECRET_PREVIOUS` 实现双密钥平滑轮换），精确旧媒体名单提供缓存兼容。`api/x-video.js` 流式转发单段 Range（包括浏览器用于大视频的 `bytes=0-`），拒绝 `bytes=-0`，并设有 55 秒的单次请求总时限。`416` 仅在已知视频完整长度时包含 `Content-Range`。
 
 图片代理的连接超时为 10 秒，每次等待上游数据的空闲超时为 10 秒，总请求时限为 60 秒。持续传输可超过 10 秒，客户端背压不计为空闲读取超时。图片大小上限为 12 MiB，编码结果、回退原图和 Blob 命中均以字节流发送。响应结束、失败或取消后释放计时器和断开监听，客户端取消时中止上游请求。
 
@@ -58,7 +58,7 @@ CI 使用 `npm run audit:ci` 运行完整的 `npm audit --audit-level=moderate`�
 
 `/api/starrygal` provides public TouchGal metadata to the StarryGal desktop launcher. Set `TOUCHGAL_API_TOKEN` as a server-only Vercel environment variable in Production and Preview. Do not prefix it with `VITE_`, commit a real token, or include it in frontend builds. Redeploy after changing it.
 
-The function only calls fixed routes on `https://developer.touchgal.com/api/v1/`. It exposes search, detail, resource and patch metadata, with a sanitized `status` check. It returns no token prefix or account ID. Credentials never appear in response bodies or URLs. Adult-rated metadata requires an explicit `allowNsfw=true`. There are no game download URLs or PVs in the upstream contract.
+The function (`server/starrygal.mjs`, wrapped by `api/starrygal.js` and shared with `worker/index.js`) only calls fixed routes on `https://developer.touchgal.com/api/v1/`, validates query parameters strictly per `action` to prevent CDN cache busting, prefers trusted Vercel/proxy IP headers for per-instance rate limiting, and uses instance-scoped LRU caching. It exposes search, detail, resource and patch metadata, with a sanitized `status` check. It returns no token prefix or account ID. Credentials never appear in response bodies or URLs. Adult-rated metadata requires an explicit `allowNsfw=true`. There are no game download URLs or PVs in the upstream contract. `TOUCHGAL_API_TOKEN` is included in CI canaries and `tests/build/artifacts.test.mjs` leak scans.
 
 Success responses use CDN and bounded warm-instance caching, with in-flight deduplication, a 12-second upstream timeout, a 2 MiB response limit, and a best-effort limit of 30 requests per minute per client on each warm instance. When the 2,000-address table fills, new clients share 128 additional counters with the same one-minute quota per counter. TouchGal enforces the shared token quotas globally. Upstream errors and rate limits are not cached.
 

@@ -1,7 +1,7 @@
 dist/
 .vercel/
 archive/
-qa/
+/qa/
 public/
 node_modules/
 vendor/picomatch/

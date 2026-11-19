@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { FiArrowUp } from "react-icons/fi";
-import { fantasyCopy } from "../../constants/fantasy.js";
+import zhFantasy from "../../constants/fantasy/zh.js";
 import { preferredScrollBehavior } from "../../utils/motion.js";
 import { SakuraCanvas } from "./SakuraCanvas.jsx";
 import "../../styles/fantasy-extras.css";
@@ -70,8 +70,7 @@ function ScrollCompanion({ page, label }) {
   );
 }
 
-export default function FantasyExtras({ language, page, preferences }) {
-  const f = fantasyCopy[language];
+export default function FantasyExtras({ f = zhFantasy, page, preferences }) {
   const { motion } = preferences;
   return (
     <>

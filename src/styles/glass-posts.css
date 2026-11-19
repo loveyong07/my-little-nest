@@ -1,0 +1,109 @@
+/* Progressive glass layers for Posts reading cards, age confirmation and index controls. */
+.post-card,
+.posts-age-gate {
+  border-color: #ffffff80;
+  box-shadow: var(--glass-card-shadow);
+}
+@media (min-width: 901px) and (pointer: fine) {
+  .post-card:hover {
+    border-color: #ffffffb3;
+  }
+}
+.post-index-button {
+  border-color: #ffffff80;
+  box-shadow: var(--glass-card-shadow);
+}
+.post-index-button.is-active {
+  box-shadow:
+    inset 0 -3px #9cbcd6,
+    var(--glass-edge-light);
+}
+
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .post-index-button {
+    -webkit-backdrop-filter: blur(var(--glass-tile-blur)) saturate(1.03);
+    backdrop-filter: blur(var(--glass-tile-blur)) saturate(1.03);
+  }
+  .post-date,
+  .post-month-picker select,
+  .posts-age-badge,
+  .posts-age-actions button,
+  .posts-age-actions a {
+    -webkit-backdrop-filter: blur(var(--glass-control-blur)) saturate(1.02);
+    backdrop-filter: blur(var(--glass-control-blur)) saturate(1.02);
+  }
+}
+
+@supports (filter: blur(1px)) and (clip-path: border-box) {
+  /* A post can be very tall: frost a viewport-sized static image, not a live
+     backdrop covering the full article. The fill reproduces both glass layers. */
+  .post-card,
+  .posts-age-gate {
+    position: relative;
+    isolation: isolate;
+    background: var(--glass-reading-fill);
+  }
+  .glass-reading-backdrop::before {
+    filter: blur(var(--glass-reading-blur)) saturate(1.04);
+  }
+  .glass-reading-backdrop::after {
+    background: var(--glass-reading-fill), var(--glass-panel-fill);
+  }
+  .post-index-button {
+    background: var(--glass-tile-fill);
+  }
+  .post-index-button:hover {
+    background: #ffffff8c;
+  }
+  .post-index-button.is-active {
+    background: linear-gradient(135deg, #f9e6f080, #e3effca6);
+  }
+  .post-date,
+  .post-month-picker select {
+    border-color: #ffffff8c;
+    background: var(--glass-control-fill);
+    box-shadow: var(--glass-edge-light);
+  }
+  /* The age prompt follows the same stack: clear panel, frosted reading card,
+     then smaller tinted controls. Only the scene behind the text is filtered. */
+  .posts-age-badge {
+    border-color: #ffffffb3;
+    background: linear-gradient(135deg, #eee5faad, #f4effa85);
+    box-shadow: var(--glass-edge-light);
+  }
+  .posts-age-confirm {
+    border-color: #ffffff8c;
+    background: linear-gradient(135deg, #e3effcb3, #f4f9ff94);
+    box-shadow: var(--glass-edge-light);
+  }
+  .posts-age-exit {
+    border-color: #ffffff8c;
+    background: var(--glass-control-fill);
+    box-shadow: var(--glass-edge-light);
+  }
+  .posts-age-actions button:hover,
+  .posts-age-actions a:hover {
+    border-color: var(--color-primary);
+    background: #ffffffc2;
+  }
+}
+
+@media (forced-colors: active) {
+  .post-card,
+  .posts-age-gate,
+  .posts-age-badge,
+  .posts-age-actions button,
+  .posts-age-actions a,
+  .posts-quick-nav,
+  .quick-nav-pill,
+  .post-index-button,
+  .post-date,
+  .post-month-picker select {
+    background: Canvas;
+    border-color: CanvasText;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    text-shadow: none;
+  }
+}

@@ -5,10 +5,12 @@
   "outputDirectory": "dist/client",
   "functions": {
     "api/x-media.js": {
-      "regions": ["hkg1"]
+      "regions": ["hkg1"],
+      "maxDuration": 60
     },
     "api/x-video.js": {
-      "regions": ["hkg1"]
+      "regions": ["hkg1"],
+      "maxDuration": 60
     },
     "api/x-posts.js": {
       "regions": ["hkg1"],
@@ -69,6 +71,18 @@
         {
           "key": "Referrer-Policy",
           "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=31536000; includeSubDomains"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
+        },
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin"
         }
       ]
     }

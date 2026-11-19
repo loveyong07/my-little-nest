@@ -45,7 +45,7 @@ function RouteLoadError({ t }) {
 }
 
 export function App() {
-  const { language, t, changeLanguage } = useI18n();
+  const { language, t, f, changeLanguage } = useI18n();
   const { page, handleRouteClick, preparePosts, navigatePage, historyReading, rememberReading } = useSiteRoute();
   const [postsReady, setPostsReady] = useState(false);
   const profile = useXProfile(page, page !== "posts" || postsReady);
@@ -70,7 +70,7 @@ export function App() {
   const extras = extrasReady ? (
     <LazyRegionBoundary fallback={null}>
       <Suspense fallback={null}>
-        <FantasyExtras language={language} page={page} preferences={preferences} />
+        <FantasyExtras f={f} page={page} preferences={preferences} />
       </Suspense>
     </LazyRegionBoundary>
   ) : null;
@@ -79,8 +79,7 @@ export function App() {
   );
 
   return (
-    <main
-      aria-labelledby="page-heading"
+    <div
       className={
         "site language-" +
         language +
@@ -100,15 +99,11 @@ export function App() {
         </div>
       )}
       {page === "home" ? (
-        <HeroSection header={header} language={language} t={t} profile={profile} extras={extras} />
+        <HeroSection header={header} language={language} t={t} f={f} profile={profile} extras={extras} />
       ) : (
         <>
           <RouteHero page={page} t={t} header={header} />
-          <section
-            key={page}
-            className={"content-panel route-panel route-panel-" + page}
-            aria-label={page === "posts" ? t.postsHeading : t.contactsHeading}
-          >
+          <main key={page} className={"content-panel route-panel route-panel-" + page} aria-labelledby="page-heading">
             <GlassFlorals />
             <LazyRegionBoundary fallback={<RouteLoadError t={t} />}>
               <Suspense
@@ -133,7 +128,7 @@ export function App() {
               </Suspense>
             </LazyRegionBoundary>
             <div className="glass-panel-backdrop" aria-hidden="true" />
-          </section>
+          </main>
           <PageFooter t={t} page={page} />
         </>
       )}
@@ -142,6 +137,6 @@ export function App() {
       <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
         {t.nav[navIds.indexOf(page)]}
       </div>
-    </main>
+    </div>
   );
 }

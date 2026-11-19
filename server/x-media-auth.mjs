@@ -11,13 +11,19 @@ const MAX_LIFETIME_SECONDS = 8 * DAY_SECONDS;
 export const MEDIA_RETRY_LIMIT = 3;
 const legacy = { image: new Set(LEGACY_IMAGE_URLS), video: new Set(LEGACY_VIDEO_URLS) };
 const encoder = new TextEncoder();
-let cachedSecret;
-let cachedKey;
+const primarySlot = { secret: undefined, key: undefined };
+const previousSlot = { secret: undefined, key: undefined };
 
 // A dedicated X_MEDIA_SIGNING_SECRET is preferred; without it the key is derived from the
 // X credential (signingKey() never uses the secret directly).
 export function signingSecret(env = globalThis.process?.env ?? {}) {
   return env.X_MEDIA_SIGNING_SECRET || env.X_BEARER_TOKEN || "";
+}
+
+// Optional previous secret lets key rotations accept existing 8-day signed URLs
+// without breaking cached feeds or CDN responses.
+export function previousSigningSecret(env = globalThis.process?.env ?? {}) {
+  return env.X_MEDIA_SIGNING_SECRET_PREVIOUS || "";
 }
 
 /**
@@ -38,10 +44,10 @@ export function validMediaQuery(request) {
   return params.getAll("url").length === 1 && (!params.has("format") || params.get("format") === "webp");
 }
 
-async function signingKey(secret) {
+async function signingKey(secret, slot = primarySlot) {
   if (!secret) return null;
-  if (secret !== cachedSecret) {
-    cachedSecret = secret;
+  if (secret !== slot.secret) {
+    slot.secret = secret;
     const pending = (async () => {
       const rootKey = await crypto.subtle.importKey(
         "raw",
@@ -53,16 +59,16 @@ async function signingKey(secret) {
       const derived = await crypto.subtle.sign("HMAC", rootKey, encoder.encode("little-nest/media-signing-key/v1"));
       return crypto.subtle.importKey("raw", derived, { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
     })();
-    cachedKey = pending;
+    slot.key = pending;
     void pending.catch(() => {
       // An older failure must not evict a key derived after a secret rotation.
-      if (cachedKey === pending) {
-        cachedSecret = undefined;
-        cachedKey = undefined;
+      if (slot.key === pending) {
+        slot.secret = undefined;
+        slot.key = undefined;
       }
     });
   }
-  return cachedKey;
+  return slot.key;
 }
 
 function payload(kind, source, expires, format = null) {
@@ -105,7 +111,7 @@ export async function authorizedMediaRequest(
   request,
   source,
   kind,
-  { secret = signingSecret(), now = Date.now() } = {},
+  { secret = signingSecret(), previousSecret = previousSigningSecret(), now = Date.now() } = {},
 ) {
   if (!source || !validMediaQuery(request)) return false;
   // This is an early browser hotlink check, not a substitute for cryptographic authorization.
@@ -125,10 +131,17 @@ export async function authorizedMediaRequest(
   const expires = Number(expiresText);
   const nowSeconds = Math.floor(now / 1000);
   if (expires <= nowSeconds || expires > nowSeconds + MAX_LIFETIME_SECONDS + 60) return false;
-  const key = await signingKey(secret);
-  if (!key) return false;
   const bytes = Uint8Array.from(signature.match(/.{2}/g), (hex) => Number.parseInt(hex, 16));
-  return crypto.subtle.verify("HMAC", key, bytes, payload(kind, source, expires, format));
+  const data = payload(kind, source, expires, format);
+  const candidates = [
+    { candidate: secret, slot: primarySlot },
+    ...(previousSecret && previousSecret !== secret ? [{ candidate: previousSecret, slot: previousSlot }] : []),
+  ];
+  for (const { candidate, slot } of candidates) {
+    const key = await signingKey(candidate, slot);
+    if (key && (await crypto.subtle.verify("HMAC", key, bytes, data))) return true;
+  }
+  return false;
 }
 
 export function boundedMediaCache(request, policy, now = Date.now()) {

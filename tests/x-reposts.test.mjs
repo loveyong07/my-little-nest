@@ -228,3 +228,44 @@ test("reading follows latest until manually selected, retains identity and disti
   assert.equal(reading.state, "none");
   assert.equal(refreshedRepostReading(reading, {}).state, "unavailable");
 });
+
+test("authoritative deleted or protected repost errors are skipped without causing a 60s rescan loop", async () => {
+  let now = 0;
+  let timelineCalls = 0;
+  const service = createXFeedService({
+    token: "test-token",
+    now: () => now,
+    fetchImpl: async (input) => {
+      const url = new URL(input);
+      if (url.pathname === `/2/users/${account.id}`) return Response.json({ data: account });
+      if (url.pathname === "/2/tweets") {
+        assert.equal(url.searchParams.get("ids"), "10");
+        const details = payload();
+        return Response.json({ data: [original("10")], includes: details.includes });
+      }
+      timelineCalls++;
+      const body = payload([event("101", "retweeted", "10"), event("102", "retweeted", "999")]);
+      body.errors = [
+        {
+          type: "https://api.twitter.com/2/problems/resource-not-found",
+          resource_type: "tweet",
+          resource_id: "999",
+          value: "999",
+        },
+      ];
+      return Response.json(body);
+    },
+  });
+  const first = await service();
+  assert.equal(first.status, "ok");
+  assert.equal(first.repostsStatus, "ok");
+  assert.deepEqual(
+    first.reposts.map((post) => post.id),
+    ["10"],
+  );
+  // After 2 minutes (past 60s error backoff, within 15m TTL), no rescan should fire.
+  now += 2 * 60_000;
+  const second = await service();
+  assert.equal(second.repostsStatus, "ok");
+  assert.equal(timelineCalls, 1);
+});

@@ -41,11 +41,23 @@ export function MediaLightbox({
 
   useEffect(() => {
     const returnFocus = returnFocusRef.current;
+    const root = document.getElementById("root");
     const previousOverflow = document.body.style.overflow;
+    const previousInert = root?.inert;
+    const previousAriaHidden = root?.getAttribute("aria-hidden");
     document.body.style.overflow = "hidden";
     closeRef.current?.focus();
+    if (root) {
+      root.inert = true;
+      root.setAttribute("aria-hidden", "true");
+    }
     return () => {
       document.body.style.overflow = previousOverflow;
+      if (root) {
+        root.inert = Boolean(previousInert);
+        if (previousAriaHidden === null) root.removeAttribute("aria-hidden");
+        else root.setAttribute("aria-hidden", previousAriaHidden);
+      }
       returnFocus?.focus();
     };
   }, [returnFocusRef]);
@@ -54,9 +66,9 @@ export function MediaLightbox({
     function handleKeyDown(event) {
       if (event.key === "Escape") {
         closePreview();
-      } else if (kind === "photo" && ["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) {
+      } else if (kind === "photo" && photoCount > 1 && ["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) {
         event.preventDefault();
-        onPhotoChange((index) =>
+        onPhotoChange?.((index) =>
           event.key === "Home"
             ? 0
             : event.key === "End"
@@ -70,10 +82,15 @@ export function MediaLightbox({
           return;
         }
         const focusable = [...dialogRef.current.querySelectorAll("video[controls], button:not(:disabled)")].filter(
-          (element) => !element.closest('[aria-hidden="true"]'),
+          (element) => {
+            if (element.closest('[aria-hidden="true"]')) return false;
+            const style = window.getComputedStyle(element);
+            return style.display !== "none" && style.visibility !== "hidden";
+          },
         );
         const first = focusable[0];
         const last = focusable.at(-1);
+        if (!first || !last) return;
         if (event.shiftKey && document.activeElement === first) {
           event.preventDefault();
           last.focus();

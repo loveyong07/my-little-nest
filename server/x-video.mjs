@@ -5,6 +5,8 @@ const CACHE_CONTROL = "public, max-age=1800, s-maxage=43200";
 // Covers connecting and waiting for the first byte; while streaming, the same limit
 // applies between chunks so a stalled upstream releases instead of hanging on.
 const STALL_TIMEOUT_MS = 15000;
+// Bound total streaming time so a paused connection cannot hold a function open indefinitely.
+const TOTAL_TIMEOUT_MS = 55000;
 
 function errorResponse(status, message, extraHeaders = {}) {
   return new Response(message, {
@@ -22,8 +24,13 @@ function validSingleByteRange(value) {
   if (!value) return true;
   if (value.length > 128 || !/^bytes=(?:\d+-\d*|-\d+)$/.test(value)) return false;
   const [startText, endText] = value.slice(6).split("-");
+  if (!startText && Number(endText) === 0) return false;
   if (startText && endText && Number(startText) > Number(endText)) return false;
   return [startText, endText].filter(Boolean).every((part) => Number.isSafeInteger(Number(part)));
+}
+
+function validIfRange(value) {
+  return Boolean(value && value.length <= 256 && !/[\r\n]/.test(value));
 }
 
 function responseBody(upstreamBody, controller, cleanup, idle) {
@@ -59,7 +66,7 @@ export async function proxyXVideo(
   request,
   fetchImpl = globalThis.fetch,
   authOptions,
-  { stallTimeoutMs = STALL_TIMEOUT_MS } = {},
+  { stallTimeoutMs = STALL_TIMEOUT_MS, totalTimeoutMs = TOTAL_TIMEOUT_MS } = {},
 ) {
   if (request.method !== "GET") {
     return errorResponse(405, "Method not allowed", { Allow: "GET" });
@@ -83,6 +90,7 @@ export async function proxyXVideo(
   if (request.signal.aborted) abortFromClient();
   else request.signal.addEventListener("abort", abortFromClient, { once: true });
   const connectTimeout = setTimeout(() => controller.abort(), stallTimeoutMs);
+  const totalTimeout = Number.isFinite(totalTimeoutMs) ? setTimeout(() => controller.abort(), totalTimeoutMs) : null;
   let idleTimeout = null;
   // Re-armed around each upstream read, so this is an idle limit and not a total limit.
   const idle = {
@@ -98,6 +106,7 @@ export async function proxyXVideo(
   const cleanup = () => {
     request.signal.removeEventListener("abort", abortFromClient);
     clearTimeout(connectTimeout);
+    clearTimeout(totalTimeout);
     clearTimeout(idleTimeout);
   };
 
@@ -105,7 +114,7 @@ export async function proxyXVideo(
     const headers = new Headers({ Accept: VIDEO_TYPE });
     if (range) headers.set("Range", range);
     const ifRange = request.headers.get("if-range");
-    if (ifRange) headers.set("If-Range", ifRange);
+    if (validIfRange(ifRange)) headers.set("If-Range", ifRange);
 
     const upstream = await fetchImpl(source.href, {
       headers,
@@ -133,7 +142,6 @@ export async function proxyXVideo(
       cleanup();
       return errorResponse(415, "Unsupported video type");
     }
-
     const responseHeaders = new Headers({
       "Content-Type": VIDEO_TYPE,
       "Cache-Control": boundedMediaCache(request, CACHE_CONTROL, authOptions?.now),

@@ -11,6 +11,24 @@
   min-width: 0;
   scroll-margin-top: 20px;
 }
+.pinned-placeholder {
+  display: flex;
+  align-items: center;
+  min-height: 64px;
+  margin-top: 15px;
+  padding: 14px 18px;
+  border: 1px solid #d0dce6;
+  border-radius: 16px;
+  background: var(--surface-tint);
+  box-shadow: 0 3px 13px #7899be0e;
+  color: var(--color-muted);
+  font-size: 14px;
+}
+.route-panel-posts .pinned-placeholder {
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  background: var(--surface-card);
+}
 .section-heading {
   display: flex;
   align-items: center;

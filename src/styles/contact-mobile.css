@@ -1,0 +1,365 @@
+/* Mobile and touch correspondence desk for Contact. */
+@media (max-width: 900px), (pointer: coarse), (pointer: none) {
+  /* Contact channels and a fold-away draft keep the desktop stationery details. */
+  .contact-channel-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    margin-top: 20px;
+  }
+  .contact-channel-heading h3 {
+    margin: 0;
+    color: #345775;
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .contact-channel-heading > span {
+    color: #705b81;
+    font:
+      700 8px/1.5 "Quicksand",
+      sans-serif;
+    letter-spacing: 0.04em;
+  }
+  .contact-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 12px;
+  }
+  .contact-filters button {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 44px;
+    padding: 8px 10px;
+    border: 1px solid #ffffffd9;
+    border-radius: 15px;
+    background: #eef5ffe0;
+    color: #3e617e;
+    font-size: 12px;
+  }
+  .contact-filters button > span {
+    font:
+      700 10px/1.5 "Quicksand",
+      sans-serif;
+  }
+  .contact-filters [aria-pressed="true"] {
+    border-color: #e5c5dc;
+    background: #fff1f8;
+    color: #834769;
+  }
+  .contact-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .contact-tile {
+    min-height: 136px;
+    padding: 14px 10px;
+    border-radius: 20px;
+    background: linear-gradient(145deg, #ffffffe0, #edf5ffd9);
+    text-shadow: none;
+  }
+  .contact-tile.line,
+  .contact-tile.whatsapp {
+    background: linear-gradient(145deg, #ffffffe0, #e8f8f0d9);
+  }
+  .contact-tile.qq,
+  .contact-tile.wechat {
+    background: linear-gradient(145deg, #ffffffe0, #f5ecfcd9);
+  }
+  .contact-tile::before {
+    display: none;
+  }
+  .contact-icon {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 7px;
+  }
+  .contact-icon svg {
+    width: 34px;
+    height: 34px;
+    padding: 7px;
+  }
+  .contact-tile strong {
+    font-size: 14px;
+  }
+  .contact-tile small {
+    font-size: 11px;
+  }
+  .contact-action {
+    margin-top: 10px;
+    padding: 4px 9px;
+    border-radius: 999px;
+    background: var(--tile-pill-bg);
+    color: var(--tile-pill-ink);
+    font-size: 10px;
+  }
+  .email-row {
+    display: block;
+    margin-top: 20px;
+    padding: 20px 16px;
+    border-radius: 24px;
+    background: linear-gradient(145deg, #fffafcf0, #edf5ffeb);
+    text-shadow: none;
+  }
+  .email-row .mail-card-heading {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+    color: #82678e;
+    font:
+      700 8px/1.6 "Quicksand",
+      sans-serif;
+    letter-spacing: 0.08em;
+  }
+  .email-row h3 {
+    font-size: 20px;
+    font-weight: 500;
+  }
+  .email-row > .email-stamp {
+    display: none;
+  }
+  .email-row .mail-card-note {
+    display: block;
+    margin: 10px 0 0;
+    color: #5a738b;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+  .email-row .letter-composer {
+    display: block;
+    margin-top: 18px;
+  }
+  .letter-topics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  .letter-topics legend {
+    margin-bottom: 10px;
+    padding: 0;
+    color: #536d86;
+    font-size: 12px;
+  }
+  .letter-topics button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 1px solid #ccd8e8;
+    border-radius: 15px;
+    background: #ffffffc9;
+    color: #536c86;
+    font-size: 12px;
+  }
+  .letter-topics [aria-pressed="true"] {
+    border-color: #d4b0cf;
+    background: #fbe7f2;
+    color: #854a6d;
+  }
+  .letter-subject-preview {
+    display: grid;
+    gap: 6px;
+    margin-top: 12px;
+    padding: 10px 12px;
+    border: 1px solid #e3d4ec;
+    border-radius: 14px;
+    background: #ffffffa6;
+    font-size: 12px;
+    line-height: 1.7;
+  }
+  .letter-subject-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #83638f;
+    font-size: 10px;
+  }
+  .letter-subject-preview strong {
+    color: #3b5b77;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+  }
+  .letter-draft {
+    margin-top: 12px;
+    border-block: 1px dashed #c8cfe1;
+  }
+  .letter-draft summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 48px;
+    color: #705382;
+    font-size: 13px;
+    cursor: pointer;
+    list-style: none;
+  }
+  .letter-draft summary::-webkit-details-marker {
+    display: none;
+  }
+  .letter-draft summary svg:last-child {
+    margin-left: auto;
+  }
+  .letter-draft[open] summary svg:last-child {
+    transform: rotate(180deg);
+  }
+  .letter-prompts-label,
+  .letter-draft label {
+    display: block;
+    margin-bottom: 8px;
+    color: #5a6d86;
+    font-size: 12px;
+  }
+  .letter-prompts-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-bottom: 14px;
+  }
+  .letter-prompt-chip,
+  .letter-draft-clear {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 9px 12px;
+    border: 1px dashed #d3bbdf;
+    border-radius: 14px;
+    background: #fff7fc;
+    color: #6d517e;
+    font-size: 12px;
+    line-height: 1.6;
+    text-align: left;
+  }
+  .letter-draft textarea {
+    width: 100%;
+    min-height: 150px;
+    max-height: 320px;
+    padding: 12px;
+    border: 1px solid #b9cfe5;
+    border-radius: 16px;
+    background: #fffffff0;
+    color: #355572;
+    font: inherit;
+    font-size: 16px;
+    line-height: 1.8;
+    resize: vertical;
+    scroll-margin-block: 24px;
+  }
+  .letter-draft-note {
+    display: grid;
+    gap: 8px;
+    margin-block: 8px 12px;
+    color: #5a738b;
+    font-size: 11px;
+    line-height: 1.7;
+  }
+  .letter-draft-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .email-row .email-options-list {
+    margin-top: 16px;
+  }
+  .email-option {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px 8px;
+  }
+  .email-option > .email-address {
+    grid-column: 1 / -1;
+    min-height: 44px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font-size: 10px;
+  }
+  .email-address span {
+    font-size: 14px;
+  }
+  .email-row .mail-compose-link {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 7px;
+    min-height: 46px;
+    padding: 10px 12px;
+    border: 1px solid #d5b8d8;
+    border-radius: 16px;
+    background: linear-gradient(120deg, #f9e2ef, #e8e4fb, #dff0ff);
+    color: #674775;
+    font-size: 13px;
+  }
+  .email-option button {
+    min-height: 46px;
+    padding: 10px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+  }
+  .letter-guide ul {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .letter-guide li {
+    padding: 14px;
+    border: 1px solid #fff;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #ffffffe6, #f0f6ffdb);
+    box-shadow: var(--shadow-card);
+  }
+  .letter-guide li::after {
+    display: none;
+  }
+  .letter-guide-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    margin-top: 10px;
+    padding: 8px 12px;
+    border: 1px solid #decae7;
+    border-radius: 14px;
+    background: #faf3ff;
+    color: #725382;
+    font-size: 12px;
+  }
+  .contacts-section :is(button, a, input, textarea, summary):focus-visible {
+    outline: 2px solid #8866a9;
+    outline-offset: 3px;
+  }
+}
+
+@media (min-width: 701px) and (max-width: 900px) {
+  .contact-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) and (forced-colors: active), (pointer: coarse) and (forced-colors: active) {
+  .contact-tile,
+  .email-row,
+  .letter-guide li {
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
+    box-shadow: none;
+  }
+  :is(.letter-topics, .contact-filters) button {
+    border: 1px solid ButtonText;
+  }
+  :is(.letter-topics, .contact-filters) button[aria-selected="true"],
+  :is(.letter-topics, .contact-filters) button[aria-pressed="true"] {
+    outline: 2px solid Highlight;
+  }
+}

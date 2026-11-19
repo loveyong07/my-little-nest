@@ -1,24 +1,33 @@
 import assert from "node:assert/strict";
-import { randomUUID } from "node:crypto";
 import { spawnSync } from "node:child_process";
-import { unlinkSync, writeFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 import { test } from "node:test";
 import { checkCssSyntax } from "../scripts/check-css-syntax.mjs";
 
+const BIOME_BIN = resolve("node_modules/@biomejs/biome/bin/biome");
+const BIOME_CONFIG = resolve("biome.json");
+
 function lintCss(source) {
-  const file = resolve("src/styles", `.css-lint-test-${randomUUID()}.css`);
+  const dir = mkdtempSync(join(tmpdir(), "little-nest-css-lint-"));
+  const file = join(dir, "src", "sample.css");
+  mkdirSync(join(dir, "src"), { recursive: true });
+  copyFileSync(BIOME_CONFIG, join(dir, "biome.json"));
   writeFileSync(file, source, { flag: "wx" });
   try {
     const result = spawnSync(
       process.execPath,
-      ["node_modules/@biomejs/biome/bin/biome", "lint", file, "--error-on-warnings", "--colors=off"],
-      { encoding: "utf8" },
+      [BIOME_BIN, "lint", "src/sample.css", "--error-on-warnings", "--colors=off"],
+      {
+        cwd: dir,
+        encoding: "utf8",
+      },
     );
     assert.ifError(result.error);
     return { status: result.status, output: `${result.stdout}\n${result.stderr}` };
   } finally {
-    unlinkSync(file);
+    rmSync(dir, { recursive: true, force: true });
   }
 }
 
