@@ -1,17 +1,14 @@
 # 样式维护
 
-`src/styles.css` 是入口。导入顺序影响层叠，调整前应先检查后续同名选择器、媒体条件与 `@supports`。
+`src/styles.css` 是首页与公共样式入口；动态页与联系页的专属样式分别通过 `posts-route.css` 和 `contact-route.css` 随懒加载路由按需拆包，同时保持原有层叠顺序。调整前应先检查后续同名选择器、媒体条件与 `@supports`。
 
 | 层次 | 文件 | 职责 |
 | --- | --- | --- |
-| 基础 | `globals.css`、`scenes.css`、`hero-scene.css` | 变量、全局约定、场景与背景 |
-| 组件与页面 | `header.css`、`hero.css`、`starrygal-balloon.css`、`panels.css`、`posts.css`、`media-lightbox.css`、`contact.css`、`routes.css` | 导航、首页热气球、页面结构、帖子、灯箱与联系交互 |
-| 材质与装饰 | `glass.css`、`glass-florals.css`、`articles.css`、`desktop-stationery.css` | 共用玻璃效果、花饰、文章和桌面装饰 |
-| 桌面构图 | `desktop-design.css` | 宽屏首页、导航、路由标题与外层面板 |
-| 桌面功能 | `sky-letter.css` | 阅读目录、搜索抽屉、联系方式和信件草稿 |
-| 触屏布局 | `mobile-letter.css` | 小屏或粗指针设备上的手帐、阅读与来信布局 |
+| 基础与首页入口 | `globals.css`、`scenes.css`、`hero-scene.css`、`header.css`、`hero.css`、`starrygal-balloon.css`、`panels.css`、`routes.css`、`glass.css`、`glass-florals.css`、`desktop-stationery.css`、`desktop-design.css`、`mobile-letter.css`、`swipe-switch.css` | 全局变量、场景、导航滑动切换、首页信笺与手记、公共路由外壳与玻璃基座 |
+| 动态页按需包（`posts-route.css`） | `posts.css`、`media-lightbox.css`、`glass-posts.css`、`articles.css`、`posts-desktop.css`、`posts-mobile.css`、`translation.css` | 帖子、转帖、文章、灯箱、目录与搜索抽屉、端侧翻译 |
+| 联系页按需包（`contact-route.css`） | `contact.css`、`glass-contact.css`、`contact-desktop.css`、`contact-mobile.css` | 社交渠道卡片、写信草稿与联系页玻璃/响应布局 |
 
-`desktop-design.css` 和 `sky-letter.css` 的主布局条件为宽度至少 901px 且精细指针；`mobile-letter.css` 的主条件为宽度至多 900px，或粗指针、无指针设备。键盘焦点、减少动画与强制颜色规则仍需保留。脚本断点配置在 `src/constants/media-queries.js`。
+`desktop-design.css`、`posts-desktop.css` 和 `contact-desktop.css` 的主布局条件为宽度至少 901px 且精细指针；`mobile-letter.css`、`posts-mobile.css` 和 `contact-mobile.css` 的主条件为宽度至多 900px，或粗指针、无指针设备。键盘焦点、减少动画与强制颜色规则仍需保留。脚本断点配置在 `src/constants/media-queries.js`。
 
 `fantasy-extras.css` 由附加组件单独引入，`post-font.css` 按阅读需要加载，不属于上述入口的静态导入列表。
 

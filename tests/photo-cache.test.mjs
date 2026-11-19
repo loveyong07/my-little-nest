@@ -436,3 +436,70 @@ test("records function-level Blob cache outcomes, reasons and media proxy timing
   assert.ok(events.some((e) => e.type === "x_photo_cache" && e.layer === "function_blob" && e.outcome === "hit"));
   assert.ok(events.some((e) => e.type === "x_media_proxy" && e.cache === "blob_hit" && e.outcome === "ok"));
 });
+
+test("evicts oldest photo blobs when budget is exceeded and skips v1 lookup when no legacy blobs exist", async () => {
+  const deleted = [];
+  const reads = [];
+  const sdk = {
+    list: async () => ({
+      blobs: [
+        {
+          pathname: "x-photos/original-q90-v2/oldest.image",
+          url: "https://blob.test/oldest.image",
+          size: 4,
+          uploadedAt: "2026-09-01T00:00:00Z",
+        },
+        {
+          pathname: "x-photos/original-q90-v2/newer.image",
+          url: "https://blob.test/newer.image",
+          size: 4,
+          uploadedAt: "2026-10-01T00:00:00Z",
+        },
+      ],
+      hasMore: false,
+    }),
+    del: async (urls) => {
+      deleted.push(...urls);
+    },
+    put: async () => {},
+    get: async (pathname) => {
+      reads.push(pathname);
+      return null;
+    },
+  };
+  const cache = createBlobPhotoCache({ env, sdk, maxBytes: 10 });
+  assert.equal(await cache.write(source, image, "image/webp"), "written");
+  assert.deepEqual(deleted, ["https://blob.test/oldest.image"]);
+  // Inventory saw zero v1 blobs, so subsequent misses only read v2 once.
+  assert.equal(await cache.read(source), null);
+  assert.equal(reads.length, 1);
+  assert.ok(reads[0].startsWith("x-photos/original-q90-v2/"));
+});
+
+test("a write that cannot fit leaves eviction candidates available for a smaller write", async () => {
+  const deleted = [];
+  const cache = createBlobPhotoCache({
+    env,
+    maxBytes: 10,
+    sdk: {
+      list: async () => ({
+        blobs: [
+          { size: 9, pathname: "unrelated" },
+          {
+            size: 1,
+            pathname: "x-photos/original-q90-v2/old.image",
+            url: "https://blob.test/old.image",
+            uploadedAt: "2026-09-01T00:00:00Z",
+          },
+        ],
+        hasMore: false,
+      }),
+      del: async (urls) => deleted.push(...urls),
+      put: async () => {},
+    },
+  });
+  assert.equal(await cache.write(source, image, "image/webp"), false);
+  assert.deepEqual(deleted, []);
+  assert.equal(await cache.write(source, image.subarray(0, 1), "image/webp"), "written");
+  assert.deepEqual(deleted, ["https://blob.test/old.image"]);
+});

@@ -6,9 +6,17 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -22,7 +30,9 @@ jobs:
         env:
           X_BEARER_TOKEN: BUILD_ONLY_X_TOKEN_CANARY_20261013
           X_MEDIA_SIGNING_SECRET: BUILD_ONLY_MEDIA_SECRET_CANARY_20261013
+          X_MEDIA_SIGNING_SECRET_PREVIOUS: BUILD_ONLY_PREVIOUS_MEDIA_SECRET_CANARY_20261119
           BLOB_READ_WRITE_TOKEN: BUILD_ONLY_BLOB_TOKEN_CANARY_20261022
+          TOUCHGAL_API_TOKEN: BUILD_ONLY_TOUCHGAL_TOKEN_CANARY_20261119
         run: npm run check
       - name: Audit production and development dependencies
         run: npm run audit:ci

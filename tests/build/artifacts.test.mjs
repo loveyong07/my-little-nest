@@ -6,6 +6,7 @@ import { access, readFile, readdir } from "node:fs/promises";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { SECURITY_HEADERS, ROUTE_SHELLS } from "../../shared/hosting-policy.mjs";
 
 const client = fileURLToPath(new URL("../../dist/client/", import.meta.url));
 const dist = fileURLToPath(new URL("../../dist/", import.meta.url));
@@ -44,8 +45,10 @@ test("public artifacts exclude source maps, server code, credentials and environ
   const secrets = [
     process.env.X_BEARER_TOKEN,
     process.env.X_MEDIA_SIGNING_SECRET,
+    process.env.X_MEDIA_SIGNING_SECRET_PREVIOUS,
     process.env.BLOB_READ_WRITE_TOKEN,
     process.env.VERCEL_OIDC_TOKEN,
+    process.env.TOUCHGAL_API_TOKEN,
   ].filter(Boolean);
   let checked = 0;
   function inspect(directory) {
@@ -60,7 +63,7 @@ test("public artifacts exclude source maps, server code, credentials and environ
         const code = readFileSync(file, "utf8");
         assert.ok(!/sourceMappingURL\s*=/.test(code), `Source map reference in ${relative}`);
         assert.ok(
-          !/X_BEARER_TOKEN|X_MEDIA_SIGNING_SECRET|BLOB_READ_WRITE_TOKEN|VERCEL_OIDC_TOKEN|BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY/.test(
+          !/X_BEARER_TOKEN|X_MEDIA_SIGNING_SECRET|BLOB_READ_WRITE_TOKEN|VERCEL_OIDC_TOKEN|TOUCHGAL_API_TOKEN|BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY/.test(
             code,
           ),
           `Server-only material in ${relative}`,
@@ -133,11 +136,24 @@ test("every relative import in the Sites worker bundle resolves to a shipped fil
   assert.ok(imports > 0, "Check the packaged worker, not an empty folder");
 });
 
-test("Sites module outputs match current sources without obsolete modules", () => {
+test("Sites module outputs match current sources without obsolete or Vercel-only modules", () => {
+  const vercelOnly = new Set(["article-cache.mjs", "photo-cache.mjs", "photo-cache-warm.mjs"]);
   for (const directory of ["server", "shared"]) {
     const source = fileURLToPath(new URL(`../../${directory}/`, import.meta.url));
-    const expected = readdirSync(source).filter((name) => name.endsWith(".mjs") && !name.startsWith("vite-"));
+    const expected = readdirSync(source).filter(
+      (name) =>
+        name.endsWith(".mjs") && !(directory === "server" && (name.startsWith("vite-") || vercelOnly.has(name))),
+    );
     const actual = readdirSync(path.join(dist, directory)).filter((name) => name.endsWith(".mjs"));
     assert.deepEqual(actual.sort(), expected.sort(), directory);
+  }
+});
+
+test("Vercel and Sites share identical security headers and route shells", () => {
+  const globalHeaders = vercelConfig.headers.find(({ source }) => source === "/(.*)")?.headers ?? [];
+  const vercelHeaderMap = Object.fromEntries(globalHeaders.map(({ key, value }) => [key, value]));
+  assert.deepEqual(vercelHeaderMap, SECURITY_HEADERS);
+  for (const [source, destination] of Object.entries(ROUTE_SHELLS)) {
+    assert.equal(vercelConfig.rewrites.find((rule) => rule.source === source)?.destination, destination, source);
   }
 });

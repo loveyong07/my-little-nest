@@ -342,3 +342,46 @@ test("a visitor that stops reading is not treated as a stalled upstream", async 
   await reader.cancel();
   assert.equal(upstreamCancelled, true, "cancelling the response must cancel the upstream reader");
 });
+
+test("rejects zero-length suffix ranges and bounds total streaming duration", async () => {
+  const badRange = await proxyXVideo(videoRequest(VIDEO_URL, { headers: { Range: "bytes=-0" } }), () => {
+    throw new Error("bytes=-0 must not reach upstream");
+  });
+  assert.equal(badRange.status, 416);
+
+  let aborted = false;
+  const timed = await proxyXVideo(
+    videoRequest(VIDEO_URL),
+    async (_url, options) => {
+      options.signal.addEventListener("abort", () => {
+        aborted = true;
+      });
+      return new Response(new ReadableStream({ pull() {} }), { headers: { "Content-Type": "video/mp4" } });
+    },
+    undefined,
+    { stallTimeoutMs: 5000, totalTimeoutMs: 40 },
+  );
+  await new Promise((resolve) => setTimeout(resolve, 90));
+  assert.equal(aborted, true);
+  await timed.body.cancel().catch(() => {});
+});
+
+test("passes an open-ended Range for a large video without buffering the full resource", async () => {
+  const range = "bytes=0-";
+  const length = 79_213_129;
+  const response = await proxyXVideo(videoRequest(VIDEO_URL, { headers: { Range: range } }), async (_url, options) => {
+    assert.equal(options.headers.get("range"), range);
+    return new Response(new ReadableStream({ pull() {} }), {
+      status: 206,
+      headers: {
+        "Content-Type": "video/mp4",
+        "Content-Length": String(length),
+        "Content-Range": `bytes 0-${length - 1}/${length}`,
+      },
+    });
+  });
+  assert.equal(response.status, 206);
+  assert.equal(response.headers.get("content-length"), String(length));
+  assert.equal(response.headers.get("content-range"), `bytes 0-${length - 1}/${length}`);
+  await response.body.cancel();
+});

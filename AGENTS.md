@@ -3,14 +3,14 @@
 ## Scope and current content
 
 - The site is a personal social calling card with three routes in this order: Home, Posts, Contact. Keep desktop and mobile navigation consistent in Chinese, Japanese and English. Do not hijack the browser's right-click menu.
-- The Business page, its navigation entry, cards and disclaimer have been removed. Do not restore them from historical instructions or design assets.
+- The Business page, its navigation entry, cards and disclaimer have been removed. The homepage `风帆Sailing` external referral link has also been removed. Do not restore them from historical instructions or design assets.
 - The Contact page has one email address: `loveyong2007@gmail.com`. Preserve the other social contact methods unless the user requests a change.
 - Keep this file limited to current effective conventions. Record durable decisions by updating the relevant rule, rather than appending a dated change log or conflicting superseding instructions.
 
 ## Local development and hosting
 
 - Run the local server yourself and open the preview in the browser available to this environment. Do not give the user server-start instructions when you can run it.
-- Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts/prepare-sites-build.mjs`, and `tests/sites-worker.test.mjs` intact so the same local prototype can be handed to Sites.
+- Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `shared/hosting-policy.mjs`, `scripts/prepare-sites-build.mjs`, and `tests/sites-worker.test.mjs` intact and aligned with `vercel.json` (security headers, `/route-shells/*.html` rewrites, `/business` redirects, and `/api/starrygal`) so the same local prototype can be handed to Sites without security or SEO drift.
 - Before a Sites handoff, run `npm run check` (lint with zero warnings, formatting, logic tests, build, build-artifact checks, Sites worker tests); the build must leave `dist/client/index.html`, `dist/server/index.js`, and `dist/.openai/hosting.json`. Keep the logic tests independent of `dist/` and let the build-artifact checks fail, never skip, when the build is missing.
 - CSS, layout or component-structure changes also require a visual comparison. Build a traceable commit/workspace baseline and the final source separately; use the same `qa:styles` collector, fixtures and browser conditions. Preserve and explain differences instead of overwriting the baseline. `npm run check` does not include visual QA; mock video failures do not verify real playback.
 - The user owns `loveyong07.top` through Tencent Cloud and selected GitHub plus Vercel for hosting. The production branch is `master`. Do not use Cloudflare or change DNS records; inspect Vercel's exact requirements and tell the user when DNS changes are needed. The user handles domain purchases and payments personally.

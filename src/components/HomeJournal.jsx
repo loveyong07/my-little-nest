@@ -2,12 +2,11 @@ import { useEffect, useState } from "react";
 import { FiCheck, FiCopy, FiRefreshCw } from "react-icons/fi";
 import { PiFlowerLight } from "react-icons/pi";
 import { GiStrawberry } from "react-icons/gi";
-import { fantasyCopy, interests } from "../constants/fantasy.js";
+import zhFantasy from "../constants/fantasy/zh.js";
 import { useClipboard } from "../hooks/useClipboard.js";
 import { CopyFallback } from "./ContactTile.jsx";
 
-export function HomeJournal({ language, t }) {
-  const f = fantasyCopy[language];
+export function HomeJournal({ f = zhFantasy, t }) {
   const [notice, setNotice] = useState(() => Math.floor(Math.random() * f.notices.length));
   const [quote, setQuote] = useState(() => Math.floor(Math.random() * f.quotes.length));
   const [spinning, setSpinning] = useState(false);
@@ -106,13 +105,6 @@ export function HomeJournal({ language, t }) {
             <span>{t.shuffleNotice}</span>
           </button>
         </div>
-        {interests[language].length > 0 && (
-          <ul className="interest-tags" aria-label={f.interests}>
-            {interests[language].map((tag) => (
-              <li key={tag}>{tag}</li>
-            ))}
-          </ul>
-        )}
       </article>
       <article
         className={`journal-note journal-quote${spinning ? " is-shuffling" : ""}`}

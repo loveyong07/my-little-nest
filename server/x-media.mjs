@@ -125,6 +125,7 @@ export async function proxyXMedia(
     defer = (task) => void task.catch(() => {}),
     onEvent = null,
     now = Date.now,
+    inFlight = null,
   } = {},
 ) {
   if (request.method !== "GET") {
@@ -150,7 +151,8 @@ export async function proxyXMedia(
 
   const emit = createTelemetryEmitter(onEvent);
   const requestStartedAt = now();
-  const usePhotoCache = photoCache && requestUrl.searchParams.get("format") === "webp";
+  const wantsWebp = requestUrl.searchParams.get("format") === "webp";
+  const usePhotoCache = photoCache && wantsWebp;
   const cacheHeaders = {
     "Cache-Control": boundedMediaCache(request, CACHE_CONTROL, authOptions?.now),
     "Vercel-CDN-Cache-Control": boundedMediaCache(request, VERCEL_CDN_CACHE_CONTROL, authOptions?.now),
@@ -182,6 +184,228 @@ export async function proxyXMedia(
       // A storage failure falls back to the existing upstream path.
       blobError = true;
     }
+  }
+
+  // Coalesce concurrent cold fetches/WebP encodes for the same photo within a warm
+  // instance so traffic bursts do not multiply Sharp memory and upstream downloads.
+  if (inFlight && wantsWebp) {
+    const dedupeKey = source.href;
+    let entry = inFlight.get(dedupeKey);
+    if (!entry) {
+      const sharedController = new AbortController();
+      const connectTimeout = setTimeout(() => sharedController.abort(), connectTimeoutMs);
+      const totalTimeout = setTimeout(() => sharedController.abort(), totalTimeoutMs);
+      let idleTimeout;
+      const clearTimers = () => {
+        clearTimeout(connectTimeout);
+        clearTimeout(totalTimeout);
+        clearTimeout(idleTimeout);
+      };
+      const readChunk = async (reader) => {
+        idleTimeout = setTimeout(() => sharedController.abort(), stallTimeoutMs);
+        try {
+          return await reader.read();
+        } finally {
+          clearTimeout(idleTimeout);
+        }
+      };
+      const upstreamStartedAt = now();
+      const promise = Promise.resolve().then(async () => {
+        try {
+          const upstream = await fetchImpl(source.href, {
+            headers: { Accept: "image/avif,image/webp,image/png,image/jpeg,image/gif" },
+            redirect: "error",
+            signal: sharedController.signal,
+          });
+          clearTimeout(connectTimeout);
+          if (!upstream.ok) {
+            await upstream.body?.cancel();
+            return {
+              error: true,
+              status: upstream.status === 404 ? 404 : 502,
+              message: "Image source unavailable",
+              reason: `http_${upstream.status}`,
+              upstreamDurationMs: Math.max(0, now() - upstreamStartedAt),
+            };
+          }
+          let contentType = upstream.headers.get("content-type")?.split(";")[0].trim().toLowerCase();
+          if (!IMAGE_TYPES.has(contentType)) {
+            await upstream.body?.cancel();
+            return {
+              error: true,
+              status: 415,
+              message: "Unsupported image type",
+              reason: "unsupported_type",
+              upstreamDurationMs: Math.max(0, now() - upstreamStartedAt),
+            };
+          }
+          const contentLengthHeader = upstream.headers.get("content-length");
+          const contentLength = contentLengthHeader === null ? Number.NaN : Number(contentLengthHeader);
+          if (Number.isFinite(contentLength) && contentLength > MAX_IMAGE_BYTES) {
+            await upstream.body?.cancel();
+            return {
+              error: true,
+              status: 413,
+              message: "Image is too large",
+              reason: "too_large",
+              upstreamDurationMs: Math.max(0, now() - upstreamStartedAt),
+            };
+          }
+          const body = await readLimitedImage(upstream.body, sharedController.signal, readChunk);
+          const upstreamDurationMs = Math.max(0, now() - upstreamStartedAt);
+          if (body?.tooLarge) {
+            return { error: true, status: 413, message: "Image is too large", reason: "too_large", upstreamDurationMs };
+          }
+          if (!body?.image?.byteLength) {
+            return {
+              error: true,
+              status: 502,
+              message: "Image source unavailable",
+              reason: "empty_body",
+              upstreamDurationMs,
+            };
+          }
+          let responseBytes = body.image;
+          let encodeDurationMs = 0;
+          let encodeFallback = false;
+          let retryEncoding = false;
+          if (["image/jpeg", "image/png"].includes(contentType)) {
+            const encodeStartedAt = now();
+            try {
+              const converted = await webpEncoder(body.image);
+              if (converted?.byteLength && converted.byteLength <= MAX_IMAGE_BYTES) {
+                responseBytes = converted;
+                contentType = "image/webp";
+              } else {
+                encodeFallback = true;
+              }
+            } catch {
+              encodeFallback = true;
+              retryEncoding = true;
+            }
+            encodeDurationMs = Math.max(0, now() - encodeStartedAt);
+          }
+          if (usePhotoCache && !retryEncoding) {
+            const pending = Promise.resolve()
+              .then(() => photoCache.write(source.href, responseBytes, contentType))
+              .catch(() => {});
+            try {
+              defer(pending);
+            } catch {
+              // Some local runtimes have no background-task context.
+            }
+          }
+          return {
+            error: false,
+            bytes: responseBytes,
+            contentType,
+            encodeFallback,
+            retryEncoding,
+            upstreamDurationMs,
+            encodeDurationMs,
+          };
+        } catch {
+          return {
+            error: true,
+            status: 502,
+            message: "Image source unavailable",
+            reason: "network_or_timeout",
+            upstreamDurationMs: Math.max(0, now() - upstreamStartedAt),
+          };
+        } finally {
+          clearTimers();
+          if (inFlight.get(dedupeKey) === entry) inFlight.delete(dedupeKey);
+        }
+      });
+      entry = { controller: sharedController, waiters: 0, promise };
+      inFlight.set(dedupeKey, entry);
+    }
+    entry.waiters += 1;
+    let settled = false;
+    const onCallerAbort = () => {
+      if (settled) return;
+      settled = true;
+      entry.waiters -= 1;
+      if (entry.waiters === 0) {
+        if (inFlight.get(dedupeKey) === entry) inFlight.delete(dedupeKey);
+        entry.controller.abort(request.signal.reason);
+      }
+    };
+    if (request.signal.aborted) {
+      onCallerAbort();
+      emit({
+        type: "x_media_proxy",
+        cache: usePhotoCache ? "blob_miss" : "bypass",
+        outcome: "upstream_error",
+        reason: "client_aborted",
+        durationMs: Math.max(0, now() - requestStartedAt),
+      });
+      return errorResponse(502, "Image source unavailable");
+    }
+    request.signal.addEventListener("abort", onCallerAbort, { once: true });
+    let result;
+    try {
+      result = await new Promise((resolve, reject) => {
+        const failAbort = () => reject(new Error("aborted"));
+        request.signal.addEventListener("abort", failAbort, { once: true });
+        entry.promise.then(
+          (value) => {
+            request.signal.removeEventListener("abort", failAbort);
+            resolve(value);
+          },
+          (error) => {
+            request.signal.removeEventListener("abort", failAbort);
+            reject(error);
+          },
+        );
+      });
+    } catch {
+      emit({
+        type: "x_media_proxy",
+        cache: usePhotoCache ? "blob_miss" : "bypass",
+        outcome: "upstream_error",
+        reason: "client_aborted",
+        durationMs: Math.max(0, now() - requestStartedAt),
+      });
+      return errorResponse(502, "Image source unavailable");
+    } finally {
+      request.signal.removeEventListener("abort", onCallerAbort);
+      if (!settled) {
+        settled = true;
+        entry.waiters -= 1;
+      }
+    }
+    if (result.error) {
+      emit({
+        type: "x_media_proxy",
+        cache: usePhotoCache ? "blob_miss" : "bypass",
+        outcome: "upstream_error",
+        reason: result.reason,
+        upstreamDurationMs: result.upstreamDurationMs,
+        durationMs: Math.max(0, now() - requestStartedAt),
+      });
+      return errorResponse(result.status, result.message);
+    }
+    emit({
+      type: "x_media_proxy",
+      layer: usePhotoCache ? "function_blob" : "upstream_stream",
+      cache: usePhotoCache ? "blob_miss" : "bypass",
+      outcome: result.encodeFallback ? "encode_fallback" : "ok",
+      ...(result.retryEncoding ? { reason: "encode_exception" } : blobError ? { reason: "blob_read_error" } : {}),
+      contentType: result.contentType,
+      upstreamDurationMs: result.upstreamDurationMs,
+      encodeDurationMs: result.encodeDurationMs,
+      durationMs: Math.max(0, now() - requestStartedAt),
+    });
+    return new Response(streamBufferedImage(result.bytes), {
+      status: 200,
+      headers: {
+        "Content-Type": result.contentType,
+        ...cacheHeaders,
+        ...(result.retryEncoding ? { "Cache-Control": "no-store", "Vercel-CDN-Cache-Control": "no-store" } : {}),
+        ...(usePhotoCache ? { "X-Nest-Photo-Cache": "miss" } : {}),
+      },
+    });
   }
 
   const controller = new AbortController();

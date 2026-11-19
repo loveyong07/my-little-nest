@@ -13,7 +13,7 @@ letter_only = "--letter" in sys.argv
 if letter_only:
     # Keep new display glyphs scoped to the letter heading instead of changing
     # the existing UI font and the typography of other routes.
-    locales = (root / "src/constants/locales.js").read_text(encoding="utf-8")
+    locales = "".join(p.read_text(encoding="utf-8") for p in sorted((root / "src/constants/locales").glob("*.js")))
     text = "".join(re.findall(r"homeGreeting: \[(.*?)\]", locales))
 options = subset.Options()
 options.flavor = "woff"

@@ -20,30 +20,43 @@ const imagePath = await signedMediaUrl(imageSource, "image", { secret });
 const videoPath = await signedMediaUrl(videoSource, "video", { secret });
 const seen = [];
 let upstream = 0;
-const handler = createApiHandler({ X_MEDIA_SIGNING_SECRET: secret }, {
-  fetchImpl: async (url, options) => {
-    upstream++;
-    if (url === imageSource) return new Response(bytes, { headers: { "Content-Type": "image/png" } });
-    assert.equal(url, videoSource);
-    assert.equal(options.headers.get("range"), "bytes=0-3");
-    return new Response(new Uint8Array([0, 1, 2, 3]), {
-      status: 206,
-      headers: { "Content-Type": "video/mp4", "Content-Range": "bytes 0-3/8", "Content-Length": "4" },
-    });
+const handler = createApiHandler(
+  { X_MEDIA_SIGNING_SECRET: secret },
+  {
+    fetchImpl: async (url, options) => {
+      upstream++;
+      if (url === imageSource) return new Response(bytes, { headers: { "Content-Type": "image/png" } });
+      assert.equal(url, videoSource);
+      assert.equal(options.headers.get("range"), "bytes=0-3");
+      return new Response(new Uint8Array([0, 1, 2, 3]), {
+        status: 206,
+        headers: { "Content-Type": "video/mp4", "Content-Range": "bytes 0-3/8", "Content-Length": "4" },
+      });
+    },
   },
-});
+);
 const middleware = createNodeApiMiddleware(async (request) => {
   const response = await handler(request);
-  seen.push({ site: request.headers.get("sec-fetch-site"), status: response?.status, vary: response?.headers.get("vary") });
+  seen.push({
+    site: request.headers.get("sec-fetch-site"),
+    status: response?.status,
+    vary: response?.headers.get("vary"),
+  });
   return response;
 });
-const server = createServer((request, response) => middleware(request, response, () => {
-  response.setHeader("Content-Type", "text/html; charset=utf-8");
-  response.end("<!doctype html><title>Media security smoke test</title><body>Local media policy test</body>");
-}));
+const server = createServer((request, response) =>
+  middleware(request, response, () => {
+    response.setHeader("Content-Type", "text/html; charset=utf-8");
+    response.end("<!doctype html><title>Media security smoke test</title><body>Local media policy test</body>");
+  }),
+);
 await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
 const origin = `http://127.0.0.1:${server.address().port}`;
-const report = { browser: null, checks: [], evidence: "Local browser and fixture upstream; not live CDN or MP4 playback" };
+const report = {
+  browser: null,
+  checks: [],
+  evidence: "Local browser and fixture upstream; not live CDN or MP4 playback",
+};
 let browser;
 try {
   browser = await chromium.launch({ channel: process.env.QA_BROWSER || "msedge", headless: true });
@@ -52,13 +65,17 @@ try {
   const page = await context.newPage();
   await page.goto(origin);
   async function loadImage(url) {
-    return page.evaluate((src) => new Promise((resolve) => {
-      const image = new Image();
-      image.onload = () => resolve({ loaded: true, width: image.naturalWidth });
-      image.onerror = () => resolve({ loaded: false });
-      image.src = src;
-      document.body.append(image);
-    }), url);
+    return page.evaluate(
+      (src) =>
+        new Promise((resolve) => {
+          const image = new Image();
+          image.onload = () => resolve({ loaded: true, width: image.naturalWidth });
+          image.onerror = () => resolve({ loaded: false });
+          image.src = src;
+          document.body.append(image);
+        }),
+      url,
+    );
   }
   assert.deepEqual(await loadImage(origin + imagePath), { loaded: true, width: 1 });
   const afterWarm = upstream;
@@ -68,7 +85,11 @@ try {
 
   const range = await page.evaluate(async (url) => {
     const response = await fetch(url, { headers: { Range: "bytes=0-3" } });
-    return { status: response.status, range: response.headers.get("content-range"), bytes: [...new Uint8Array(await response.arrayBuffer())] };
+    return {
+      status: response.status,
+      range: response.headers.get("content-range"),
+      bytes: [...new Uint8Array(await response.arrayBuffer())],
+    };
   }, origin + videoPath);
   assert.deepEqual(range, { status: 206, range: "bytes 0-3/8", bytes: [0, 1, 2, 3] });
   report.checks.push("same-origin video Range fetch preserves 206, Content-Range and bytes");

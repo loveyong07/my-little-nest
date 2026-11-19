@@ -21,6 +21,7 @@ npm run dev:proxy -- --host 127.0.0.1 --port 4173 --strictPort
 
 ```powershell
 npm run check       # lint、类型、格式、逻辑、构建、产物与 Sites 兼容检查
+npm run audit:ci    # 生产与开发依赖安全审计（含本地 picomatch 基线公告检查）
 npm run test:browser # 构建后检查日期搜索、缓存提示、视频进度、导航与文章图片
 npm run build       # 生成 dist/client、dist/server、dist/.openai
 npm run preview     # 预览构建结果
@@ -37,7 +38,7 @@ CSS 或布局修改还需进行修改前后的固定场景对比，方法见 [�
 - 源码：[loveyong07/my-little-nest](https://github.com/loveyong07/my-little-nest)，生产分支为 `master`。
 - 运行 `npm run check` 后，推送 `master` 触发 [Vercel 项目](https://vercel.com/fyh2026s-projects/my-little-nest) 自动部署。构建命令为 `npm run build`，输出目录为 `dist/client`，配置见 `vercel.json`。
 - 正式站：[loveyong07.top](https://loveyong07.top)。发布结果以对应提交的 Vercel Production 状态为准。
-- 线上 X 与 Blob 凭据配置在 Vercel 服务端环境变量；保留 `.openai/`、`worker/` 与 Sites 构建脚本以供兼容交付。
+- 线上 X、Blob 与 `TOUCHGAL_API_TOKEN` 凭据配置在 Vercel 服务端环境变量；保留 `.openai/`、`worker/` 与 Sites 构建脚本，并与 Vercel 共享 `shared/hosting-policy.mjs` 安全头、路由壳、`/business` 重定向与 `/api/starrygal` 路由以保持双宿主一致。
 
 ## 主要文件
 

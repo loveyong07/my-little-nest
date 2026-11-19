@@ -69,6 +69,7 @@
  * }} ProfileResponse
  * @typedef {{
  *   secret?: string,
+ *   previousSecret?: string,
  *   now?: number,
  *   format?: "webp" | null,
  * }} MediaSigningOptions

@@ -202,18 +202,6 @@
     box-shadow 0.18s ease,
     color 0.18s ease;
 }
-.language-picker button:nth-child(1) {
-  --control-bg: #fbe1eb;
-  --control-ink: #743e59;
-}
-.language-picker button:nth-child(2) {
-  --control-bg: #e9e2fa;
-  --control-ink: #59457f;
-}
-.language-picker button:nth-child(3) {
-  --control-bg: #e0f2e9;
-  --control-ink: #315f53;
-}
 .language-picker button:hover {
   background: #ffffffb8;
   box-shadow: 0 4px 10px #4d739417;

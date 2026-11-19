@@ -169,3 +169,22 @@ test("a full address table gives new clients a bounded shared allowance", async 
   now = start + 60000;
   assert.equal(await statusFor(2000), 200);
 });
+
+test("relay rejects cross-action cache-busting query params and handles empty upstream bodies safely", async () => {
+  for (const query of [
+    "action=status&keyword=cachebust",
+    "action=status&allowNsfw=true",
+    "action=detail&uniqueId=abcd1234&keyword=cachebust",
+    "action=search&keyword=Summer&uniqueId=abcd1234",
+  ]) {
+    assert.throws(() => parseRequest("/api/starrygal?" + query), query);
+  }
+  const handler = createHandler({
+    token: () => "null-body-token",
+    fetchImpl: async () => new Response(null, { status: 200 }),
+  });
+  const res = response();
+  await handler(req("/api/starrygal?action=status", "null-body-client"), res);
+  assert.equal(res.statusCode, 503);
+  assert.equal(res.body.error.code, "UPSTREAM_UNAVAILABLE");
+});

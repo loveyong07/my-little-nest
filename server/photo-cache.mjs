@@ -1,4 +1,4 @@
-import { get, head, list, put } from "@vercel/blob";
+import { del, get, head, list, put } from "@vercel/blob";
 import { parseMediaSource } from "../shared/media-sources.mjs";
 import { createTelemetryEmitter } from "./telemetry.mjs";
 
@@ -6,6 +6,8 @@ export const PHOTO_CACHE_PREFIX = "x-photos/original-q90-v2/";
 const legacyPhotoCachePrefix = "x-photos/original-q90-v1/";
 export const PHOTO_CACHE_MAX_BYTES = 800_000_000;
 export const MAX_PHOTO_BYTES = 12 * 1024 * 1024;
+const USAGE_TTL_MS = 5 * 60 * 1000;
+const MAX_EVICTIONS_PER_WRITE = 16;
 const TYPES = new Set(["image/webp", "image/jpeg", "image/png"]);
 
 function validPhotoBlob(blob) {
@@ -34,7 +36,7 @@ export async function photoCachePath(value) {
 // existing source/encoder path and never load the Blob SDK or its credentials.
 export function createBlobPhotoCache({
   env = process.env,
-  sdk = { get, head, list, put },
+  sdk = { del, get, head, list, put },
   maxBytes = PHOTO_CACHE_MAX_BYTES,
   readTimeoutMs = 1500,
   writeTimeoutMs = 15000,
@@ -48,23 +50,77 @@ export function createBlobPhotoCache({
   let writeUnavailableUntil = 0;
   let usage;
   let usageAt = 0;
+  let hasLegacyBlobs = true;
+  /** @type {Array<{ url: string, size: number, uploadedAt: number }>} */
+  let evictableBlobs = [];
   /** @type {Promise<unknown>} */
   let queue = Promise.resolve();
   const writes = new Map();
 
-  async function storeBytes(signal) {
-    if (usage !== undefined && now() - usageAt < 60000) return usage;
+  async function refreshInventory(signal) {
     let cursor;
     let bytes = 0;
+    let foundLegacy = false;
+    const candidates = [];
     do {
       const page = await sdk.list({ ...credentials, limit: 1000, cursor, abortSignal: signal });
-      for (const blob of page.blobs) bytes += blob.size;
-      if (bytes >= maxBytes) break;
+      for (const blob of page.blobs) {
+        bytes += blob.size;
+        const pathname = typeof blob.pathname === "string" ? blob.pathname : "";
+        if (pathname.startsWith(legacyPhotoCachePrefix)) foundLegacy = true;
+        if (
+          typeof blob.url === "string" &&
+          blob.url &&
+          blob.uploadedAt &&
+          (pathname.startsWith(PHOTO_CACHE_PREFIX) || pathname.startsWith(legacyPhotoCachePrefix))
+        ) {
+          const uploadedAt =
+            blob.uploadedAt instanceof Date ? blob.uploadedAt.getTime() : Date.parse(String(blob.uploadedAt));
+          if (Number.isFinite(uploadedAt)) candidates.push({ url: blob.url, size: blob.size, uploadedAt });
+        }
+      }
       cursor = page.hasMore ? page.cursor : undefined;
     } while (cursor);
+    candidates.sort((left, right) => left.uploadedAt - right.uploadedAt);
     usage = bytes;
     usageAt = now();
+    hasLegacyBlobs = foundLegacy;
+    evictableBlobs = candidates;
     return bytes;
+  }
+
+  async function storeBytes(signal) {
+    if (usage !== undefined && now() - usageAt < USAGE_TTL_MS) return usage;
+    return refreshInventory(signal);
+  }
+
+  async function evictOldest(neededBytes, signal) {
+    if (typeof sdk.del !== "function") return false;
+    if (usage === undefined || now() - usageAt >= USAGE_TTL_MS) await refreshInventory(signal);
+    let count = 0;
+    let reclaimed = 0;
+    while (
+      usage - reclaimed + neededBytes > maxBytes &&
+      count < evictableBlobs.length &&
+      count < MAX_EVICTIONS_PER_WRITE
+    ) {
+      reclaimed += evictableBlobs[count].size;
+      count += 1;
+    }
+    if (!count || usage - reclaimed + neededBytes > maxBytes) return false;
+    try {
+      await sdk.del(
+        evictableBlobs.slice(0, count).map((item) => item.url),
+        { ...credentials, abortSignal: signal },
+      );
+    } catch {
+      // The remote operation may have partially succeeded. Re-list before the next write.
+      usage = undefined;
+      return false;
+    }
+    evictableBlobs.splice(0, count);
+    usage = Math.max(0, usage - reclaimed);
+    return true;
   }
 
   return {
@@ -108,7 +164,10 @@ export function createBlobPhotoCache({
         // Older WebPs are reusable. Original bytes written by v1 have no record
         // of why encoding was skipped, so give them a new conversion attempt.
         const cached =
-          current ?? (await sdk.get(pathname.replace(PHOTO_CACHE_PREFIX, legacyPhotoCachePrefix), options));
+          current ??
+          (hasLegacyBlobs
+            ? await sdk.get(pathname.replace(PHOTO_CACHE_PREFIX, legacyPhotoCachePrefix), options)
+            : null);
         if (!cached) {
           emit({
             type: "x_photo_cache",
@@ -257,15 +316,18 @@ export function createBlobPhotoCache({
           const pathname = await photoCachePath(canonical);
           const abortSignal = AbortSignal.timeout(writeTimeoutMs);
           if ((await storeBytes(abortSignal)) + image.byteLength > maxBytes) {
-            emit({
-              type: "x_photo_cache",
-              layer: "function_blob",
-              operation: "write",
-              outcome: "skipped",
-              reason: "budget_exceeded",
-              durationMs: Math.max(0, now() - startedAt),
-            });
-            return false;
+            const evicted = await evictOldest(image.byteLength, abortSignal);
+            if (!evicted) {
+              emit({
+                type: "x_photo_cache",
+                layer: "function_blob",
+                operation: "write",
+                outcome: "skipped",
+                reason: "budget_exceeded",
+                durationMs: Math.max(0, now() - startedAt),
+              });
+              return false;
+            }
           }
           try {
             await sdk.put(pathname, image, {

@@ -30,8 +30,13 @@ function copyModules(from, to, skip = () => false) {
   }
 }
 
-// The Vite plugin only runs in development, so it stays out of the worker bundle.
-copyModules(path.join(root, "server"), path.join(dist, "server"), (file) => file.startsWith("vite-"));
+// Dev-only Vite middleware and Vercel Blob storage adapters stay out of the Sites worker bundle.
+const VERCEL_ONLY_MODULES = new Set(["article-cache.mjs", "photo-cache.mjs", "photo-cache-warm.mjs"]);
+copyModules(
+  path.join(root, "server"),
+  path.join(dist, "server"),
+  (file) => file.startsWith("vite-") || VERCEL_ONLY_MODULES.has(file),
+);
 copyModules(path.join(root, "shared"), path.join(dist, "shared"));
 copyFileSync(path.join(root, "worker", "index.js"), path.join(dist, "server", "index.js"));
 mkdirSync(path.join(dist, ".openai"), { recursive: true });

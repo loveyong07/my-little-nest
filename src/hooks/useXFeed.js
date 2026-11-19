@@ -76,8 +76,11 @@ export function useXFeed(historyReading = null) {
 
   function alignRetryCooldown() {
     const delay = getFeedRetryAfter();
-    if (!delay) return;
     window.clearTimeout(retryTimerRef.current);
+    if (!delay) {
+      setRetryDisabled(false);
+      return;
+    }
     setRetryDisabled(true);
     retryTimerRef.current = window.setTimeout(() => setRetryDisabled(false), delay);
   }
@@ -166,6 +169,7 @@ export function useXFeed(historyReading = null) {
 
   function retryFeed() {
     if (retryDisabled) return;
+    window.clearTimeout(retryTimerRef.current);
     setRetryDisabled(true);
     setFeedLoading(true);
     setFeedRefreshToken((value) => value + 1);

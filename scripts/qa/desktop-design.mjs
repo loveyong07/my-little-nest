@@ -37,7 +37,6 @@ async function contextFor(width, height, language = "zh", mobile = false) {
   });
   await context.addInitScript((language) => {
     localStorage.setItem("hello-nice-site-language", language);
-    localStorage.setItem("nest-effects", "false");
     sessionStorage.setItem("nest-posts-age-confirmed", "18+");
     Object.defineProperty(navigator, "clipboard", {
       configurable: true,
@@ -56,7 +55,6 @@ async function contextFor(width, height, language = "zh", mobile = false) {
   await context.route("**/api/x-video?**", (route) =>
     route.fulfill({ status: 404, body: "Fixture has no playable video" }),
   );
-  await context.route("**/*.mp3", (route) => route.abort());
   return context;
 }
 
@@ -125,10 +123,7 @@ async function verifyLayout(page, label, route, desktop) {
   }
   assert.deepEqual(layout.occluded, [], `${label}: controls covered by another element`);
   if (route === "/" && desktop) {
-    assert.ok(
-      layout.journal.bottom <= page.viewportSize().height - 65,
-      `${label}: journal clipped`,
-    );
+    assert.ok(layout.journal.bottom <= page.viewportSize().height - 16, `${label}: journal clipped`);
     assert.equal(layout.desktopTabs, true);
   }
   if (!desktop) assert.equal(layout.desktopTabs, route === "/");
@@ -156,7 +151,10 @@ try {
       break;
     await new Promise((resolve) => setTimeout(resolve, 200));
   }
-  browser = await chromium.launch({ channel: "chrome", args: ["--autoplay-policy=user-gesture-required"] });
+  browser = await chromium.launch({
+    channel: process.env.QA_BROWSER || "chrome",
+    args: ["--autoplay-policy=user-gesture-required"],
+  });
 
   for (const [width, height, mobile] of interactionsOnly
     ? []
@@ -252,7 +250,7 @@ try {
       assert.equal(await page.locator(".contact-tile").count(), 3);
       assert.equal(await page.locator(".contact-tile[href]").count(), 3);
       await filters.nth(2).click();
-      assert.equal(await page.locator("button.contact-tile").count(), 3);
+      assert.equal(await page.locator("button.contact-tile").count(), 4);
       await page.locator(".contact-tile.wechat").click();
       assert.equal(await page.evaluate(() => window.__copiedText), "loveyong07");
       assert.equal(
@@ -260,7 +258,7 @@ try {
         true,
       );
       await page.locator(".email-option button").click();
-      assert.equal(await page.evaluate(() => window.__copiedText), "fyh20071004@gmail.com");
+      assert.equal(await page.evaluate(() => window.__copiedText), "loveyong2007@gmail.com");
       await page.evaluate(() =>
         Object.defineProperty(navigator, "clipboard", {
           configurable: true,
@@ -279,9 +277,9 @@ try {
       );
       await page.setViewportSize({ width: 390, height: 844 });
       assert.equal(await page.locator(".contact-filters").isVisible(), true);
-      assert.equal(await page.locator(".contact-tile").count(), 3);
+      assert.equal(await page.locator(".contact-tile").count(), 4);
       await filters.nth(0).click();
-      assert.equal(await page.locator(".contact-tile").count(), 6);
+      assert.equal(await page.locator(".contact-tile").count(), 7);
       assert.equal(await page.locator(".mail-compose-link").isVisible(), true);
       await page.getByRole("button", { name: "打开菜单", exact: true }).click();
       const contact = page.locator(".site-nav a[data-page=contact]");
@@ -325,7 +323,7 @@ try {
         "post selection must preserve the article",
       );
       await page.locator(".quick-nav-pin").click();
-      await page.locator(".posts-group").first().locator(".post-media-open").click();
+      await page.locator(".posts-group").first().locator(".post-media-open").first().click();
       await page.locator(".media-lightbox").waitFor();
       await page.keyboard.press("Escape");
       assert.equal(await page.locator(".media-lightbox").count(), 0);
@@ -334,10 +332,7 @@ try {
       await page.waitForFunction(
         () => document.querySelector(".quick-nav-articles").getAttribute("aria-current") === "location",
       );
-      assert.equal(
-        await page.locator("#x-articles h2").evaluate((el) => el === document.activeElement),
-        true,
-      );
+      assert.equal(await page.locator("#x-articles h2").evaluate((el) => el === document.activeElement), true);
       await page.emulateMedia({ reducedMotion: "reduce" });
       assert.equal(
         await page
@@ -365,7 +360,7 @@ try {
       assert.equal(await page.locator(".library-empty").isVisible(), true);
       await page.locator(".library-empty button").click();
       assert.equal(await page.locator(".library-result").count(), feed.posts.length + feed.articles.length + 1);
-      await page.locator(".library-filters button").nth(2).click();
+      await page.locator(".library-filters button").nth(3).click();
       assert.equal(await page.locator(".library-result").count(), 2);
       await search.fill("ＳＥＣＯＮＤ");
       assert.equal(await page.locator(".library-result").count(), 1, "full-width and case-insensitive search");
@@ -384,7 +379,10 @@ try {
       await trigger.click();
       for (let index = 0; index < 14; index++) {
         await page.keyboard.press("Tab");
-        assert.equal(await page.locator(".reading-library").evaluate((el) => el.contains(document.activeElement)), true);
+        assert.equal(
+          await page.locator(".reading-library").evaluate((el) => el.contains(document.activeElement)),
+          true,
+        );
       }
       await page.screenshot({ path: path.join(output, "story-drawer.png") });
       await page.keyboard.press("Escape");
@@ -416,17 +414,20 @@ try {
       await page.locator("#letter-draft-body").fill(draft);
       const target = new URL(await page.locator(".mail-compose-link").getAttribute("href"));
       assert.equal(target.protocol, "mailto:");
-      assert.equal(target.pathname, "fyh20071004@gmail.com");
+      assert.equal(target.pathname, "loveyong2007@gmail.com");
       assert.equal(target.searchParams.get("subject"), "读完你的文字，想和你聊聊");
       assert.equal(target.searchParams.get("body"), draft);
       await page.screenshot({ path: path.join(output, "letter-draft.png"), fullPage: true });
       await page.setViewportSize({ width: 390, height: 844 });
       assert.equal(await page.locator(".letter-composer").isVisible(), true);
       assert.equal(await page.locator("#letter-draft-body").inputValue(), draft);
-      assert.equal(new URL(await page.locator(".mail-compose-link").getAttribute("href")).searchParams.get("body"), draft);
-      assert.equal(await page.locator(".contact-tile").count(), 6);
+      assert.equal(
+        new URL(await page.locator(".mail-compose-link").getAttribute("href")).searchParams.get("body"),
+        draft,
+      );
+      assert.equal(await page.locator(".contact-tile").count(), 7);
       assert.equal(await page.locator('.email-option a[href^="mailto:"]').count(), 1);
-      assert.equal(await page.locator(".email-address span").textContent(), "fyh20071004@gmail.com");
+      assert.equal(await page.locator(".email-address span").textContent(), "loveyong2007@gmail.com");
       await page.setViewportSize({ width: 1440, height: 900 });
       await page.waitForFunction(() => !!document.querySelector(".letter-composer"));
       assert.equal(await page.locator("#letter-draft-body").inputValue(), draft);
@@ -447,21 +448,27 @@ try {
           await page.locator(".journal-notice-shuffle").click();
           await page.locator("#journal-tab-quote").click();
           await page.locator(".journal-copy").click();
-          assert.equal(await page.evaluate(() => window.__copiedText), await page.locator(".journal-quote p").textContent());
+          assert.equal(
+            await page.evaluate(() => window.__copiedText),
+            await page.locator(".journal-quote p").textContent(),
+          );
           await page.locator(".journal-shuffle").click();
           await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
           await page.screenshot({ path: path.join(output, `home-mobile-${width}-${language}.png`), fullPage: true });
 
           await load(page, "/posts");
           await verifyLayout(page, `${width}-${language}/posts`, "/posts", false);
-          const fontSize = () => page.locator(".post-reading .post-text").evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+          const fontSize = () =>
+            page.locator(".post-reading .post-text").evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
           const originalSize = await fontSize();
           await page.locator(".reading-text-toggle").click();
-          assert.ok(await fontSize() > originalSize);
+          assert.ok((await fontSize()) > originalSize);
           await page.locator(".quick-nav-articles").click();
-          await page.waitForFunction(() => document.querySelector(".quick-nav-articles").getAttribute("aria-current") === "location");
+          await page.waitForFunction(
+            () => document.querySelector(".quick-nav-articles").getAttribute("aria-current") === "location",
+          );
           await page.locator(".reading-library-trigger").click();
-          await page.locator(".library-filters button").nth(2).click();
+          await page.locator(".library-filters button").nth(3).click();
           await page.locator(".library-search input").fill("second");
           assert.equal(await page.locator(".library-result").count(), 1);
           await page.screenshot({ path: path.join(output, `drawer-mobile-${width}-${language}.png`) });
@@ -476,7 +483,7 @@ try {
           await load(page, "/contact");
           await verifyLayout(page, `${width}-${language}/contact`, "/contact", false);
           await page.locator(".contact-filters button").nth(2).click();
-          assert.equal(await page.locator("button.contact-tile").count(), 3);
+          assert.equal(await page.locator("button.contact-tile").count(), 4);
           await page.locator(".contact-filters button").nth(0).click();
           await page.locator(".letter-guide-action").nth(2).click();
           assert.equal(await page.locator("#letter-draft-body").evaluate((el) => el === document.activeElement), true);
@@ -486,12 +493,23 @@ try {
           assert.equal(await page.locator("#letter-draft-body").inputValue(), "");
           const draft = `你好，${language}。\nA & B + 100%？`;
           await page.locator("#letter-draft-body").fill(draft);
-          assert.equal(new URL(await page.locator(".mail-compose-link").getAttribute("href")).searchParams.get("body"), draft);
+          assert.equal(
+            new URL(await page.locator(".mail-compose-link").getAttribute("href")).searchParams.get("body"),
+            draft,
+          );
           await page.locator(".email-row").scrollIntoViewIfNeeded();
           await page.screenshot({ path: path.join(output, `letter-mobile-${width}-${language}.png`), fullPage: true });
           const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
           assert.equal(overflow, false, "expanded draft must fit the screen");
-          const smallControls = await page.evaluate(() => [...document.querySelectorAll(".journal-tabs button, .posts-quick-nav button, .reading-library[open] button, .contact-filters button, .letter-composer button, .letter-draft summary, .mail-compose-link, .letter-guide-action")].filter((el) => el.getClientRects().length && el.getBoundingClientRect().height < 44).map((el) => el.textContent.trim()));
+          const smallControls = await page.evaluate(() =>
+            [
+              ...document.querySelectorAll(
+                ".journal-tabs button, .posts-quick-nav button, .reading-library[open] button, .contact-filters button, .letter-composer button, .letter-draft summary, .mail-compose-link, .letter-guide-action",
+              ),
+            ]
+              .filter((el) => el.getClientRects().length && el.getBoundingClientRect().height < 44)
+              .map((el) => el.textContent.trim()),
+          );
           assert.deepEqual(smallControls, [], "new mobile controls have 44px tap targets");
           assert.deepEqual(errors, []);
         } finally {

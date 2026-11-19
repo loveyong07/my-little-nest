@@ -1,0 +1,59 @@
+/* Progressive glass layers for Contact tiles, mail desk and footer signature. */
+.micro-slogan,
+.contact-action {
+  color: #325572;
+}
+.footer-script,
+.footer-flower {
+  color: #325572;
+}
+.contact-tile {
+  border-color: #ffffff80;
+  box-shadow: var(--glass-card-shadow);
+}
+.contact-tile:hover {
+  border-color: #ffffffb3;
+  box-shadow:
+    0 0 14px #ffffff33,
+    0 12px 26px #355b8124,
+    var(--glass-edge-light);
+}
+.email-row {
+  border-color: #ffffff80;
+  box-shadow:
+    inset 3px 0 #a4c3dc99,
+    var(--glass-card-shadow);
+}
+
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .contact-tile {
+    -webkit-backdrop-filter: blur(var(--glass-tile-blur)) saturate(1.03);
+    backdrop-filter: blur(var(--glass-tile-blur)) saturate(1.03);
+  }
+  .email-row {
+    -webkit-backdrop-filter: blur(var(--glass-email-blur)) saturate(1.03);
+    backdrop-filter: blur(var(--glass-email-blur)) saturate(1.03);
+  }
+}
+
+@supports (filter: blur(1px)) and (clip-path: border-box) {
+  .contact-tile {
+    background: var(--glass-tile-fill);
+  }
+  .email-row {
+    background: linear-gradient(125deg, #eaf3fa5c, #f9fcfe73);
+  }
+}
+
+@media (forced-colors: active) {
+  .contact-tile,
+  .email-row,
+  .letter-guide li {
+    background: Canvas;
+    border-color: CanvasText;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    text-shadow: none;
+  }
+}

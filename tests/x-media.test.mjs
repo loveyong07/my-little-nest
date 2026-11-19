@@ -391,3 +391,66 @@ test("signed image caching shrinks as authorization approaches expiry", async ()
   assert.equal(response.headers.get("vercel-cdn-cache-control"), "public, s-maxage=29, stale-while-revalidate=0");
   await response.arrayBuffer();
 });
+
+test("concurrent uncached WebP photo misses share one upstream download and one encode", async () => {
+  const source = "https://pbs.twimg.com/media/Concurrent?format=jpg&name=orig";
+  const signedUrl = await signedMediaUrl(source, "image", { ...AUTH, format: "webp" });
+  const inFlight = new Map();
+  let fetches = 0;
+  let encodes = 0;
+  const fetchImpl = async () => {
+    fetches++;
+    await new Promise((resolve) => setTimeout(resolve, 25));
+    return new Response(new Uint8Array([1, 2, 3, 4]), { headers: { "Content-Type": "image/jpeg" } });
+  };
+  const webpEncoder = async (bytes) => {
+    encodes++;
+    return new Uint8Array([...bytes, 9]);
+  };
+  const makeReq = () =>
+    new Request(new URL(signedUrl, "https://site.test"), { headers: { "Sec-Fetch-Site": "same-origin" } });
+  const [first, second] = await Promise.all([
+    proxyXMedia(makeReq(), fetchImpl, AUTH, { webpEncoder, inFlight }),
+    proxyXMedia(makeReq(), fetchImpl, AUTH, { webpEncoder, inFlight }),
+  ]);
+  assert.equal(fetches, 1);
+  assert.equal(encodes, 1);
+  assert.equal(first.status, 200);
+  assert.equal(second.status, 200);
+  assert.equal(first.headers.get("content-type"), "image/webp");
+  assert.deepEqual(new Uint8Array(await first.arrayBuffer()), new Uint8Array([1, 2, 3, 4, 9]));
+  assert.deepEqual(new Uint8Array(await second.arrayBuffer()), new Uint8Array([1, 2, 3, 4, 9]));
+});
+
+test("a new WebP request can start while a cancelled upstream download is unwinding", async () => {
+  const source = "https://pbs.twimg.com/media/Concurrent?format=jpg&name=orig";
+  const signedUrl = await signedMediaUrl(source, "image", { ...AUTH, format: "webp" });
+  const url = new URL(signedUrl, "https://site.test");
+  const inFlight = new Map();
+  const controller = new AbortController();
+  const started = Promise.withResolvers();
+  const download = Promise.withResolvers();
+  const options = { inFlight, webpEncoder: async (bytes) => bytes };
+  const first = proxyXMedia(
+    new Request(url, { signal: controller.signal }),
+    (_url, { signal }) => {
+      started.resolve(signal);
+      return download.promise;
+    },
+    AUTH,
+    options,
+  );
+  const upstreamSignal = await started.promise;
+  controller.abort();
+  try {
+    assert.equal((await first).status, 502);
+    assert.ok(upstreamSignal.aborted);
+    assert.equal(inFlight.size, 0);
+
+    const response = await proxyXMedia(new Request(url), async () => imageResponse(), AUTH, options);
+    assert.equal(response.status, 200);
+    await response.arrayBuffer();
+  } finally {
+    download.reject(upstreamSignal.reason);
+  }
+});

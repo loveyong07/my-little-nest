@@ -24,6 +24,13 @@ export default defineConfig(({ mode }) => ({
     scenePreloadPlugin(),
     react(),
     // Server-only secrets from .env.local (never VITE_-prefixed, never bundled).
-    apiPlugin(loadEnv(mode, process.cwd(), ["X_BEARER_TOKEN", "X_MEDIA_SIGNING_SECRET"])),
+    apiPlugin(
+      loadEnv(mode, process.cwd(), [
+        "X_BEARER_TOKEN",
+        "X_MEDIA_SIGNING_SECRET",
+        "X_MEDIA_SIGNING_SECRET_PREVIOUS",
+        "TOUCHGAL_API_TOKEN",
+      ]),
+    ),
   ],
 }));

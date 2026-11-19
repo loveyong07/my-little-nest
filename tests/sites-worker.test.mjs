@@ -135,3 +135,65 @@ test("does not turn missing API or write requests into the app shell", async () 
 
 // The Sites packaging file assertions live in tests/build/artifacts.test.mjs,
 // which runs after `npm run build` as part of `npm run check`.
+
+test("Sites worker matches Vercel parity for route shells, /business redirects, security headers and /api/starrygal", async () => {
+  const calls = [];
+  const env = {
+    TOUCHGAL_API_TOKEN: "",
+    ASSETS: {
+      fetch: async (request) => {
+        const pathname = new URL(request.url).pathname;
+        calls.push(pathname);
+        if (pathname === "/route-shells/posts.html") {
+          return new Response('<meta name="robots" content="noindex, follow" />', {
+            status: 200,
+            headers: { "Content-Type": "text/html; charset=utf-8" },
+          });
+        }
+        if (pathname === "/route-shells/contact.html") {
+          return new Response('<link rel="canonical" href="https://loveyong07.top/contact" />', {
+            status: 200,
+            headers: { "Content-Type": "text/html; charset=utf-8" },
+          });
+        }
+        if (pathname === "/assets/index-abcd1234.js") {
+          return new Response("console.log(1)", { status: 200 });
+        }
+        return new Response("missing", { status: 404 });
+      },
+    },
+  };
+
+  const posts = await worker.fetch(
+    new Request("https://loveyong07.top/posts", { headers: { accept: "text/html" } }),
+    env,
+  );
+  assert.equal(posts.status, 200);
+  assert.ok((await posts.text()).includes("noindex, follow"));
+  assert.ok(posts.headers.get("content-security-policy")?.includes("script-src 'self'"));
+  assert.equal(posts.headers.get("x-frame-options"), "DENY");
+  assert.equal(posts.headers.get("x-content-type-options"), "nosniff");
+  assert.ok(posts.headers.get("strict-transport-security")?.includes("max-age=31536000"));
+  assert.ok(posts.headers.get("link")?.includes("/assets/posts-winter-hero-q90.webp"));
+
+  const contact = await worker.fetch(
+    new Request("https://loveyong07.top/contact/", { headers: { accept: "text/html" } }),
+    env,
+  );
+  assert.equal(contact.status, 200);
+  assert.ok((await contact.text()).includes("/contact"));
+
+  const redirect = await worker.fetch(new Request("https://loveyong07.top/business/old"), env);
+  assert.equal(redirect.status, 308);
+  assert.equal(redirect.headers.get("location"), "https://loveyong07.top/");
+  assert.equal(redirect.headers.get("x-frame-options"), "DENY");
+
+  const hashed = await worker.fetch(new Request("https://loveyong07.top/assets/index-abcd1234.js"), env);
+  assert.equal(hashed.status, 200);
+  assert.equal(hashed.headers.get("cache-control"), "public, max-age=31536000, immutable");
+
+  const relay = await worker.fetch(new Request("https://loveyong07.top/api/starrygal?action=status"), env);
+  assert.equal(relay.status, 503);
+  assert.equal((await relay.json()).error.code, "NOT_CONFIGURED");
+  assert.deepEqual(calls, ["/route-shells/posts.html", "/route-shells/contact.html", "/assets/index-abcd1234.js"]);
+});

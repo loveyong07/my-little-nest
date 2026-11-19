@@ -11,12 +11,13 @@ import {
   writeFileSync,
 } from "node:fs";
 import { execFileSync } from "node:child_process";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 test("repackaging Sites removes renamed and deleted modules without changing client files", () => {
   const root = fileURLToPath(new URL("../", import.meta.url));
-  const fixture = mkdtempSync(path.join(root, ".qa-sites-build-"));
+  const fixture = mkdtempSync(path.join(tmpdir(), "little-nest-sites-build-"));
   try {
     for (const directory of ["scripts", "worker", "server", "shared", ".openai", "dist/client"]) {
       mkdirSync(path.join(fixture, directory), { recursive: true });
@@ -48,8 +49,8 @@ test("repackaging Sites removes renamed and deleted modules without changing cli
     assert.equal(readFileSync(path.join(fixture, "dist/server/current.mjs"), "utf8"), "export const current = true;");
     assert.equal(readFileSync(path.join(fixture, "dist/server/notes.txt"), "utf8"), "preserve unrelated output");
   } finally {
-    assert.equal(path.dirname(fixture), path.resolve(root));
-    assert.ok(path.basename(fixture).startsWith(".qa-sites-build-"));
+    assert.equal(path.dirname(fixture), path.resolve(tmpdir()));
+    assert.ok(path.basename(fixture).startsWith("little-nest-sites-build-"));
     rmSync(fixture, { recursive: true });
   }
 });

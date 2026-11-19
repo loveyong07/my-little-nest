@@ -82,9 +82,11 @@ export function PhotoGallery({ photos, onOpen, priorityMedia, nextPost, t }) {
   const trackRef = useRef(null);
   const geometryRef = useRef([]);
   const frameRef = useRef(null);
+  const settleTimerRef = useRef(null);
   const gesture = useRef(null);
   const suppressClick = useRef(false);
   const targetRef = useRef(0);
+  const targetLeftRef = useRef(null);
   const programmatic = useRef(false);
   const [view, setView] = useState({ previous: false, next: photos.length > 1, first: 0, last: 1 });
   const [statuses, setStatuses] = useState([]);
@@ -100,12 +102,24 @@ export function PhotoGallery({ photos, onOpen, priorityMedia, nextPost, t }) {
       ? t.photoUnavailable
       : "";
 
+  function settleProgrammatic() {
+    window.clearTimeout(settleTimerRef.current);
+    settleTimerRef.current = null;
+    programmatic.current = false;
+    targetLeftRef.current = null;
+    targetRef.current = closestPhoto();
+  }
+
   function readPosition() {
     const track = trackRef.current;
     if (!track || !track.clientWidth) return;
     const left = track.scrollLeft;
     const right = left + track.clientWidth;
-    if (!programmatic.current) targetRef.current = closestPhoto();
+    if (programmatic.current && targetLeftRef.current !== null && Math.abs(left - targetLeftRef.current) <= 2) {
+      settleProgrammatic();
+    } else if (!programmatic.current) {
+      targetRef.current = closestPhoto();
+    }
     const items = geometryRef.current;
     const visible = items.filter((item) => item.left + item.width > left + 1 && item.left < right - 1);
     const next = {
@@ -134,15 +148,23 @@ export function PhotoGallery({ photos, onOpen, priorityMedia, nextPost, t }) {
     const next = Math.max(0, Math.min(photos.length - 1, index));
     const item = geometryRef.current[next];
     if (!track || !item) return;
-    programmatic.current = true;
+    const destination = Math.max(
+      0,
+      Math.min(track.scrollWidth - track.clientWidth, item.left - (track.clientWidth - item.width) / 2),
+    );
+    const isSmooth = smooth && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    programmatic.current = isSmooth && Math.abs(track.scrollLeft - destination) > 2;
+    targetLeftRef.current = programmatic.current ? destination : null;
     targetRef.current = next;
+    window.clearTimeout(settleTimerRef.current);
+    if (programmatic.current) {
+      // Fallback for browsers without scrollend (e.g. older Safari / WebKit).
+      settleTimerRef.current = window.setTimeout(settleProgrammatic, 600);
+    }
     track.style.scrollSnapType = "";
     track.scrollTo({
-      left: Math.max(
-        0,
-        Math.min(track.scrollWidth - track.clientWidth, item.left - (track.clientWidth - item.width) / 2),
-      ),
-      behavior: smooth && !window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "smooth" : "instant",
+      left: destination,
+      behavior: isSmooth ? "smooth" : "instant",
     });
   }
 
@@ -157,10 +179,7 @@ export function PhotoGallery({ photos, onOpen, priorityMedia, nextPost, t }) {
       readPosition();
     };
     measure();
-    const settle = () => {
-      programmatic.current = false;
-      targetRef.current = closestPhoto();
-    };
+    const settle = () => settleProgrammatic();
     track.addEventListener("scrollend", settle);
     const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
     observer?.observe(track);
@@ -168,6 +187,8 @@ export function PhotoGallery({ photos, onOpen, priorityMedia, nextPost, t }) {
     return () => {
       track.removeEventListener("scrollend", settle);
       observer?.disconnect();
+      window.clearTimeout(settleTimerRef.current);
+      settleTimerRef.current = null;
       if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
       frameRef.current = null;
     };
@@ -200,6 +221,10 @@ export function PhotoGallery({ photos, onOpen, priorityMedia, nextPost, t }) {
           className="post-photo-track"
           dir="ltr"
           onScroll={() => {
+            if (programmatic.current) {
+              window.clearTimeout(settleTimerRef.current);
+              settleTimerRef.current = window.setTimeout(settleProgrammatic, 160);
+            }
             if (frameRef.current !== null) return;
             frameRef.current = requestAnimationFrame(() => {
               frameRef.current = null;
@@ -208,8 +233,7 @@ export function PhotoGallery({ photos, onOpen, priorityMedia, nextPost, t }) {
           }}
           onPointerDown={(event) => {
             suppressClick.current = false;
-            programmatic.current = false;
-            targetRef.current = closestPhoto();
+            settleProgrammatic();
             if (
               event.pointerType !== "mouse" ||
               event.button !== 0 ||

@@ -16,10 +16,42 @@ export function useSwipeSwitch({ activeIndex, onChange, itemSelector, layoutKey 
     const control = ref.current;
     const items = [...control.querySelectorAll(itemSelector)];
     let gesture = null;
+    let pointerListenersActive = false;
+    let escapeListenerActive = false;
     let selectionTimer;
     let settlingTimer;
     let wheelTimer;
     let suppressClick = false;
+
+    function attachPointerListeners() {
+      if (pointerListenersActive) return;
+      pointerListenersActive = true;
+      window.addEventListener("pointermove", pointerMove, { passive: false });
+      window.addEventListener("pointerup", pointerUp, { passive: false });
+      window.addEventListener("pointercancel", cancelPointer, { passive: false });
+      window.addEventListener("blur", reset, { passive: true });
+    }
+
+    function detachPointerListeners() {
+      if (!pointerListenersActive) return;
+      pointerListenersActive = false;
+      window.removeEventListener("pointermove", pointerMove);
+      window.removeEventListener("pointerup", pointerUp);
+      window.removeEventListener("pointercancel", cancelPointer);
+      window.removeEventListener("blur", reset);
+    }
+
+    function attachEscapeListener() {
+      if (escapeListenerActive) return;
+      escapeListenerActive = true;
+      window.addEventListener("keydown", keyDown, { passive: true });
+    }
+
+    function detachEscapeListener() {
+      if (!escapeListenerActive) return;
+      escapeListenerActive = false;
+      window.removeEventListener("keydown", keyDown);
+    }
 
     function measure() {
       return items.map((item) => ({
@@ -49,6 +81,8 @@ export function useSwipeSwitch({ activeIndex, onChange, itemSelector, layoutKey 
       clearTimeout(selectionTimer);
       clearTimeout(settlingTimer);
       clearTimeout(wheelTimer);
+      detachPointerListeners();
+      detachEscapeListener();
       const pointerId = gesture?.pointerId;
       gesture = null;
       delete control.dataset.swiping;
@@ -75,6 +109,8 @@ export function useSwipeSwitch({ activeIndex, onChange, itemSelector, layoutKey 
         boxes,
         dragging: false,
       };
+      attachEscapeListener();
+      if (pointerId !== undefined) attachPointerListeners();
     }
 
     function move(x, time) {
@@ -116,7 +152,13 @@ export function useSwipeSwitch({ activeIndex, onChange, itemSelector, layoutKey 
       // Let the settling motion be visible before a route replaces its header.
       const settleTime =
         window.matchMedia("(prefers-reduced-motion: reduce)").matches || control.closest(".motion-off") ? 0 : 160;
-      if (next !== activeIndex) selectionTimer = setTimeout(() => changeRef.current(next), settleTime);
+      if (next !== activeIndex) {
+        attachEscapeListener();
+        selectionTimer = setTimeout(() => {
+          detachEscapeListener();
+          changeRef.current(next);
+        }, settleTime);
+      }
     }
 
     function pointerDown(event) {
@@ -195,16 +237,7 @@ export function useSwipeSwitch({ activeIndex, onChange, itemSelector, layoutKey 
       wheel,
       dragstart: preventNativeDrag,
     };
-    const windowHandlers = {
-      pointermove: pointerMove,
-      pointerup: pointerUp,
-      pointercancel: cancelPointer,
-      keydown: keyDown,
-      blur: reset,
-    };
     for (const [name, handler] of Object.entries(handlers)) control.addEventListener(name, handler, { passive: false });
-    for (const [name, handler] of Object.entries(windowHandlers))
-      window.addEventListener(name, handler, { passive: false });
     control.addEventListener("click", click, true);
     const observer = new ResizeObserver(() => {
       if (!gesture) paint(activeIndex);
@@ -217,7 +250,6 @@ export function useSwipeSwitch({ activeIndex, onChange, itemSelector, layoutKey 
       observer.disconnect();
       control.removeEventListener("click", click, true);
       for (const [name, handler] of Object.entries(handlers)) control.removeEventListener(name, handler);
-      for (const [name, handler] of Object.entries(windowHandlers)) window.removeEventListener(name, handler);
     };
   }, [activeIndex, itemSelector, layoutKey]);
 

@@ -4,7 +4,7 @@ import { pagePaths } from "../routes/site-route.js";
 
 export function RouteHero({ page, t, header }) {
   return (
-    <section className={"route-hero route-hero-" + page} aria-label={t.pageTitle[page]}>
+    <div className={"route-hero route-hero-" + page}>
       {header}
       <div className="route-page-title" key={page}>
         <div className="route-breadcrumb">
@@ -27,6 +27,6 @@ export function RouteHero({ page, t, header }) {
         <span>{page === "posts" ? "STORIES & MOMENTS" : "LETTERS & HELLOS"}</span>
       </div>
       <RouteGarland page={page} />
-    </section>
+    </div>
   );
 }

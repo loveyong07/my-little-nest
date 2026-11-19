@@ -153,7 +153,11 @@ export function articleDocumentFromHtml(html, postId) {
     for (const literal of script[1].matchAll(/"(?:[^"\\]|\\.)*"/g)) {
       if (!literal[0].includes("content_state")) continue;
       try {
-        const data = JSON.parse(JSON.parse(literal[0].replace(/\\x([0-9a-f]{2})/gi, "\\u00$1")));
+        const data = JSON.parse(
+          JSON.parse(
+            literal[0].replace(/\\(\\|x([0-9a-f]{2}))/gi, (match, _next, hex) => (hex ? `\\u00${hex}` : match)),
+          ),
+        );
         const tweet = data?.data?.tweet_result_by_rest_id;
         if (tweet?.rest_id !== postId) continue;
         const document = tweet.result?.article?.article_results?.result;

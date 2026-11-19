@@ -1,10 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { FaArrowRight, FaEnvelope, FaPaperPlane, FaXTwitter } from "react-icons/fa6";
-import { FiArrowUpRight } from "react-icons/fi";
+import { FaArrowRight, FaEnvelope, FaXTwitter } from "react-icons/fa6";
 import { HiOutlineSparkles } from "react-icons/hi2";
 import { PiFlowerLight } from "react-icons/pi";
 import { BsPostageHeart } from "react-icons/bs";
-import { ASSETS, FALLBACK_AVATAR, SAILING_SIGNUP_URL, xProfileUrl } from "../constants/site.js";
+import { ASSETS, FALLBACK_AVATAR, xProfileUrl } from "../constants/site.js";
 import { DESKTOP_FIT_QUERY, MOBILE_QUERY } from "../constants/media-queries.js";
 import { pagePaths } from "../routes/site-route.js";
 import { xMediaSrc } from "../media-urls.js";
@@ -14,10 +13,10 @@ import { HomeJournal } from "./HomeJournal.jsx";
 import { GlassFlorals } from "./GlassFlorals.jsx";
 import { DesktopStationery } from "./DesktopStationery.jsx";
 import { LetterSeaside } from "./ScrapbookAccents.jsx";
-import { fantasyCopy } from "../constants/fantasy.js";
+import zhFantasy from "../constants/fantasy/zh.js";
 import { StarryGalBalloon } from "./StarryGalBalloon.jsx";
 
-export function HeroSection({ header, language, t, profile, extras = null }) {
+export function HeroSection({ header, language, t, f = zhFantasy, profile, extras = null }) {
   const heroRef = useRef(null);
   const introRef = useRef(null);
   useLayoutEffect(() => {
@@ -58,7 +57,7 @@ export function HeroSection({ header, language, t, profile, extras = null }) {
   }, []);
 
   return (
-    <section className="hero" ref={heroRef} aria-label={t.homeLabel}>
+    <div className="hero" ref={heroRef}>
       <div className="home-floating-elements" aria-hidden="true">
         {mobileScene ? (
           <>
@@ -110,7 +109,7 @@ export function HeroSection({ header, language, t, profile, extras = null }) {
       </div>
       {header}
       {extras}
-      <div className="hero-layout">
+      <main className="hero-layout" aria-labelledby="page-heading">
         <div className="hero-intro-stack" ref={introRef}>
           <div className="hero-copy">
             <GlassFlorals />
@@ -126,7 +125,7 @@ export function HeroSection({ header, language, t, profile, extras = null }) {
               </span>
               {t.homePlaceLabel}
             </p>
-            <p className="hero-chapter">{fantasyCopy[language].chapter}</p>
+            <p className="hero-chapter">{f.chapter}</p>
             <div className="hero-letter-overline" aria-hidden="true">
               <span>A LITTLE LETTER</span>
               <span>NO. 01</span>
@@ -174,24 +173,13 @@ export function HeroSection({ header, language, t, profile, extras = null }) {
                 <FaEnvelope aria-hidden="true" />
                 {t.contactCta}
               </a>
-              <a
-                className="sailing-cta"
-                href={SAILING_SIGNUP_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={t.sailingLink}
-              >
-                <FaPaperPlane aria-hidden="true" />
-                风帆Sailing
-                <FiArrowUpRight className="sailing-external-icon" aria-hidden="true" />
-              </a>
             </div>
             <LetterSeaside />
           </div>
-          <HomeJournal language={language} t={t} />
+          <HomeJournal f={f} t={t} />
         </div>
         <div className="hero-character-space" aria-hidden="true" />
-      </div>
+      </main>
       <p className="sky-quote">
         {t.heroScript}
         <HiOutlineSparkles aria-hidden="true" />
@@ -217,6 +205,6 @@ export function HeroSection({ header, language, t, profile, extras = null }) {
       </div>
       <DesktopStationery />
       <StarryGalBalloon t={t} contentRef={introRef} />
-    </section>
+    </div>
   );
 }

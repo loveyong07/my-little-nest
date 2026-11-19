@@ -335,3 +335,16 @@ test("feed adds valid media permissions while preserving content, order, pinned 
   assert.equal(serialized.includes("X_BEARER_TOKEN"), false);
   assert.equal(serialized.includes("X_MEDIA_SIGNING_SECRET"), false);
 });
+
+test("dual-key rotation accepts URLs signed by the previous secret without breaking cached feeds", async () => {
+  const oldAuth = { secret: "previous-signing-secret", now: NOW };
+  const rotatedAuth = { secret: "new-signing-secret", previousSecret: "previous-signing-secret", now: NOW };
+  const oldSigned = await signedMediaUrl(IMAGE_URL, "image", oldAuth);
+  const newSigned = await signedMediaUrl(IMAGE_URL, "image", rotatedAuth);
+  assert.equal(await isAuthorized(oldSigned, "image", rotatedAuth), true);
+  assert.equal(await isAuthorized(newSigned, "image", rotatedAuth), true);
+  assert.equal(
+    await isAuthorized(oldSigned, "image", { secret: "new-signing-secret", previousSecret: "other", now: NOW }),
+    false,
+  );
+});

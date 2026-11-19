@@ -48,8 +48,8 @@ export function SakuraCanvas({ snow = false }) {
       brush.stroke();
     }
     const trail = [...trailRef.current.children];
-    let width,
-      height,
+    let width = 0,
+      height = 0,
       petals = [],
       flakes = [],
       sparks = [],
@@ -61,8 +61,11 @@ export function SakuraCanvas({ snow = false }) {
     const connection = navigator.connection;
     const compact = () => mobile.matches || connection?.saveData;
     function resize() {
-      width = innerWidth;
-      height = innerHeight;
+      const nextWidth = innerWidth;
+      const nextHeight = innerHeight;
+      const widthChanged = nextWidth !== width;
+      width = nextWidth;
+      height = nextHeight;
       // Bound the full-screen decorative surface on large/high-DPI monitors.
       // This does not change the resolution of scene images or post media.
       const ratio = Math.min(
@@ -73,7 +76,11 @@ export function SakuraCanvas({ snow = false }) {
       canvas.width = Math.round(width * ratio);
       canvas.height = Math.round(height * ratio);
       context.setTransform(ratio, 0, 0, ratio, 0, 0);
-      petals = Array.from({ length: compact() ? 9 : 26 }, () => ({
+      const petalTarget = compact() ? 9 : 26;
+      const flakeTarget = snow ? (compact() ? 16 : 38) : 0;
+      // Mobile URL-bar toggles only change height; keep particle positions continuous.
+      if (!widthChanged && petals.length === petalTarget && flakes.length === flakeTarget) return;
+      petals = Array.from({ length: petalTarget }, () => ({
         x: Math.random() * width,
         y: Math.random() * height,
         size: 12 + Math.random() * 16,
@@ -81,7 +88,7 @@ export function SakuraCanvas({ snow = false }) {
         rotation: Math.random() * 6.28,
         phase: Math.random() * 6.28,
       }));
-      flakes = Array.from({ length: snow ? (compact() ? 16 : 38) : 0 }, () => ({
+      flakes = Array.from({ length: flakeTarget }, () => ({
         x: Math.random() * width,
         y: Math.random() * height,
         size: 7 + Math.random() * 7,

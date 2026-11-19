@@ -253,19 +253,24 @@ async function interactions(video) {
     console.log("PASS mobile Contact navigation and client-side route metadata");
   } catch (error) {
     await page.screenshot({ path: path.join(output, "interaction-failure.png"), fullPage: true }).catch(() => {});
-    const layout = await page.evaluate(() => ({
-      scrollY,
-      viewport: { width: innerWidth, height: innerHeight },
-      paragraph: document.querySelector(".x-article-card .article-text p")?.getBoundingClientRect().toJSON(),
-      fonts: document.fonts.status,
-      images: [...document.querySelectorAll(".x-article-card img")].map((image) => ({
-        complete: image.complete,
-        width: image.naturalWidth,
-        height: image.naturalHeight,
-        rect: image.getBoundingClientRect().toJSON(),
-      })),
-    })).catch(() => null);
-    writeFileSync(path.join(output, "interaction-failure.json"), JSON.stringify({ error: String(error), layout }, null, 2));
+    const layout = await page
+      .evaluate(() => ({
+        scrollY,
+        viewport: { width: innerWidth, height: innerHeight },
+        paragraph: document.querySelector(".x-article-card .article-text p")?.getBoundingClientRect().toJSON(),
+        fonts: document.fonts.status,
+        images: [...document.querySelectorAll(".x-article-card img")].map((image) => ({
+          complete: image.complete,
+          width: image.naturalWidth,
+          height: image.naturalHeight,
+          rect: image.getBoundingClientRect().toJSON(),
+        })),
+      }))
+      .catch(() => null);
+    writeFileSync(
+      path.join(output, "interaction-failure.json"),
+      JSON.stringify({ error: String(error), layout }, null, 2),
+    );
     throw error;
   } finally {
     release();
@@ -278,7 +283,10 @@ async function multipleAttachments(video) {
     const feed = feedData();
     feed.posts[0].media = [1, 2, 3].map((number) => ({
       type: "video",
-      url: number === 3 ? "https://video.twimg.com/tweet_video/QaGif.mp4" : `https://video.twimg.com/ext_tw_video/${number}/pu/vid/check.mp4`,
+      url:
+        number === 3
+          ? "https://video.twimg.com/tweet_video/QaGif.mp4"
+          : `https://video.twimg.com/ext_tw_video/${number}/pu/vid/check.mp4`,
       ...(number === 3 ? { animated: true } : {}),
       width: 320,
       height: 180,
@@ -298,33 +306,71 @@ async function multipleAttachments(video) {
       const players = page.locator("#latest-posts .post-reading video");
       await players.nth(2).waitFor();
       assert.equal(await players.count(), 3, "all videos and GIFs must render");
-      assert.deepEqual(await players.nth(2).evaluate((element) => ({ loop: element.loop, muted: element.muted, autoplay: element.autoplay })), { loop: true, muted: true, autoplay: false });
-      await players.nth(1).evaluate(async (element) => { element.muted = true; await element.play(); });
-      await page.waitForFunction(() => document.querySelectorAll("#latest-posts .post-reading video")[1]?.currentTime > 0.1);
-      await players.nth(1).evaluate((element) => { element.pause(); element.currentTime = 1.75; element.volume = 0.35; element.playbackRate = 1.5; });
+      assert.deepEqual(
+        await players
+          .nth(2)
+          .evaluate((element) => ({ loop: element.loop, muted: element.muted, autoplay: element.autoplay })),
+        { loop: true, muted: true, autoplay: false },
+      );
+      await players.nth(1).evaluate(async (element) => {
+        element.muted = true;
+        await element.play();
+      });
+      await page.waitForFunction(
+        () => document.querySelectorAll("#latest-posts .post-reading video")[1]?.currentTime > 0.1,
+      );
+      await players.nth(1).evaluate((element) => {
+        element.pause();
+        element.currentTime = 1.75;
+        element.volume = 0.35;
+        element.playbackRate = 1.5;
+      });
       await page.locator("#latest-posts .post-video-open").nth(1).click();
       await page.waitForFunction(() => {
         const element = document.querySelector(".media-lightbox video");
         return element?.readyState >= 2 && Math.abs(element.currentTime - 1.75) < 0.25;
       });
-      assert.equal(new URL(await page.locator(".media-lightbox source").getAttribute("src"), origin).searchParams.get("url"), feed.posts[0].media[1].url);
-      await page.locator(".media-lightbox video").evaluate((element) => { element.pause(); element.currentTime = 2.25; });
+      assert.equal(
+        new URL(await page.locator(".media-lightbox source").getAttribute("src"), origin).searchParams.get("url"),
+        feed.posts[0].media[1].url,
+      );
+      await page.locator(".media-lightbox video").evaluate((element) => {
+        element.pause();
+        element.currentTime = 2.25;
+      });
       await page.locator(".media-lightbox-close").click();
       await page.waitForFunction(() => {
         const element = document.querySelectorAll("#latest-posts .post-reading video")[1];
         return Math.abs(element.currentTime - 2.25) < 0.25 && element.paused;
       });
-      assert.deepEqual(await players.nth(1).evaluate((element) => ({ volume: element.volume, muted: element.muted, rate: element.playbackRate })), { volume: 0.35, muted: true, rate: 1.5 });
-      assert.equal(await players.first().evaluate((element) => element.currentTime), 0, "second player cannot change the first");
+      assert.deepEqual(
+        await players
+          .nth(1)
+          .evaluate((element) => ({ volume: element.volume, muted: element.muted, rate: element.playbackRate })),
+        { volume: 0.35, muted: true, rate: 1.5 },
+      );
+      assert.equal(
+        await players.first().evaluate((element) => element.currentTime),
+        0,
+        "second player cannot change the first",
+      );
       await page.emulateMedia({ reducedMotion: "no-preference" });
-      await page.waitForFunction(() => document.querySelectorAll("#latest-posts .post-reading video")[2]?.currentTime > 0.1);
+      await page.waitForFunction(
+        () => document.querySelectorAll("#latest-posts .post-reading video")[2]?.currentTime > 0.1,
+      );
       await page.emulateMedia({ reducedMotion: "reduce" });
       await page.waitForFunction(() => document.querySelectorAll("#latest-posts .post-reading video")[2]?.paused);
       assert.deepEqual(errors, []);
-      await page.locator("#latest-posts .post-reading .post-card").screenshot({ path: path.join(output, `multiple-videos-${width}.png`) });
-      console.log(`PASS ${width}px: all videos/GIFs render, second-video playback/preview stays independent, GIF autoplay follows reduced motion`);
+      await page
+        .locator("#latest-posts .post-reading .post-card")
+        .screenshot({ path: path.join(output, `multiple-videos-${width}.png`) });
+      console.log(
+        `PASS ${width}px: all videos/GIFs render, second-video playback/preview stays independent, GIF autoplay follows reduced motion`,
+      );
     } catch (error) {
-      await page.screenshot({ path: path.join(output, `multiple-videos-failure-${width}.png`), fullPage: true }).catch(() => {});
+      await page
+        .screenshot({ path: path.join(output, `multiple-videos-failure-${width}.png`), fullPage: true })
+        .catch(() => {});
       throw error;
     } finally {
       await context.close();
@@ -346,11 +392,16 @@ async function routeAndAccessibility(video) {
   const page = await context.newPage();
   try {
     await page.goto(origin);
-    for (const size of [{ width: 320, height: 740 }, { width: 390, height: 844 }]) {
+    for (const size of [
+      { width: 320, height: 740 },
+      { width: 390, height: 844 },
+    ]) {
       await page.setViewportSize(size);
-      const targets = await page.locator(".language-picker button, .hero-sender .profile a").evaluateAll((elements) =>
-        elements.map((element) => ({ width: element.offsetWidth, height: element.offsetHeight })),
-      );
+      const targets = await page
+        .locator(".language-picker button, .hero-sender .profile a")
+        .evaluateAll((elements) =>
+          elements.map((element) => ({ width: element.offsetWidth, height: element.offsetHeight })),
+        );
       assert.equal(targets.length, 4);
       assert.ok(targets.every(({ width, height }) => width >= 44 && height >= 44));
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
@@ -359,7 +410,10 @@ async function routeAndAccessibility(video) {
     await page.locator(".reading-library-trigger").waitFor();
     await page.locator(".feed-status").waitFor({ state: "hidden" });
     await page.locator("#page-heading").press("Tab");
-    assert.equal(await page.locator(".reading-library-trigger").evaluate((element) => element === document.activeElement), true);
+    assert.equal(
+      await page.locator(".reading-library-trigger").evaluate((element) => element === document.activeElement),
+      true,
+    );
 
     const selection = page.locator("#latest-posts .post-index-button").filter({ hasText: "Hongkong" });
     await selection.click();
@@ -452,8 +506,9 @@ async function homeLayouts() {
       await page.evaluate(() => document.fonts.ready);
       await page.waitForFunction(
         () =>
-          !!document.querySelector(".hero").style.getPropertyValue("--home-fit") ||
-          matchMedia("(max-width: 900px), (pointer: coarse)").matches,
+          Boolean(document.querySelector(".hero")) &&
+          (!!document.querySelector(".hero").style.getPropertyValue("--home-fit") ||
+            matchMedia("(max-width: 900px), (pointer: coarse)").matches),
       );
       const geometry = await page.evaluate(async () => {
         await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));

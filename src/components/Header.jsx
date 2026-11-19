@@ -39,11 +39,19 @@ export function Header({ page, t, language, changeLanguage, onNavigate }) {
     function closeMenuOutside(event) {
       if (!headerRef.current?.contains(event.target)) setMenuPage(null);
     }
+    function closeMenuOnFocusOut(event) {
+      if (event.relatedTarget instanceof Node && !headerRef.current?.contains(event.relatedTarget)) {
+        setMenuPage(null);
+      }
+    }
+    const header = headerRef.current;
     document.addEventListener("keydown", closeMenuOnEscape);
     document.addEventListener("pointerdown", closeMenuOutside);
+    header?.addEventListener("focusout", closeMenuOnFocusOut);
     return () => {
       document.removeEventListener("keydown", closeMenuOnEscape);
       document.removeEventListener("pointerdown", closeMenuOutside);
+      header?.removeEventListener("focusout", closeMenuOnFocusOut);
     };
   }, [menuOpen]);
 
@@ -105,6 +113,7 @@ export function Header({ page, t, language, changeLanguage, onNavigate }) {
         {LANGUAGES.map(({ code, label }) => (
           <button
             key={code}
+            type="button"
             className={language === code ? "active" : ""}
             onClick={() => changeLanguage(code)}
             aria-pressed={language === code}
@@ -125,7 +134,7 @@ export function Header({ page, t, language, changeLanguage, onNavigate }) {
         aria-expanded={menuOpen}
         aria-controls="site-navigation"
       >
-        {menuOpen ? <FiX /> : <FiMenu />}
+        {menuOpen ? <FiX aria-hidden="true" /> : <FiMenu aria-hidden="true" />}
       </button>
     </header>
   );

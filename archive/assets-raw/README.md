@@ -16,7 +16,7 @@
 | `public/assets/contact-sky-letter-v2.png` | 联系页构图原件 |
 | `public/assets/contact-sky-letter-v2-clean.png` | 当前联系页压缩图的原件 |
 | `public/assets/contact-dove-motion.png` | 已被 `contact-sky-dove-v2.png` 替代的鸽子图层 |
-| `public/assets/site-favicon.png` | 已被 `site-favicon-2026-09-29.png` 替代的 favicon |
+| `public/assets/site-favicon.png` | 早期已停用的 favicon（当前站点使用 `site-favicon-chibi-2026-10-28.png`） |
 | `public/assets/contact-sky-dove-v2.png` | 当前 `contact-sky-dove-v2.webp` 的 PNG 原件 |
 | `public/assets/home-dove-motion.png` | 当前 `home-dove-motion.webp` 的 PNG 原件 |
 | `public/assets/home-floating-petal.png` | 当前 `home-floating-petal.webp` 的 PNG 原件 |

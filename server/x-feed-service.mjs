@@ -13,8 +13,74 @@ const CACHE_TTL_MS = 15 * 60 * 1000;
 const FULL_REFRESH_TTL_MS = 24 * 60 * 60 * 1000;
 const USER_CACHE_TTL_MS = CACHE_TTL_MS;
 const ERROR_RETRY_MS = 60 * 1000;
+const MAX_RATE_LIMIT_RETRY_MS = 15 * 60 * 1000;
 const PAGE_SIZE = 100;
 const MAX_PAGES = 32;
+
+const PERMANENT_X_ERROR_TYPES = new Set([
+  "https://api.twitter.com/2/problems/resource-not-found",
+  "https://api.x.com/2/problems/resource-not-found",
+  "https://api.twitter.com/2/problems/not-authorized-for-resource",
+  "https://api.x.com/2/problems/not-authorized-for-resource",
+]);
+
+function classifyXErrors(errors) {
+  const permanentIds = new Set();
+  let hasTransientError = false;
+  for (const entry of Array.isArray(errors) ? errors : []) {
+    const type = typeof entry?.type === "string" ? entry.type.trim() : "";
+    const id = entry?.resource_id ?? entry?.value;
+    if (PERMANENT_X_ERROR_TYPES.has(type) && /^\d+$/.test(String(id ?? ""))) {
+      permanentIds.add(String(id));
+    } else {
+      hasTransientError = true;
+    }
+  }
+  return { permanentIds, hasTransientError };
+}
+
+function parseRateLimitDelayMs(response, currentMs) {
+  if (response.status !== 429) return undefined;
+  const retryAfter = response.headers?.get?.("retry-after")?.trim();
+  if (retryAfter) {
+    if (/^\d+$/.test(retryAfter)) {
+      return Math.min(MAX_RATE_LIMIT_RETRY_MS, Math.max(ERROR_RETRY_MS, Number(retryAfter) * 1000));
+    }
+    const parsedDate = Date.parse(retryAfter);
+    if (Number.isFinite(parsedDate)) {
+      return Math.min(MAX_RATE_LIMIT_RETRY_MS, Math.max(ERROR_RETRY_MS, parsedDate - currentMs));
+    }
+  }
+  const reset = response.headers?.get?.("x-rate-limit-reset")?.trim();
+  if (reset && /^\d+$/.test(reset)) {
+    const resetMs = Number(reset) * 1000 - currentMs;
+    if (resetMs > 0) return Math.min(MAX_RATE_LIMIT_RETRY_MS, Math.max(ERROR_RETRY_MS, resetMs));
+  }
+  return undefined;
+}
+
+function retryDelayMs(error) {
+  return Number.isFinite(error?.retryAfterMs) ? error.retryAfterMs : ERROR_RETRY_MS;
+}
+
+function raceWithSignal(promise, signal) {
+  if (!signal) return promise;
+  if (signal.aborted) return Promise.reject(signal.reason ?? new DOMException("Aborted", "AbortError"));
+  return new Promise((resolve, reject) => {
+    const onAbort = () => reject(signal.reason ?? new DOMException("Aborted", "AbortError"));
+    signal.addEventListener("abort", onAbort, { once: true });
+    promise.then(
+      (value) => {
+        signal.removeEventListener("abort", onAbort);
+        resolve(value);
+      },
+      (error) => {
+        signal.removeEventListener("abort", onAbort);
+        reject(error);
+      },
+    );
+  });
+}
 
 const unavailable = () => ({ status: "unavailable", posts: [] });
 const isId = (value) => /^\d+$/.test(String(value ?? ""));
@@ -102,7 +168,12 @@ function normalizedPostText(text, post, media, username) {
   return { text: media.length ? result.trimEnd() : result, ...(links.length ? { links } : {}) };
 }
 
-async function getXJson(url, token, fetchImpl, { allowPartialErrors = false, signal = undefined } = {}) {
+async function getXJson(
+  url,
+  token,
+  fetchImpl,
+  { allowPartialErrors = false, signal = undefined, now = Date.now } = {},
+) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
   const abortSignal = signal ? AbortSignal.any([controller.signal, signal]) : controller.signal;
@@ -117,9 +188,10 @@ async function getXJson(url, token, fetchImpl, { allowPartialErrors = false, sig
       signal: abortSignal,
     });
     if (!response.ok) {
-      /** @type {Error & { status?: number }} */
+      /** @type {Error & { status?: number, retryAfterMs?: number }} */
       const error = new Error(`X API returned ${response.status}`);
       error.status = response.status;
+      error.retryAfterMs = parseRateLimitDelayMs(response, now());
       throw error;
     }
     const json = await response.json();
@@ -327,6 +399,7 @@ export function createXFeedService({
   }
 
   async function lookupUser() {
+    const budget = AbortSignal.timeout(12000);
     async function lookup(mode) {
       const url = new URL(`${X_API}/users/${USER_ID}`);
       url.searchParams.set(
@@ -334,7 +407,7 @@ export function createXFeedService({
         mode === "tweet" ? "name,username,profile_image_url,pinned_tweet_id" : "name,username,profile_image_url",
       );
       if (mode === "post") url.searchParams.set("expansions", "pinned_post_id");
-      return getXJson(url, token, fetchImpl, { allowPartialErrors: true });
+      return getXJson(url, token, fetchImpl, { allowPartialErrors: true, signal: budget, now });
     }
     let json;
     try {
@@ -359,14 +432,14 @@ export function createXFeedService({
     return user;
   }
 
-  async function getUser() {
+  async function getUser(signal = undefined) {
     if (user && now() - userAt < USER_CACHE_TTL_MS) return user;
     // The feed and the standalone profile route share one account lookup.
     if (!userInFlight)
       userInFlight = lookupUser().finally(() => {
         userInFlight = null;
       });
-    return userInFlight;
+    return raceWithSignal(userInFlight, signal);
   }
 
   async function fetchPinnedPost(author, pinnedId, signal = undefined) {
@@ -385,7 +458,7 @@ export function createXFeedService({
         url.searchParams.set("expansions", "attachments.media_keys,author_id");
       }
       url.searchParams.set("media.fields", "media_key,type,url,alt_text,width,height,preview_image_url,variants");
-      return getXJson(url, token, fetchImpl, { signal });
+      return getXJson(url, token, fetchImpl, { signal, now });
     }
     async function lookupForMode(includeArticles) {
       try {
@@ -418,8 +491,9 @@ export function createXFeedService({
       return { post, status: "ok" };
     } catch (error) {
       const old = cached?.pinnedPost;
-      if (old?.id === pinnedId && error?.status !== 404) return { post: old, status: "stale" };
-      return { post: null, status: "unavailable" };
+      const retryAfterMs = retryDelayMs(error);
+      if (old?.id === pinnedId && error?.status !== 404) return { post: old, status: "stale", retryAfterMs };
+      return { post: null, status: "unavailable", retryAfterMs };
     }
   }
 
@@ -431,11 +505,13 @@ export function createXFeedService({
     const repostPostsById = new Map();
     const repostUsersById = new Map();
     const repostMediaByKey = new Map();
+    const permanentlyUnavailableIds = new Set();
     const seen = new Set();
     let nextToken = null;
     let includeArticles = true;
     let articlesAvailable = true;
     let repostsAvailable = true;
+    let repostsRetryDelayMs = ERROR_RETRY_MS;
     const fullRefresh =
       !cached ||
       cachedPinnedId !== pinnedId ||
@@ -470,7 +546,7 @@ export function createXFeedService({
 
       let json;
       try {
-        json = await getXJson(url, token, fetchImpl, { allowPartialErrors: true, signal });
+        json = await getXJson(url, token, fetchImpl, { allowPartialErrors: true, signal, now });
       } catch (error) {
         // Optional Article fields must not take the existing post feed down if an
         // X API access tier/version rejects them. A fallback is unknown, not empty.
@@ -485,11 +561,16 @@ export function createXFeedService({
           "expansions",
           "attachments.media_keys,referenced_tweets.id,referenced_tweets.id.author_id",
         );
-        json = await getXJson(url, token, fetchImpl, { allowPartialErrors: true, signal });
+        json = await getXJson(url, token, fetchImpl, { allowPartialErrors: true, signal, now });
       }
       if (json.errors?.length && !Array.isArray(json.data)) throw new Error("X timeline unavailable");
-      // A deleted/private referenced post must not take the ordinary timeline down.
-      if (json.errors?.length) repostsAvailable = false;
+      // Authoritative deleted/protected reference errors skip permanently gone reposts
+      // instead of locking the feed into a 60-second full-rescan loop.
+      if (json.errors?.length) {
+        const { permanentIds, hasTransientError } = classifyXErrors(json.errors);
+        for (const id of permanentIds) permanentlyUnavailableIds.add(id);
+        if (hasTransientError) repostsAvailable = false;
+      }
       if (json.data !== undefined && !Array.isArray(json.data)) {
         throw new Error("Invalid X posts response");
       }
@@ -541,7 +622,7 @@ export function createXFeedService({
       const tokenForNextPage = json.meta?.next_token;
       if (!tokenForNextPage) break;
       if (tokenForNextPage === nextToken) throw new Error("X posts pagination did not advance");
-      if (page === MAX_PAGES - 1) throw new Error("X posts exceed the supported timeline window");
+      if (page === MAX_PAGES - 1) break;
       nextToken = tokenForNextPage;
     }
 
@@ -550,7 +631,13 @@ export function createXFeedService({
     // silently turn illustrated reposts into text-only cards.
     const referenceOf = (event) =>
       (event.referenced_tweets ?? event.referenced_posts ?? []).find((reference) => reference.type === "retweeted");
-    const originalIds = [...new Set(repostEvents.map((event) => referenceOf(event)?.id).filter(isId))];
+    const originalIds = [
+      ...new Set(
+        repostEvents
+          .map((event) => referenceOf(event)?.id)
+          .filter((id) => isId(id) && !permanentlyUnavailableIds.has(id)),
+      ),
+    ];
     const verifiedOriginals = new Set();
     for (let start = 0; start < originalIds.length; start += PAGE_SIZE) {
       const ids = originalIds.slice(start, start + PAGE_SIZE);
@@ -564,8 +651,16 @@ export function createXFeedService({
       url.searchParams.set("user.fields", "name,username,profile_image_url,protected");
       url.searchParams.set("media.fields", "media_key,type,url,alt_text,width,height,preview_image_url,variants");
       try {
-        const json = await getXJson(url, token, fetchImpl, { allowPartialErrors: true, signal });
-        if (!Array.isArray(json.data)) throw new Error("X repost details unavailable");
+        const json = await getXJson(url, token, fetchImpl, { allowPartialErrors: true, signal, now });
+        if (json.errors?.length) {
+          const { permanentIds, hasTransientError } = classifyXErrors(json.errors);
+          for (const id of permanentIds) permanentlyUnavailableIds.add(id);
+          if (hasTransientError) repostsAvailable = false;
+        }
+        if (!Array.isArray(json.data)) {
+          if (!ids.every((id) => permanentlyUnavailableIds.has(id))) throw new Error("X repost details unavailable");
+          continue;
+        }
         for (const post of json.data) {
           if (!ids.includes(post.id)) continue;
           repostPostsById.set(post.id, post);
@@ -573,22 +668,27 @@ export function createXFeedService({
         }
         for (const user of json.includes?.users ?? []) repostUsersById.set(user.id, user);
         for (const media of json.includes?.media ?? []) repostMediaByKey.set(media.media_key, media);
-      } catch {
+      } catch (error) {
         // Keep available originals and their last verified media during an outage.
         repostsAvailable = false;
+        repostsRetryDelayMs = Math.max(repostsRetryDelayMs, retryDelayMs(error));
       }
     }
     for (const event of repostEvents) {
       const id = referenceOf(event)?.id;
-      const old = cached?.reposts?.find((post) => post.id === id);
+      const original = repostPostsById.get(id);
+      const permanentlyGone =
+        permanentlyUnavailableIds.has(id) || (original?.author_id && permanentlyUnavailableIds.has(original.author_id));
       const verified = verifiedOriginals.has(id);
+      if (!verified && permanentlyGone) continue;
+      const old = cached?.reposts?.find((post) => post.id === id);
       if (!verified) repostsAvailable = false;
       const repost =
         !verified && old
           ? { ...old, repostId: event.id, repostedAt: event.created_at }
           : normalizedRepost(event, author, repostPostsById, repostUsersById, repostMediaByKey);
       if (repost) foundReposts.push(repost);
-      else repostsAvailable = false;
+      else if (!permanentlyGone) repostsAvailable = false;
     }
 
     const unique = [];
@@ -635,15 +735,26 @@ export function createXFeedService({
       : reposts.length
         ? "stale"
         : "unavailable";
-    return { posts: unique, articles, articlesStatus, reposts, repostsStatus, latestId, fullRefresh };
+    return {
+      posts: unique,
+      articles,
+      articlesStatus,
+      reposts,
+      repostsStatus,
+      repostsRetryDelayMs,
+      latestId,
+      fullRefresh,
+    };
   }
 
   async function fetchFeed(signal) {
-    const author = await getUser();
+    const author = await getUser(signal);
     signal.throwIfAborted();
     const pinnedId = author.pinned_tweet_id ?? author.pinned_post_id ?? null;
-    const [{ posts, articles, articlesStatus, reposts, repostsStatus, latestId, fullRefresh }, pinned] =
-      await Promise.all([fetchOriginalPosts(author, pinnedId, signal), fetchPinnedPost(author, pinnedId, signal)]);
+    const [
+      { posts, articles, articlesStatus, reposts, repostsStatus, repostsRetryDelayMs, latestId, fullRefresh },
+      pinned,
+    ] = await Promise.all([fetchOriginalPosts(author, pinnedId, signal), fetchPinnedPost(author, pinnedId, signal)]);
     return {
       result: {
         status: "ok",
@@ -661,6 +772,8 @@ export function createXFeedService({
       pinnedId,
       author,
       fullRefresh,
+      pinnedRetryDelayMs: pinned.retryAfterMs ?? ERROR_RETRY_MS,
+      repostsRetryDelayMs,
     };
   }
 
@@ -709,9 +822,9 @@ export function createXFeedService({
             durationMs: Math.max(0, now() - startedAt),
           });
           return cachedProfile;
-        } catch {
+        } catch (error) {
           // A short failure backoff stops a burst of failed lookups from repeating.
-          profileRetryAt = now() + ERROR_RETRY_MS;
+          profileRetryAt = now() + retryDelayMs(error);
           const fallback = lastKnown();
           emit({
             type: "x_profile",
@@ -763,7 +876,9 @@ export function createXFeedService({
           }))
           .then((pinned) => {
             cached = { ...cached, pinnedPost: pinned.post, pinnedStatus: pinned.status };
-            pinnedRetryAt = ["ok", "none"].includes(pinned.status) ? 0 : now() + ERROR_RETRY_MS;
+            pinnedRetryAt = ["ok", "none"].includes(pinned.status)
+              ? 0
+              : now() + (pinned.retryAfterMs ?? ERROR_RETRY_MS);
             emit({
               type: "x_feed",
               outcome: "pinned_retry",
@@ -807,15 +922,15 @@ export function createXFeedService({
     const refreshStartedAt = now();
     refreshCount += 1;
     inFlight = withinFeedBudget(fetchFeed)
-      .then(({ result, latestId, pinnedId, author, fullRefresh }) => {
+      .then(({ result, latestId, pinnedId, author, fullRefresh, pinnedRetryDelayMs, repostsRetryDelayMs }) => {
         cached = result;
         cachedAt = now();
         newestSeenId = latestId;
         cachedPinnedId = pinnedId;
         cachedAuthor = author;
-        pinnedRetryAt = ["ok", "none"].includes(result.pinnedStatus) ? 0 : cachedAt + ERROR_RETRY_MS;
+        pinnedRetryAt = ["ok", "none"].includes(result.pinnedStatus) ? 0 : cachedAt + pinnedRetryDelayMs;
         articlesRetryAt = ["ok", "none"].includes(result.articlesStatus) ? 0 : cachedAt + ERROR_RETRY_MS;
-        repostsRetryAt = ["ok", "none"].includes(result.repostsStatus) ? 0 : cachedAt + ERROR_RETRY_MS;
+        repostsRetryAt = ["ok", "none"].includes(result.repostsStatus) ? 0 : cachedAt + repostsRetryDelayMs;
         if (fullRefresh) fullRefreshAt = cachedAt;
         retryAt = 0;
         emit({
@@ -829,9 +944,9 @@ export function createXFeedService({
         });
         return result;
       })
-      .catch(() => {
+      .catch((error) => {
         const failedAt = now();
-        retryAt = failedAt + ERROR_RETRY_MS;
+        retryAt = failedAt + retryDelayMs(error);
         articlesRetryAt = retryAt;
         repostsRetryAt = retryAt;
         // A retry for partial Article data may fail while ordinary posts are still

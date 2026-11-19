@@ -1,10 +1,11 @@
-// The site's four API routes as one fetch-style handler. Vercel functions (api/), the
+// The site's API routes as one fetch-style handler. Vercel functions (api/), the
 // Sites worker (worker/index.js) and the Vite dev/preview server (vite-api-plugin.mjs)
 // only adapt their runtime to it.
-import { authorizeFeed, authorizeProfile, signingSecret } from "./x-media-auth.mjs";
+import { authorizeFeed, authorizeProfile, previousSigningSecret, signingSecret } from "./x-media-auth.mjs";
 import { createXFeedService } from "./x-feed-service.mjs";
 import { proxyXMedia } from "./x-media.mjs";
 import { proxyXVideo } from "./x-video.mjs";
+import { createStarryGalFetchHandler } from "./starrygal.mjs";
 
 // Browsers do not HTTP-cache these answers. Complete successes use the retained five-minute
 // CDN policy; partial, stale and unknown results use the one-minute retry policy. These
@@ -20,6 +21,7 @@ function json(body, { status = 200, headers = {} } = {}) {
       "Content-Type": "application/json; charset=utf-8",
       "Cache-Control": JSON_CACHE_CONTROL,
       "X-Content-Type-Options": "nosniff",
+      "X-Robots-Tag": "noindex, nofollow",
       "Cross-Origin-Resource-Policy": "same-origin",
       ...headers,
     },
@@ -43,6 +45,7 @@ function json(body, { status = 200, headers = {} } = {}) {
  *     defer?: (task: Promise<unknown>) => void,
  *     onEvent?: import("./telemetry.mjs").TelemetryEmitter | null,
  *     now?: () => number,
+ *     inFlight?: Map<string, unknown> | null,
  *   },
  * }} ApiHandlerOptions
  */
@@ -64,9 +67,11 @@ export function createApiHandler(
     mediaOptions = undefined,
   } = {},
 ) {
-  const authOptions = { secret: signingSecret(env) };
+  const authOptions = { secret: signingSecret(env), previousSecret: previousSigningSecret(env) };
   const resolvedDefer = defer ?? mediaOptions?.defer;
+  const mediaInFlight = new Map();
   let service = null;
+  let starrygal = null;
   const feedService = () =>
     (service ??= serviceFactory({
       token: env.X_BEARER_TOKEN ?? "",
@@ -75,6 +80,11 @@ export function createApiHandler(
       articleCache,
       ...(resolvedDefer ? { defer: resolvedDefer } : {}),
       ...(onEvent ? { onEvent } : {}),
+    }));
+  const starrygalHandler = () =>
+    (starrygal ??= createStarryGalFetchHandler({
+      fetchImpl,
+      token: () => env.TOUCHGAL_API_TOKEN ?? "",
     }));
 
   async function feedRoute(request, route) {
@@ -115,6 +125,7 @@ export function createApiHandler(
     if (pathname === "/api/x-media") {
       return proxyXMedia(request, fetchImpl, authOptions, {
         ...mediaOptions,
+        inFlight: mediaOptions?.inFlight ?? mediaInFlight,
         ...(resolvedDefer ? { defer: resolvedDefer } : {}),
         ...(onEvent && !mediaOptions?.onEvent ? { onEvent } : {}),
       });
@@ -122,6 +133,7 @@ export function createApiHandler(
     if (pathname === "/api/x-video") return proxyXVideo(request, fetchImpl, authOptions);
     if (pathname === "/api/x-posts") return feedRoute(request, "posts");
     if (pathname === "/api/x-profile") return feedRoute(request, "profile");
+    if (pathname === "/api/starrygal") return starrygalHandler()(request);
     return null;
   };
 }
