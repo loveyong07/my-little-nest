@@ -1,9 +1,4 @@
 /* Desktop reading desk and story drawer for Posts. */
-/* Hide focus ring on pointer focus while preserving keyboard :focus-visible feedback. */
-.reading-library .library-search input:focus:not(:focus-visible) {
-  outline: none;
-}
-
 @media (min-width: 901px) and (pointer: fine) {
   /* Posts: a sticky reading directory beside the full, independent timelines. */
   .posts-section {
@@ -677,7 +672,7 @@
   .posts-age-exit {
     border-radius: 999px;
   }
-  .reading-library :is(button, input):focus-visible {
+  .reading-library button:focus-visible {
     outline: 2px solid #567da4;
     outline-offset: 4px;
   }

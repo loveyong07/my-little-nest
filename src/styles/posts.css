@@ -110,6 +110,18 @@
   font-size: var(--font-xs);
 }
 
+.library-search:focus-within {
+  border-color: var(--color-primary);
+}
+.library-search input:focus {
+  outline: none;
+}
+@media (forced-colors: active) {
+  .library-search:focus-within {
+    border-color: Highlight;
+  }
+}
+
 /* Desktop quick-jump bar for sections on the Posts page. */
 .posts-section {
   display: flex;

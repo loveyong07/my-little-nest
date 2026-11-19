@@ -313,7 +313,7 @@
     background: #f3e9fa;
     color: #705381;
   }
-  :is(.posts-quick-nav, .reading-library) :is(button, a, input, textarea, summary):focus-visible {
+  :is(.posts-quick-nav, .reading-library) :is(button, a, textarea, summary):focus-visible {
     outline: 2px solid #8866a9;
     outline-offset: 3px;
   }
