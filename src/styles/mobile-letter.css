@@ -3,13 +3,25 @@
   /* Keep the illustration visible around the letter, with quieter paper inside. */
   .hero-copy {
     --glass-home-fill: var(--letter-surface);
+    padding-block: 22px 20px;
+    border-radius: 24px;
+  }
+  .hero-copy h1 span {
+    white-space: normal;
+  }
+  .hero-copy h1 span:nth-child(2),
+  .hero-copy h1 span:last-child {
+    padding-inline-start: 0;
+  }
+  .hero-copy .ornament {
+    margin-top: 14px;
+  }
+  .hero-copy .hero-actions {
+    margin-top: 15px;
   }
   .hero-sender {
     display: block;
-    padding: 16px;
-    border: 1px solid #ffffffb3;
-    border-radius: 20px;
-    background: linear-gradient(135deg, #ffffff80, #eaf4ff6b);
+    padding: 0;
   }
   .hero-sender .profile {
     margin-top: 0;
@@ -25,7 +37,7 @@
     min-height: 44px;
   }
   .hero-sender .bio {
-    margin-top: 12px;
+    margin-top: 6px;
     font-size: 14px;
     line-height: 1.7;
   }

@@ -3,17 +3,15 @@
   /* Posts: a sticky reading directory beside the full, independent timelines. */
   .posts-section {
     display: grid;
-    grid-template-columns: 236px minmax(0, 1fr);
+    grid-template-columns: 222px minmax(0, 1fr);
     align-items: start;
-    gap: 34px;
+    gap: 28px;
   }
   .posts-flow {
     grid-column: 2;
     grid-row: 1;
     display: block;
     min-width: 0;
-    padding-left: 34px;
-    border-left: 1px solid #ffffff8c;
   }
   .posts-quick-nav {
     position: sticky;
@@ -28,8 +26,8 @@
     padding: 0 16px 20px;
     overflow-y: auto;
     border: 1px solid #ffffffeb;
-    border-radius: 28px;
-    background: linear-gradient(155deg, #fffdfef2 0%, #f6effdf0 58%, #eef7ffeb 100%);
+    border-radius: 23px;
+    background: var(--journal-surface);
     box-shadow: var(--desk-card-shadow);
     text-shadow: none;
     scrollbar-width: thin;
@@ -37,15 +35,15 @@
   .reading-directory-heading {
     display: block;
     margin: 0 -16px 14px;
-    padding: 20px 20px 18px;
-    border-bottom: 1px dashed #d3c2e480;
-    background: linear-gradient(135deg, #e5f2ffd9, #f5e6fad1);
+    padding: 16px;
+    border-bottom: 1px solid var(--paper-border);
+    background: #edf5ff99;
   }
   .directory-cover-icon {
     display: block;
     width: 34px;
     height: 34px;
-    margin-bottom: 12px;
+    margin-bottom: 6px;
     padding: 6px;
     border: 1px solid #fff;
     border-radius: 12px;
@@ -82,7 +80,7 @@
     border-radius: 16px;
     background: transparent;
     color: #46637e;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 500;
     text-align: left;
     transition:
@@ -668,9 +666,6 @@
   .posts-section {
     grid-template-columns: 196px minmax(0, 1fr);
     gap: 22px;
-  }
-  .posts-flow {
-    padding-left: 22px;
   }
   .posts-quick-nav {
     padding-inline: 12px;
