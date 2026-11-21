@@ -5,19 +5,6 @@
   justify-content: space-between;
   gap: var(--space-3) var(--space-5);
 }
-.micro-slogan {
-  padding: 6px 15px;
-  border: 1px solid #ffffffd9;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #ffffffcf, #eef6fcc7);
-  box-shadow:
-    0 4px 14px #456a8a12,
-    inset 0 1px 1px #fff;
-
-  font:
-    700 var(--font-xs) / 1.5 "Quicksand",
-    sans-serif;
-}
 .contact-intro {
   max-width: 68ch;
   margin: var(--space-3) 0 0;
@@ -28,6 +15,35 @@
   color: var(--color-text);
   font-size: var(--font-sm);
   line-height: 1.9;
+}
+
+.contact-page-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.contact-page-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 6px 12px;
+  border: 1px solid var(--pastel-mint-line);
+  border-radius: 12px;
+  background: var(--pastel-mint);
+  color: var(--pastel-mint-ink);
+  font-size: var(--font-sm);
+  text-underline-offset: 3px;
+}
+.contact-page-links a[href="#email-options"] {
+  border-color: var(--pastel-pink-line);
+  background: var(--pastel-pink);
+  color: var(--pastel-pink-ink);
+}
+#email-options,
+#contact-methods {
+  scroll-margin-top: 20px;
 }
 
 .contact-grid {
@@ -600,9 +616,6 @@
 }
 
 @media (max-width: 1050px) {
-  .micro-slogan {
-    display: none;
-  }
   .contact-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
