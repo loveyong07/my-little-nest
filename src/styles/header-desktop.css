@@ -186,10 +186,6 @@
   .site-route-posts .brand {
     flex-basis: 132px;
   }
-  .site-route-posts .site-nav a {
-    min-width: 102px;
-    padding-inline: 12px;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
