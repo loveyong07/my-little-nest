@@ -13,7 +13,6 @@ export default {
   footerNavLabel: "Explore the nest",
   routeIntro: {
     posts: "Everyday moments, and the words I leave here.",
-    contact: "A little hello. A lovely place to begin.",
   },
   homeJournalAbout: "About the nest",
   homeJournalQuote: "A little thought",
@@ -87,7 +86,6 @@ export default {
   contactFilterLabel: "Choose a contact method",
   contactFilters: ["All channels", "Open a link", "Copy an ID"],
   contactChannelHeading: "Somewhere familiar",
-  mailCardNote: "Give your thoughts a little room in a letter.",
   mailCardAction: "Write an email",
   pageTitle: { posts: "Posts", contact: "Contact" },
   pageKicker: { posts: "WINTER JOURNAL", contact: "LETTERS BY THE SEA" },
@@ -102,17 +100,6 @@ export default {
   homeAboutHeading: "A little about this nest",
   homeAboutText:
     "A place for everyday moments and words that wander. A little room to get to know each other under the same sky.",
-  contactIntro:
-    "No perfect opening line needed. A hello, a small discovery, or a thought sparked by something you read here is a lovely place to start.",
-  letterGuideHeading: "For the letter you haven't written yet",
-  letterGuide: [
-    { title: "Start with a hello", text: "Pick a platform that feels familiar and leave a little greeting." },
-    {
-      title: "Keep the story going",
-      text: "Coming from a post or article? Bring its link so we can pick up the same thread.",
-    },
-    { title: "Take your time", text: "If there's a longer story on your mind, give it room in an email." },
-  ],
   copyEmail: "Copy email",
   postsQuickNavLabel: "Posts section navigation",
   quickNavPinned: "Pinned post",
@@ -150,7 +137,6 @@ export default {
   ageGateExit: "I am under 18 · Return home",
   ageGateNote:
     "Your confirmation is remembered for this browsing session only. We do not collect your birth date or identity details.",
-  contactsHeading: "Find me and say hello",
   feedStale: "Update unavailable · showing last sync",
   feedSnapshot: (date) => `Public post snapshot · ${date}`,
   pinnedStale: "Update unavailable · showing last pinned post",
@@ -200,7 +186,4 @@ export default {
   emailHeading: "Looking forward to your letter",
   actionOpen: "Open ↗",
   actionCopy: "Copy ID",
-  footerScript: "Thank you\nfor being here ♡",
-  footerNote: "Every meeting begins a story.\nMay life be gentle to us all.",
-  footerSmall: "Different People　/　Same Beautiful Sky　/　Always Here for You",
 };

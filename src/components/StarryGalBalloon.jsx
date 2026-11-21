@@ -9,24 +9,31 @@ export function StarryGalBalloon({ t, contentRef }) {
   useEffect(() => {
     const sky = skyRef.current;
     const content = contentRef.current;
+    const letter = content.querySelector(".hero-copy");
+    const journal = content.querySelector(".home-journal");
     const desktop = window.matchMedia(DESKTOP_FIT_QUERY);
     let frame;
     const measure = () => {
       const bounds = content.getBoundingClientRect();
+      const letterBounds = letter.getBoundingClientRect();
+      const journalBounds = journal.getBoundingClientRect();
+      const split = desktop.matches && journalBounds.left > letterBounds.right;
       const hero = sky.closest(".hero").getBoundingClientRect();
       const header = sky.closest(".hero").querySelector(".site-header").getBoundingClientRect();
       const topSpace = bounds.top - header.bottom - 24;
       const topWidth = Math.min(88, Math.floor((topSpace - 64) / 1.1));
       const topLane = !desktop.matches && topWidth >= 60;
       const width = topLane ? topWidth : desktop.matches ? 144 : 88;
-      const left = topLane ? 16 : Math.ceil(bounds.right) + 24;
+      const left = topLane ? 16 : Math.ceil(split ? letterBounds.right : bounds.right) + 24;
+      const right = split ? journalBounds.left : innerWidth;
+      const travel = right - left - width - 24;
       sky.dataset.lane = topLane ? "top" : "side";
       sky.style.setProperty("--balloon-width", `${width}px`);
       sky.style.setProperty("--flight-top", `${topLane ? header.bottom - hero.top + 12 : header.bottom + 12}px`);
       sky.style.setProperty("--flight-left", `${left}px`);
       if (topLane) sky.style.removeProperty("--flight-x");
-      else sky.style.setProperty("--flight-x", `${Math.max(0, Math.min(120, innerWidth - left - width - 24))}px`);
-      sky.dataset.ready = String(topLane || innerWidth - left - 24 >= width);
+      else sky.style.setProperty("--flight-x", `${Math.max(0, Math.min(120, travel))}px`);
+      sky.dataset.ready = String(topLane || travel >= 0);
     };
     const schedule = () => {
       cancelAnimationFrame(frame);
@@ -34,6 +41,8 @@ export function StarryGalBalloon({ t, contentRef }) {
     };
     const observer = new ResizeObserver(schedule);
     observer.observe(content);
+    observer.observe(letter);
+    observer.observe(journal);
     window.addEventListener("resize", schedule);
     desktop.addEventListener("change", schedule);
     schedule();

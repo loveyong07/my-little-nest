@@ -4,11 +4,11 @@
 
 | 层次 | 文件 | 职责 |
 | --- | --- | --- |
-| 基础与首页入口 | `globals.css`、`scenes.css`、`hero-scene.css`、`header.css`、`hero.css`、`starrygal-balloon.css`、`panels.css`、`routes.css`、`glass.css`、`glass-florals.css`、`desktop-stationery.css`、`desktop-design.css`、`mobile-letter.css`、`swipe-switch.css` | 全局变量、场景、导航滑动切换、首页信笺与手记、公共路由外壳与玻璃基座 |
+| 基础与首页入口 | `globals.css`、`scenes.css`、`hero-scene.css`、`header.css`、`hero.css`、`starrygal-balloon.css`、`panels.css`、`routes.css`、`glass.css`、`glass-florals.css`、`desktop-stationery.css`、`composition.css`、`header-desktop.css`、`home-desktop.css`、`route-desktop.css`、`mobile-letter.css`、`swipe-switch.css` | 公用颜色、页面边距与阅读底色，场景、导航、首页信笺和手记、路由外壳 |
 | 动态页按需包（`posts-route.css`） | `posts.css`、`media-lightbox.css`、`glass-posts.css`、`articles.css`、`posts-desktop.css`、`posts-mobile.css`、`translation.css` | 帖子、转帖、文章、灯箱、目录与搜索抽屉、端侧翻译 |
 | 联系页按需包（`contact-route.css`） | `contact.css`、`glass-contact.css`、`contact-desktop.css`、`contact-mobile.css` | 社交渠道卡片、写信草稿与联系页玻璃/响应布局 |
 
-`desktop-design.css`、`posts-desktop.css` 和 `contact-desktop.css` 的主布局条件为宽度至少 901px 且精细指针；`mobile-letter.css`、`posts-mobile.css` 和 `contact-mobile.css` 的主条件为宽度至多 900px，或粗指针、无指针设备。键盘焦点、减少动画与强制颜色规则仍需保留。脚本断点配置在 `src/constants/media-queries.js`。
+各 `*-desktop.css` 文件的主布局条件为宽度至少 901px 且精细指针。`mobile-letter.css`、`posts-mobile.css` 和 `contact-mobile.css` 的主条件为宽度至多 900px，或粗指针、无指针设备。键盘焦点、减少动画与强制颜色规则仍需保留。脚本断点配置在 `src/constants/media-queries.js`。
 
 `fantasy-extras.css` 由附加组件单独引入，`post-font.css` 按阅读需要加载，不属于上述入口的静态导入列表。
 
