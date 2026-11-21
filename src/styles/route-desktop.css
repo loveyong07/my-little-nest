@@ -3,12 +3,41 @@
   .route-hero {
     height: 302px;
   }
-  .route-page-title,
-  .route-hero-posts .route-page-title {
+  .route-page-title {
     left: max(var(--layout-gutter), calc((100% - var(--layout-width)) / 2));
     bottom: 56px;
     gap: 11px;
     animation: desk-title-enter 420ms var(--ease-spring) both;
+  }
+  .route-hero-posts {
+    height: 360px;
+  }
+  .route-hero-posts .route-page-title {
+    left: max(48px, calc((100vw - 1380px) / 2));
+    bottom: 66px;
+  }
+  .route-breadcrumb {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 2px;
+    padding: 4px 12px;
+    border: 1px solid #ffffff66;
+    border-radius: 999px;
+    background: #1e497038;
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    color: #fff;
+    font-size: 11px;
+    text-shadow: 0 1px 6px #1c476ce6;
+  }
+  .route-breadcrumb a {
+    color: #fff;
+    text-decoration: none;
+    text-underline-offset: 4px;
+  }
+  .route-breadcrumb a:hover {
+    text-decoration: underline;
   }
   .route-page-kicker {
     padding: 7px 14px;
@@ -18,6 +47,10 @@
   .route-page-title h1 {
     font-size: clamp(52px, 4.8vw, 68px);
     letter-spacing: 0.015em;
+  }
+  .route-hero-posts .route-page-title h1 {
+    font-size: clamp(58px, 5.2vw, 74px);
+    letter-spacing: 0.05em;
   }
   .route-page-intro {
     display: block;
@@ -34,12 +67,43 @@
     opacity: 0.9;
     pointer-events: none;
   }
+  .route-edition {
+    position: absolute;
+    top: 148px;
+    right: max(48px, calc((100vw - 1380px) / 2));
+    left: auto;
+    display: grid;
+    justify-items: end;
+    gap: 2px;
+    padding-left: 28px;
+    border-left: 1px solid #ffffff73;
+    color: #fff;
+    text-shadow: 0 2px 14px #245278b3;
+    pointer-events: none;
+  }
+  .route-edition span {
+    font:
+      700 9px/1.5 "Quicksand",
+      sans-serif;
+    letter-spacing: 0.16em;
+  }
+  .route-edition strong {
+    font:
+      500 84px/1 "Quicksand",
+      sans-serif;
+    letter-spacing: -0.08em;
+    opacity: 0.9;
+  }
   .route-panel {
     width: min(100% - 2 * var(--layout-gutter), var(--layout-width));
     margin: -32px auto 30px;
     padding: 36px;
     border-radius: var(--desk-radius);
     box-shadow: var(--desk-shadow), var(--glass-edge-light);
+  }
+  .route-panel-posts {
+    width: calc(100% - 96px);
+    max-width: 1380px;
   }
   .route-panel-contact {
     padding: 38px;
@@ -50,12 +114,42 @@
     border-radius: 6px;
   }
   .chapter-heading {
-    gap: 12px;
+    gap: 16px;
+  }
+  .chapter-heading > div {
+    display: block;
+    min-width: 0;
   }
   .chapter-heading > svg {
+    display: none;
+  }
+  .chapter-number {
+    display: inline-grid;
+    place-items: center;
     flex: 0 0 auto;
-    width: 28px;
-    height: 28px;
+    min-width: 52px;
+    height: 52px;
+    padding-inline: 10px;
+    border: 1px solid #ffffffcc;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #fff6fbcc, #ebf4ffcc);
+    box-shadow:
+      0 6px 16px #3a618614,
+      inset 0 1px 1px #fff;
+    color: var(--desk-plum);
+    font:
+      700 26px/1 "Quicksand",
+      sans-serif;
+    letter-spacing: -0.04em;
+  }
+  .chapter-kicker {
+    display: block;
+    margin-bottom: 5px;
+    color: #7d6491;
+    font:
+      700 9.5px/1.4 "Quicksand",
+      sans-serif;
+    letter-spacing: 0.16em;
   }
   .chapter-heading h2 {
     font-size: 25px;
@@ -81,6 +175,13 @@
     background: linear-gradient(135deg, #fffdfee6, #f2f8ffe6);
     box-shadow: var(--desk-card-shadow);
     color: #426480;
+  }
+  .site-route-posts .nest-page-footer {
+    width: calc(100% - 96px);
+    max-width: 1380px;
+  }
+  .site-route-contact .nest-page-footer {
+    grid-template-columns: minmax(0, 1fr);
   }
   .nest-page-footer p {
     display: flex;
@@ -130,7 +231,15 @@
 }
 
 @media (min-width: 901px) and (max-width: 1250px) and (pointer: fine) {
-  .route-garland {
+  .route-hero-posts .route-page-title {
+    left: 30px;
+  }
+  .route-panel-posts,
+  .site-route-posts .nest-page-footer {
+    width: calc(100% - 60px);
+  }
+  .route-garland,
+  .route-edition {
     display: none;
   }
   .route-panel {

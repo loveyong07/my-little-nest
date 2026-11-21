@@ -99,7 +99,7 @@ export function XArticlesSection({
   return (
     <section className="posts-group articles-group" id="x-articles" aria-labelledby="x-articles-heading">
       <div className="posts-daily-heading">
-        <SectionHeading icon={FiFeather} id="x-articles-heading">
+        <SectionHeading icon={FiFeather} number="04" kicker="THOUGHTS IN FULL" id="x-articles-heading">
           {t.articlesHeading}
         </SectionHeading>
         {months.length > 1 && (
