@@ -79,7 +79,6 @@ export function PostsNavigator({
     <nav className="posts-quick-nav" id="posts-reading-directory" ref={navRef} aria-label={t.postsQuickNavLabel}>
       <div className="reading-directory-heading">
         <FiBookOpen className="directory-cover-icon" aria-hidden="true" />
-        <span>THE LITTLE JOURNAL</span>
         <h2 tabIndex={-1}>{t.readingDirectory}</h2>
         <p>{t.readingDirectoryText}</p>
       </div>
@@ -107,9 +106,6 @@ export function PostsNavigator({
             aria-current={activeSection === targets[index] ? "location" : undefined}
             onClick={() => jumpToSection(targets[index])}
           >
-            <span className="directory-number" aria-hidden="true">
-              0{index + 1}
-            </span>
             <Icon aria-hidden="true" />
             <span>{label}</span>
             {count > 0 && <em className="quick-nav-badge">{count}</em>}

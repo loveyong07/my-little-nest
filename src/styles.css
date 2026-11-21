@@ -12,6 +12,9 @@
 @import "./styles/glass.css";
 @import "./styles/glass-florals.css";
 @import "./styles/desktop-stationery.css";
-@import "./styles/desktop-design.css";
+@import "./styles/composition.css";
+@import "./styles/header-desktop.css";
+@import "./styles/home-desktop.css";
+@import "./styles/route-desktop.css";
 @import "./styles/mobile-letter.css";
 @import "./styles/swipe-switch.css";

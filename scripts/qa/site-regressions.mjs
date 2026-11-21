@@ -520,7 +520,7 @@ async function homeLayouts() {
         const balloon = document.querySelector(".starrygal-balloon");
         const header = document.querySelector(".site-header").getBoundingClientRect();
         const collisions = [];
-        const actions = [...document.querySelectorAll(".hero .sky-letter-link")]
+        const reservedAreas = [...document.querySelectorAll(".hero-copy, .home-journal, .hero .sky-letter-link")]
           .filter((element) => element.getClientRects().length)
           .map((element) => element.getBoundingClientRect());
         const animation = document.querySelector(".starrygal-flight").getAnimations()[0];
@@ -534,7 +534,7 @@ async function homeLayouts() {
             const box = balloon.getBoundingClientRect();
             const intersects = (other) =>
               box.left < other.right && box.right > other.left && box.top < other.bottom && box.bottom > other.top;
-            if (intersects(bounds) || intersects(header) || actions.some(intersects)) collisions.push(fraction);
+            if (intersects(header) || reservedAreas.some(intersects)) collisions.push(fraction);
           }
           if (animation) animation.currentTime = 0;
         }

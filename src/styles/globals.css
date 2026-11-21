@@ -40,6 +40,13 @@
   --gradient-lavender: linear-gradient(135deg, #f1e8fc 0%, #e7eefc 100%);
   --surface-panel: #f9fbfde6;
   --surface-card: #ffffffeb;
+  /* Reading surfaces share their paper tone across the three scenes. */
+  --letter-surface: linear-gradient(140deg, #fcfefff5, #edf7ffeb 68%, #fdf1f7f0);
+  --journal-surface: linear-gradient(140deg, #fbfdfff5, #f6f0fbf2 65%, #ecf6fff2);
+  --reading-surface: linear-gradient(140deg, #fcfeffe8, #f1f7ffed);
+  --paper-border: #c4d9eb;
+  --layout-gutter: clamp(30px, 3.35vw, 48px);
+  --layout-width: 1380px;
   --shadow-card: 0 5px 18px #567a9a10;
   --shadow-card-hover: 0 14px 32px #3b608021, 0 3px 10px #567a9a12, inset 0 1px 1px #fff;
   --panel-shadow: 0 16px 48px #4967821c, inset 0 1px #fff;

@@ -1,215 +1,4 @@
-/* Desktop is a separate composition. The existing small-screen surfaces stay in
-   their own stylesheets; these wrappers have no layout effect there. */
-.posts-flow,
-.contact-desk,
-.contact-channels,
-.reading-directory-links,
-.chapter-heading > div,
-.hero-sender,
-.hero-sender-note,
-.nav-label-stack {
-  display: contents;
-}
-.nav-selection,
-.nav-label-stack small,
-.nav-page-number,
-.nav-page-icon,
-.hero-letter-overline,
-.home-edition,
-.sky-letter-link,
-.route-breadcrumb,
-.route-page-intro,
-.route-edition,
-.chapter-number,
-.chapter-kicker,
-.reading-directory-heading,
-.directory-cover-icon,
-.directory-number,
-.reading-tools,
-.contact-channel-heading,
-.nest-page-footer,
-.email-row .mail-card-heading,
-.email-row .mail-card-art,
-.email-row .mail-card-note,
-.email-row .mail-compose-link {
-  display: none;
-}
-.skip-to-content {
-  position: fixed;
-  z-index: 100;
-  top: 12px;
-  left: 20px;
-  padding: 10px 20px;
-  border-radius: 12px;
-  background: white;
-  color: #294c68;
-  text-decoration: none;
-  transform: translateY(-160%);
-}
-.skip-to-content:focus {
-  transform: none;
-}
-
 @media (min-width: 901px) and (pointer: fine) {
-  .site {
-    --desk-ink: #274a68;
-    --desk-plum: #6c4d7a;
-    --desk-berry: #88496a;
-    --desk-line: #9abbd84d;
-    --desk-rose: linear-gradient(135deg, #ffe6f2, #f5e6fc);
-    --desk-blue: linear-gradient(135deg, #e2f2ff, #ecf0ff);
-    --desk-lilac: linear-gradient(135deg, #f1e6ff, #fceaf4);
-    --desk-mint: linear-gradient(135deg, #dff6ec, #e6f3ff);
-    --desk-radius: 34px;
-    --desk-shadow: 0 22px 56px #20466c24, 0 4px 16px #9571a814, inset 0 1px 1px #fff;
-    --desk-card-shadow: 0 14px 34px #244b701a, 0 2px 10px #9571a80f, inset 0 1px 1px #fff;
-    --desk-motion: 260ms;
-  }
-
-  .skip-to-content:not(:focus) {
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  /* Dreamy floating header with a spring-animated pastel capsule indicator. */
-  .site-header {
-    width: min(100% - 96px, 1480px);
-    height: 108px;
-    margin-inline: auto;
-    padding: 18px 0;
-    gap: clamp(24px, 3vw, 56px);
-  }
-  .site .brand,
-  .site .brand-caption {
-    color: #fff;
-    text-shadow: 0 2px 10px #1f48708c;
-  }
-  .brand {
-    flex-basis: 164px;
-  }
-  .brand-script {
-    font-size: 40px;
-    letter-spacing: -0.06em;
-  }
-  .site .brand-script svg {
-    color: #eef6ff;
-  }
-  .brand-caption {
-    margin-top: 3px;
-    letter-spacing: 0.14em;
-  }
-  .site-nav {
-    position: relative;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0;
-    padding: 6px;
-    border: 1px solid #ffffffd9;
-    border-radius: 999px;
-    background: linear-gradient(135deg, #fffdfef0, #f3f9ffeb);
-    box-shadow:
-      0 12px 32px #214c7521,
-      inset 0 1px 1px #fff;
-  }
-  .nav-selection {
-    position: absolute;
-    top: 6px;
-    bottom: 6px;
-    left: 6px;
-    display: block;
-    width: calc((100% - 12px) / 3);
-    border: 1px solid #fff;
-    border-radius: 999px;
-    background: var(--desk-blue);
-    box-shadow:
-      0 4px 12px #4a72961f,
-      inset 0 1px 1px #fff;
-    transform: translateX(calc(var(--nav-position) * 100%));
-    transition:
-      transform 340ms var(--ease-spring),
-      background var(--desk-motion);
-    pointer-events: none;
-  }
-  .nav-selection-posts {
-    background: var(--desk-rose);
-  }
-  .nav-selection-contact {
-    background: var(--desk-mint);
-  }
-  .site-nav a,
-  .site-nav a.active,
-  .site-route .site-nav a {
-    z-index: 1;
-    justify-content: center;
-    min-width: 122px;
-    min-height: 52px;
-    padding: 10px 18px;
-    gap: 10px;
-    border: 0;
-    border-radius: 999px;
-    background: transparent;
-    box-shadow: none;
-    font-size: 14px;
-    transform: none;
-  }
-  .site-nav a:hover {
-    background: #ffffff66;
-  }
-  .site-nav a.active .nav-active-flower {
-    display: none;
-  }
-  .nav-page-number {
-    display: none;
-  }
-  .nav-page-icon {
-    display: block;
-    width: 17px;
-    height: 17px;
-    stroke-width: 1.85;
-    transition: transform 240ms var(--ease-spring);
-  }
-  .site-nav a:hover .nav-page-icon {
-    transform: rotate(-10deg) scale(1.08);
-  }
-  .nav-label-stack {
-    display: grid;
-    gap: 3px;
-    text-align: left;
-  }
-  .nav-label-stack small {
-    display: block;
-    font:
-      700 7.5px/1 "Quicksand",
-      sans-serif;
-    letter-spacing: 0.12em;
-    opacity: 0.88;
-  }
-  .language-picker {
-    padding: 5px;
-    border: 1px solid #ffffffd9;
-    border-radius: 999px;
-    background: linear-gradient(135deg, #fffdfeed, #f2f8ffeb);
-    box-shadow:
-      0 10px 26px #214c751c,
-      inset 0 1px 1px #fff;
-  }
-  .language-picker button {
-    min-height: 38px;
-    padding-inline: 13px;
-    border-radius: 999px;
-    font-size: 12px;
-    transition:
-      transform 200ms var(--ease-spring),
-      background 200ms ease;
-  }
-  .language-picker button.active {
-    background: var(--desk-lilac);
-    box-shadow:
-      0 3px 10px #7956901c,
-      inset 0 1px 1px #fff;
-    color: var(--desk-plum);
-  }
-
   /* Home: left-stacked letter + interactive journal, leaving the right character scene open. */
   .hero-layout {
     width: min(100%, 1520px);
@@ -223,7 +12,7 @@
   }
   .hero-copy {
     --glass-home-blur: 8px;
-    --glass-home-fill: linear-gradient(135deg, #fffdfee3 0%, #f3f9ffd6 56%, #fdeff8d9 100%);
+    --glass-home-fill: var(--letter-surface);
     padding: 26px 34px 24px;
     border: 1px solid #ffffffeb;
     border-radius: 32px;
@@ -252,40 +41,11 @@
     width: 38px;
     height: 38px;
   }
-  .home-place-badge {
-    margin-bottom: 8px;
-    font-size: 12px;
-  }
   .hero-chapter {
     display: inline-flex;
-    margin-left: 12px;
-    margin-bottom: 8px;
-    font-size: 11px;
-    letter-spacing: 0.1em;
-  }
-  .hero-letter-overline {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin: 8px 0 10px;
-    color: #5b7e9c;
-    font:
-      700 9px/1 "Quicksand",
-      sans-serif;
-    letter-spacing: 0.18em;
-  }
-  .hero-letter-overline::after {
-    flex: 1;
-    height: 1px;
-    margin-right: 88px;
-    background: linear-gradient(90deg, #9abbd666, #e5bdd366, transparent);
-    content: "";
-  }
-  .hero-letter-overline span:last-child {
-    padding: 2px 8px;
-    border-radius: 999px;
-    background: #fcebf3cc;
-    color: var(--desk-berry);
+    margin: 0 0 14px;
+    font-size: 12px;
+    letter-spacing: 0.08em;
   }
   .hero-copy h1 {
     color: #2e5677;
@@ -417,7 +177,7 @@
     padding: 14px 20px 14px;
     border: 1px solid #ffffffeb;
     border-radius: 28px;
-    background: linear-gradient(135deg, #fffdfef2 0%, #f6effdf0 55%, #eef7ffeb 100%);
+    background: var(--journal-surface);
     box-shadow: var(--desk-card-shadow);
     text-shadow: none;
   }
@@ -665,28 +425,6 @@
     box-shadow: 0 4px 12px #8e55781f;
     transform: translateY(-1px);
   }
-  .home-edition {
-    position: absolute;
-    right: 48px;
-    bottom: 26px;
-    left: max(640px, 52vw);
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    color: #fff;
-    font:
-      700 9px/1.5 "Quicksand",
-      sans-serif;
-    letter-spacing: 0.18em;
-    text-shadow: 0 2px 10px #2b577ee6;
-    pointer-events: none;
-  }
-  .home-edition::before {
-    flex: 1;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, #ffffffb3);
-    content: "";
-  }
   .desktop-stationery-home .stationery-chime {
     left: 55%;
     width: 84px;
@@ -706,237 +444,9 @@
   .desktop-stationery-contact {
     display: none;
   }
-
-  /* Route Hero & Outer Glass Panels */
-  .route-hero {
-    height: 360px;
-  }
-  .route-page-title,
-  .route-hero-posts .route-page-title {
-    left: max(48px, calc((100vw - 1380px) / 2));
-    bottom: 66px;
-    gap: 11px;
-    animation: desk-title-enter 420ms var(--ease-spring) both;
-  }
-  .route-breadcrumb {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 2px;
-    padding: 4px 12px;
-    border: 1px solid #ffffff66;
-    border-radius: 999px;
-    background: #1e497038;
-    -webkit-backdrop-filter: blur(6px);
-    backdrop-filter: blur(6px);
-    color: #fff;
-    font-size: 11px;
-    text-shadow: 0 1px 6px #1c476ce6;
-  }
-  .route-breadcrumb a {
-    color: #fff;
-    text-decoration: none;
-    text-underline-offset: 4px;
-  }
-  .route-breadcrumb a:hover {
-    text-decoration: underline;
-  }
-  .route-hero-contact .route-breadcrumb > span:last-child {
-    text-decoration-line: underline;
-    text-decoration-thickness: 1px;
-    text-underline-offset: 4px;
-  }
-  .route-page-kicker {
-    padding: 7px 14px;
-    font-size: 11px;
-    letter-spacing: 0.09em;
-  }
-  .route-page-title h1 {
-    font-size: clamp(58px, 5.2vw, 74px);
-    letter-spacing: 0.05em;
-  }
-  .route-page-intro {
-    display: block;
-    margin: 2px 0 0;
-    color: #fff;
-    font-size: 14.5px;
-    letter-spacing: 0.03em;
-    text-shadow: 0 2px 10px #19426de6;
-  }
-  .route-garland {
-    top: 122px;
-    left: clamp(410px, 44vw, 660px);
-    width: clamp(190px, 19vw, 275px);
-    opacity: 0.9;
-    pointer-events: none;
-  }
-  .route-edition {
-    position: absolute;
-    top: 148px;
-    right: max(48px, calc((100vw - 1380px) / 2));
-    left: auto;
-    display: grid;
-    justify-items: end;
-    gap: 2px;
-    padding-left: 28px;
-    border-left: 1px solid #ffffff73;
-    color: #fff;
-    text-shadow: 0 2px 14px #245278b3;
-    pointer-events: none;
-  }
-  .route-edition span {
-    font:
-      700 9px/1.5 "Quicksand",
-      sans-serif;
-    letter-spacing: 0.16em;
-  }
-  .route-edition strong {
-    font:
-      500 84px/1 "Quicksand",
-      sans-serif;
-    letter-spacing: -0.08em;
-    opacity: 0.9;
-  }
-  .route-panel {
-    width: calc(100% - 96px);
-    max-width: 1380px;
-    margin: -32px auto 30px;
-    padding: 36px;
-    border-radius: var(--desk-radius);
-    box-shadow: var(--desk-shadow), var(--glass-edge-light);
-  }
-  .route-panel-contact {
-    max-width: 1380px;
-    padding: 38px;
-  }
-  .route-panel::before {
-    left: 56px;
-    width: 108px;
-    border-radius: 6px;
-  }
-  .chapter-heading {
-    gap: 16px;
-  }
-  .chapter-heading > div {
-    display: block;
-    min-width: 0;
-  }
-  .chapter-heading > svg {
-    display: none;
-  }
-  .chapter-number {
-    display: inline-grid;
-    place-items: center;
-    flex: 0 0 auto;
-    min-width: 52px;
-    height: 52px;
-    padding-inline: 10px;
-    border: 1px solid #ffffffcc;
-    border-radius: 18px;
-    background: linear-gradient(135deg, #fff6fbcc, #ebf4ffcc);
-    box-shadow:
-      0 6px 16px #3a618614,
-      inset 0 1px 1px #fff;
-    color: var(--desk-plum);
-    font:
-      700 26px/1 "Quicksand",
-      sans-serif;
-    letter-spacing: -0.04em;
-  }
-  .chapter-kicker {
-    display: block;
-    margin-bottom: 5px;
-    color: #7d6491;
-    font:
-      700 9.5px/1.4 "Quicksand",
-      sans-serif;
-    letter-spacing: 0.16em;
-  }
-  .chapter-heading h2 {
-    font-size: 25px;
-    font-weight: 500;
-    letter-spacing: 0.015em;
-    scroll-margin-top: 28px;
-  }
-  [data-reveal][data-revealed="true"] {
-    animation: desk-section-enter 360ms ease-out both;
-  }
-
-  /* Route Footer */
-  .nest-page-footer {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 6px 28px;
-    width: calc(100% - 96px);
-    max-width: 1380px;
-    margin: 0 auto;
-    padding: 22px 32px;
-    border: 1px solid #ffffffcc;
-    border-radius: 26px;
-    background: linear-gradient(135deg, #fffdfee6, #f2f8ffe6);
-    box-shadow: var(--desk-card-shadow);
-    color: #426480;
-  }
-  .nest-page-footer p {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin: 0;
-    font-size: 13.5px;
-  }
-  .nest-page-footer p > svg {
-    width: 21px;
-    height: 21px;
-    color: #b7769a;
-  }
-  .nest-page-footer nav {
-    display: flex;
-    gap: 20px;
-  }
-  .nest-page-footer a {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    min-height: 36px;
-    padding: 6px 14px;
-    border: 1px solid #ffffffb3;
-    border-radius: 999px;
-    background: #ffffff99;
-    color: #486784;
-    font-size: 12px;
-    font-weight: 700;
-    text-decoration: none;
-    transition:
-      transform 200ms var(--ease-spring),
-      background 200ms ease;
-  }
-  .nest-page-footer a:hover {
-    background: #fff;
-    transform: translateY(-2px);
-  }
-  .nest-page-footer small {
-    padding-left: 31px;
-    color: #4c6882;
-    font:
-      700 8.5px/1.5 "Quicksand",
-      sans-serif;
-    letter-spacing: 0.14em;
-  }
 }
 
 @media (min-width: 901px) and (max-width: 1250px) and (pointer: fine) {
-  .site-header {
-    width: calc(100% - 60px);
-    gap: 20px;
-  }
-  .brand {
-    flex-basis: 132px;
-  }
-  .site-nav a {
-    min-width: 102px;
-    padding-inline: 12px;
-  }
   .hero-layout {
     grid-template-columns: minmax(0, 56vw) minmax(0, 1fr);
     padding-inline: 30px;
@@ -958,30 +468,6 @@
     right: 18px;
     width: 84px;
   }
-  .home-edition span:last-child {
-    display: none;
-  }
-  .route-page-title,
-  .route-hero-posts .route-page-title {
-    left: 30px;
-  }
-  .route-garland,
-  .route-edition {
-    display: none;
-  }
-  .route-panel,
-  .nest-page-footer {
-    width: calc(100% - 60px);
-  }
-  .route-panel {
-    padding: 28px;
-  }
-  .route-panel-contact {
-    padding: 30px;
-  }
-  .chapter-heading h2 {
-    font-size: 21px;
-  }
 }
 
 @media (min-width: 901px) and (max-height: 800px) and (pointer: fine) {
@@ -991,9 +477,6 @@
   }
   .hero-copy {
     padding: 16px 24px;
-  }
-  .hero-letter-overline {
-    display: none;
   }
   .hero-copy h1 span:first-child,
   .hero-copy h1 span:nth-child(2),
@@ -1092,52 +575,15 @@
     opacity: 1;
   }
 }
-@keyframes desk-title-enter {
-  from {
-    opacity: 0.4;
-    translate: 0 9px;
-  }
-  to {
-    opacity: 1;
-    translate: 0 0;
-  }
-}
-@keyframes desk-section-enter {
-  from {
-    opacity: 0.7;
-    translate: 0 6px;
-  }
-  to {
-    opacity: 1;
-    translate: 0 0;
-  }
-}
-
-@media (min-width: 901px) and (pointer: fine) {
-  .site :is(a, button, summary, textarea):focus-visible {
-    outline: 2px solid #567da4;
-    outline-offset: 4px;
-  }
-  .site :is(a, button):active {
-    translate: 0 1px;
-  }
-}
 
 @media (prefers-reduced-motion: reduce) {
-  .nav-selection {
-    transition: none;
-  }
-  .route-page-title,
-  .home-journal .journal-note,
-  [data-reveal][data-revealed="true"] {
+  .home-journal .journal-note {
     animation: none;
   }
 }
 
 @media (forced-colors: active) {
-  .nav-selection,
-  .home-journal,
-  .nest-page-footer {
+  .home-journal {
     border: 1px solid CanvasText;
     background: Canvas;
     color: CanvasText;

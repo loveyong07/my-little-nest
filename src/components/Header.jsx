@@ -96,14 +96,8 @@ export function Header({ page, t, language, changeLanguage, onNavigate }) {
               aria-current={page === id ? "page" : undefined}
             >
               <PiFlowerLight className="nav-active-flower" aria-hidden="true" />
-              <span className="nav-page-number" aria-hidden="true">
-                0{index + 1}
-              </span>
               <Icon className="nav-page-icon" aria-hidden="true" />
-              <span className="nav-label-stack">
-                {t.nav[index]}
-                <small aria-hidden="true">{["THE NEST", "JOURNAL", "SAY HELLO"][index]}</small>
-              </span>
+              {t.nav[index]}
             </a>
           );
         })}

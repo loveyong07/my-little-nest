@@ -248,7 +248,7 @@ function PostsContent({ language, t, profile, onFeedReady, historyReading = null
           </div>
         )}
         <section className="posts-group" aria-labelledby="pinned-posts-heading">
-          <SectionHeading icon={PiPushPinFill} number="01" kicker="A NOTE TO KEEP" id="pinned-posts-heading">
+          <SectionHeading icon={PiPushPinFill} id="pinned-posts-heading">
             {t.pinnedHeading}
           </SectionHeading>
           {pinnedPost ? (
@@ -294,7 +294,7 @@ function PostsContent({ language, t, profile, onFeedReady, historyReading = null
         </section>
         <section className="posts-group" id="latest-posts" aria-labelledby="daily-posts-heading">
           <div className="posts-daily-heading">
-            <SectionHeading icon={HiOutlineSparkles} number="02" kicker="EVERYDAY MOMENTS" id="daily-posts-heading">
+            <SectionHeading icon={HiOutlineSparkles} id="daily-posts-heading">
               {t.postsHeading}
             </SectionHeading>
             {months.length > 1 && (

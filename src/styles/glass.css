@@ -14,7 +14,7 @@
     linear-gradient(135deg, #f9fcfe1f, #e7f4ff0d 60%, #ffffff1a);
   --glass-panel-fill: linear-gradient(135deg, #ffffff29, #e8f3ff1a 60%, #ffffff24);
   --glass-tile-fill: linear-gradient(135deg, #ffffff4d, #f4f9ff66);
-  --glass-reading-fill: linear-gradient(135deg, #fbfdffb8, #f4f9ffcc);
+  --glass-reading-fill: var(--reading-surface);
   --glass-control-fill: linear-gradient(135deg, #ffffff94, #f4f9ffad);
   --glass-text-halo: 0 1px 2px #ffffffbf, 0 0 6px #ffffff66;
   --glass-tile-blur: 3px;
