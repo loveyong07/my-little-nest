@@ -1,6 +1,5 @@
-/* Desktop correspondence studio for Contact. */
+/* Desktop letter and contact list. */
 @media (min-width: 901px) and (pointer: fine) {
-  /* Contact: Pastel Social Studio on the left, Airmail Letter Desk on the right. */
   .contacts-heading-row .chapter-heading h2 {
     font-size: 28px;
   }
@@ -13,16 +12,15 @@
   }
   .contact-desk {
     display: grid;
-    grid-template-columns: minmax(0, 1.15fr) minmax(350px, 0.85fr);
-    align-items: stretch;
+    grid-template-columns: minmax(0, 0.84fr) minmax(0, 1.16fr);
+    align-items: start;
     gap: 28px;
     margin-top: 28px;
   }
   .contact-channels {
     display: block;
     min-width: 0;
-    min-height: 430px;
-    padding: 26px;
+    padding: 22px;
     border: 1px solid #ffffffcc;
     border-radius: 28px;
     background: linear-gradient(145deg, #fffdfebf, #eef7ffad);
@@ -96,8 +94,8 @@
     grid-template-rows: auto auto 1fr;
     align-items: center;
     gap: 0 12px;
-    min-height: 118px;
-    padding: 16px;
+    min-height: 100px;
+    padding: 12px 14px;
     border: 1px solid #ffffffe6;
     border-radius: 22px;
     background: linear-gradient(140deg, #fffdfee6, #f1f8ffd9);
@@ -167,7 +165,7 @@
     grid-column: 1 / -1;
   }
 
-  /* Right-hand Airmail Letter Studio */
+  /* The enamel-tinted envelope carries the primary contact action. */
   .email-row {
     position: relative;
     display: flex;
@@ -179,7 +177,7 @@
     padding: 28px;
     border: 1px solid #ffffffeb;
     border-radius: 28px;
-    --glass-home-fill: linear-gradient(145deg, #fffdfee8 0%, #f7effde0 52%, #edf6ffe3 100%);
+    --glass-home-fill: var(--journal-surface);
     background: linear-gradient(145deg, #fffdfef2, #f1f7ffeb);
     box-shadow: var(--desk-card-shadow);
     text-shadow: var(--glass-text-halo);
@@ -195,7 +193,7 @@
   }
   .email-row h3 {
     margin-top: 0;
-    font-size: 27px;
+    font-size: 25px;
     font-weight: 500;
     line-height: 1.38;
   }

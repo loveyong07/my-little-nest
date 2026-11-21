@@ -91,6 +91,16 @@ export default function ContactPage({ t, profile }) {
         </a>
       </div>
       <div className="contact-desk">
+        <ContactEmail
+          t={t}
+          topic={letterTopic}
+          setTopic={setLetterTopic}
+          body={letterBody}
+          setBody={setLetterBody}
+          detailsRef={draftDetailsRef}
+          copiedId={copiedId}
+          copyId={copyId}
+        />
         <section
           className="contact-channels"
           id="contact-methods"
@@ -133,16 +143,6 @@ export default function ContactPage({ t, profile }) {
             {t.contactFilters[["all", "open", "copy"].indexOf(channelFilter)]} · {visibleSocials.length}
           </span>
         </section>
-        <ContactEmail
-          t={t}
-          topic={letterTopic}
-          setTopic={setLetterTopic}
-          body={letterBody}
-          setBody={setLetterBody}
-          detailsRef={draftDetailsRef}
-          copiedId={copiedId}
-          copyId={copyId}
-        />
       </div>
       {mailboxes.some(({ address }) => address === copyFailedId) && (
         <CopyFallback value={copyFailedId} message={t.copyFailed} label={t.manualCopyId} inputRef={manualCopyRef} />
