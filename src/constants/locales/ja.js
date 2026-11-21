@@ -13,7 +13,6 @@ export default {
   footerNavLabel: "おうちをもう少し見る",
   routeIntro: {
     posts: "日々のかけらと、ここに残しておきたい言葉。",
-    contact: "ひとことの挨拶から、出会いの続きを。",
   },
   homeJournalAbout: "このおうち",
   homeJournalQuote: "今日のひとこと",
@@ -83,7 +82,6 @@ export default {
   contactFilterLabel: "連絡方法を選ぶ",
   contactFilters: ["すべて", "直接開く", "ID をコピー"],
   contactChannelHeading: "使いやすい方法で",
-  mailCardNote: "伝えたいことを、一通のお便りに。",
   mailCardAction: "メールを書く",
   pageTitle: { posts: "投稿", contact: "連絡先" },
   pageKicker: { posts: "冬の日記", contact: "海辺からのお便り" },
@@ -97,14 +95,6 @@ export default {
   note: "はじめまして、\nもうあなたが好きです ♡",
   homeAboutHeading: "この小さなおうちについて",
   homeAboutText: "日々のかけらと、気ままに綴った言葉を集める場所。同じ空の下で、少しずつ知り合えたら。",
-  contactIntro:
-    "特別な書き出しはいりません。ひとことの挨拶、小さな発見、読んだ文章から浮かんだこと。気軽に届けてください。",
-  letterGuideHeading: "まだ書きはじめていない手紙へ",
-  letterGuide: [
-    { title: "ひとことの挨拶から", text: "使いやすいサービスを選んで、気軽に声をかけてください。" },
-    { title: "物語の続きを話そう", text: "投稿や記事の感想なら、元のリンクも添えると話がつながります。" },
-    { title: "長いお話も、ゆっくり", text: "伝えたいことがたくさんある日は、メールに綴ってみてください。" },
-  ],
   copyEmail: "メールアドレスをコピー",
   postsQuickNavLabel: "投稿セクション移動",
   quickNavPinned: "固定した投稿",
@@ -140,7 +130,6 @@ export default {
   ageGateConfirm: "18 歳以上です · 投稿を見る",
   ageGateExit: "18 歳未満です · ホームへ戻る",
   ageGateNote: "確認は今回の閲覧セッション中のみ記憶します。生年月日や本人確認情報は収集しません。",
-  contactsHeading: "見つけてね、話しましょう",
   feedStale: "一時的に更新できません · 前回の投稿を表示",
   feedSnapshot: (date) => `公開投稿の記録 · ${date}`,
   pinnedStale: "一時的に更新できません · 前回の固定投稿を表示",
@@ -190,7 +179,4 @@ export default {
   emailHeading: "お便りをお待ちしています",
   actionOpen: "開く ↗",
   actionCopy: "ID をコピー",
-  footerScript: "Thank you\nfor being here ♡",
-  footerNote: "出会いは物語の始まり。\n優しい日々になりますように。",
-  footerSmall: "Different People　/　Same Beautiful Sky　/　Always Here for You",
 };

@@ -73,7 +73,7 @@
   }
   .posts-age-confirm {
     border-color: #ffffff8c;
-    background: linear-gradient(135deg, #e3effcb3, #f4f9ff94);
+    background: var(--posts-confirm-fill, linear-gradient(135deg, #cfe6faf2, #e5f0fcf2));
     box-shadow: var(--glass-edge-light);
   }
   .posts-age-exit {
@@ -85,6 +85,13 @@
   .posts-age-actions a:hover {
     border-color: var(--color-primary);
     background: #ffffffc2;
+  }
+}
+
+@media (min-width: 901px) and (pointer: fine) {
+  .site-route-posts {
+    --glass-reading-fill: linear-gradient(135deg, #fbfdffb8, #f4f9ffcc);
+    --posts-confirm-fill: linear-gradient(135deg, #e3effcb3, #f4f9ff94);
   }
 }
 

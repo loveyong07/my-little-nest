@@ -1,17 +1,19 @@
 import { PiFlowerLight } from "react-icons/pi";
-import { RouteGarland } from "./ScrapbookAccents.jsx";
 import { pagePaths } from "../routes/site-route.js";
+import { RouteGarland } from "./ScrapbookAccents.jsx";
 
 export function RouteHero({ page, t, header }) {
   return (
     <div className={"route-hero route-hero-" + page}>
       {header}
       <div className="route-page-title" key={page}>
-        <div className="route-breadcrumb">
-          <a href={pagePaths.home}>{t.nav[0]}</a>
-          <span aria-hidden="true">/</span>
-          <span>{t.pageTitle[page]}</span>
-        </div>
+        {page === "posts" && (
+          <div className="route-breadcrumb">
+            <a href={pagePaths.home}>{t.nav[0]}</a>
+            <span aria-hidden="true">/</span>
+            <span>{t.pageTitle.posts}</span>
+          </div>
+        )}
         <span className="route-page-kicker">
           <PiFlowerLight aria-hidden="true" />
           {t.pageKicker[page]}
@@ -19,13 +21,15 @@ export function RouteHero({ page, t, header }) {
         <h1 id="page-heading" tabIndex={-1}>
           {t.pageTitle[page]}
         </h1>
-        <p className="route-page-intro">{t.routeIntro[page]}</p>
+        {page === "posts" && <p className="route-page-intro">{t.routeIntro.posts}</p>}
       </div>
-      <div className="route-edition" aria-hidden="true">
-        <span>MY LITTLE NEST</span>
-        <strong>0{page === "posts" ? 2 : 3}</strong>
-        <span>{page === "posts" ? "STORIES & MOMENTS" : "LETTERS & HELLOS"}</span>
-      </div>
+      {page === "posts" && (
+        <div className="route-edition" aria-hidden="true">
+          <span>MY LITTLE NEST</span>
+          <strong>02</strong>
+          <span>STORIES & MOMENTS</span>
+        </div>
+      )}
       <RouteGarland page={page} />
     </div>
   );

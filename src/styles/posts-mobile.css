@@ -41,13 +41,6 @@
     flex-wrap: wrap;
     gap: 4px 10px;
   }
-  .reading-directory-heading > span {
-    color: #80638c;
-    font:
-      700 8px/1.5 "Quicksand",
-      sans-serif;
-    letter-spacing: 0.08em;
-  }
   .reading-directory-heading h2 {
     order: -1;
     margin: 0;
@@ -55,6 +48,7 @@
     font-size: 15px;
     font-weight: 500;
   }
+  .reading-directory-heading > span,
   .reading-directory-heading p,
   .reading-tools > span,
   .reading-tools > p,

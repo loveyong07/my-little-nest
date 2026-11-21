@@ -6,10 +6,12 @@ import { pagePaths } from "../routes/site-route.js";
 export function PageFooter({ t, page }) {
   return (
     <footer className="nest-page-footer">
-      <p>
-        <PiFlowerLight aria-hidden="true" />
-        <span>{t.pageFooterNote}</span>
-      </p>
+      {page === "posts" && (
+        <p>
+          <PiFlowerLight aria-hidden="true" />
+          <span>{t.pageFooterNote}</span>
+        </p>
+      )}
       <nav aria-label={t.footerNavLabel}>
         {navIds
           .filter((id) => id !== page)
@@ -20,7 +22,7 @@ export function PageFooter({ t, page }) {
             </a>
           ))}
       </nav>
-      <small>MY LITTLE NEST · SAME BEAUTIFUL SKY</small>
+      {page === "posts" && <small>MY LITTLE NEST · SAME BEAUTIFUL SKY</small>}
     </footer>
   );
 }

@@ -1,18 +1,13 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { FaArrowRight, FaEnvelope, FaXTwitter } from "react-icons/fa6";
+import { FaArrowRight } from "react-icons/fa6";
 import { HiOutlineSparkles } from "react-icons/hi2";
-import { PiFlowerLight } from "react-icons/pi";
-import { BsPostageHeart } from "react-icons/bs";
-import { ASSETS, FALLBACK_AVATAR, xProfileUrl } from "../constants/site.js";
+import { ASSETS } from "../constants/site.js";
 import { DESKTOP_FIT_QUERY, MOBILE_QUERY } from "../constants/media-queries.js";
 import { pagePaths } from "../routes/site-route.js";
-import { xMediaSrc } from "../media-urls.js";
-import { handleAvatarError } from "../utils/profile.js";
 import { formatLocalDate, formatVisitDate } from "../utils/date.js";
 import { HomeJournal } from "./HomeJournal.jsx";
-import { GlassFlorals } from "./GlassFlorals.jsx";
+import { HomeLetter } from "./HomeLetter.jsx";
 import { DesktopStationery } from "./DesktopStationery.jsx";
-import { LetterSeaside } from "./ScrapbookAccents.jsx";
 import zhFantasy from "../constants/fantasy/zh.js";
 import { StarryGalBalloon } from "./StarryGalBalloon.jsx";
 
@@ -111,74 +106,9 @@ export function HeroSection({ header, language, t, f = zhFantasy, profile, extra
       {extras}
       <main className="hero-layout" aria-labelledby="page-heading">
         <div className="hero-intro-stack" ref={introRef}>
-          <div className="hero-copy">
-            <GlassFlorals />
-            <div className="hero-postmark" aria-hidden="true">
-              <BsPostageHeart />
-              <span>FROM CHUYONG</span>
-            </div>
-            <p className="home-place-badge">
-              <span className="home-place-seal" aria-hidden="true">
-                <svg viewBox="0 0 24 24" focusable="false">
-                  <path d="M9 20V9l3-4 3 4v11M8 9h8M10 13h1m2 0h1M7.5 20h9M12 2v1.5M3.9 6.8l1.4.7m14.8-.7-1.4.7" />
-                </svg>
-              </span>
-              {t.homePlaceLabel}
-            </p>
-            <p className="hero-chapter">{f.chapter}</p>
-            <div className="hero-letter-overline" aria-hidden="true">
-              <span>A LITTLE LETTER</span>
-              <span>NO. 01</span>
-            </div>
-            <h1 id="page-heading" tabIndex={-1} aria-label={t.homeGreeting.join(language === "en" ? " " : "")}>
-              {t.homeGreeting.map((line, index) => (
-                <span className={index === 0 ? "greeting-opening" : "greeting-line"} key={line} aria-hidden="true">
-                  {line}
-                </span>
-              ))}
-            </h1>
-            <p className="hero-letter-caption">Little moments, from me to you.</p>
-            <div className="ornament" aria-hidden="true">
-              <span />
-              <PiFlowerLight />
-              <span />
-            </div>
-            <div className="hero-sender">
-              <div className="profile">
-                <img
-                  src={xMediaSrc(profile.avatar, true, profile.avatarProxy?.highRes) || FALLBACK_AVATAR}
-                  data-avatar-low-res={xMediaSrc(profile.avatar, false, profile.avatarProxy?.normal) || undefined}
-                  alt={t.profileAlt}
-                  onError={handleAvatarError}
-                />
-                <div>
-                  <strong>{profile.name}</strong>
-                  <a href={xProfileUrl(profile.username)} target="_blank" rel="noopener noreferrer">
-                    @{profile.username}
-                  </a>
-                </div>
-              </div>
-              <div className="hero-sender-note">
-                <p className="bio">{t.bio}</p>
-                <p className="motto">{t.motto}</p>
-              </div>
-            </div>
-            <div className="hero-actions">
-              <a className="primary-cta" href={pagePaths.posts}>
-                <FaXTwitter aria-hidden="true" />
-                {t.postsCta}
-                <FaArrowRight aria-hidden="true" />
-              </a>
-              <a className="secondary-cta" href={pagePaths.contact}>
-                <FaEnvelope aria-hidden="true" />
-                {t.contactCta}
-              </a>
-            </div>
-            <LetterSeaside />
-          </div>
+          <HomeLetter language={language} t={t} chapter={f.chapter} profile={profile} />
           <HomeJournal f={f} t={t} />
         </div>
-        <div className="hero-character-space" aria-hidden="true" />
       </main>
       <p className="sky-quote">
         {t.heroScript}
@@ -197,11 +127,6 @@ export function HeroSection({ header, language, t, f = zhFantasy, profile, extra
           {t.skyLetterAction}
           <FaArrowRight aria-hidden="true" />
         </a>
-      </div>
-      <div className="home-edition" aria-hidden="true">
-        <span>MY LITTLE NEST</span>
-        <span>01 / 03</span>
-        <span>SAME SKY. MORE GOOD FRIENDS.</span>
       </div>
       <DesktopStationery />
       <StarryGalBalloon t={t} contentRef={introRef} />

@@ -1,37 +1,27 @@
-/* A pocket edition of the existing letter desk. The wide, fine-pointer
-   composition remains entirely in desktop-design.css and sky-letter.css. */
+/* Touch layout for the home letter and journal. */
 @media (max-width: 900px), (pointer: coarse), (pointer: none) {
   /* Keep the illustration visible around the letter, with quieter paper inside. */
   .hero-copy {
-    --glass-home-fill: linear-gradient(145deg, #fafdffc4, #eaf5ff99 62%, #fff4fac2);
+    --glass-home-fill: var(--letter-surface);
+    padding-block: 22px 20px;
+    border-radius: 24px;
   }
-  .hero-letter-overline {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin: 16px 0 10px;
-    color: #617c98;
-    font:
-      700 9px/1.5 "Quicksand",
-      sans-serif;
-    letter-spacing: 0.14em;
+  .hero-copy h1 span {
+    white-space: normal;
   }
-  .hero-letter-overline::after {
-    flex: 1;
-    height: 1px;
-    background: #8caec54d;
-    content: "";
+  .hero-copy h1 span:nth-child(2),
+  .hero-copy h1 span:last-child {
+    padding-inline-start: 0;
   }
-  .hero-letter-overline span:last-child {
-    order: 1;
-    color: #927092;
+  .hero-copy .ornament {
+    margin-top: 14px;
+  }
+  .hero-copy .hero-actions {
+    margin-top: 15px;
   }
   .hero-sender {
     display: block;
-    padding: 16px;
-    border: 1px solid #ffffffb3;
-    border-radius: 20px;
-    background: linear-gradient(135deg, #ffffff80, #eaf4ff6b);
+    padding: 0;
   }
   .hero-sender .profile {
     margin-top: 0;
@@ -47,7 +37,7 @@
     min-height: 44px;
   }
   .hero-sender .bio {
-    margin-top: 12px;
+    margin-top: 6px;
     font-size: 14px;
     line-height: 1.7;
   }
@@ -62,7 +52,7 @@
     padding: 14px 16px;
     border: 1px solid #fff;
     border-radius: 24px;
-    background: linear-gradient(135deg, #fbfdfff2, #f5effbeb 65%, #eaf5fff0);
+    background: var(--journal-surface);
     box-shadow: var(--shadow-card);
     text-shadow: none;
   }
