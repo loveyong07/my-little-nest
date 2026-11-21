@@ -2,11 +2,19 @@
 .posts-flow,
 .contact-desk,
 .reading-directory-links,
+.chapter-heading > div,
+.nav-label-stack,
 .hero-sender,
 .hero-sender-note {
   display: contents;
 }
 .nav-selection,
+.nav-label-stack small,
+.route-breadcrumb,
+.route-edition,
+.chapter-number,
+.chapter-kicker,
+.directory-number,
 .nav-page-icon,
 .sky-letter-link,
 .route-page-intro,
@@ -15,7 +23,6 @@
 .reading-tools,
 .contact-channel-heading,
 .nest-page-footer,
-.email-row .mail-card-note,
 .email-row .mail-compose-link {
   display: none;
 }

@@ -9,7 +9,7 @@
     gap: 4px 10px;
     margin-top: 20px;
   }
-  .contact-channel-heading h3 {
+  .contact-channel-heading h2 {
     margin: 0;
     color: #345775;
     font-size: 15px;
@@ -93,24 +93,17 @@
   .email-row {
     display: block;
     margin-top: 20px;
-    padding: 18px 16px;
-    border-radius: 22px;
+    padding: 20px 16px;
+    border-radius: 24px;
     background: linear-gradient(145deg, #fffafcf0, #edf5ffeb);
     text-shadow: none;
   }
-  .email-row h3 {
+  .email-row h2 {
     font-size: 20px;
     font-weight: 500;
   }
   .email-row > .email-stamp {
     display: none;
-  }
-  .email-row .mail-card-note {
-    display: block;
-    margin: 10px 0 0;
-    color: #5a738b;
-    font-size: 13px;
-    line-height: 1.8;
   }
   .email-row .letter-composer {
     display: block;
@@ -300,15 +293,11 @@
     background: linear-gradient(135deg, #ffffffe6, #f0f6ffdb);
     box-shadow: var(--shadow-card);
   }
-  .letter-guide li::after {
-    display: none;
-  }
   .letter-guide-action {
     display: inline-flex;
     align-items: center;
     gap: 8px;
     min-height: 44px;
-    margin-top: 10px;
     padding: 8px 12px;
     border: 1px solid #decae7;
     border-radius: 14px;

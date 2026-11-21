@@ -48,7 +48,7 @@ export function SiteRouteLayout({ page, t, header, extras, children }) {
           <Suspense
             fallback={
               <div className="pinned-placeholder" role="status">
-                {page === "posts" ? t.feedLoading : t.contactsHeading}
+                {page === "posts" ? t.feedLoading : t.pageTitle.contact}
               </div>
             }
           >

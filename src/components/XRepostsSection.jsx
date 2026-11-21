@@ -54,7 +54,7 @@ export function XRepostsSection({
   return (
     <section className="posts-group reposts-group" id="x-reposts" aria-labelledby="x-reposts-heading">
       <div className="posts-daily-heading">
-        <SectionHeading icon={FiRepeat} id="x-reposts-heading">
+        <SectionHeading icon={FiRepeat} number="03" kicker="FOUND & SHARED" id="x-reposts-heading">
           {t.repostsHeading}
         </SectionHeading>
       </div>
