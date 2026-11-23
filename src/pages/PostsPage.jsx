@@ -80,6 +80,7 @@ function PostsContent({ language, t, profile, onFeedReady, historyReading = null
     feedSource,
     feedLoading,
     feedUpdatedAt,
+    previewIssue,
     retryDisabled,
     pinnedPost,
     pinState,
@@ -199,12 +200,18 @@ function PostsContent({ language, t, profile, onFeedReady, historyReading = null
     });
   }
 
+  const previewMessage =
+    previewIssue === "x_credential_missing"
+      ? t.previewXCredentialMissing
+      : previewIssue === "x_upstream_unavailable"
+        ? t.previewXUnavailable
+        : null;
   const statusText = feedLoading
     ? feedSource === "snapshot"
       ? t.feedLoading
       : t.feedRefreshing
     : feedSource === "snapshot"
-      ? t.feedUnavailable
+      ? (previewMessage ?? t.feedUnavailable)
       : feedSource === "stale"
         ? t.feedStale
         : pinState === "stale"

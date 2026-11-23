@@ -26,6 +26,8 @@ export default {
   hideReplies: "收起 X 回复",
   repliesLoading: "正在同步 X 回复…",
   repliesUnavailable: "暂时无法同步 X 回复。",
+  previewXCredentialMissing: "这个预览环境还没配置 X 接口令牌，当前显示站内快照。",
+  previewXUnavailable: "预览环境已配置 X 接口，但本次同步失败。当前显示站内快照。",
   repliesEmpty: "过去 7 天没有找到公开回复。",
   repliesRecent: "X 上过去 7 天的公开直接回复",
   repliesLimited: "显示过去 7 天内部分最新的公开回复。",

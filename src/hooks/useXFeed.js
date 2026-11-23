@@ -43,6 +43,7 @@ export function useXFeed(historyReading = null, sharedPost = null) {
   // request as a failure before it has actually finished.
   const [feedLoading, setFeedLoading] = useState(true);
   const [feedUpdatedAt, setFeedUpdatedAt] = useState(cachedFeed?.savedAt ?? null);
+  const [previewIssue, setPreviewIssue] = useState(null);
   const [feedRefreshToken, setFeedRefreshToken] = useState(0);
   const [retryDisabled, setRetryDisabled] = useState(false);
   const [pinnedPost, setPinnedPost] = useState(cachedPin);
@@ -97,6 +98,7 @@ export function useXFeed(historyReading = null, sharedPost = null) {
         const request = takeEarlyFeed() ?? fetchFeed({ force });
         const feed = await request;
         if (!mounted) return;
+        setPreviewIssue(feed.previewIssue ?? null);
         setArticleReading((current) => refreshedArticleReading(current, feed));
         setRepostReading((current) => {
           const refreshed = refreshedRepostReading(current, feed);
@@ -161,6 +163,7 @@ export function useXFeed(historyReading = null, sharedPost = null) {
         setFeedLoading(false);
       } catch {
         if (mounted) {
+          setPreviewIssue(null);
           setFeedSource((current) => (current === "live" ? "stale" : current));
           setPinState(pinnedPostRef.current ? "stale" : "unavailable");
           setArticleReading((current) => refreshedArticleReading(current, null));
@@ -193,6 +196,7 @@ export function useXFeed(historyReading = null, sharedPost = null) {
     feedSource,
     feedLoading,
     feedUpdatedAt,
+    previewIssue,
     retryDisabled,
     pinnedPost,
     pinState,

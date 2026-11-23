@@ -28,6 +28,8 @@ export default {
   hideReplies: "X の返信を閉じる",
   repliesLoading: "X の返信を取得しています…",
   repliesUnavailable: "X の返信を取得できませんでした。",
+  previewXCredentialMissing: "プレビュー環境に X API トークンが設定されていないため、保存済みの投稿を表示しています。",
+  previewXUnavailable: "プレビュー環境で X の同期に失敗したため、保存済みの投稿を表示しています。",
   repliesEmpty: "過去7日間の公開返信は見つかりませんでした。",
   repliesRecent: "過去7日間の X での公開返信",
   repliesLimited: "過去7日間の公開返信の一部を新しい順に表示しています。",

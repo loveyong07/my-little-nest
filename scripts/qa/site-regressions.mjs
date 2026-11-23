@@ -225,6 +225,50 @@ async function postDiscussion(video) {
   }
 }
 
+async function mobileRouteScenes(video) {
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+    reducedMotion: "reduce",
+  });
+  try {
+    await setup(context, feedData(), video);
+    const page = await context.newPage();
+    for (const route of ["posts", "contact"]) {
+      await page.goto(`${origin}/${route}`);
+      const scene = page.locator(".site-route");
+      await scene.locator(".route-floating-elements").waitFor({ state: "attached" });
+      const sizes = () =>
+        scene.evaluate((element) => {
+          const viewport = document.createElement("div");
+          viewport.style.cssText = "position:fixed;height:100lvh;visibility:hidden";
+          element.append(viewport);
+          const largeHeight = viewport.getBoundingClientRect().height;
+          viewport.remove();
+          const background = getComputedStyle(element, "::before");
+          const foreground = getComputedStyle(element.querySelector(".route-floating-elements"));
+          return {
+            largeHeight,
+            heightUnit: getComputedStyle(element).getPropertyValue("--route-scene-height").trim(),
+            background: background.height,
+            foreground: foreground.height,
+          };
+        });
+      const before = await sizes();
+      assert.equal(before.heightUnit, "100lvh", route);
+      assert.equal(before.background, `${before.largeHeight + 32}px`, route);
+      assert.equal(before.foreground, `${before.largeHeight}px`, route);
+      await page.evaluate(() => window.scrollTo({ top: 400, behavior: "instant" }));
+      await page.waitForFunction(() => window.scrollY > 0);
+      assert.deepEqual(await sizes(), before, route);
+    }
+    console.log("✓ mobile Posts and Contact scene layers keep their large viewport sizing while scrolling");
+  } finally {
+    await context.close();
+  }
+}
+
 async function interactions(video) {
   const feed = feedData();
   const context = await browser.newContext({
@@ -678,6 +722,7 @@ try {
   }
   browser = await chromium.launch({ channel: process.env.QA_BROWSER || "chrome" });
   const video = await recordVideo();
+  await mobileRouteScenes(video);
   await postDiscussion(video);
   await interactions(video);
   await multipleAttachments(video);

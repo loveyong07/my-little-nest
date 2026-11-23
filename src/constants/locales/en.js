@@ -28,6 +28,8 @@ export default {
   hideReplies: "Hide X replies",
   repliesLoading: "Syncing X replies…",
   repliesUnavailable: "X replies are temporarily unavailable.",
+  previewXCredentialMissing: "This preview has no X API token. Showing the site's saved snapshot.",
+  previewXUnavailable: "X sync failed in this preview. Showing the site's saved snapshot.",
   repliesEmpty: "No public replies were found in the past 7 days.",
   repliesRecent: "Public direct replies on X from the past 7 days",
   repliesLimited: "Showing some of the latest public replies from the past 7 days.",
