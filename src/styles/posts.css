@@ -926,12 +926,17 @@
   color: var(--color-ink);
   overflow-wrap: anywhere;
 }
-.post-quote p {
-  margin: var(--space-1) 0;
-  white-space: pre-wrap;
+section.post-quote > .post-card {
+  min-width: 0;
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  animation: none;
 }
-.post-quote a {
-  color: var(--pastel-blue-ink);
+.post-quote .post-topline {
+  padding-bottom: var(--space-2);
 }
 .post-comment-form label {
   display: grid;

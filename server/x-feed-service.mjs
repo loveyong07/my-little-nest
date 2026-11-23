@@ -130,7 +130,7 @@ function isMediaLinkForPost(entity, postId, media, username) {
   }
 }
 
-function normalizedPostText(text, post, media, username) {
+function normalizedPostText(text, post, media, username, quotedId) {
   const entities = [
     ...(Array.isArray(post.entities?.urls) ? post.entities.urls : []),
     ...(Array.isArray(post.note_tweet?.entities?.urls) ? post.note_tweet.entities.urls : []),
@@ -146,7 +146,11 @@ function normalizedPostText(text, post, media, username) {
     try {
       const expanded = new URL(entity.expanded_url);
       if (["https:", "http:"].includes(expanded.protocol) && !expanded.username && !expanded.password) {
-        replacements.set(entity.url, entity.expanded_url);
+        const embeddedQuote =
+          quotedId &&
+          ["x.com", "www.x.com", "twitter.com", "www.twitter.com"].includes(expanded.hostname) &&
+          expanded.pathname.toLowerCase() === `/${username.toLowerCase()}/status/${quotedId}`;
+        replacements.set(entity.url, embeddedQuote ? "" : entity.expanded_url);
       }
     } catch {
       // Keep the original short link when X supplies no valid destination.
@@ -165,7 +169,7 @@ function normalizedPostText(text, post, media, username) {
     delta += replacement.length - link.length;
     return replacement;
   });
-  return { text: media.length ? result.trimEnd() : result, ...(links.length ? { links } : {}) };
+  return { text: media.length || quotedId ? result.trimEnd() : result, ...(links.length ? { links } : {}) };
 }
 
 async function getXJson(
@@ -205,7 +209,9 @@ async function getXJson(
   }
 }
 
+/** @returns {import("../shared/contracts.mjs").MediaItem[]} */
 function normalizedMedia(keys, mediaByKey) {
+  /** @type {import("../shared/contracts.mjs").MediaItem[]} */
   const mediaItems = [];
   const usedKeys = new Set();
   for (const key of keys) {
@@ -238,7 +244,8 @@ function normalizedMedia(keys, mediaByKey) {
   return mediaItems;
 }
 
-function normalizedPost(post, user, mediaByKey, { allowReferences = false } = {}) {
+/** @returns {import("../shared/contracts.mjs").PostItem | null} */
+function normalizedPost(post, user, mediaByKey, { allowReferences = false, quotedId = undefined } = {}) {
   if (!isId(post?.id) || typeof post.text !== "string") return null;
   if (post.author_id && post.author_id !== user.id) return null;
   if (allowReferences && post.author_id !== user.id) return null;
@@ -253,8 +260,9 @@ function normalizedPost(post, user, mediaByKey, { allowReferences = false } = {}
     post,
     mediaItems,
     user.username,
+    quotedId,
   );
-  if (!content.text.trim() && mediaItems.length === 0) return null;
+  if (!content.text.trim() && mediaItems.length === 0 && !quotedId) return null;
   return {
     id: post.id,
     ...content,
@@ -283,16 +291,24 @@ function normalizedSelfQuote(post, author, mediaByKey, postsById) {
   if (post?.in_reply_to_user_id || references.length !== 1 || references[0].type !== "quoted") return null;
   const original = postsById.get(references[0].id);
   if (original?.author_id !== author.id || !isId(original.id)) return null;
-  const quote = normalizedPost(post, author, mediaByKey, { allowReferences: true });
+  const quote = normalizedPost(post, author, mediaByKey, { allowReferences: true, quotedId: original.id });
   if (!quote) return null;
   return {
     ...quote,
-    quotedPost: {
+    quotedPost: normalizedQuoteTarget(original, author, mediaByKey) ?? {
       id: original.id,
-      text: normalizedPost(original, author, mediaByKey, { allowReferences: true })?.text ?? "",
+      text: "",
+      created_at: original.created_at ?? null,
+      author: author.name || author.username,
+      username: author.username,
       permalink: `https://x.com/${author.username}/status/${original.id}`,
     },
   };
+}
+
+function normalizedQuoteTarget(original, author, mediaByKey) {
+  const post = normalizedPost(original, author, mediaByKey, { allowReferences: true });
+  return post ? { ...post, username: author.username } : null;
 }
 
 // Article metadata comes from the requested article field, never from note_tweet:
@@ -526,6 +542,19 @@ export function createXFeedService({
     return raceWithSignal(userInFlight, signal);
   }
 
+  function fetchPostDetails(ids, signal) {
+    const url = new URL(`${X_API}/tweets`);
+    url.searchParams.set("ids", ids.join(","));
+    url.searchParams.set(
+      "tweet.fields",
+      "created_at,author_id,referenced_tweets,in_reply_to_user_id,note_tweet,attachments,entities",
+    );
+    url.searchParams.set("expansions", "attachments.media_keys,author_id");
+    url.searchParams.set("user.fields", "name,username,profile_image_url,protected");
+    url.searchParams.set("media.fields", "media_key,type,url,alt_text,width,height,preview_image_url,variants");
+    return getXJson(url, token, fetchImpl, { allowPartialErrors: true, signal, now });
+  }
+
   async function fetchPinnedPost(author, pinnedId, signal = undefined) {
     if (!isId(pinnedId)) return { post: null, status: "none" };
     function lookup(mode, includeArticles = true) {
@@ -580,8 +609,21 @@ export function createXFeedService({
         if ((parent || parentAuthorId) && parentAuthorId !== author.id) return { post: null, status: "none" };
         if (isQuote) {
           const quote = normalizedSelfQuote(json.data, author, mediaByKey, postsById);
-          if (quote && typeof json.data.created_at === "string") return { post: quote, status: "ok" };
-          return { post: null, status: "none" };
+          if (!quote || typeof json.data.created_at !== "string") return { post: null, status: "none" };
+          try {
+            const details = await fetchPostDetails([quote.quotedPost.id], signal);
+            const target = Array.isArray(details.data)
+              ? details.data.find((post) => post.id === quote.quotedPost.id)
+              : null;
+            if (target?.author_id && target.author_id !== author.id) return { post: null, status: "none" };
+            for (const media of details.includes?.media ?? []) mediaByKey.set(media.media_key, media);
+            quote.quotedPost = normalizedQuoteTarget(target, author, mediaByKey) ?? quote.quotedPost;
+          } catch {
+            // The verified expansion is still usable if the optional detail lookup fails.
+            const previous = cached?.pinnedPost?.quotedPost;
+            if (previous?.id === quote.quotedPost.id && previous.media?.length) quote.quotedPost = previous;
+          }
+          return { post: quote, status: "ok" };
         }
       }
       const post = normalizedPost(json.data, author, mediaByKey, { allowReferences: true });
@@ -602,6 +644,7 @@ export function createXFeedService({
     const foundArticles = [];
     const foundReposts = [];
     const repostEvents = [];
+    const ownTimelinePosts = new Map();
     const repostPostsById = new Map();
     const repostUsersById = new Map();
     const repostMediaByKey = new Map();
@@ -681,7 +724,7 @@ export function createXFeedService({
           .map((media) => [media.media_key, media]),
       );
       const postsById = new Map((json.includes?.tweets ?? json.includes?.posts ?? []).map((post) => [post.id, post]));
-      const quoteTargets = new Map([...pagePosts.map((post) => [post.id, post]), ...postsById]);
+      const quoteTargets = new Map([...postsById, ...pagePosts.map((post) => [post.id, post])]);
       const usersById = new Map((json.includes?.users ?? []).map((user) => [user.id, user]));
       for (const [id, post] of postsById) repostPostsById.set(id, post);
       for (const [id, user] of usersById) repostUsersById.set(id, user);
@@ -695,6 +738,7 @@ export function createXFeedService({
         latestId = json.meta?.newest_id ?? pagePosts[0].id;
       }
       for (const post of pagePosts) {
+        if (post.author_id === author.id) ownTimelinePosts.set(post.id, post);
         const isRepost = (post.referenced_tweets ?? post.referenced_posts ?? []).some(
           (reference) => reference.type === "retweeted",
         );
@@ -730,36 +774,25 @@ export function createXFeedService({
       nextToken = tokenForNextPage;
     }
 
-    // Timeline reference expansions omit media on some originals. Resolve their
-    // canonical details in deduplicated batches so text-only expansions cannot
-    // silently turn illustrated reposts into text-only cards.
+    // Reference expansions can omit attachments. Use full timeline entries for
+    // owned quote targets when available, and share detail batches with reposts.
     const referenceOf = (event) =>
       (event.referenced_tweets ?? event.referenced_posts ?? []).find((reference) => reference.type === "retweeted");
-    const originalIds = [
-      ...new Set(
-        repostEvents
-          .map((event) => referenceOf(event)?.id)
-          .filter((id) => isId(id) && !permanentlyUnavailableIds.has(id)),
-      ),
-    ];
+    const repostIds = new Set(repostEvents.map((event) => referenceOf(event)?.id).filter(isId));
+    const quoteIds = found.flatMap(({ quotedPost }) =>
+      quotedPost && !ownTimelinePosts.has(quotedPost.id) ? [quotedPost.id] : [],
+    );
+    const originalIds = [...new Set([...repostIds, ...quoteIds])].filter((id) => !permanentlyUnavailableIds.has(id));
     const verifiedOriginals = new Set();
     for (let start = 0; start < originalIds.length; start += PAGE_SIZE) {
       const ids = originalIds.slice(start, start + PAGE_SIZE);
-      const url = new URL(`${X_API}/tweets`);
-      url.searchParams.set("ids", ids.join(","));
-      url.searchParams.set(
-        "tweet.fields",
-        "created_at,author_id,referenced_tweets,in_reply_to_user_id,note_tweet,attachments,entities",
-      );
-      url.searchParams.set("expansions", "attachments.media_keys,author_id");
-      url.searchParams.set("user.fields", "name,username,profile_image_url,protected");
-      url.searchParams.set("media.fields", "media_key,type,url,alt_text,width,height,preview_image_url,variants");
+      const includesReposts = ids.some((id) => repostIds.has(id));
       try {
-        const json = await getXJson(url, token, fetchImpl, { allowPartialErrors: true, signal, now });
+        const json = await fetchPostDetails(ids, signal);
         if (json.errors?.length) {
           const { permanentIds, hasTransientError } = classifyXErrors(json.errors);
           for (const id of permanentIds) permanentlyUnavailableIds.add(id);
-          if (hasTransientError) repostsAvailable = false;
+          if (hasTransientError && includesReposts) repostsAvailable = false;
         }
         if (!Array.isArray(json.data)) {
           if (!ids.every((id) => permanentlyUnavailableIds.has(id))) throw new Error("X repost details unavailable");
@@ -774,6 +807,7 @@ export function createXFeedService({
         for (const media of json.includes?.media ?? []) repostMediaByKey.set(media.media_key, media);
       } catch (error) {
         // Keep available originals and their last verified media during an outage.
+        if (!includesReposts) continue;
         repostsAvailable = false;
         repostsRetryDelayMs = Math.max(repostsRetryDelayMs, retryDelayMs(error));
       }
@@ -795,9 +829,25 @@ export function createXFeedService({
       else if (!permanentlyGone) repostsAvailable = false;
     }
 
+    const previousQuotes = new Map(
+      cached?.posts?.filter((post) => post.quotedPost).map((post) => [post.id, post.quotedPost]),
+    );
+    const dailyPosts = found.flatMap((post) => {
+      if (!post.quotedPost) return [post];
+      const id = post.quotedPost.id;
+      const target = ownTimelinePosts.get(id) ?? repostPostsById.get(id);
+      if (target?.author_id && target.author_id !== author.id) return [];
+      const full = normalizedQuoteTarget(target, author, repostMediaByKey);
+      if (ownTimelinePosts.has(id) || verifiedOriginals.has(id)) {
+        return [{ ...post, quotedPost: full ?? post.quotedPost }];
+      }
+      const previous = previousQuotes.get(post.id);
+      const fallback = previous?.id === id && previous.media?.length ? previous : (full ?? post.quotedPost);
+      return [{ ...post, quotedPost: fallback }];
+    });
     const unique = [];
     const ids = new Set();
-    for (const post of [...found, ...(fullRefresh ? [] : (cached?.posts ?? []))]) {
+    for (const post of [...dailyPosts, ...(fullRefresh ? [] : (cached?.posts ?? []))]) {
       if (post.id === pinnedId) continue;
       if (!ids.has(post.id)) {
         ids.add(post.id);

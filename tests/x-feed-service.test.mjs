@@ -314,7 +314,15 @@ test("caches successful X responses containing originals and verified self-quote
         author: "初咏",
         avatar: "https://pbs.twimg.com/avatar.jpg",
         permalink: "https://x.com/loveyong07/status/4",
-        quotedPost: { id: "9", text: "Shared original", permalink: "https://x.com/loveyong07/status/9" },
+        quotedPost: {
+          id: "9",
+          text: "Shared original",
+          created_at: "2026-09-25T00:00:00Z",
+          author: "初咏",
+          username: "loveyong07",
+          avatar: "https://pbs.twimg.com/avatar.jpg",
+          permalink: "https://x.com/loveyong07/status/9",
+        },
       },
     ],
   });
