@@ -51,6 +51,7 @@
  * @typedef {{
  *   status: FeedStatus | "method_not_allowed" | "invalid_request",
  *   posts: PostItem[],
+ *   syncedAt?: number,
  *   previewIssue?: "x_credential_missing" | "x_upstream_unavailable",
  *   pinnedPost?: PostItem | null,
  *   pinnedStatus?: SectionStatus,
@@ -69,6 +70,25 @@
  *   status: FeedStatus | "method_not_allowed" | "invalid_request",
  *   profile?: ProfileItem,
  * }} ProfileResponse
+ * @typedef {{
+ *   id: string,
+ *   name?: string,
+ *   username: string,
+ *   profile_image_url?: string,
+ *   pinned_tweet_id?: string,
+ *   pinned_post_id?: string,
+ * }} XFeedAuthor
+ * @typedef {{
+ *   feed: FeedResponse,
+ *   newestSeenId: string | null,
+ *   pinnedId: string | null,
+ *   author: XFeedAuthor,
+ *   authorAt: number,
+ *   fullRefreshAt: number | null,
+ *   userFieldMode: "tweet" | "post",
+ *   postFieldMode: "tweet" | "post",
+ * }} XFeedCheckpoint
+ * @typedef {{ syncedAt: number, feed: FeedResponse, profile: ProfileResponse }} PublishedXSnapshot
  * @typedef {{
  *   secret?: string,
  *   previousSecret?: string,

@@ -1,11 +1,9 @@
 // Vercel function: every API route shares server/api-handler.mjs.
 import { createApiHandler } from "../server/api-handler.mjs";
-import { waitUntil } from "@vercel/functions";
-import { createBlobArticleCache } from "../server/article-cache.mjs";
+import { readPublishedXSnapshot } from "../server/x-feed-snapshot.mjs";
 
 const handleApi = createApiHandler(process.env, {
-  articleCache: createBlobArticleCache(),
-  defer: waitUntil,
+  readXSnapshot: readPublishedXSnapshot(),
 });
 
 export default {

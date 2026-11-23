@@ -20,9 +20,20 @@
       "regions": ["hkg1"],
       "maxDuration": 30
     },
+    "api/x-sync.js": {
+      "regions": ["hkg1"],
+      "maxDuration": 55,
+      "experimentalTriggers": [{ "type": "schedule/v1beta" }]
+    },
     "api/starrygal.js": {
       "regions": ["hkg1"],
       "maxDuration": 20
+    }
+  },
+  "schedules": {
+    "sync-x-feed": {
+      "schedule": "37 * * * *",
+      "function": "api/x-sync"
     }
   },
   "headers": [

@@ -42,7 +42,7 @@ export function useXFeed(historyReading = null, sharedPost = null) {
   // A cached first paint still has a refresh in flight. Do not describe that
   // request as a failure before it has actually finished.
   const [feedLoading, setFeedLoading] = useState(true);
-  const [feedUpdatedAt, setFeedUpdatedAt] = useState(cachedFeed?.savedAt ?? null);
+  const [feedUpdatedAt, setFeedUpdatedAt] = useState(cachedFeed?.feed.syncedAt ?? cachedFeed?.savedAt ?? null);
   const [previewIssue, setPreviewIssue] = useState(null);
   const [feedRefreshToken, setFeedRefreshToken] = useState(0);
   const [retryDisabled, setRetryDisabled] = useState(false);
@@ -142,7 +142,9 @@ export function useXFeed(historyReading = null, sharedPost = null) {
           ? feed.posts.filter((post) => isOriginalPost(post) && post.id !== pinnedPostRef.current?.id)
           : [];
         if ((feed.status === "ok" || feed.status === "stale") && Array.isArray(feed.posts)) {
-          if (feed.status === "ok") {
+          if (Number.isSafeInteger(feed.syncedAt)) {
+            setFeedUpdatedAt(feed.syncedAt);
+          } else if (feed.status === "ok") {
             setFeedUpdatedAt(getFeedSnapshot()?.savedAt ?? null);
           }
           setReading((current) => {

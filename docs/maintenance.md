@@ -10,9 +10,11 @@ Vercel 的图片函数可连接香港 `hkg1` 私有 Blob，持久保存成功编
 
 首次导入现有图片可运行 `node --env-file=.env.local scripts/warm-photo-cache.mjs`，加 `--limit 3` 只导入三个样本；本地文件需要已经连接存储后的服务端 Blob 凭据。脚本从当前成功同步的公开动态中去重收集配图，保留完整像素与实际格式，不处理头像、封面或视频。它不是持续同步任务；后续新图首次请求仍可能需要回源，随后自动持久缓存。缓存写入前检查用量（每 5 分钟复用盘点结果，若库中已无 `v1` 旧图则跳过 `v1` 双查），触及 800 MB 软预算时优先按上传时间淘汰最旧配图腾出空间（每次至多 16 条），无法回收时再停止新增；实例间并发和盘点快照仍存在偏差，这个预算不能代替 Vercel 的账户用量限制。存储、流量或操作配额不足时保留现有回源回退。同实例对同一张未缓存 `format=webp` 原图的并发请求会合并为一次回源与一次编码，避免突发并发放大内存。
 
-`/api/x-profile` 通过稳定用户 ID 查询账号资料；`/api/x-posts` 获取置顶、日常原创帖、转帖和 X Articles。文章来自同一次时间线请求的 `article` / `article_title` 字段，与普通长帖分开，响应包含 `articles` 和 `articlesStatus`（`ok` / `none` / `stale` / `unavailable`）。文章优先展示 API 提供的纯文本正文，缺少正文时展示预览，并提供 X 原文链接；封面沿用同源签名媒体代理。前端定期刷新，接口失败时使用已有缓存或明确标注的快照，不代表秒级同步。
+Vercel 正式站的 `/api/x-profile` 与 `/api/x-posts` 从私有 Blob 的 `x-feed/snapshot-v1/current.json` 读取同一份账号资料、置顶、原创、转帖和 X Articles，按响应时间生成媒体签名。响应头 `X-Nest-X-Source: snapshot` 和 `X-Nest-X-Synced-At` 可用于核对。Blob 读取失败时复用同实例最近的快照，或由浏览器使用已有缓存。访客访问、前端刷新和点击重试均只读取已有结果。
 
-Vercel 的 `/api/x-posts` 函数同样连接私有 Blob（`server/article-cache.mjs`），以 `x-articles/document-v1/<id>.json` 持久保存已通过正文、封面与配图完整性校验的 Article 段落结构（`blocks`）。缓存保留段落链接的 `offset` / `length`，区分文字相同但目标不同的链接；旧缓存缺少位置且目标有歧义时保留原文，不猜测地址。媒体仍只保存未签名的原始 URL，并记录结构版本号与校验时间戳，返回响应时由 `authorizeFeed` 重新生成当日媒体签名。未变化的文章在 24 小时校验期内优先使用内存或 Blob 缓存，避免每次刷新重复抓取 X 网页；满 24 小时后重新校验网页以同步可能发生的链接目标或图片位置调整，若网页抓取失败则保留既有有效快照且绝不覆盖持久缓存。缓存恢复先于网页抓取进行，两阶段各限制四个并发任务并共用六秒预算，避免前几篇网页超时阻塞后续已有缓存的文章。
+每小时由 `sync-x-feed` 调用生产环境的私有 `api/x-sync.js`，使用稳定账号 ID 和快照里的 `since_id` 游标检查新增内容。账号资料和有效置顶最多复用六小时。首次同步及约每 24 小时完整核对，以反映删除和取消转发。成功时原子保存内容、游标和同步时间，重复的计划时间会跳过，Blob ETag 条件写入保护并发更新。同步失败保留上一份完整数据，三小时后标记过期。首次导入可在具备现有 X、Blob 服务端凭据的环境运行 `node --env-file=.env.local scripts/sync-x-snapshot.mjs`。正式环境的 Vercel Schedules 可按需手动运行。Hobby 的计划任务实际会在设定时间后的 15 分钟内分散触发，调度和浏览器缓存都会影响访客看到新帖的时间。
+
+同步函数使用 `server/article-cache.mjs` 持久保存已校验的 Article 段落结构（`blocks`），路径为 `x-articles/document-v1/<id>.json`。文章来自时间线的 `article` / `article_title` 字段，与普通长帖分开。结构缓存保留段落链接的位置和未签名媒体地址。未变化的文章在 24 小时内优先使用已有结构。网页重验失败时保留最后验证的结构。恢复与抓取各限制四个并发任务并共用六秒预算。缺少正文时页面展示预览和 X 原文链接。
 
 `server/telemetry.mjs` 在 Vercel 运行环境（或设置 `NEST_TELEMETRY=1` 时）输出单行 JSON 观测日志，记录 Feed/Profile 刷新计数、上游耗时、Article 文档缓存命中/重验结果以及图片 Blob 命中与跳过原因。注意 `X-Nest-Photo-Cache: hit | miss` 响应头仅代表函数执行当次的 `function_blob` 查询结果；响应被 Vercel CDN 缓存后该头会被边缘复用，因此不能直接等同于所有访客请求的实时 Blob 命中率，统计时需区分 CDN 与 Blob 两层。
 
@@ -30,11 +32,7 @@ Vercel 的 `/api/x-posts` 函数同样连接私有 Blob（`server/article-cache.
 
 资料和动态响应对浏览器使用 `Cache-Control: no-store`，但浏览器应用层仍有内存和 localStorage 缓存。保留当前偏向复用、减少重复查询的策略：Vercel CDN 对完整成功响应使用 `s-maxage=300, stale-while-revalidate=600`；整体过期/不可用，或置顶过期/不可用/状态缺失及异常时使用 `s-maxage=60`。动态只有整体 `ok`、置顶、转帖和文章均为 `ok` / `none` 才算完整成功，`none` 表示已确认该部分为空；资料只判断自身状态。异常响应也用短缓存。
 
-服务端时间线和用户资料成功缓存为 15 分钟，时间线每 24 小时完整核对；前端完整成功数据的刷新窗口也为 15 分钟，页面可见时每分钟检查一次。因此单层 CDN 的 5 分钟不是端到端同步时限，缓存窗口可能叠加。`stale-while-revalidate` 允许过期缓存被使用并在后台更新，不表示每次请求固定再等待 10 分钟。尚无线上命中、费用或冷启动数据证明延长缓存有显著收益，接受其可能增加同步等待的取舍。
-
-置顶部分失败保留可用日常动态：服务端从该次失败完成起退避 60 秒，到期后的下一次请求只重查同一置顶详情，不重抓用户或时间线，并合并并发；继续失败则再退避 60 秒。置顶恢复不会重置时间线缓存时钟。浏览器保存可用动态，但部分失败不进入 15 分钟完整成功窗口，沿用 30 秒失败退避及可见页面每分钟检查。恢复为 `ok` / `none` 后回到正常缓存。上述均按请求触发，CDN、页面可见性、函数实例和上游响应还会影响用户看到恢复的时间，不保证一分钟内端到端恢复。
-
-文章部分失败同样退避 60 秒，之后合并并发并完整重扫时间线以恢复旧文章。若 X 拒绝可选文章字段，则回退普通帖子字段，保留可用帖子及旧文章的过期状态；整次重试失败不延长原成功缓存的寿命。完整采集成功后按新结果更新帖子和文章。无服务端凭据或整体异常且无缓存时，保留兼容响应 `{status: "unavailable", posts: []}`，前端将缺少的文章状态视为不可用。
+前端完整成功数据的刷新窗口为 15 分钟，页面可见时每分钟检查，失败沿用 30 秒退避。本地 Vite 和 Sites 兼容入口继续使用请求触发的 15 分钟进程缓存，置顶、文章和转帖失败按原服务退避。Vercel 则由下一个后台运行恢复。缺少服务器快照时动态接口返回 `{status: "unavailable", posts: []}`，前端使用现有缓存或保留不可用提示。
 
 共享 handler（`server/api-handler.mjs`）统一处理 API 路由。Vercel 侧由 `api/` 下的函数分别托管，并由 `vercel.json` 显式配置各函数 `maxDuration` 与流式响应；Sites 侧由 `worker/index.js` 共用 `shared/hosting-policy.mjs` 注入与 Vercel 一致的安全响应头（CSP、HSTS、Permissions-Policy、COOP、X-Frame-Options、nosniff）、`/route-shells/*.html` 路由壳（保证 `/posts` 的 `noindex, follow`）、`/business` 308 跳转与静态资源缓存策略，`scripts/prepare-sites-build.mjs` 自动剔除仅 Vercel 使用的 Blob 存储模块。动态与资料接口统一输出 `X-Robots-Tag: noindex, nofollow`，`public/robots.txt` 禁止抓取 `/api/`。X API 明确返回的永久对象级错误（原帖已删或作者设私）会跳过该条转帖而不污染 `repostsStatus`；收到 `429` 时遵循 `retry-after` / `x-rate-limit-reset` 退避（60 秒至 15 分钟）。
 

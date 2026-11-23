@@ -12,6 +12,7 @@ const X_API = "https://api.x.com/2";
 const CACHE_TTL_MS = 15 * 60 * 1000;
 const FULL_REFRESH_TTL_MS = 24 * 60 * 60 * 1000;
 const USER_CACHE_TTL_MS = CACHE_TTL_MS;
+const SCHEDULED_USER_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 const ERROR_RETRY_MS = 60 * 1000;
 const MAX_RATE_LIMIT_RETRY_MS = 15 * 60 * 1000;
 const PAGE_SIZE = 100;
@@ -379,6 +380,8 @@ function mergeArticles(current, previous = []) {
   });
 }
 
+/** @typedef {import("../shared/contracts.mjs").XFeedCheckpoint} XFeedCheckpoint */
+
 export function createXFeedService({
   token = globalThis.process?.env?.X_BEARER_TOKEN ?? "",
   fetchImpl = globalThis.fetch,
@@ -390,24 +393,26 @@ export function createXFeedService({
   defer = (task) => void Promise.resolve(task).catch(() => {}),
   onEvent = null,
   now = Date.now,
+  resumeFrom = /** @type {XFeedCheckpoint | null | undefined} */ (undefined),
 } = {}) {
   const emit = createTelemetryEmitter(onEvent);
-  let user = null;
-  let userAt = 0;
+  const userCacheTtl = resumeFrom === undefined ? USER_CACHE_TTL_MS : SCHEDULED_USER_CACHE_TTL_MS;
+  let user = resumeFrom?.author ?? null;
+  let userAt = resumeFrom?.authorAt ?? 0;
   let userInFlight = null;
-  let cached = null;
+  let cached = resumeFrom?.feed ?? null;
   let cachedAt = 0;
-  let newestSeenId = null;
+  let newestSeenId = resumeFrom?.newestSeenId ?? null;
   let retryAt = 0;
   let inFlight = null;
-  let userFieldMode = "tweet";
-  let postFieldMode = "tweet";
-  let cachedPinnedId = null;
-  let cachedAuthor = null;
+  let userFieldMode = resumeFrom?.userFieldMode ?? "tweet";
+  let postFieldMode = resumeFrom?.postFieldMode ?? "tweet";
+  let cachedPinnedId = resumeFrom?.pinnedId ?? null;
+  let cachedAuthor = resumeFrom?.author ?? null;
   let pinnedRetryAt = 0;
   let articlesRetryAt = 0;
   let repostsRetryAt = 0;
-  let fullRefreshAt = null;
+  let fullRefreshAt = resumeFrom?.fullRefreshAt ?? null;
   let cachedProfile = null;
   let profileRetryAt = 0;
   let profileInFlight = null;
@@ -466,7 +471,7 @@ export function createXFeedService({
   }
 
   async function getUser(signal = undefined) {
-    if (user && now() - userAt < USER_CACHE_TTL_MS) return user;
+    if (user && now() - userAt < userCacheTtl) return user;
     // The feed and the standalone profile route share one account lookup.
     if (!userInFlight)
       userInFlight = lookupUser().finally(() => {
@@ -541,6 +546,7 @@ export function createXFeedService({
         const parentAuthorId = json.data.in_reply_to_user_id ?? postsById.get(parent?.id)?.author_id;
         if ((parent || parentAuthorId) && parentAuthorId !== author.id) return { post: null, status: "none" };
         if (isQuote) {
+          /** @type {import("../shared/contracts.mjs").PostItem} */
           const quote = normalizedSelfQuote(json.data, author, mediaByKey, postsById);
           if (!quote || typeof json.data.created_at !== "string") return { post: null, status: "none" };
           try {
@@ -649,6 +655,9 @@ export function createXFeedService({
       }
       if (json.data !== undefined && !Array.isArray(json.data)) {
         throw new Error("Invalid X posts response");
+      }
+      if (resumeFrom !== undefined && json.data === undefined && json.meta?.result_count !== 0) {
+        throw new Error("X timeline did not confirm an empty result");
       }
       const pagePosts = json.data ?? [];
       const mediaByKey = new Map(
@@ -838,10 +847,20 @@ export function createXFeedService({
     const author = await getUser(signal);
     signal.throwIfAborted();
     const pinnedId = author.pinned_tweet_id ?? author.pinned_post_id ?? null;
+    const reusablePin =
+      resumeFrom &&
+      userAt === resumeFrom.authorAt &&
+      cachedPinnedId === pinnedId &&
+      ["ok", "none"].includes(cached?.pinnedStatus)
+        ? { post: cached.pinnedPost, status: cached.pinnedStatus }
+        : null;
     const [
       { posts, articles, articlesStatus, reposts, repostsStatus, repostsRetryDelayMs, latestId, fullRefresh },
       pinned,
-    ] = await Promise.all([fetchOriginalPosts(author, pinnedId, signal), fetchPinnedPost(author, pinnedId, signal)]);
+    ] = await Promise.all([
+      fetchOriginalPosts(author, pinnedId, signal),
+      reusablePin ?? fetchPinnedPost(author, pinnedId, signal),
+    ]);
     return {
       result: {
         status: "ok",
@@ -888,7 +907,7 @@ export function createXFeedService({
     if (!profileInFlight) {
       profileInFlight = (async () => {
         const startedAt = now();
-        const wasUserCached = Boolean(user && startedAt - userAt < USER_CACHE_TTL_MS && cachedProfile);
+        const wasUserCached = Boolean(user && startedAt - userAt < userCacheTtl && cachedProfile);
         if (!wasUserCached) profileRefreshCount += 1;
         try {
           const current = await getUser();
@@ -1055,5 +1074,18 @@ export function createXFeedService({
     return inFlight;
   }
   getFeed.getProfile = getProfile;
+  getFeed.getCheckpoint = /** @returns {XFeedCheckpoint | null} */ () =>
+    cached && cachedAuthor
+      ? {
+          feed: cached,
+          newestSeenId,
+          pinnedId: cachedPinnedId,
+          author: cachedAuthor,
+          authorAt: userAt,
+          fullRefreshAt,
+          userFieldMode,
+          postFieldMode,
+        }
+      : null;
   return getFeed;
 }

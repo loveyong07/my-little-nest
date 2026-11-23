@@ -33,6 +33,7 @@ function json(body, { status = 200, headers = {} } = {}) {
  *   fetchImpl?: typeof globalThis.fetch,
  *   articleFetchImpl?: typeof globalThis.fetch | null,
  *   articleCache?: import("../shared/contracts.mjs").ArticleCacheAdapter | null,
+ *   readXSnapshot?: (() => Promise<import("../shared/contracts.mjs").PublishedXSnapshot | null>) | null,
  *   videoCache?: import("./x-video.mjs").VideoCache | null,
  *   defer?: (task: Promise<unknown>) => void,
  *   onEvent?: import("./telemetry.mjs").TelemetryEmitter | null,
@@ -62,6 +63,7 @@ export function createApiHandler(
     fetchImpl = (input, init) => globalThis.fetch(input, init),
     articleFetchImpl = fetchImpl,
     articleCache = null,
+    readXSnapshot = null,
     videoCache = null,
     defer = undefined,
     onEvent = null,
@@ -103,8 +105,18 @@ export function createApiHandler(
       return json({ ...empty, status: "invalid_request" }, { status: 400 });
     }
     try {
+      const snapshot = readXSnapshot ? await readXSnapshot() : null;
+      if (readXSnapshot && !snapshot) {
+        return json(empty, { status: 503, headers: { "Vercel-CDN-Cache-Control": JSON_CDN_CACHE_CONTROL_RETRY } });
+      }
+      const snapshotHeaders = snapshot
+        ? {
+            "X-Nest-X-Source": "snapshot",
+            "X-Nest-X-Synced-At": new Date(snapshot.syncedAt).toISOString(),
+          }
+        : {};
       if (route === "posts") {
-        const result = await authorizeFeed(await feedService()(), authOptions);
+        const result = await authorizeFeed(snapshot ? snapshot.feed : await feedService()(), authOptions);
         const complete =
           result?.status === "ok" &&
           ["ok", "none"].includes(result.pinnedStatus) &&
@@ -115,11 +127,14 @@ export function createApiHandler(
           env.VERCEL_ENV === "preview" && result.status === "unavailable"
             ? { ...result, previewIssue: env.X_BEARER_TOKEN ? "x_upstream_unavailable" : "x_credential_missing" }
             : result;
-        return json(body, { headers: { "Vercel-CDN-Cache-Control": cdn } });
+        return json(body, { headers: { ...snapshotHeaders, "Vercel-CDN-Cache-Control": cdn } });
       }
-      const result = await authorizeProfile(await feedService().getProfile(), authOptions);
+      const result = await authorizeProfile(
+        snapshot ? snapshot.profile : await feedService().getProfile(),
+        authOptions,
+      );
       const cdn = result?.status === "ok" ? JSON_CDN_CACHE_CONTROL : JSON_CDN_CACHE_CONTROL_RETRY;
-      return json(result, { headers: { "Vercel-CDN-Cache-Control": cdn } });
+      return json(result, { headers: { ...snapshotHeaders, "Vercel-CDN-Cache-Control": cdn } });
     } catch {
       // A failed lookup still answers, so no runtime is left with a hanging request.
       return json(empty, { status: 503, headers: { "Vercel-CDN-Cache-Control": JSON_CDN_CACHE_CONTROL_RETRY } });
