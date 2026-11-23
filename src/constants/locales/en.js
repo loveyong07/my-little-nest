@@ -11,6 +11,9 @@ export default {
   skipToContent: "Skip to content",
   pageFooterNote: "A little page of encounters. Come back whenever you like.",
   footerNavLabel: "Explore the nest",
+  legalLinksLabel: "Site policies",
+  privacyPolicy: "Privacy Policy",
+  termsOfService: "Terms of Service",
   routeIntro: {
     posts: "Everyday moments, and the words I leave here.",
   },

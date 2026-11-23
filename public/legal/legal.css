@@ -1,0 +1,95 @@
+:root {
+  color-scheme: light;
+  color: #294259;
+  background: #eef6ff;
+  font-family: system-ui, "Microsoft YaHei", sans-serif;
+  line-height: 1.75;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  max-width: 50rem;
+  margin: 0 auto;
+  padding: clamp(1rem, 4vw, 2.5rem);
+}
+a {
+  color: #225d8e;
+  text-underline-offset: 0.2em;
+}
+a:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+.legal-header,
+.legal-language,
+.legal-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 1rem;
+}
+.legal-header {
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.legal-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+.legal-language a,
+.legal-footer a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+}
+body:not(:has(.legal-copy:target)) .legal-language [href="#zh"],
+body:has(#zh:target) .legal-language [href="#zh"],
+body:has(#ja:target) .legal-language [href="#ja"],
+body:has(#en:target) .legal-language [href="#en"] {
+  font-weight: 700;
+}
+.legal-copy {
+  scroll-margin-top: 7rem;
+  padding: clamp(1rem, 4.5vw, 2.5rem);
+  border: 1px solid #cfdfed;
+  border-radius: 1.5rem;
+  background: #fff;
+  box-shadow: 0 8px 32px #3b608012;
+}
+.legal-copy:not(:first-child),
+.legal-document:has(.legal-copy:target) .legal-copy:not(:target) {
+  display: none;
+}
+.legal-copy:target {
+  display: block;
+}
+.legal-copy h1 {
+  margin: 0;
+  font-size: clamp(1.65rem, 5vw, 2.35rem);
+  line-height: 1.25;
+}
+.legal-copy h2 {
+  margin: 1.5rem 0 0.25rem;
+  font-size: 1.125rem;
+}
+.legal-copy p {
+  margin: 0.5rem 0;
+  overflow-wrap: anywhere;
+}
+.legal-updated {
+  color: #4f6b82;
+  font-size: 0.875rem;
+}
+.legal-footer {
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+  border-top: 1px solid #d6e1ea;
+  font-size: 0.875rem;
+}
+.legal-footer [aria-current="page"] {
+  font-weight: 700;
+}

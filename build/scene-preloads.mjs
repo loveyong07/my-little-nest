@@ -3,6 +3,14 @@ import path from "node:path";
 import { pagePaths, resolvePage } from "../src/routes/site-route.js";
 import { scenePreloads } from "../src/routes/scene-assets.js";
 import { siteMetadata } from "../src/routes/site-metadata.js";
+import { ROUTE_SHELLS } from "../shared/hosting-policy.mjs";
+
+function serveLegalPage(request, _response, next) {
+  const url = new URL(request.url, "http://localhost");
+  const destination = ROUTE_SHELLS[url.pathname];
+  if (destination?.startsWith("/legal/")) request.url = destination + url.search;
+  next();
+}
 
 export function withRouteMetadata(html, page) {
   const meta = siteMetadata(page);
@@ -72,7 +80,11 @@ export function scenePreloadPlugin() {
         writeFileSync(path.join(directory, `${page}.html`), withRouteMetadata(withScenePreloads(html, page), page));
       }
     },
+    configureServer(server) {
+      server.middlewares.use(serveLegalPage);
+    },
     configurePreviewServer(server) {
+      server.middlewares.use(serveLegalPage);
       server.middlewares.use((request, _response, next) => {
         const url = new URL(request.url, "http://localhost");
         const page = resolvePage(url.pathname);

@@ -79,6 +79,10 @@ export function App() {
       <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
         {t.nav[navIds.indexOf(page)]}
       </div>
+      <footer className="site-legal-links" aria-label={t.legalLinksLabel}>
+        <a href={language === "zh" ? "/privacy" : `/privacy#${language}`}>{t.privacyPolicy}</a>
+        <a href={language === "zh" ? "/terms" : `/terms#${language}`}>{t.termsOfService}</a>
+      </footer>
     </div>
   );
 }

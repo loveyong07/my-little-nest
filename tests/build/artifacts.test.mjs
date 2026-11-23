@@ -163,3 +163,20 @@ test("Vercel and Sites share identical security headers and route shells", () =>
     assert.equal(vercelConfig.rewrites.find((rule) => rule.source === source)?.destination, destination, source);
   }
 });
+
+test("public legal pages include all translations without running the app", async () => {
+  const home = await readFile(path.join(client, "index.html"), "utf8");
+  for (const name of ["privacy", "terms"]) {
+    const html = await readFile(path.join(client, ROUTE_SHELLS[`/${name}`]), "utf8");
+    assert.ok(html.includes(`rel="canonical" href="https://loveyong07.top/${name}"`));
+    assert.ok(home.includes(`href="/${name}"`));
+    for (const [id, language] of [
+      ["zh", "zh-CN"],
+      ["ja", "ja"],
+      ["en", "en"],
+    ]) {
+      assert.ok(html.includes(`id="${id}" lang="${language}"`));
+    }
+    assert.doesNotMatch(html, /<script\b/);
+  }
+});

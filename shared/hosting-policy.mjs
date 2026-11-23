@@ -24,6 +24,10 @@ export const ROUTE_SHELLS = Object.freeze({
   "/posts/": "/route-shells/posts.html",
   "/contact": "/route-shells/contact.html",
   "/contact/": "/route-shells/contact.html",
+  "/privacy": "/legal/privacy.html",
+  "/privacy/": "/legal/privacy.html",
+  "/terms": "/legal/terms.html",
+  "/terms/": "/legal/terms.html",
 });
 
 export function isBusinessRedirect(pathname) {

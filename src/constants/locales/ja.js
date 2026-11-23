@@ -11,6 +11,9 @@ export default {
   skipToContent: "本文へ移動",
   pageFooterNote: "この出会いのページへ、いつでも帰ってきてください。",
   footerNavLabel: "おうちをもう少し見る",
+  legalLinksLabel: "サイトポリシー",
+  privacyPolicy: "プライバシーポリシー",
+  termsOfService: "利用規約",
   routeIntro: {
     posts: "日々のかけらと、ここに残しておきたい言葉。",
   },

@@ -126,6 +126,22 @@
     {
       "source": "/contact/",
       "destination": "/route-shells/contact.html"
+    },
+    {
+      "source": "/privacy",
+      "destination": "/legal/privacy.html"
+    },
+    {
+      "source": "/privacy/",
+      "destination": "/legal/privacy.html"
+    },
+    {
+      "source": "/terms",
+      "destination": "/legal/terms.html"
+    },
+    {
+      "source": "/terms/",
+      "destination": "/legal/terms.html"
     }
   ]
 }

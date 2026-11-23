@@ -744,6 +744,37 @@ async function desktopNavStability(video) {
   }
 }
 
+async function legalPages(video) {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  try {
+    await setup(context, feedData(), video, Promise.resolve(), false);
+    const page = await context.newPage();
+    for (const route of ["/", "/posts", "/contact"]) {
+      await page.goto(origin + route);
+      const footer = page.locator(".site-legal-links");
+      await footer.waitFor({ state: "visible" });
+      assert.equal(await footer.getByRole("link", { name: "隐私政策" }).getAttribute("href"), "/privacy");
+      assert.equal(await footer.getByRole("link", { name: "服务条款" }).getAttribute("href"), "/terms");
+      const rect = await footer.boundingBox();
+      assert.ok(rect.x + rect.width > 355 && rect.y + rect.height > 810, "legal links sit at the bottom right");
+    }
+    await page.getByRole("button", { name: "日本語", exact: true }).click();
+    const privacy = page.locator(".site-legal-links").getByRole("link", { name: "プライバシーポリシー" });
+    await privacy.click();
+    await page.getByRole("heading", { name: "プライバシーポリシー", level: 1 }).waitFor();
+    assert.equal(new URL(page.url()).hash, "#ja");
+    await page.getByRole("link", { name: "English", exact: true }).click();
+    await page.getByRole("heading", { name: "Privacy Policy", level: 1 }).waitFor();
+    await page.getByRole("link", { name: "Terms of Service", exact: true }).click();
+    await page.getByRole("heading", { name: "Terms of Service", level: 1 }).waitFor();
+    await page.getByRole("link", { name: "简体中文", exact: true }).click();
+    await page.getByRole("heading", { name: "服务条款", level: 1 }).waitFor();
+    console.log("PASS public legal pages, bottom-right links, and language switching across both documents");
+  } finally {
+    await context.close();
+  }
+}
+
 try {
   for (let attempt = 0; attempt < 50; attempt++) {
     if (
@@ -756,6 +787,7 @@ try {
   }
   browser = await chromium.launch({ channel: process.env.QA_BROWSER || "chrome" });
   const video = await recordVideo();
+  await legalPages(video);
   await desktopNavStability(video);
   await mobileRouteScenes(video);
   await postDiscussion(video);
