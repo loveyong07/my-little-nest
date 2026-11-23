@@ -243,6 +243,7 @@ export async function authorizeFeed(result, options, discussion = {}) {
     const blocks = post.blocks?.map((block) =>
       block.type === "photo" ? { ...block, url: originalPhotoSource(block.url) } : block,
     );
+    const quotedPost = includeDiscussion && post.quotedPost ? await postWithMedia(post.quotedPost) : undefined;
     return {
       ...post,
       ...(Object.hasOwn(post, "coverUrl")
@@ -251,6 +252,7 @@ export async function authorizeFeed(result, options, discussion = {}) {
       ...(blocks ? { blocks } : {}),
       ...(proxy ? { avatarProxy: proxy } : {}),
       ...(media ? { media } : {}),
+      ...(quotedPost ? { quotedPost } : {}),
       ...(query && discussion.replies ? { repliesUrl: `/api/x-replies${query}` } : {}),
       ...(query && discussion.comments ? { commentsUrl: `/api/post-comments${query}` } : {}),
     };

@@ -58,6 +58,9 @@ const request = createSharedRequest({
   isSuccess: (feed) => feed?.status === "ok" && Array.isArray(feed.posts),
   isFresh: (feed) =>
     ["ok", "none"].includes(feed?.pinnedStatus) &&
+    [...feed.posts, feed.pinnedPost].every(
+      (post) => !post?.quotedPost || typeof post.quotedPost.username === "string",
+    ) &&
     (feed.repostsStatus === "none" || (feed.repostsStatus === "ok" && Array.isArray(feed.reposts))) &&
     (feed.articlesStatus === "none" || (feed.articlesStatus === "ok" && Array.isArray(feed.articles))),
   onSuccess: (feed, savedAt) => {

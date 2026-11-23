@@ -6,7 +6,7 @@ export { mediaDimensions };
 
 export function isOwnPost(post) {
   if (!post || !/^\d+$/.test(String(post.id ?? "")) || typeof post.text !== "string") return false;
-  if (!post.text.trim() && !post.media?.length) return false;
+  if (!post.text.trim() && !post.media?.length && !post.quotedPost?.id) return false;
   try {
     const url = new URL(post.permalink);
     return (
@@ -31,14 +31,14 @@ export function isOriginalPost(post) {
 }
 
 export function postExcerpt(post, t) {
-  const text = typeof post.text === "string" ? displayXText(post.text).trim().replace(/\s+/g, " ") : "";
+  const content = (typeof post.text === "string" ? post.text.trim() : "") || post.quotedPost?.text;
+  const text = typeof content === "string" ? displayXText(content).trim().replace(/\s+/g, " ") : "";
   if (text) {
     const characters = Array.from(text);
     return characters.length > 38 ? `${characters.slice(0, 38).join("")}…` : text;
   }
-  return Array.isArray(post.media) && post.media.some((media) => media?.type === "video")
-    ? t.postVideoAlt
-    : t.postPhotoAlt(1);
+  const media = post.media?.length ? post.media : post.quotedPost?.media;
+  return Array.isArray(media) && media.some((item) => item?.type === "video") ? t.postVideoAlt : t.postPhotoAlt(1);
 }
 
 export function mediaFrameRatio(media, fallback = 4 / 3) {

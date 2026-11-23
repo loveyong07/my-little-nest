@@ -130,7 +130,14 @@ async function postDiscussion(video) {
   post.media = [];
   post.repliesUrl = `/api/x-replies?post=${post.id}`;
   post.commentsUrl = `/api/post-comments?post=${post.id}`;
-  post.quotedPost = { id: feed.posts[0].id, text: "Quoted original", permalink: feed.posts[0].permalink };
+  post.quotedPost = {
+    ...feed.posts[0],
+    text: "Quoted original",
+    media: [
+      { type: "photo", url: "https://pbs.twimg.com/media/QuotedPhoto.jpg", width: 3072, height: 4096 },
+      ...feed.posts[0].media,
+    ],
+  };
   const reply = {
     id: "2190000000000000005",
     text: "Reply from X",
@@ -188,8 +195,21 @@ async function postDiscussion(video) {
     assert.equal(await page.locator(".post-card").count(), 0);
     await page.getByRole("button", { name: copy.zh.ageGateConfirm }).click();
     const card = page.locator(`#post-${post.id}`);
-    await card.getByText("Quoted original", { exact: true }).waitFor();
+    const quote = card.locator(".post-quote");
+    await quote.getByText("Quoted original", { exact: true }).waitFor();
     await page.waitForFunction((id) => document.activeElement.id === `post-${id}`, post.id);
+    assert.equal(await quote.locator("time").getAttribute("datetime"), post.quotedPost.created_at);
+    assert.equal(
+      await quote.getByRole("link", { name: copy.zh.quotedPostLink }).getAttribute("href"),
+      post.quotedPost.permalink,
+    );
+    await quote.locator("video").waitFor();
+    const quotedPhoto = quote.locator(".post-media-open");
+    await quotedPhoto.click();
+    await page.locator(".media-lightbox img").first().waitFor();
+    await page.keyboard.press("Escape");
+    await page.locator(".media-lightbox").waitFor({ state: "hidden" });
+    await quote.screenshot({ path: path.join(output, "quoted-post-mobile.png") });
     await card.getByRole("button", { name: copy.zh.sharePost, exact: true }).click();
     const shared = await page.locator("body").getAttribute("data-shared-url");
     assert.equal(shared, `${origin}/posts?post=${post.id}`);
@@ -218,7 +238,7 @@ async function postDiscussion(video) {
     const repost = recipient.locator(`#repost-${feed.reposts[0].repostId}`);
     await repost.waitFor();
     await recipient.waitForFunction((id) => document.activeElement.id === `repost-${id}`, feed.reposts[0].repostId);
-    console.log("✓ post sharing, self-quote, X replies and comments across two browser sessions");
+    console.log("✓ embedded quote photo/video, post sharing, X replies and comments across two browser sessions");
   } finally {
     await mobile.close();
     await desktop.close();

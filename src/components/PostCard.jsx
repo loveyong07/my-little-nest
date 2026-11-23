@@ -98,7 +98,7 @@ function PostReplies({ url, t, language, profile }) {
       <ul className="post-reply-list">
         {result.replies.map((reply) => (
           <li key={reply.id}>
-            <PostCard post={reply} feedSource="live" language={language} t={t} profile={profile} asReply />
+            <PostCard post={reply} feedSource="live" language={language} t={t} profile={profile} variant="reply" />
           </li>
         ))}
       </ul>
@@ -115,7 +115,7 @@ export function PostCard({
   profile,
   priorityMedia = false,
   nextPost = null,
-  asReply = false,
+  variant = "post",
 }) {
   const desktop = useDesktopLayout();
   const { copiedId, copyFailedId, manualCopyRef, copyId } = useClipboard();
@@ -123,7 +123,9 @@ export function PostCard({
   const repliesId = useId();
   const [showComments, setShowComments] = useState(false);
   const commentsId = useId();
-  const share = asReply ? null : postShareDetails(post);
+  const standalone = variant === "post";
+  const quoted = variant === "quote";
+  const share = standalone ? postShareDetails(post) : null;
   const shareCopied = share && copiedId === share.url;
   const text = displayXText(post.text);
   const segments = [];
@@ -186,9 +188,11 @@ export function PostCard({
             <strong>{post.author || profile.name}</strong>
             <span>@{post.username || profile.username}</span>
           </div>
-          <time className="post-date" dateTime={post.created_at}>
-            {formatPostDate(post.created_at, language)}
-          </time>
+          {post.created_at && (
+            <time className="post-date" dateTime={post.created_at}>
+              {formatPostDate(post.created_at, language)}
+            </time>
+          )}
           <FaXTwitter className="post-x-mark" aria-hidden="true" />
         </div>
         <ContentTranslationControl translation={translation} language={language} t={t} className="post-translation" />
@@ -224,26 +228,19 @@ export function PostCard({
         {videos.map((video, index) => (
           <PostVideo key={`${video.url}-${index}`} video={video} t={t} />
         ))}
-        {post.quotedPost && (
-          <blockquote className="post-quote">
+        {standalone && post.quotedPost && (
+          <section className="post-quote" aria-label={t.selfQuote}>
             <strong>{t.selfQuote}</strong>
-            {post.quotedPost.text && (
-              <p dir="auto">
-                {textLinkParts(displayXText(post.quotedPost.text)).map((part, index) =>
-                  part.url ? (
-                    <a key={index} href={part.url} target="_blank" rel="noopener noreferrer">
-                      {part.text}
-                    </a>
-                  ) : (
-                    part.text
-                  ),
-                )}
-              </p>
-            )}
-            <a href={post.quotedPost.permalink} target="_blank" rel="noopener noreferrer">
-              {t.quotedPostLink}
-            </a>
-          </blockquote>
+            <PostCard
+              key={post.quotedPost.id}
+              post={post.quotedPost}
+              feedSource="live"
+              language={language}
+              t={t}
+              profile={profile}
+              variant="quote"
+            />
+          </section>
         )}
         {isSnapshot && (
           <figure className="post-illustration">
@@ -253,7 +250,7 @@ export function PostCard({
         )}
         <div className="post-bottomline">
           {sourceLabel && <span>{sourceLabel}</span>}
-          {!asReply && post.repliesUrl && (
+          {standalone && post.repliesUrl && (
             <button
               type="button"
               className="post-action"
@@ -265,7 +262,7 @@ export function PostCard({
               {showReplies ? t.hideReplies : t.viewReplies}
             </button>
           )}
-          {!asReply && post.commentsUrl && (
+          {standalone && post.commentsUrl && (
             <button
               type="button"
               className="post-action"
@@ -282,7 +279,7 @@ export function PostCard({
               <span aria-live="polite">{shareCopied ? t.linkCopied : t.sharePost}</span>
             </button>
           )}
-          {!asReply && desktop && post.permalink && (
+          {standalone && desktop && post.permalink && (
             <button
               type="button"
               className={`post-copy-link${copiedId === post.permalink ? " is-copied" : ""}`}
@@ -294,7 +291,7 @@ export function PostCard({
             </button>
           )}
           <a href={post.permalink} target="_blank" rel="noopener noreferrer">
-            {t.openPost}
+            {quoted ? t.quotedPostLink : t.openPost}
             <FaArrowRight aria-hidden="true" />
           </a>
         </div>
@@ -306,19 +303,19 @@ export function PostCard({
             inputRef={manualCopyRef}
           />
         )}
-        {!asReply && post.repliesUrl && (
+        {standalone && post.repliesUrl && (
           <section id={repliesId} className="post-discussion" aria-label={t.viewReplies} hidden={!showReplies}>
             {showReplies && (
               <PostReplies key={post.repliesUrl} url={post.repliesUrl} t={t} language={language} profile={profile} />
             )}
           </section>
         )}
-        {!asReply && post.commentsUrl && (
+        {standalone && post.commentsUrl && (
           <section id={commentsId} className="post-discussion" aria-label={t.viewComments} hidden={!showComments}>
             {showComments && <PostComments key={post.commentsUrl} url={post.commentsUrl} t={t} language={language} />}
           </section>
         )}
-        <div className="glass-panel-backdrop glass-reading-backdrop" aria-hidden="true" />
+        {!quoted && <div className="glass-panel-backdrop glass-reading-backdrop" aria-hidden="true" />}
       </article>
       {expandedMedia && currentPhoto && (
         <MediaLightbox

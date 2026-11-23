@@ -32,7 +32,7 @@
  *   permalink?: string,
  *   repliesUrl?: string,
  *   commentsUrl?: string,
- *   quotedPost?: { id: string, text: string, permalink: string },
+ *   quotedPost?: Omit<PostItem, "quotedPost" | "repliesUrl" | "commentsUrl">,
  *   media?: MediaItem[],
  * }} PostItem
  * @typedef {{
