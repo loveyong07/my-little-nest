@@ -49,6 +49,8 @@ test("public artifacts exclude source maps, server code, credentials and environ
     process.env.BLOB_READ_WRITE_TOKEN,
     process.env.VERCEL_OIDC_TOKEN,
     process.env.TOUCHGAL_API_TOKEN,
+    process.env.GOOGLE_DRIVE_CLIENT_SECRET,
+    process.env.GOOGLE_DRIVE_REFRESH_TOKEN,
   ].filter(Boolean);
   let checked = 0;
   function inspect(directory) {
@@ -63,7 +65,7 @@ test("public artifacts exclude source maps, server code, credentials and environ
         const code = readFileSync(file, "utf8");
         assert.ok(!/sourceMappingURL\s*=/.test(code), `Source map reference in ${relative}`);
         assert.ok(
-          !/X_BEARER_TOKEN|X_MEDIA_SIGNING_SECRET|BLOB_READ_WRITE_TOKEN|VERCEL_OIDC_TOKEN|TOUCHGAL_API_TOKEN|BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY/.test(
+          !/X_BEARER_TOKEN|X_MEDIA_SIGNING_SECRET|BLOB_READ_WRITE_TOKEN|VERCEL_OIDC_TOKEN|TOUCHGAL_API_TOKEN|GOOGLE_DRIVE_(?:CLIENT_ID|CLIENT_SECRET|REFRESH_TOKEN)|BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY/.test(
             code,
           ),
           `Server-only material in ${relative}`,
@@ -139,6 +141,8 @@ test("every relative import in the Sites worker bundle resolves to a shipped fil
 test("Sites module outputs match current sources without obsolete or Vercel-only modules", () => {
   const vercelOnly = new Set([
     "article-cache.mjs",
+    "drive-video-archive.mjs",
+    "google-drive.mjs",
     "photo-cache.mjs",
     "photo-cache-warm.mjs",
     "video-cache.mjs",

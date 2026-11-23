@@ -36,9 +36,10 @@ CSS 或布局修改还需进行修改前后的固定场景对比，方法见 [�
 ## 部署
 
 - 源码：[loveyong07/my-little-nest](https://github.com/loveyong07/my-little-nest)，生产分支为 `master`。
-- 运行 `npm run check` 后，推送 `master` 触发 [Vercel 项目](https://vercel.com/fyh2026s-projects/my-little-nest) 自动部署。构建命令为 `npm run build`，输出目录为 `dist/client`，配置见 `vercel.json`。
+- 运行 `npm run check` 后，推送 `master` 触发 [Vercel 项目](https://vercel.com/fyh2026s-projects/my-little-nest) 自动部署。正式部署先用服务端凭据验证 Drive 授权，再运行 `npm run build`，输出目录为 `dist/client`，配置见 `vercel.json`。
 - 正式站：[loveyong07.top](https://loveyong07.top)。发布结果以对应提交的 Vercel Production 状态为准。
 - 正式站从同一个私有 Blob 快照读取 X 动态和资料，由 Vercel Schedules 每小时调用私有同步函数。首次部署前可通过 `node --env-file=.env.local scripts/sync-x-snapshot.mjs` 导入，后续可用项目的 Schedules 页面手动运行 `sync-x-feed`。
+- `sync-x-videos` 每小时从已发布快照归档视频和 GIF 的 MP4 到私有 Drive。三项 `GOOGLE_DRIVE_*` 变量使用同一 OAuth 客户端和 `drive.file` 权限，配置为 Production Secrets。播放沿用同源 `/api/x-video`。
 - 线上 X、Blob 与 `TOUCHGAL_API_TOKEN` 凭据配置在 Vercel 服务端环境变量；保留 `.openai/`、`worker/` 与 Sites 构建脚本，并与 Vercel 共享 `shared/hosting-policy.mjs` 安全头、路由壳、`/business` 重定向与 `/api/starrygal` 路由以保持双宿主一致。
 
 ## 主要文件

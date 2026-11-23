@@ -16,6 +16,7 @@
 !build/**
 !scripts
 !scripts/prepare-sites-build.mjs
+!scripts/verify-drive-connection.mjs
 !worker
 !worker/index.js
 !.openai

@@ -178,6 +178,7 @@ export async function proxyXVideo(
       "X-Content-Type-Options": "nosniff",
       ...mediaContextHeaders(request),
       ...(videoCache ? { "X-Nest-Video-Cache": cached ? "hit" : "miss" } : {}),
+      ...(cached?.headers.get("x-nest-video-store") === "drive" ? { "X-Nest-Video-Store": "drive" } : {}),
     });
     for (const name of ["content-length", "content-range", "etag", "last-modified"]) {
       const value = upstream.headers.get(name);

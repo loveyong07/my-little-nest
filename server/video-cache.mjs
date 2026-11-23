@@ -2,23 +2,26 @@ import { get, head, list, put } from "@vercel/blob";
 import { createTelemetryEmitter } from "./telemetry.mjs";
 
 const PREFIX = "x-videos/mp4-v1/";
-const VIDEO_TYPE = "video/mp4";
-const MAX_VIDEO_SIZE = 100_000_000;
+export const VIDEO_TYPE = "video/mp4";
+export const MAX_VIDEO_SIZE = 100_000_000;
 const MAX_VIDEO_BYTES = 500_000_000;
 const MAX_STORE_BYTES = 750_000_000;
 const INVENTORY_TTL_MS = 5 * 60_000;
 
-async function videoPath(source) {
+export async function videoCacheKey(source) {
   const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(source));
-  const hex = Array.from(new Uint8Array(hash), (byte) => byte.toString(16).padStart(2, "0")).join("");
-  return `${PREFIX}${hex}.mp4`;
+  return Array.from(new Uint8Array(hash), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
-function isMp4(value) {
+async function videoPath(source) {
+  return `${PREFIX}${await videoCacheKey(source)}.mp4`;
+}
+
+export function isMp4(value) {
   return value?.split(";")[0].trim().toLowerCase() === VIDEO_TYPE;
 }
 
-function matchesIfRange(value, headers) {
+export function matchesIfRange(value, headers) {
   return value === headers.get(value.startsWith('"') ? "etag" : "last-modified");
 }
 
