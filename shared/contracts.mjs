@@ -53,6 +53,7 @@
  * @typedef {{
  *   status: FeedStatus | "method_not_allowed" | "invalid_request",
  *   posts: PostItem[],
+ *   previewIssue?: "x_credential_missing" | "x_upstream_unavailable",
  *   pinnedPost?: PostItem | null,
  *   pinnedStatus?: SectionStatus,
  *   articles?: ArticleItem[],

@@ -42,6 +42,18 @@ test("feed routes accept only GET", async () => {
   }
 });
 
+test("Vercel Preview distinguishes a missing X credential from an upstream failure", async () => {
+  const missing = createApiHandler({ VERCEL_ENV: "preview" });
+  const failing = createApiHandler(
+    { VERCEL_ENV: "preview", X_BEARER_TOKEN: "test-token" },
+    {
+      fetchImpl: async () => new Response(null, { status: 401 }),
+    },
+  );
+  assert.equal((await (await missing(request("/api/x-posts"))).json()).previewIssue, "x_credential_missing");
+  assert.equal((await (await failing(request("/api/x-posts"))).json()).previewIssue, "x_upstream_unavailable");
+});
+
 test("feed routes reject query variants before initializing or calling the upstream service", async () => {
   let initialized = 0;
   const handleApi = createApiHandler(

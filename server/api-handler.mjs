@@ -159,7 +159,11 @@ export function createApiHandler(
           ["ok", "none"].includes(result.repostsStatus) &&
           ["ok", "none"].includes(result.articlesStatus);
         const cdn = complete ? JSON_CDN_CACHE_CONTROL : JSON_CDN_CACHE_CONTROL_RETRY;
-        return json(result, { headers: { "Vercel-CDN-Cache-Control": cdn } });
+        const body =
+          env.VERCEL_ENV === "preview" && result.status === "unavailable"
+            ? { ...result, previewIssue: env.X_BEARER_TOKEN ? "x_upstream_unavailable" : "x_credential_missing" }
+            : result;
+        return json(body, { headers: { "Vercel-CDN-Cache-Control": cdn } });
       }
       const result = await authorizeProfile(await feedService().getProfile(), authOptions);
       const cdn = result?.status === "ok" ? JSON_CDN_CACHE_CONTROL : JSON_CDN_CACHE_CONTROL_RETRY;

@@ -7,6 +7,7 @@
 
 /* Posts and Contact: a fixed scene image over a fixed blue gradient. */
 .site-route {
+  --route-scene-height: 100vh;
   position: relative;
   isolation: isolate;
   background: transparent;
@@ -128,6 +129,23 @@
 .scene-paused .home-mobile-petal,
 .scene-paused .route-floating-dove {
   animation-play-state: paused;
+}
+
+/* Keep the artwork crop steady while mobile browser toolbars retract or expand. */
+@supports (height: 100lvh) {
+  .site-route {
+    --route-scene-height: 100lvh;
+  }
+}
+@media (max-width: 900px), (pointer: coarse), (pointer: none) {
+  .site-route::before {
+    bottom: auto;
+    height: calc(var(--route-scene-height) + 32px);
+  }
+  .site-route .route-floating-elements {
+    bottom: auto;
+    height: var(--route-scene-height);
+  }
 }
 
 @media (max-width: 900px) {
