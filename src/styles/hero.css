@@ -20,6 +20,17 @@
   position: relative;
   min-width: 0;
 }
+.hero-intro-stack.is-entering {
+  animation: hero-panel-arrive 0.34s ease-out backwards;
+}
+@keyframes hero-panel-arrive {
+  from {
+    opacity: 0.72;
+  }
+  to {
+    opacity: 1;
+  }
+}
 
 /* A glass letter, held by washi tape and signed with a small postage mark. */
 .hero-copy {
@@ -838,6 +849,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .hero-intro-stack.is-entering,
   .greeting-opening,
   .greeting-line,
   .journal-note,

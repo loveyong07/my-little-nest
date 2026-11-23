@@ -7,7 +7,6 @@
     left: max(var(--layout-gutter), calc((100% - var(--layout-width)) / 2));
     bottom: 56px;
     gap: 11px;
-    animation: desk-title-enter 420ms var(--ease-spring) both;
   }
   .route-hero-posts {
     height: 360px;
@@ -253,16 +252,6 @@
   }
 }
 
-@keyframes desk-title-enter {
-  from {
-    opacity: 0.4;
-    translate: 0 9px;
-  }
-  to {
-    opacity: 1;
-    translate: 0 0;
-  }
-}
 @keyframes desk-section-enter {
   from {
     opacity: 0.7;

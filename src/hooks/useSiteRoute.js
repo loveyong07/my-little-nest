@@ -62,9 +62,33 @@ function restoreScroll(top) {
   return stop;
 }
 
-function preloadScene(page) {
+const warmedScenes = new Set();
+
+function activeSceneHref(page) {
   const scenes = scenePreloads(page);
-  const { href } = scenes.find((scene) => !scene.media || window.matchMedia(scene.media).matches) ?? scenes.at(-1);
+  return (scenes.find((scene) => !scene.media || window.matchMedia(scene.media).matches) ?? scenes.at(-1))?.href;
+}
+
+function warmSceneImage(page) {
+  if (typeof Image === "undefined" || !canPrefetch()) return;
+  const href = activeSceneHref(page);
+  if (!href || warmedScenes.has(href)) return;
+  warmedScenes.add(href);
+  const image = new Image();
+  image.src = href;
+  image.decode?.().catch(() => {});
+}
+
+export function warmSiblingScenes(activePage) {
+  if (!canPrefetch()) return;
+  for (const candidate of Object.keys(pagePaths)) {
+    if (candidate !== activePage) warmSceneImage(candidate);
+  }
+}
+
+function preloadScene(page) {
+  const href = activeSceneHref(page);
+  if (!href) return;
   // The DOM is the record of what is already preloaded, including the server-rendered link.
   if (
     [...document.querySelectorAll('link[rel="preload"][as="image"]')].some((link) => link.getAttribute("href") === href)
@@ -104,7 +128,7 @@ export function takeEarlyFeed() {
   return request;
 }
 
-export function useSiteRoute() {
+export function useSiteRoute(onPrefetchPage = undefined) {
   const [route, setRoute] = useState(() => ({ page: currentPage(), scrollTop: null, reading: null }));
   const { page } = route;
   const previousPage = useRef(page);
@@ -160,11 +184,14 @@ export function useSiteRoute() {
     };
   }, [savePosition]);
 
-  function preparePosts(event) {
+  function prepareRoute(event) {
     const link = event.target.closest("a[href]");
     if (!link || !canPrefetch()) return;
-    const target = new URL(link.href, window.location.href);
-    if (target.origin === window.location.origin && target.pathname === pagePaths.posts) preloadScene("posts");
+    const destination = siteNavigation(link.href, window.location.href);
+    if (!destination || destination.page === page) return;
+    preloadScene(destination.page);
+    warmSceneImage(destination.page);
+    onPrefetchPage?.(destination.page);
   }
 
   function navigatePage(nextPage) {
@@ -204,5 +231,5 @@ export function useSiteRoute() {
     navigatePage(destination.page);
   }
 
-  return { page, handleRouteClick, preparePosts, navigatePage, historyReading: route.reading, rememberReading };
+  return { page, handleRouteClick, prepareRoute, navigatePage, historyReading: route.reading, rememberReading };
 }

@@ -14,6 +14,7 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 8px;
+  animation: route-title-enter 380ms var(--ease-spring) both;
 }
 .route-hero-posts .route-page-title {
   left: max(4vw, calc((100vw - 1060px) / 2));
@@ -78,6 +79,16 @@
 }
 .route-panel-posts {
   max-width: 1060px;
+}
+@keyframes route-title-enter {
+  from {
+    opacity: 0.4;
+    translate: 0 9px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
 }
 @keyframes panel-arrive {
   from {

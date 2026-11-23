@@ -187,7 +187,10 @@
   text-align: left;
   text-decoration: none;
   text-shadow: 0 1px #fff;
-  transition: transform 0.24s var(--ease-spring);
+  transition:
+    transform 0.24s var(--ease-spring),
+    color 0.22s ease,
+    text-shadow 0.22s ease;
 }
 .brand-script {
   display: flex;
@@ -228,6 +231,9 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   white-space: nowrap;
+  transition:
+    color 0.22s ease,
+    text-shadow 0.22s ease;
 }
 /* White branding over the Posts and Contact scenes. */
 .site-route .brand,

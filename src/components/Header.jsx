@@ -21,6 +21,7 @@ export function Header({ page, t, language, changeLanguage, onNavigate }) {
     onChange: (index) => onNavigate?.(navIds[index]),
     itemSelector: "a[data-page]",
     layoutKey: `${language}-${menuOpen}`,
+    onPosition: (position) => navRef.current?.style.setProperty("--switch-position", String(position)),
   });
   const languageRef = useSwipeSwitch({
     activeIndex: LANGUAGES.findIndex(({ code }) => code === language),

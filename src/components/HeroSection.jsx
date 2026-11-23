@@ -11,7 +11,15 @@ import { DesktopStationery } from "./DesktopStationery.jsx";
 import zhFantasy from "../constants/fantasy/zh.js";
 import { StarryGalBalloon } from "./StarryGalBalloon.jsx";
 
-export function HeroSection({ language, t, f = zhFantasy, profile, extras = null }) {
+export function HeroSection({
+  language,
+  t,
+  f = zhFantasy,
+  profile,
+  extras = null,
+  outgoingScene = null,
+  entering = false,
+}) {
   const heroRef = useRef(null);
   const introRef = useRef(null);
   useLayoutEffect(() => {
@@ -54,6 +62,7 @@ export function HeroSection({ language, t, f = zhFantasy, profile, extras = null
 
   return (
     <div className="hero" ref={heroRef}>
+      {outgoingScene}
       <div className="home-floating-elements" aria-hidden="true">
         {mobileScene ? (
           <>
@@ -105,7 +114,7 @@ export function HeroSection({ language, t, f = zhFantasy, profile, extras = null
       </div>
       {extras}
       <main className="hero-layout" aria-labelledby="page-heading">
-        <div className="hero-intro-stack" ref={introRef}>
+        <div className={"hero-intro-stack" + (entering ? " is-entering" : "")} ref={introRef}>
           <HomeLetter language={language} t={t} chapter={f.chapter} profile={profile} />
           <HomeJournal f={f} t={t} />
         </div>

@@ -31,36 +31,39 @@
   border: 0;
   border-radius: 999px;
   transform: translate3d(var(--switch-x), var(--switch-y), 0);
+  pointer-events: none;
+}
+.swipe-switch[data-swipe-animated] .nav-selection,
+.swipe-switch[data-swipe-animated] .language-selection {
   transition:
     transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1),
     width 320ms cubic-bezier(0.2, 0.8, 0.2, 1),
     height 320ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    background 220ms ease;
-  pointer-events: none;
+    background-color 220ms ease;
 }
 
 .nav-selection-home {
-  background: #e3effc;
+  background-color: #e3effc;
   color: #345d83;
 }
 .nav-selection-posts {
-  background: #fbe1eb;
+  background-color: #fbe1eb;
   color: #743e59;
 }
 .nav-selection-contact {
-  background: #e0f2e9;
+  background-color: #e0f2e9;
   color: #315f53;
 }
 .language-selection-zh {
-  background: #fbe1eb;
+  background-color: #fbe1eb;
   color: #743e59;
 }
 .language-selection-ja {
-  background: #e9e2fa;
+  background-color: #e9e2fa;
   color: #59457f;
 }
 .language-selection-en {
-  background: #e0f2e9;
+  background-color: #e0f2e9;
   color: #315f53;
 }
 .swipe-switch .nav-selection,
@@ -85,6 +88,14 @@
 .swipe-switch[data-swiping] .language-selection {
   transition: none;
 }
+.site-nav[data-swiping] .nav-selection {
+  background-color: color-mix(
+    in srgb,
+    color-mix(in srgb, #e3effc calc((1 - clamp(0, var(--switch-position, 0), 1)) * 100%), #fbe1eb)
+      calc((1 - clamp(0, var(--switch-position, 0) - 1, 1)) * 100%),
+    #e0f2e9
+  );
+}
 .language-picker[data-swiping] button,
 .language-picker[data-swipe-settling] button,
 .site-nav[data-swiping] a,
@@ -101,18 +112,27 @@
 @media (min-width: 901px) and (pointer: fine) {
   .swipe-switch[data-swipe-ready] .nav-selection {
     border: 1px solid #fff;
+    background-image: linear-gradient(135deg, #ffffff66, #ffffff00);
     box-shadow:
       0 4px 12px #4a72961f,
       inset 0 1px 1px #fff;
   }
   .nav-selection-home {
-    background: var(--desk-blue);
+    background-color: #e5f1ff;
   }
   .nav-selection-posts {
-    background: var(--desk-rose);
+    background-color: #fce5f4;
   }
   .nav-selection-contact {
-    background: var(--desk-mint);
+    background-color: #e1f5ee;
+  }
+  .site-nav[data-swiping] .nav-selection {
+    background-color: color-mix(
+      in srgb,
+      color-mix(in srgb, #e5f1ff calc((1 - clamp(0, var(--switch-position, 0), 1)) * 100%), #fce5f4)
+        calc((1 - clamp(0, var(--switch-position, 0) - 1, 1)) * 100%),
+      #e1f5ee
+    );
   }
   .swipe-switch .language-selection {
     background: var(--desk-lilac);
@@ -123,13 +143,17 @@
 }
 
 .motion-off .swipe-switch .nav-selection,
-.motion-off .swipe-switch .language-selection {
+.motion-off .swipe-switch .language-selection,
+.motion-off .swipe-switch[data-swipe-animated] .nav-selection,
+.motion-off .swipe-switch[data-swipe-animated] .language-selection {
   transition: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .swipe-switch .nav-selection,
-  .swipe-switch .language-selection {
+  .swipe-switch .language-selection,
+  .swipe-switch[data-swipe-animated] .nav-selection,
+  .swipe-switch[data-swipe-animated] .language-selection {
     transition: none;
   }
 }

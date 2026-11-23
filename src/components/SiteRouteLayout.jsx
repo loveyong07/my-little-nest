@@ -33,9 +33,10 @@ function RouteLoadError({ t }) {
   );
 }
 
-export function SiteRouteLayout({ page, t, extras, children }) {
+export function SiteRouteLayout({ page, t, extras, outgoingScene = null, children }) {
   return (
     <>
+      {outgoingScene}
       <div className="route-floating-elements" aria-hidden="true">
         {page === "contact" && (
           <img className="route-floating-dove" src={ASSETS + "/contact-sky-dove-v2.webp"} alt="" draggable="false" />

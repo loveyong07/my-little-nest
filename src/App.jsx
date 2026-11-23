@@ -6,21 +6,47 @@ import { LazyRegionBoundary, SiteRouteLayout } from "./components/SiteRouteLayou
 import { navIds, SITE_SOURCE_REPOSITORY } from "./constants/site.js";
 import { useI18n } from "./hooks/useI18n.js";
 import { useXProfile } from "./hooks/useXProfile.js";
-import { useSiteRoute } from "./hooks/useSiteRoute.js";
+import { useSiteRoute, warmSiblingScenes } from "./hooks/useSiteRoute.js";
 import { useSceneActivity } from "./hooks/useSceneActivity.js";
 import { useFantasyPreferences } from "./hooks/useFantasyPreferences.js";
 
-const PostsPage = lazy(() => import("./pages/PostsPage.jsx"));
-const ContactPage = lazy(() => import("./pages/ContactPage.jsx"));
+const loadPostsPage = () => import("./pages/PostsPage.jsx");
+const loadContactPage = () => import("./pages/ContactPage.jsx");
+const PostsPage = lazy(loadPostsPage);
+const ContactPage = lazy(loadContactPage);
 const FantasyExtras = lazy(() => import("./components/fantasy/FantasyExtras.jsx"));
+const prefetchedRouteChunks = new Set();
+
+function prefetchRouteChunk(targetPage) {
+  if (prefetchedRouteChunks.has(targetPage)) return;
+  prefetchedRouteChunks.add(targetPage);
+  if (targetPage === "posts") {
+    loadPostsPage().catch(() => prefetchedRouteChunks.delete(targetPage));
+  } else if (targetPage === "contact") {
+    loadContactPage().catch(() => prefetchedRouteChunks.delete(targetPage));
+  }
+}
 
 export function App() {
   const { language, t, f, changeLanguage } = useI18n();
-  const { page, handleRouteClick, preparePosts, navigatePage, historyReading, rememberReading } = useSiteRoute();
+  const { page, handleRouteClick, prepareRoute, navigatePage, historyReading, rememberReading } =
+    useSiteRoute(prefetchRouteChunk);
   const [postsReady, setPostsReady] = useState(false);
   const profile = useXProfile(page, page !== "posts" || postsReady);
   const preferences = useFantasyPreferences();
   const [extrasReady, setExtrasReady] = useState(false);
+  const [sceneTransition, setSceneTransition] = useState({ current: page, outgoing: null, key: 0 });
+  if (sceneTransition.current !== page) {
+    setSceneTransition({ current: page, outgoing: sceneTransition.current, key: sceneTransition.key + 1 });
+  }
+  useEffect(() => {
+    if (!sceneTransition.outgoing) return undefined;
+    const timer = window.setTimeout(
+      () => setSceneTransition((state) => (state.key === sceneTransition.key ? { ...state, outgoing: null } : state)),
+      preferences.motion ? 360 : 0,
+    );
+    return () => window.clearTimeout(timer);
+  }, [sceneTransition.outgoing, sceneTransition.key, preferences.motion]);
   useEffect(() => {
     // A direct feed visit prioritizes its first cards before loading decorative extras.
     if (extrasReady || (page === "posts" && !postsReady)) return undefined;
@@ -36,7 +62,18 @@ export function App() {
       window.removeEventListener("load", schedule);
     };
   }, [page, postsReady, extrasReady]);
+  useEffect(() => {
+    if (extrasReady) warmSiblingScenes(page);
+  }, [extrasReady, page]);
   const sceneActive = useSceneActivity(page);
+  const outgoingScene =
+    preferences.motion && sceneTransition.outgoing ? (
+      <div
+        key={sceneTransition.key}
+        className={"site-scene-outgoing site-scene-outgoing-" + sceneTransition.outgoing}
+        aria-hidden="true"
+      />
+    ) : null;
   const extras = extrasReady ? (
     <LazyRegionBoundary fallback={null}>
       <Suspense fallback={null}>
@@ -54,15 +91,23 @@ export function App() {
         (page === "home" ? "" : " site-route site-route-" + page)
       }
       onClick={handleRouteClick}
-      onPointerOver={preparePosts}
-      onFocus={preparePosts}
-      onTouchStart={preparePosts}
+      onPointerOver={prepareRoute}
+      onFocus={prepareRoute}
+      onTouchStart={prepareRoute}
     >
       <Header page={page} t={t} language={language} changeLanguage={changeLanguage} onNavigate={navigatePage} />
       {page === "home" ? (
-        <HeroSection language={language} t={t} f={f} profile={profile} extras={extras} />
+        <HeroSection
+          language={language}
+          t={t}
+          f={f}
+          profile={profile}
+          extras={extras}
+          outgoingScene={outgoingScene}
+          entering={Boolean(outgoingScene)}
+        />
       ) : (
-        <SiteRouteLayout page={page} t={t} extras={extras}>
+        <SiteRouteLayout page={page} t={t} extras={extras} outgoingScene={outgoingScene}>
           {page === "posts" ? (
             <PostsPage
               language={language}
