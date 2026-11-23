@@ -259,6 +259,7 @@ async function mobileRouteScenes(video) {
       await page.goto(`${origin}/${route}`);
       const scene = page.locator(".site-route");
       await scene.locator(".route-floating-elements").waitFor({ state: "attached" });
+      await page.waitForFunction(() => document.documentElement.scrollHeight > window.innerHeight);
       const sizes = () =>
         scene.evaluate((element) => {
           const viewport = document.createElement("div");
