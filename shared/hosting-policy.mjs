@@ -1,4 +1,4 @@
-// Shared hosting policy kept in lockstep between Vercel (vercel.json) and Sites (worker/index.js).
+// Shared security headers and route-shell policy validated against vercel.json.
 export const SITE_CSP =
   "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self'; font-src 'self'; connect-src 'self'; media-src 'self'; frame-src 'none'";
 

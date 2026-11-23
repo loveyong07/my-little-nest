@@ -13,13 +13,5 @@
     "strictNullChecks": false,
     "skipLibCheck": true
   },
-  "include": [
-    "types/**/*.d.ts",
-    "shared/**/*.mjs",
-    "server/**/*.mjs",
-    "api/*.js",
-    "worker/index.js",
-    "src/**/*.js",
-    "src/**/*.jsx"
-  ]
+  "include": ["types/**/*.d.ts", "shared/**/*.mjs", "server/**/*.mjs", "api/*.js", "src/**/*.js", "src/**/*.jsx"]
 }

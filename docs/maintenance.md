@@ -32,9 +32,9 @@ Vercel 正式站的 `/api/x-profile` 与 `/api/x-posts` 从私有 Blob 的 `x-fe
 
 资料和动态响应对浏览器使用 `Cache-Control: no-store`，但浏览器应用层仍有内存和 localStorage 缓存。保留当前偏向复用、减少重复查询的策略：Vercel CDN 对完整成功响应使用 `s-maxage=300, stale-while-revalidate=600`；整体过期/不可用，或置顶过期/不可用/状态缺失及异常时使用 `s-maxage=60`。动态只有整体 `ok`、置顶、转帖和文章均为 `ok` / `none` 才算完整成功，`none` 表示已确认该部分为空；资料只判断自身状态。异常响应也用短缓存。
 
-前端完整成功数据的刷新窗口为 15 分钟，页面可见时每分钟检查，失败沿用 30 秒退避。本地 Vite 和 Sites 兼容入口继续使用请求触发的 15 分钟进程缓存，置顶、文章和转帖失败按原服务退避。Vercel 则由下一个后台运行恢复。缺少服务器快照时动态接口返回 `{status: "unavailable", posts: []}`，前端使用现有缓存或保留不可用提示。
+前端完整成功数据的刷新窗口为 15 分钟，页面可见时每分钟检查，失败沿用 30 秒退避。本地 Vite 开发服务使用请求触发的 15 分钟进程缓存，置顶、文章和转帖失败按原服务退避。Vercel 则由下一个后台运行恢复。缺少服务器快照时动态接口返回 `{status: "unavailable", posts: []}`，前端使用现有缓存或保留不可用提示。
 
-共享 handler（`server/api-handler.mjs`）统一处理 API 路由。Vercel 侧由 `api/` 下的函数分别托管，并由 `vercel.json` 显式配置各函数 `maxDuration` 与流式响应；Sites 侧由 `worker/index.js` 共用 `shared/hosting-policy.mjs` 注入与 Vercel 一致的安全响应头（CSP、HSTS、Permissions-Policy、COOP、X-Frame-Options、nosniff）、`/route-shells/*.html` 路由壳（保证 `/posts` 的 `noindex, follow`）、`/business` 308 跳转与静态资源缓存策略，`scripts/prepare-sites-build.mjs` 自动剔除仅 Vercel 使用的 Blob 存储模块。动态与资料接口统一输出 `X-Robots-Tag: noindex, nofollow`，`public/robots.txt` 禁止抓取 `/api/`。X API 明确返回的永久对象级错误（原帖已删或作者设私）会跳过该条转帖而不污染 `repostsStatus`；收到 `429` 时遵循 `retry-after` / `x-rate-limit-reset` 退避（60 秒至 15 分钟）。
+共享 handler（`server/api-handler.mjs`）统一处理 API 路由。Vercel 侧由 `api/` 下的函数分别托管，并由 `vercel.json` 显式配置各函数 `maxDuration`、流式响应、安全响应头（与 `shared/hosting-policy.mjs` 保持同步）、`/route-shells/*.html` 路由壳（保证 `/posts` 的 `noindex, follow`）以及 `/business` 308 跳转。动态与资料接口统一输出 `X-Robots-Tag: noindex, nofollow`，`public/robots.txt` 禁止抓取 `/api/`。X API 明确返回的永久对象级错误（原帖已删或作者设私）会跳过该条转帖而不污染 `repostsStatus`；收到 `429` 时遵循 `retry-after` / `x-rate-limit-reset` 退避（60 秒至 15 分钟）。
 
 `/api/x-media`、`/api/x-video` 为同源媒体接口。服务端校验规范形式的签名源地址、类型、有效期和签名（支持通过 `X_MEDIA_SIGNING_SECRET_PREVIOUS` 实现双密钥平滑轮换），精确旧媒体名单提供缓存兼容。`api/x-video.js` 流式转发单段 Range（包括浏览器用于大视频的 `bytes=0-`），拒绝 `bytes=-0`，并设有 55 秒的单次请求总时限。`416` 仅在已知视频完整长度时包含 `Content-Range`。
 
@@ -48,7 +48,7 @@ Vercel 正式站的 `/api/x-profile` 与 `/api/x-posts` 从私有 Blob 的 `x-fe
 
 资料和动态接口不接受查询参数；带参数返回不缓存的 400，且不初始化上游服务。JSON 响应带 `nosniff` 与同源资源策略。新生成的媒体项显式使用 `type: "photo"` / `"video"`；旧快照和旧浏览器缓存继续兼容。
 
-生产构建显式关闭 sourcemap，`test:build` 检查公共产物中的环境文件、服务端目录、source map、密钥标记和已提供的服务端环境变量值。CI 在检查步骤使用非真实的凭据哨兵，防止未来误把服务端变量打包给浏览器；这只是回归门禁，不能代替全面的凭据扫描。`node scripts/qa/security-smoke.mjs` 使用本机 Edge 和本地模拟上游验证浏览器缓存、来源拒绝及 Range 传输，不调用真实 X API；可用 `QA_BROWSER=chrome` 切换已安装的浏览器。详细取舍与验收见 [安全加固评估-2026-10-13.md](history/安全加固评估-2026-10-13.md)。
+生产构建显式关闭 sourcemap，`test:build` 检查公共产物中的环境文件、服务端目录、source map、密钥标记和已提供的服务端环境变量值。CI 在检查步骤使用非真实的凭据哨兵，防止未来误把服务端变量打包给浏览器；这只是回归门禁，不能代替全面的凭据扫描。`node scripts/qa/security-smoke.mjs` 使用本机 Edge 和本地模拟上游验证浏览器缓存、来源拒绝及 Range 传输，不调用真实 X API；可用 `QA_BROWSER=chrome` 切换已安装的浏览器。
 
 本地密钥放在 `.env.local`，可参考 `.env.example`；线上密钥配置在 Vercel 服务端环境变量。禁止提交密钥或添加 `VITE_` 前缀。媒体签名优先使用 `X_MEDIA_SIGNING_SECRET`，否则从服务端 X 凭据派生。
 
@@ -62,7 +62,7 @@ CI 使用 `npm run audit:ci` 运行完整的 `npm audit --audit-level=moderate`�
 
 `/api/starrygal` provides public TouchGal metadata to the StarryGal desktop launcher. Set `TOUCHGAL_API_TOKEN` as a server-only Vercel environment variable in Production and Preview. Do not prefix it with `VITE_`, commit a real token, or include it in frontend builds. Redeploy after changing it.
 
-The function (`server/starrygal.mjs`, wrapped by `api/starrygal.js` and shared with `worker/index.js`) only calls fixed routes on `https://developer.touchgal.com/api/v1/`, validates query parameters strictly per `action` to prevent CDN cache busting, prefers trusted Vercel/proxy IP headers for per-instance rate limiting, and uses instance-scoped LRU caching. It exposes search, detail, resource and patch metadata, with a sanitized `status` check. It returns no token prefix or account ID. Credentials never appear in response bodies or URLs. Adult-rated metadata requires an explicit `allowNsfw=true`. There are no game download URLs or PVs in the upstream contract. `TOUCHGAL_API_TOKEN` is included in CI canaries and `tests/build/artifacts.test.mjs` leak scans.
+The function (`server/starrygal.mjs`, wrapped by `api/starrygal.js`) only calls fixed routes on `https://developer.touchgal.com/api/v1/`, validates query parameters strictly per `action` to prevent CDN cache busting, prefers trusted Vercel/proxy IP headers for per-instance rate limiting, and uses instance-scoped LRU caching. It exposes search, detail, resource and patch metadata, with a sanitized `status` check. It returns no token prefix or account ID. Credentials never appear in response bodies or URLs. Adult-rated metadata requires an explicit `allowNsfw=true`. There are no game download URLs or PVs in the upstream contract. `TOUCHGAL_API_TOKEN` is included in CI canaries and `tests/build/artifacts.test.mjs` leak scans.
 
 Success responses use CDN and bounded warm-instance caching, with in-flight deduplication, a 12-second upstream timeout, a 2 MiB response limit, and a best-effort limit of 30 requests per minute per client on each warm instance. When the 2,000-address table fills, new clients share 128 additional counters with the same one-minute quota per counter. TouchGal enforces the shared token quotas globally. Upstream errors and rate limits are not cached.
 

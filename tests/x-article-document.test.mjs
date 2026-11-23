@@ -51,10 +51,10 @@ test("preserves the original five body-image positions, which differ from the AP
   );
   const previousText = images.map((image) => blocks[blocks.indexOf(image) - 1].text);
   assert.ok(previousText[0].includes("TouchGal"));
-  assert.ok(previousText[1].includes("6月我第一次用上了Codex"));
-  assert.ok(previousText[2].includes("我的抖音"));
+  assert.ok(previousText[1].includes("今年夏天开始陆续把页面结构"));
+  assert.ok(previousText[2].includes("日常视频合集"));
   assert.ok(previousText[3].includes("Muse.ai"));
-  assert.ok(previousText[4].includes("以上就是关于"));
+  assert.ok(previousText[4].includes("以上就是这篇示例文章"));
   assert.equal(blocks.filter((block) => block.type === "divider").length, 2);
   assert.ok(blocks.some((block) => block.links?.some((link) => link.url === "https://www.touchgal.ink/")));
 });

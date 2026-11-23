@@ -15,12 +15,7 @@
 !build
 !build/**
 !scripts
-!scripts/prepare-sites-build.mjs
 !scripts/verify-drive-connection.mjs
-!worker
-!worker/index.js
-!.openai
-!.openai/hosting.json
 !index.html
 !package.json
 !package-lock.json

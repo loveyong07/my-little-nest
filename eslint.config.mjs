@@ -45,8 +45,4 @@ export default [
     files: ["tests/components.test.mjs"],
     languageOptions: { globals: { ...globals.node, ...globals.browser } },
   },
-  {
-    files: ["worker/**"],
-    languageOptions: { globals: globals.serviceworker },
-  },
 ];

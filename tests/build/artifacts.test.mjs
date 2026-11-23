@@ -2,14 +2,13 @@
 // (or `npm run check`, which builds first and is what CI and deploys run).
 import assert from "node:assert/strict";
 import test from "node:test";
-import { access, readFile, readdir } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { SECURITY_HEADERS, ROUTE_SHELLS } from "../../shared/hosting-policy.mjs";
 
 const client = fileURLToPath(new URL("../../dist/client/", import.meta.url));
-const dist = fileURLToPath(new URL("../../dist/", import.meta.url));
 const vercelConfig = JSON.parse(readFileSync(new URL("../../vercel.json", import.meta.url), "utf8"));
 
 test("the build-artifact checks have a produced build to inspect", () => {
@@ -109,58 +108,7 @@ test("hashed build assets are shipped with the names the cache rule expects", as
   );
 });
 
-test("emits the files required by Sites packaging", async () => {
-  await access(path.join(client, "index.html"));
-  await access(path.join(dist, "server/index.js"));
-  await access(path.join(dist, "server/api-handler.mjs"));
-  await access(path.join(dist, ".openai/hosting.json"));
-  assert.equal(
-    existsSync(path.join(dist, "server/vite-api-plugin.mjs")),
-    false,
-    "the dev-server plugin is not shipped",
-  );
-});
-
-test("every relative import in the Sites worker bundle resolves to a shipped file", () => {
-  let imports = 0;
-  for (const directory of ["server", "shared"]) {
-    for (const name of readdirSync(path.join(dist, directory))) {
-      const file = path.join(dist, directory, name);
-      const code = readFileSync(file, "utf8");
-      for (const [, target] of code.matchAll(/(?:from|import)\s*["'](\.{1,2}\/[^"']+)["']/g)) {
-        imports++;
-        assert.ok(
-          existsSync(path.resolve(path.dirname(file), target)),
-          `${directory}/${name} imports missing ${target}`,
-        );
-      }
-    }
-  }
-  assert.ok(imports > 0, "Check the packaged worker, not an empty folder");
-});
-
-test("Sites module outputs match current sources without obsolete or Vercel-only modules", () => {
-  const vercelOnly = new Set([
-    "article-cache.mjs",
-    "drive-video-archive.mjs",
-    "google-drive.mjs",
-    "photo-cache.mjs",
-    "photo-cache-warm.mjs",
-    "video-cache.mjs",
-    "x-feed-snapshot.mjs",
-  ]);
-  for (const directory of ["server", "shared"]) {
-    const source = fileURLToPath(new URL(`../../${directory}/`, import.meta.url));
-    const expected = readdirSync(source).filter(
-      (name) =>
-        name.endsWith(".mjs") && !(directory === "server" && (name.startsWith("vite-") || vercelOnly.has(name))),
-    );
-    const actual = readdirSync(path.join(dist, directory)).filter((name) => name.endsWith(".mjs"));
-    assert.deepEqual(actual.sort(), expected.sort(), directory);
-  }
-});
-
-test("Vercel and Sites share identical security headers and route shells", () => {
+test("Vercel config matches shared security headers and route shells", () => {
   const globalHeaders = vercelConfig.headers.find(({ source }) => source === "/(.*)")?.headers ?? [];
   const vercelHeaderMap = Object.fromEntries(globalHeaders.map(({ key, value }) => [key, value]));
   assert.deepEqual(vercelHeaderMap, SECURITY_HEADERS);

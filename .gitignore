@@ -19,5 +19,5 @@ backup-*/
 .wrangler/
 /qa/
 
-# Local-only raw sources and historical archives (kept out of the public repository).
+# Local-only raw sources and historical archives.
 /archive/

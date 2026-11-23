@@ -1,6 +1,5 @@
-// The site's API routes as one fetch-style handler. Vercel functions (api/), the
-// Sites worker (worker/index.js) and the Vite dev/preview server (vite-api-plugin.mjs)
-// only adapt their runtime to it.
+// The site's API routes as one fetch-style handler. Vercel functions (api/) and
+// the Vite dev/preview server (vite-api-plugin.mjs) only adapt their runtime to it.
 import { authorizeFeed, authorizeProfile, previousSigningSecret, signingSecret } from "./x-media-auth.mjs";
 import { createXFeedService } from "./x-feed-service.mjs";
 import { proxyXMedia } from "./x-media.mjs";
