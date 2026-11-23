@@ -698,6 +698,52 @@ async function homeLayouts() {
   }
 }
 
+async function desktopNavStability(video) {
+  const context = await browser.newContext({
+    viewport: { width: 1440, height: 900 },
+    locale: "zh-CN",
+    reducedMotion: "reduce",
+  });
+  try {
+    await setup(context, feedData(), video);
+    const page = await context.newPage();
+    await page.goto(`${origin}/`);
+    await page.locator(".hero-copy").waitFor();
+    await page.evaluate(() => document.fonts.ready);
+    const initial = await page.evaluate(() => {
+      const nav = document.querySelector(".site-nav");
+      window.__stableNav = nav;
+      const rect = nav.getBoundingClientRect();
+      return {
+        gutter: getComputedStyle(document.documentElement).scrollbarGutter,
+        rect: [rect.x, rect.y, rect.width, rect.height].map((value) => Math.round(value * 100) / 100),
+      };
+    });
+    assert.equal(initial.gutter, "stable");
+    for (const [pageId, readySelector] of [
+      ["posts", "#latest-posts .post-card"],
+      ["contact", ".contacts-section"],
+      ["home", ".hero-copy"],
+    ]) {
+      await page.locator(`.site-nav a[data-page="${pageId}"]`).click();
+      await page.locator(readySelector).first().waitFor();
+      const next = await page.evaluate(() => {
+        const nav = document.querySelector(".site-nav");
+        const rect = nav.getBoundingClientRect();
+        return {
+          sameElement: nav === window.__stableNav,
+          rect: [rect.x, rect.y, rect.width, rect.height].map((value) => Math.round(value * 100) / 100),
+        };
+      });
+      assert.equal(next.sameElement, true, `navigation element remounted on ${pageId}`);
+      assert.deepEqual(next.rect, initial.rect, `navigation shifted on ${pageId}`);
+    }
+    console.log("PASS desktop navigation stays mounted without shifting across Home, Posts and Contact");
+  } finally {
+    await context.close();
+  }
+}
+
 try {
   for (let attempt = 0; attempt < 50; attempt++) {
     if (
@@ -710,6 +756,7 @@ try {
   }
   browser = await chromium.launch({ channel: process.env.QA_BROWSER || "chrome" });
   const video = await recordVideo();
+  await desktopNavStability(video);
   await mobileRouteScenes(video);
   await postDiscussion(video);
   await interactions(video);

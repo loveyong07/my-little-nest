@@ -2,10 +2,9 @@ import { PiFlowerLight } from "react-icons/pi";
 import { pagePaths } from "../routes/site-route.js";
 import { RouteGarland } from "./ScrapbookAccents.jsx";
 
-export function RouteHero({ page, t, header }) {
+export function RouteHero({ page, t }) {
   return (
     <div className={"route-hero route-hero-" + page}>
-      {header}
       <div className="route-page-title" key={page}>
         {page === "posts" && (
           <div className="route-breadcrumb">

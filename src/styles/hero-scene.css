@@ -4,6 +4,7 @@
   isolation: isolate;
   overflow: hidden;
   min-height: max(100svh, 900px);
+  padding-top: var(--site-header-height);
   padding-bottom: 24px;
   background: var(--surface-tint);
 }

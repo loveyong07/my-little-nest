@@ -33,7 +33,7 @@ function RouteLoadError({ t }) {
   );
 }
 
-export function SiteRouteLayout({ page, t, header, extras, children }) {
+export function SiteRouteLayout({ page, t, extras, children }) {
   return (
     <>
       <div className="route-floating-elements" aria-hidden="true">
@@ -41,7 +41,7 @@ export function SiteRouteLayout({ page, t, header, extras, children }) {
           <img className="route-floating-dove" src={ASSETS + "/contact-sky-dove-v2.webp"} alt="" draggable="false" />
         )}
       </div>
-      <RouteHero page={page} t={t} header={header} />
+      <RouteHero page={page} t={t} />
       <main key={page} className={`content-panel route-panel route-panel-${page}`} aria-labelledby="page-heading">
         <GlassFlorals />
         <LazyRegionBoundary fallback={<RouteLoadError t={t} />}>

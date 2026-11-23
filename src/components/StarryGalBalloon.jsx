@@ -19,7 +19,8 @@ export function StarryGalBalloon({ t, contentRef }) {
       const journalBounds = journal.getBoundingClientRect();
       const split = desktop.matches && journalBounds.left > letterBounds.right;
       const hero = sky.closest(".hero").getBoundingClientRect();
-      const header = sky.closest(".hero").querySelector(".site-header").getBoundingClientRect();
+      const headerElement = (sky.closest(".site") ?? sky.closest(".hero")).querySelector(".site-header");
+      const header = headerElement.getBoundingClientRect();
       const topSpace = bounds.top - header.bottom - 24;
       const topWidth = Math.min(88, Math.floor((topSpace - 64) / 1.1));
       const topLane = !desktop.matches && topWidth >= 60;

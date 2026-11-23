@@ -85,6 +85,7 @@
 html {
   scroll-behavior: smooth;
   scrollbar-color: #b7cfe4 #f3f8fc;
+  scrollbar-gutter: stable;
 }
 body {
   margin: 0;

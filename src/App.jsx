@@ -43,10 +43,6 @@ export function App() {
       </Suspense>
     </LazyRegionBoundary>
   ) : null;
-  const header = (
-    <Header page={page} t={t} language={language} changeLanguage={changeLanguage} onNavigate={navigatePage} />
-  );
-
   return (
     <div
       className={
@@ -61,10 +57,11 @@ export function App() {
       onFocus={preparePosts}
       onTouchStart={preparePosts}
     >
+      <Header page={page} t={t} language={language} changeLanguage={changeLanguage} onNavigate={navigatePage} />
       {page === "home" ? (
-        <HeroSection header={header} language={language} t={t} f={f} profile={profile} extras={extras} />
+        <HeroSection language={language} t={t} f={f} profile={profile} extras={extras} />
       ) : (
-        <SiteRouteLayout page={page} t={t} header={header} extras={extras}>
+        <SiteRouteLayout page={page} t={t} extras={extras}>
           {page === "posts" ? (
             <PostsPage
               language={language}

@@ -11,7 +11,7 @@ import { DesktopStationery } from "./DesktopStationery.jsx";
 import zhFantasy from "../constants/fantasy/zh.js";
 import { StarryGalBalloon } from "./StarryGalBalloon.jsx";
 
-export function HeroSection({ header, language, t, f = zhFantasy, profile, extras = null }) {
+export function HeroSection({ language, t, f = zhFantasy, profile, extras = null }) {
   const heroRef = useRef(null);
   const introRef = useRef(null);
   useLayoutEffect(() => {
@@ -28,7 +28,8 @@ export function HeroSection({ header, language, t, f = zhFantasy, profile, extra
     };
     const observer = new ResizeObserver(fit);
     observer.observe(intro);
-    observer.observe(hero.querySelector(".site-header"));
+    const header = hero.closest(".site")?.querySelector(".site-header") ?? hero.querySelector(".site-header");
+    if (header) observer.observe(header);
     window.addEventListener("resize", fit);
     desktop.addEventListener("change", fit);
     fit();
@@ -102,7 +103,6 @@ export function HeroSection({ header, language, t, f = zhFantasy, profile, extra
           </>
         )}
       </div>
-      {header}
       {extras}
       <main className="hero-layout" aria-labelledby="page-heading">
         <div className="hero-intro-stack" ref={introRef}>
