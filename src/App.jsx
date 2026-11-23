@@ -1,8 +1,9 @@
 import { lazy, Suspense, useEffect, useState } from "react";
+import { FaArrowUpRightFromSquare, FaGithub } from "react-icons/fa6";
 import { Header } from "./components/Header.jsx";
 import { HeroSection } from "./components/HeroSection.jsx";
 import { LazyRegionBoundary, SiteRouteLayout } from "./components/SiteRouteLayout.jsx";
-import { navIds } from "./constants/site.js";
+import { navIds, SITE_SOURCE_REPOSITORY } from "./constants/site.js";
 import { useI18n } from "./hooks/useI18n.js";
 import { useXProfile } from "./hooks/useXProfile.js";
 import { useSiteRoute } from "./hooks/useSiteRoute.js";
@@ -79,10 +80,31 @@ export function App() {
       <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
         {t.nav[navIds.indexOf(page)]}
       </div>
-      <footer className="site-legal-links" aria-label={t.legalLinksLabel}>
-        <a href={language === "zh" ? "/privacy" : `/privacy#${language}`}>{t.privacyPolicy}</a>
-        <a href={language === "zh" ? "/terms" : `/terms#${language}`}>{t.termsOfService}</a>
-      </footer>
+      {page === "home" ? (
+        <div className="home-corner-links">
+          <a
+            className="home-source-link"
+            href={SITE_SOURCE_REPOSITORY}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={t.siteSourceLink}
+            title={t.siteSourceLink}
+          >
+            <FaGithub aria-hidden="true" />
+            <span>{t.siteSource}</span>
+            <FaArrowUpRightFromSquare className="home-source-external" aria-hidden="true" />
+          </a>
+          <footer className="site-legal-links" aria-label={t.legalLinksLabel}>
+            <a href={language === "zh" ? "/privacy" : `/privacy#${language}`}>{t.privacyPolicy}</a>
+            <a href={language === "zh" ? "/terms" : `/terms#${language}`}>{t.termsOfService}</a>
+          </footer>
+        </div>
+      ) : (
+        <footer className="site-legal-links" aria-label={t.legalLinksLabel}>
+          <a href={language === "zh" ? "/privacy" : `/privacy#${language}`}>{t.privacyPolicy}</a>
+          <a href={language === "zh" ? "/terms" : `/terms#${language}`}>{t.termsOfService}</a>
+        </footer>
+      )}
     </div>
   );
 }

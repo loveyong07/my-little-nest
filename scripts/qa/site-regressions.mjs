@@ -653,9 +653,13 @@ async function homeLayouts() {
         const balloon = document.querySelector(".starrygal-balloon");
         const header = document.querySelector(".site-header").getBoundingClientRect();
         const collisions = [];
-        const reservedAreas = [...document.querySelectorAll(".hero-copy, .home-journal, .hero .sky-letter-link")]
+        const reservedAreas = [
+          ...document.querySelectorAll(".hero-copy, .home-journal, .hero .sky-letter-link, .home-source-link"),
+        ]
           .filter((element) => element.getClientRects().length)
           .map((element) => element.getBoundingClientRect());
+        const sourceLink = document.querySelector(".home-source-link");
+        const sourceRect = sourceLink?.getBoundingClientRect() ?? null;
         const animation = document.querySelector(".starrygal-flight").getAnimations()[0];
         if (sky.dataset.ready === "true") {
           for (const fraction of [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875]) {
@@ -674,6 +678,19 @@ async function homeLayouts() {
         return {
           bottom: bounds.bottom,
           right: bounds.right,
+          source: sourceLink
+            ? {
+                href: sourceLink.getAttribute("href"),
+                target: sourceLink.getAttribute("target"),
+                rel: sourceLink.getAttribute("rel"),
+                text: sourceLink.textContent.trim(),
+                left: sourceRect.left,
+                top: sourceRect.top,
+                right: sourceRect.right,
+                bottom: sourceRect.bottom,
+                height: sourceRect.height,
+              }
+            : null,
           visualBioFont: Number.parseFloat(getComputedStyle(bio).fontSize) * scale,
           collisions,
           width: document.documentElement.scrollWidth,
@@ -681,12 +698,24 @@ async function homeLayouts() {
       });
       assert.ok(geometry.width <= width, `home overflows horizontally at ${width}`);
       assert.deepEqual(geometry.collisions, [], `balloon crosses reading or navigation at ${width}x${height}`);
+      assert.equal(geometry.source?.href, "https://github.com/loveyong07/my-little-nest");
+      assert.equal(geometry.source?.target, "_blank");
+      assert.equal(geometry.source?.rel, "noopener noreferrer");
+      assert.equal(geometry.source?.text, copy[language].siteSource);
+      assert.ok(geometry.source.right <= width, `source link stays within viewport at ${width}x${height}`);
       if (!touch) {
         assert.ok(geometry.bottom <= height - 20, `home must fit one viewport at ${width}x${height}`);
+        assert.ok(geometry.source.bottom <= height, `source link fits desktop viewport at ${width}x${height}`);
+        assert.ok(
+          geometry.source.top >= geometry.bottom || geometry.source.left >= geometry.right,
+          `source link clears home cards at ${width}x${height}`,
+        );
         assert.ok(
           geometry.visualBioFont >= 13,
           `home body is too small: ${geometry.visualBioFont}px at ${width}x${height}`,
         );
+      } else {
+        assert.ok(geometry.source.height >= 44, `source link tap target >= 44px at ${width}x${height}`);
       }
       await page.screenshot({ path: path.join(output, `home-${width}x${height}-${language}.png`) });
       console.log(
@@ -759,6 +788,7 @@ async function legalPages(video) {
       await footer.waitFor({ state: "visible" });
       assert.equal(await footer.getByRole("link", { name: "隐私政策" }).getAttribute("href"), "/privacy");
       assert.equal(await footer.getByRole("link", { name: "服务条款" }).getAttribute("href"), "/terms");
+      assert.equal(await page.locator(".home-source-link").count(), route === "/" ? 1 : 0);
       await page.locator(contentSelector).waitFor({ state: "attached" });
       if (route === "/posts") await page.locator(".post-reading .post-card").first().waitFor();
       const footerBounds = await footer.boundingBox();
@@ -838,9 +868,53 @@ async function legalPages(video) {
     await touch.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
     await page.waitForURL(origin + "/terms#ja");
     assert.equal(await page.locator(".legal-nav a[aria-current]:visible").innerText(), "利用規約");
+    assert.equal(await page.locator("h1:visible").innerText(), "利用規約");
     console.log("PASS centered legal navigation, localized clicks and swipes, full-screen art, and the return link");
   } finally {
     await context.close();
+  }
+  const desktopContext = await browser.newContext({
+    viewport: { width: 1440, height: 900 },
+    locale: "zh-CN",
+    reducedMotion: "reduce",
+  });
+  try {
+    const page = await desktopContext.newPage();
+    await page.goto(origin + "/privacy");
+    await page.locator(".legal-nav[data-swipe-ready]").waitFor();
+    await page.evaluate(() => document.fonts.ready);
+    const initial = await page.evaluate(() => {
+      const nav = document.querySelector(".legal-nav");
+      window.__stableLegalNav = nav;
+      const rect = nav.getBoundingClientRect();
+      return {
+        gutter: getComputedStyle(document.documentElement).scrollbarGutter,
+        rect: [rect.x, rect.y, rect.width, rect.height].map((value) => Math.round(value * 100) / 100),
+      };
+    });
+    assert.equal(initial.gutter, "stable");
+    await page.locator(".legal-nav").getByRole("link", { name: "服务条款" }).click();
+    await page.waitForURL(origin + "/terms");
+    await page.getByRole("heading", { name: "服务条款", level: 1 }).waitFor();
+    const afterTerms = await page.evaluate(() => {
+      const nav = document.querySelector(".legal-nav");
+      const rect = nav.getBoundingClientRect();
+      return {
+        sameElement: nav === window.__stableLegalNav,
+        rect: [rect.x, rect.y, rect.width, rect.height].map((value) => Math.round(value * 100) / 100),
+        scenes: document.querySelectorAll(".legal-scene").length,
+      };
+    });
+    assert.equal(afterTerms.sameElement, true, "legal navigation stays mounted without full reload");
+    assert.deepEqual(afterTerms.rect, initial.rect, "legal navigation does not shift horizontally");
+    assert.equal(afterTerms.scenes, 1);
+    await page.goBack();
+    await page.waitForURL(origin + "/privacy");
+    await page.getByRole("heading", { name: "隐私政策", level: 1 }).waitFor();
+    assert.equal(await page.evaluate(() => document.querySelector(".legal-nav") === window.__stableLegalNav), true);
+    console.log("PASS desktop legal navigation switches in place without shifting or remounting");
+  } finally {
+    await desktopContext.close();
   }
   const staticContext = await browser.newContext({ javaScriptEnabled: false });
   try {

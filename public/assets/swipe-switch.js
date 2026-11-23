@@ -73,7 +73,7 @@ export function bindSwipeSwitch({
     control.dataset.swipeReady = "true";
   }
 
-  function reset() {
+  function clearGesture() {
     clearTimeout(selectionTimer);
     clearTimeout(settlingTimer);
     clearTimeout(wheelTimer);
@@ -84,8 +84,12 @@ export function bindSwipeSwitch({
     delete control.dataset.swiping;
     delete control.dataset.swipeSettling;
     control.style.setProperty("--swipe-offset", "0px");
-    paint(activeIndex);
     if (pointerId !== undefined && control.hasPointerCapture?.(pointerId)) control.releasePointerCapture(pointerId);
+  }
+
+  function reset() {
+    clearGesture();
+    paint(activeIndex);
   }
 
   function start(x, y, time, pointerId) {
@@ -251,7 +255,7 @@ export function bindSwipeSwitch({
   for (const item of items) observer.observe(item);
   paint(activeIndex);
   function destroy() {
-    reset();
+    clearGesture();
     observer.disconnect();
     control.removeEventListener("click", click, true);
     for (const [name, handler] of Object.entries(handlers)) control.removeEventListener(name, handler);

@@ -14,6 +14,8 @@ export default {
   legalLinksLabel: "网站政策",
   privacyPolicy: "隐私政策",
   termsOfService: "服务条款",
+  siteSource: "网站源码",
+  siteSourceLink: "在 GitHub 查看网站源码（新标签页）",
   routeIntro: { posts: "把日常写成片段，把想说的留在这里。" },
   homeJournalAbout: "关于小窝",
   homeJournalQuote: "今日一句",

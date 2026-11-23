@@ -14,6 +14,8 @@ export default {
   legalLinksLabel: "Site policies",
   privacyPolicy: "Privacy Policy",
   termsOfService: "Terms of Service",
+  siteSource: "Site source",
+  siteSourceLink: "Open site source on GitHub (new tab)",
   routeIntro: {
     posts: "Everyday moments, and the words I leave here.",
   },

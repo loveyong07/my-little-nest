@@ -44,6 +44,14 @@
 * {
   box-sizing: border-box;
 }
+html {
+  scrollbar-color: #b7cfe4 #f3f8fc;
+  scrollbar-gutter: stable;
+}
+:root:has(.legal-scene-autumn) {
+  background: #f5e3d1;
+  scrollbar-color: #d6b697 #fbf4ec;
+}
 body {
   isolation: isolate;
   min-height: 100vh;
@@ -68,6 +76,7 @@ a:focus-visible {
   --legal-nav-position: 0;
   --legal-nav-fill: #e3effc;
   position: relative;
+  isolation: isolate;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-column: 2;
@@ -82,6 +91,7 @@ a:focus-visible {
     inset 0 1px 1px #fff;
   touch-action: pan-y pinch-zoom;
   user-select: none;
+  -webkit-user-select: none;
 }
 .legal-nav:has([data-legal-page="terms"][aria-current="page"]) {
   --legal-nav-position: 1;
@@ -89,33 +99,42 @@ a:focus-visible {
 }
 .legal-nav-selection {
   position: absolute;
+  z-index: 0;
   inset: 5px auto 5px 5px;
   width: calc((100% - 10px) / 2);
   border: 1px solid #fff;
   border-radius: 999px;
-  background: var(--legal-nav-fill);
-  background: color-mix(in srgb, #e3effc calc((1 - var(--switch-position, var(--legal-nav-position))) * 100%), #ffedcf);
+  background-color: #e3effc;
   box-shadow:
     0 4px 12px #4a72961f,
     inset 0 1px 1px #fff;
   transform: translateX(calc(var(--legal-nav-position) * 100%));
   pointer-events: none;
 }
+.legal-nav:has([data-legal-page="terms"][aria-current="page"]) .legal-nav-selection {
+  background-color: #ffedcf;
+}
 .legal-nav[data-swipe-ready] .legal-nav-selection {
   inset: 0 auto auto 0;
   width: var(--switch-width);
   height: var(--switch-height);
   transform: translate3d(var(--switch-x), var(--switch-y), 0);
+}
+.legal-nav[data-swipe-animated] .legal-nav-selection {
   transition:
-    transform 320ms var(--ease-spring),
-    background 220ms ease;
+    transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    width 320ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    height 320ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    background-color 220ms ease;
 }
 .legal-nav[data-swiping] .legal-nav-selection {
+  background-color: color-mix(in srgb, #e3effc calc((1 - var(--switch-position, var(--legal-nav-position))) * 100%), #ffedcf);
   transition: none;
 }
 .legal-nav a {
   --legal-localized-display: inline-flex;
   position: relative;
+  z-index: 1;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
@@ -128,6 +147,11 @@ a:focus-visible {
   line-height: 1.25;
   text-align: center;
   text-decoration: none;
+  translate: var(--swipe-offset, 0px) 0;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease,
+    translate 0.2s var(--ease-spring);
 }
 .legal-nav [data-legal-page="terms"] {
   color: #795b2c;
@@ -135,31 +159,114 @@ a:focus-visible {
 .legal-nav a:hover:not([aria-current]) {
   background: #ffffff66;
 }
+.legal-nav[data-swiping] a {
+  cursor: grabbing;
+  transition: none;
+}
+.legal-nav[data-swiping] a,
+.legal-nav[data-swipe-settling] a {
+  background: transparent;
+}
 .legal-nav svg {
   flex: none;
   width: 17px;
   height: 17px;
+  transition: transform 240ms var(--ease-spring);
+}
+.legal-nav a:hover svg {
+  transform: rotate(-10deg) scale(1.08);
 }
 .legal-language {
+  position: relative;
+  isolation: isolate;
   grid-column: 3;
   margin-inline-end: 0;
+  touch-action: pan-y pinch-zoom;
+  user-select: none;
+  -webkit-user-select: none;
 }
-body:has(#ja:target) {
+body:not([data-legal-lang]):has(#ja:target),
+body[data-legal-lang="ja"] {
   --legal-site-font: Quicksand, "Hiragino Maru Gothic ProN", "Yu Gothic", "Nest Kuaile", sans-serif;
 }
 .legal-language a {
+  position: relative;
+  z-index: 1;
   display: inline-grid;
   place-items: center;
   text-decoration: none;
+  translate: var(--swipe-offset, 0px) 0;
+  transition-property: transform, box-shadow, background, filter, color, translate;
 }
-body:not(:has(.legal-copy:target)) .legal-language [href="#zh"],
-body:has(#zh:target) .legal-language [href="#zh"],
-body:has(#ja:target) .legal-language [href="#ja"],
-body:has(#en:target) .legal-language [href="#en"] {
+.legal-language .language-selection {
+  display: none;
+}
+.legal-language[data-swipe-ready] .language-selection {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  bottom: auto;
+  left: 0;
+  display: block;
+  width: var(--switch-width);
+  height: var(--switch-height);
+  border: 0;
+  border-radius: 999px;
+  background: #fbe1eb;
+  color: #743e59;
+  box-shadow:
+    inset 0 1px 1px #ffffffcc,
+    inset 0 -3px currentColor,
+    0 3px 10px #456a8a17;
+  transform: translate3d(var(--switch-x), var(--switch-y), 0);
+  pointer-events: none;
+}
+body[data-legal-lang="ja"] .legal-language[data-swipe-ready] .language-selection {
+  background: #e9e2fa;
+  color: #59457f;
+}
+body[data-legal-lang="en"] .legal-language[data-swipe-ready] .language-selection {
+  background: #e0f2e9;
+  color: #315f53;
+}
+.legal-language[data-swipe-animated] .language-selection {
+  transition:
+    transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    width 320ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    height 320ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    background 220ms ease;
+}
+.legal-language[data-swiping] .language-selection {
+  transition: none;
+}
+.legal-language[data-swiping] a {
+  cursor: grabbing;
+  transform: none;
+  transition: none;
+}
+.legal-language[data-swiping] a,
+.legal-language[data-swipe-settling] a {
+  background: transparent;
+}
+body:not([data-legal-lang]):not(:has(.legal-copy:target)) .legal-language [href="#zh"],
+body:not([data-legal-lang]):has(#zh:target) .legal-language [href="#zh"],
+body:not([data-legal-lang]):has(#ja:target) .legal-language [href="#ja"],
+body:not([data-legal-lang]):has(#en:target) .legal-language [href="#en"],
+body[data-legal-lang="zh"] .legal-language [href="#zh"],
+body[data-legal-lang="ja"] .legal-language [href="#ja"],
+body[data-legal-lang="en"] .legal-language [href="#en"] {
   background: var(--language-selected-fill);
   color: var(--language-selected-ink);
   font-weight: 700;
   box-shadow: var(--language-selected-shadow);
+}
+body[data-legal-lang] .legal-language[data-swipe-ready] a[aria-current="true"] {
+  background: transparent;
+  box-shadow: none;
+}
+body[data-legal-lang] .legal-language[data-swiping] a,
+body[data-legal-lang] .legal-language[data-swipe-settling] a {
+  background: transparent;
 }
 .legal-document {
   display: grid;
@@ -224,7 +331,8 @@ body:has(#en:target) .legal-language [href="#en"] {
 .legal-hero-copy[lang="zh-CN"] h1 {
   font-family: "Nest Legal Heading", var(--legal-site-font);
 }
-.legal-scene {
+.legal-scene,
+.legal-scene-outgoing {
   position: fixed;
   z-index: -1;
   inset: 0 0 auto;
@@ -234,7 +342,14 @@ body:has(#en:target) .legal-language [href="#en"] {
   background: #d9ebfb;
   pointer-events: none;
 }
-.legal-scene img {
+.legal-scene-outgoing {
+  z-index: -2;
+}
+.legal-scene.is-entering {
+  animation: legal-scene-fade 320ms ease-out both;
+}
+.legal-scene img,
+.legal-scene-outgoing img {
   display: block;
   width: 100%;
   height: 100%;
@@ -285,9 +400,12 @@ body:has(#en:target) .legal-language [href="#en"] {
 .legal-localized {
   display: none;
 }
-body:not(:has(#ja:target, #en:target)) .legal-localized[lang="zh-CN"],
-body:has(#ja:target) .legal-localized[lang="ja"],
-body:has(#en:target) .legal-localized[lang="en"] {
+body:not([data-legal-lang]):not(:has(#ja:target, #en:target)) .legal-localized[lang="zh-CN"],
+body:not([data-legal-lang]):has(#ja:target) .legal-localized[lang="ja"],
+body:not([data-legal-lang]):has(#en:target) .legal-localized[lang="en"],
+body[data-legal-lang="zh"] .legal-localized[lang="zh-CN"],
+body[data-legal-lang="ja"] .legal-localized[lang="ja"],
+body[data-legal-lang="en"] .legal-localized[lang="en"] {
   display: var(--legal-localized-display, inline);
 }
 .legal-copy {
@@ -302,6 +420,12 @@ body:has(#en:target) .legal-localized[lang="en"] {
   border-radius: clamp(1.5rem, 3vw, 2rem);
   background: var(--legal-reading-surface);
   box-shadow: var(--legal-glass-shadow);
+}
+.legal-copy.is-entering {
+  animation: legal-panel-arrive 0.34s ease-out backwards;
+}
+.legal-hero-copy.is-entering {
+  animation: legal-title-enter 380ms var(--ease-spring) both;
 }
 .legal-copy::before,
 .legal-copy::after {
@@ -321,11 +445,15 @@ body:has(#en:target) .legal-localized[lang="en"] {
   bottom: calc(var(--legal-bouquet-size) * -0.65);
   rotate: 180deg;
 }
-.legal-copy:not(:where(#zh)),
-.legal-document:has(.legal-copy:target) .legal-copy:not(:target) {
+body:not([data-legal-lang]) .legal-copy:not(:where(#zh)),
+body:not([data-legal-lang]) .legal-document:has(.legal-copy:target) .legal-copy:not(:target),
+body[data-legal-lang] .legal-copy {
   display: none;
 }
-.legal-copy:target {
+body:not([data-legal-lang]) .legal-copy:target,
+body[data-legal-lang="zh"] #zh.legal-copy,
+body[data-legal-lang="ja"] #ja.legal-copy,
+body[data-legal-lang="en"] #en.legal-copy {
   display: block;
 }
 .legal-copy h2 {
@@ -344,6 +472,13 @@ body:has(#en:target) .legal-localized[lang="en"] {
 }
 
 @media (min-width: 901px) and (pointer: fine) {
+  .legal-language[data-swipe-ready] .language-selection,
+  body[data-legal-lang] .legal-language[data-swipe-ready] .language-selection {
+    background: linear-gradient(135deg, #f1e6ff, #fceaf4);
+    box-shadow:
+      0 3px 10px #7956901c,
+      inset 0 1px 1px #fff;
+  }
   .legal-document {
     width: min(100% - 2 * var(--layout-gutter), 73.75rem);
   }
@@ -429,7 +564,8 @@ body:has(#en:target) .legal-localized[lang="en"] {
 }
 
 @media (orientation: portrait) {
-  .legal-scene img {
+  .legal-scene img,
+  .legal-scene-outgoing img {
     object-position: center top;
   }
   .legal-scene-autumn img {
@@ -449,19 +585,58 @@ body:has(#en:target) .legal-localized[lang="en"] {
   }
 }
 
+@keyframes legal-scene-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes legal-panel-arrive {
+  from {
+    opacity: 0.72;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes legal-title-enter {
+  from {
+    opacity: 0.4;
+    translate: 0 9px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .legal-nav[data-swipe-ready] .legal-nav-selection {
+  .legal-nav[data-swipe-animated] .legal-nav-selection,
+  .legal-language[data-swipe-animated] .language-selection,
+  .legal-nav a,
+  .legal-nav svg {
     transition: none;
+  }
+  .legal-scene.is-entering,
+  .legal-copy.is-entering,
+  .legal-hero-copy.is-entering {
+    animation: none;
   }
 }
 
 @media (forced-colors: active) {
   .legal-scene,
+  .legal-scene-outgoing,
   .legal-copy::before,
   .legal-copy::after {
     display: none;
   }
-  .legal-nav [aria-current="page"] {
+  .legal-nav [aria-current="page"],
+  .legal-language [aria-current="true"] {
     outline: 2px solid Highlight;
     outline-offset: -3px;
   }

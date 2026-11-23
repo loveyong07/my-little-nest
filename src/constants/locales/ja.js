@@ -14,6 +14,8 @@ export default {
   legalLinksLabel: "サイトポリシー",
   privacyPolicy: "プライバシーポリシー",
   termsOfService: "利用規約",
+  siteSource: "サイトソース",
+  siteSourceLink: "サイトソースを GitHub で開く（新しいタブ）",
   routeIntro: {
     posts: "日々のかけらと、ここに残しておきたい言葉。",
   },

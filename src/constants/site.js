@@ -1,6 +1,7 @@
 import { X_USERNAME } from "../../shared/x-account.mjs";
 
 export const ASSETS = "/assets";
+export const SITE_SOURCE_REPOSITORY = "https://github.com/loveyong07/my-little-nest";
 export const STARRY_GAL_REPOSITORY = "https://github.com/loveyong07/loveyong-starrygal";
 
 export { X_USERNAME };
