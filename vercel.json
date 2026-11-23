@@ -27,7 +27,7 @@
     },
     "api/x-video-sync.js": {
       "regions": ["hkg1"],
-      "maxDuration": 55,
+      "maxDuration": 60,
       "experimentalTriggers": [{ "type": "schedule/v1beta" }]
     },
     "api/starrygal.js": {

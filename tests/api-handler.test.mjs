@@ -52,6 +52,18 @@ test("Vercel Preview distinguishes a missing X credential from an upstream failu
   );
   assert.equal((await (await missing(request("/api/x-posts"))).json()).previewIssue, "x_credential_missing");
   assert.equal((await (await failing(request("/api/x-posts"))).json()).previewIssue, "x_upstream_unavailable");
+
+  const unconfiguredStore = createApiHandler({ VERCEL_ENV: "preview" }, { readXSnapshot: async () => null });
+  const emptyStore = createApiHandler(
+    { VERCEL_ENV: "preview", BLOB_READ_WRITE_TOKEN: "test-blob" },
+    { readXSnapshot: async () => null },
+  );
+  const unconfiguredResponse = await unconfiguredStore(request("/api/x-posts"));
+  const emptyResponse = await emptyStore(request("/api/x-posts"));
+  assert.equal(unconfiguredResponse.status, 503);
+  assert.equal(emptyResponse.status, 503);
+  assert.equal((await unconfiguredResponse.json()).previewIssue, "snapshot_store_unconfigured");
+  assert.equal((await emptyResponse.json()).previewIssue, "snapshot_unavailable");
 });
 
 test("feed routes reject query variants before initializing or calling the upstream service", async () => {

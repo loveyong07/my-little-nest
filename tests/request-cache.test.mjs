@@ -262,3 +262,23 @@ test("hidden pages pause refresh checks and leaving a consumer does not abort sh
   await pending;
   assert.equal(resource.getSnapshot().value.status, "ok");
 });
+
+test("503 preview responses preserve previewIssue on the rejected error while plain 503 responses stay clean", async () => {
+  const clock = fakeClock();
+  const withIssue = createSharedRequest({
+    url: "/api/x-posts",
+    isSuccess,
+    ...clock,
+    fetchImpl: async () =>
+      Response.json({ status: "unavailable", posts: [], previewIssue: "snapshot_unavailable" }, { status: 503 }),
+  });
+  await assert.rejects(withIssue.load(), (error) => error?.previewIssue === "snapshot_unavailable");
+
+  const plain503 = createSharedRequest({
+    url: "/api/x-posts",
+    isSuccess,
+    ...clock,
+    fetchImpl: async () => ({ ok: false, status: 503 }),
+  });
+  await assert.rejects(plain503.load(), (error) => error?.previewIssue === undefined);
+});

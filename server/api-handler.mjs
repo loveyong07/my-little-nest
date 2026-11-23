@@ -107,7 +107,17 @@ export function createApiHandler(
     try {
       const snapshot = readXSnapshot ? await readXSnapshot() : null;
       if (readXSnapshot && !snapshot) {
-        return json(empty, { status: 503, headers: { "Vercel-CDN-Cache-Control": JSON_CDN_CACHE_CONTROL_RETRY } });
+        const body =
+          route === "posts" && env.VERCEL_ENV === "preview"
+            ? {
+                ...empty,
+                previewIssue:
+                  env.BLOB_READ_WRITE_TOKEN || env.BLOB_STORE_ID
+                    ? "snapshot_unavailable"
+                    : "snapshot_store_unconfigured",
+              }
+            : empty;
+        return json(body, { status: 503, headers: { "Vercel-CDN-Cache-Control": JSON_CDN_CACHE_CONTROL_RETRY } });
       }
       const snapshotHeaders = snapshot
         ? {

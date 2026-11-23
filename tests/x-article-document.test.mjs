@@ -410,3 +410,64 @@ test("Article link ranges survive normalization and persistent-cache round trips
   invalid[0].links[1].offset = 100;
   assert.equal(serializeArticleDocumentRecord(current, invalid, 1_800_000_000_000), null);
 });
+
+test("Article Blob cache reads compressed JSON with unknown or compressed size while rejecting empty or truncated streams", async () => {
+  const verifiedBlocks = normalizedArticleDocument(document, article);
+  const payload = serializeArticleDocumentRecord(article, verifiedBlocks, 1_800_000_000_000);
+  const cases = [
+    {
+      name: "chunked compressed JSON with size 0",
+      blob: { size: 0, contentType: "application/json" },
+      headers: new Headers(),
+      body: payload,
+      expectHit: true,
+    },
+    {
+      name: "gzip JSON whose Content-Length is smaller than decoded bytes",
+      blob: { size: Math.floor(payload.byteLength / 2), contentType: "application/json" },
+      headers: new Headers({ "content-encoding": "gzip" }),
+      body: payload,
+      expectHit: true,
+    },
+    {
+      name: "uncompressed truncated response",
+      blob: { size: payload.byteLength + 10, contentType: "application/json" },
+      headers: new Headers(),
+      body: payload,
+      expectHit: false,
+      reason: "size_mismatch",
+    },
+    {
+      name: "empty stream",
+      blob: { size: 0, contentType: "application/json" },
+      headers: new Headers(),
+      body: new Uint8Array(),
+      expectHit: false,
+      reason: "invalid_blob",
+    },
+  ];
+  for (const scenario of cases) {
+    const events = [];
+    const cache = createBlobArticleCache({
+      env: { BLOB_READ_WRITE_TOKEN: "test" },
+      onEvent: (event) => events.push(event),
+      sdk: {
+        get: async () => ({
+          statusCode: 200,
+          stream: new Response(scenario.body).body,
+          headers: scenario.headers,
+          blob: scenario.blob,
+        }),
+        put: async () => {},
+      },
+    });
+    const record = await cache.read(article);
+    if (scenario.expectHit) {
+      assert.deepEqual(record?.blocks, verifiedBlocks, scenario.name);
+      assert.equal(events.at(-1).outcome, "hit", scenario.name);
+    } else {
+      assert.equal(record, null, scenario.name);
+      assert.equal(events.at(-1).reason, scenario.reason, scenario.name);
+    }
+  }
+});

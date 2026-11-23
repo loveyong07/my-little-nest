@@ -66,7 +66,15 @@ export function createSharedRequest({
     });
     const request = Promise.resolve().then(async () => {
       const response = await fetchImpl(url, { cache: "no-store", signal: controller.signal });
-      if (!response.ok) throw new Error("Request unavailable");
+      if (!response.ok) {
+        /** @type {Error & { previewIssue?: string }} */
+        const error = new Error("Request unavailable");
+        if (response.status === 503 && typeof response.json === "function") {
+          const payload = await response.json().catch(() => null);
+          if (typeof payload?.previewIssue === "string") error.previewIssue = payload.previewIssue;
+        }
+        throw error;
+      }
       return response.json();
     });
     pending = Promise.race([request, deadline])

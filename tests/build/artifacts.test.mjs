@@ -49,6 +49,7 @@ test("public artifacts exclude source maps, server code, credentials and environ
     process.env.BLOB_READ_WRITE_TOKEN,
     process.env.VERCEL_OIDC_TOKEN,
     process.env.TOUCHGAL_API_TOKEN,
+    process.env.GOOGLE_DRIVE_CLIENT_ID,
     process.env.GOOGLE_DRIVE_CLIENT_SECRET,
     process.env.GOOGLE_DRIVE_REFRESH_TOKEN,
   ].filter(Boolean);

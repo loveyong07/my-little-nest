@@ -27,6 +27,8 @@ export default {
   sharedPostUnavailable: "这篇分享的帖子目前无法在动态页打开。",
   previewXCredentialMissing: "这个预览环境还没配置 X 接口令牌，当前显示站内快照。",
   previewXUnavailable: "预览环境已配置 X 接口，但本次同步失败。当前显示站内快照。",
+  previewSnapshotStoreMissing: "这个预览环境还没连接快照存储，当前显示站内快照。",
+  previewSnapshotUnavailable: "预览环境暂时读不到已发布的动态快照，当前显示站内快照。",
   selfQuote: "引用了自己的帖子",
   quotedPostLink: "在 X 查看被引用的帖子",
   translationTranslate: "翻译",

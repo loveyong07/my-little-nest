@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { collectVideoSources, createDriveVideoArchive } from "../server/drive-video-archive.mjs";
+import { collectVideoSources, createDriveVideoArchive, syncDriveVideos } from "../server/drive-video-archive.mjs";
+import { videoCacheKey } from "../server/video-cache.mjs";
 import { signedMediaUrl } from "../server/x-media-auth.mjs";
 import { proxyXVideo } from "../server/x-video.mjs";
 
@@ -103,4 +104,167 @@ test("retry after upload finalizes the same Drive file and later playback only r
   assert.equal(uploads, 1);
   assert.equal(sourceReads, 1);
   assert.equal(tokenRequests, 1);
+});
+
+test("compressed Drive index records with unknown blob size still read, while oversized decoded records fail", async () => {
+  const indexBody = JSON.stringify({ id, size: bytes.length });
+  const oversized = JSON.stringify({ id, size: bytes.length, pad: "x".repeat(600) });
+  let payload = indexBody;
+  const archive = createDriveVideoArchive({
+    env,
+    indexSdk: {
+      async get() {
+        return { statusCode: 200, stream: new Response(payload).body, blob: { size: 0 } };
+      },
+      async list() {
+        return { blobs: [] };
+      },
+      async put() {},
+    },
+    legacy: null,
+    drive: {
+      async download(fileId) {
+        assert.equal(fileId, id);
+        return new Response(bytes, { headers: { "Content-Type": "video/mp4" } });
+      },
+      async generateId() {
+        return id;
+      },
+      async metadata() {
+        return null;
+      },
+      async upload() {
+        return null;
+      },
+    },
+  });
+  const ok = await archive.read(source, new Headers(), new AbortController().signal);
+  assert.equal(ok.status, 200);
+  assert.equal(ok.headers.get("x-nest-video-store"), "drive");
+  assert.deepEqual(await ok.bytes(), bytes);
+
+  payload = oversized;
+  const freshArchive = createDriveVideoArchive({
+    env,
+    indexSdk: {
+      async get() {
+        return { statusCode: 200, stream: new Response(payload).body, blob: { size: 0 } };
+      },
+      async list() {
+        return { blobs: [] };
+      },
+      async put() {},
+    },
+    legacy: null,
+    drive: {
+      async download() {
+        assert.fail("oversized record must not trigger a Drive download");
+      },
+      async generateId() {
+        return id;
+      },
+      async metadata() {
+        return null;
+      },
+      async upload() {
+        return null;
+      },
+    },
+  });
+  assert.equal(await freshArchive.read(source, new Headers(), new AbortController().signal), null);
+});
+
+test("syncDriveVideos bounds multi-item stalls, gives a lone large video the full deadline, and sanitizes errors", async () => {
+  const storedUrl = "https://video.twimg.com/tweet_video/already.mp4";
+  const slowUrl = "https://video.twimg.com/tweet_video/huge.mp4";
+  const quickUrl = "https://video.twimg.com/tweet_video/small.mp4";
+  const secretUrl = "https://video.twimg.com/tweet_video/broken.mp4";
+  const storedPath = `x-videos/drive-index-v1/${await videoCacheKey(storedUrl)}.json`;
+  const snapshotFor = (urls) => ({
+    configured: true,
+    async read() {
+      return {
+        snapshot: {
+          checkpoint: {
+            feed: {
+              pinnedPost: null,
+              posts: urls.map((url) => ({ media: [{ type: "video", url }] })),
+              reposts: [],
+              articles: [],
+            },
+          },
+        },
+      };
+    },
+  });
+
+  // 1. Multi-item run: already-stored items are counted immediately, a slow item times out at
+  // itemTimeoutMs without starving the next item, and raw secret strings are redacted from logs.
+  const firstRun = await syncDriveVideos({
+    source: snapshotFor([storedUrl, slowUrl, quickUrl, secretUrl]),
+    totalTimeoutMs: 400,
+    itemTimeoutMs: 35,
+    drive: {
+      async archivedPaths() {
+        return new Set([storedPath]);
+      },
+      async archive(url, signal) {
+        if (url === slowUrl) {
+          await new Promise((resolve) => {
+            if (signal.aborted) resolve();
+            else signal.addEventListener("abort", resolve, { once: true });
+          });
+          throw signal.reason ?? new Error("aborted");
+        }
+        if (url === secretUrl) {
+          throw new Error("Bearer super-secret-token should never appear");
+        }
+        return "archived";
+      },
+    },
+  });
+  assert.equal(firstRun.stored, 1);
+  assert.equal(firstRun.archived, 1);
+  assert.equal(firstRun.failed, 2);
+  assert.equal(firstRun.remaining, 0);
+  assert.deepEqual(firstRun.errors, ["item_timeout", "unknown_error"]);
+
+  // 2. Next run with only the large video left: exceeds itemTimeoutMs (35ms) and succeeds within totalTimeoutMs (300ms).
+  const secondRun = await syncDriveVideos({
+    source: snapshotFor([storedUrl, slowUrl]),
+    totalTimeoutMs: 300,
+    itemTimeoutMs: 35,
+    drive: {
+      async archivedPaths() {
+        return new Set([storedPath]);
+      },
+      async archive(url, signal) {
+        assert.equal(url, slowUrl);
+        await new Promise((resolve) => setTimeout(resolve, 70));
+        assert.equal(signal.aborted, false, "lone remaining video must use the full deadline");
+        return "archived";
+      },
+    },
+  });
+  assert.equal(secondRun.stored, 1);
+  assert.equal(secondRun.archived, 1);
+  assert.equal(secondRun.failed, 0);
+  assert.equal(secondRun.remaining, 0);
+  assert.equal(secondRun.errors, undefined);
+
+  // 3. Known safe Drive errors pass through verbatim for diagnostics.
+  const oauthFailure = await syncDriveVideos({
+    source: snapshotFor([quickUrl]),
+    totalTimeoutMs: 300,
+    itemTimeoutMs: 50,
+    drive: {
+      async archivedPaths() {
+        return new Set();
+      },
+      async archive() {
+        throw new Error("Drive authorization failed (HTTP 400, invalid_grant)");
+      },
+    },
+  });
+  assert.deepEqual(oauthFailure.errors, ["Drive authorization failed (HTTP 400, invalid_grant)"]);
 });

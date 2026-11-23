@@ -52,7 +52,11 @@
  *   status: FeedStatus | "method_not_allowed" | "invalid_request",
  *   posts: PostItem[],
  *   syncedAt?: number,
- *   previewIssue?: "x_credential_missing" | "x_upstream_unavailable",
+ *   previewIssue?:
+ *     | "x_credential_missing"
+ *     | "x_upstream_unavailable"
+ *     | "snapshot_store_unconfigured"
+ *     | "snapshot_unavailable",
  *   pinnedPost?: PostItem | null,
  *   pinnedStatus?: SectionStatus,
  *   articles?: ArticleItem[],

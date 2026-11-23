@@ -163,13 +163,17 @@ export function createBlobArticleCache({
           return null;
         }
         const contentType = cached.blob?.contentType?.split(";")[0].trim().toLowerCase() ?? "";
+        const declaredSize = cached.blob?.size;
+        // Private JSON can be delivered compressed without a Content-Length (size 0).
+        // Keep bounding the decoded stream while allowing unknown/compressed lengths.
+        const validDeclaredSize =
+          declaredSize == null ||
+          (Number.isFinite(declaredSize) && declaredSize >= 0 && declaredSize <= MAX_ARTICLE_CACHE_BYTES);
         if (
           cached.statusCode !== 200 ||
           (contentType && !JSON_TYPES.has(contentType)) ||
           !cached.stream ||
-          !Number.isFinite(cached.blob?.size) ||
-          cached.blob.size <= 0 ||
-          cached.blob.size > MAX_ARTICLE_CACHE_BYTES
+          !validDeclaredSize
         ) {
           await cached.stream?.cancel();
           emit({
@@ -209,7 +213,20 @@ export function createBlobArticleCache({
           text += decoder.decode(value, { stream: true });
         }
         text += decoder.decode();
-        if (size !== cached.blob.size) {
+        if (size <= 0) {
+          emit({
+            type: "x_article_cache",
+            layer: "function_blob",
+            operation: "read",
+            articleId: article.id,
+            outcome: "miss",
+            reason: "invalid_blob",
+            durationMs: Math.max(0, now() - startedAt),
+          });
+          return null;
+        }
+        const compressed = Boolean(cached.headers?.get("content-encoding"));
+        if (!compressed && Number.isFinite(declaredSize) && declaredSize > 0 && size !== declaredSize) {
           emit({
             type: "x_article_cache",
             layer: "function_blob",

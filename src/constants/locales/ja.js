@@ -29,6 +29,10 @@ export default {
   sharedPostUnavailable: "共有された投稿は現在このページで開けません。",
   previewXCredentialMissing: "プレビュー環境に X API トークンが設定されていないため、保存済みの投稿を表示しています。",
   previewXUnavailable: "プレビュー環境で X の同期に失敗したため、保存済みの投稿を表示しています。",
+  previewSnapshotStoreMissing:
+    "プレビュー環境にスナップショット用ストレージが接続されていないため、保存済みの投稿を表示しています。",
+  previewSnapshotUnavailable:
+    "プレビュー環境で公開済みの投稿スナップショットを読み込めなかったため、保存済みの投稿を表示しています。",
   selfQuote: "自分の投稿を引用",
   quotedPostLink: "引用元の投稿を X で見る",
   translationTranslate: "翻訳",

@@ -38,7 +38,7 @@ Vercel 正式站的 `/api/x-profile` 与 `/api/x-posts` 从私有 Blob 的 `x-fe
 
 `/api/x-media`、`/api/x-video` 为同源媒体接口。服务端校验规范形式的签名源地址、类型、有效期和签名（支持通过 `X_MEDIA_SIGNING_SECRET_PREVIOUS` 实现双密钥平滑轮换），精确旧媒体名单提供缓存兼容。`api/x-video.js` 流式转发单段 Range（包括浏览器用于大视频的 `bytes=0-`），拒绝 `bytes=-0`，并设有 55 秒的单次请求总时限。`416` 仅在已知视频完整长度时包含 `Content-Range`。
 
-正式站的私有调度 `sync-x-videos` 在每小时第 57 分钟从已保存的动态快照提取视频和 GIF 的 MP4，只检查唯一的媒体地址。已有私有 Blob 副本时优先用它作为导入来源，其余从 X 的媒体 CDN 流式下载。单文件上限 100 MB。上传使用 Drive `drive.file` 权限和预分配 ID，Blob 保存按媒体摘要生成的私有预留及索引。重试复用预留 ID，并在 Drive 确认完整文件后发布索引。任务可从 Vercel Schedules 手动运行。正文、资料、图片和旧视频副本仍保存在原有存储中。
+正式站的私有调度 `sync-x-videos` 在每小时第 57 分钟从已保存的动态快照提取视频和 GIF 的 MP4，只检查唯一的媒体地址。已有私有 Blob 副本时优先用它作为导入来源，其余从 X 的媒体 CDN 流式下载。单文件上限 100 MB；多条待归档时单文件限 24 秒避免大文件阻塞其余小视频，仅剩单条待归档时可使用完整 52 秒总预算（函数上限 60 秒），失败仅记录脱敏原因码。上传使用 Drive `drive.file` 权限和预分配 ID，Blob 保存按媒体摘要生成的私有预留及索引。重试复用预留 ID，并在 Drive 确认完整文件后发布索引。任务可从 Vercel Schedules 手动运行。正文、资料、图片和旧视频副本仍保存在原有存储中。
 
 签名校验后，正式站优先从私有 Drive 分段读取。Drive 暂时不可用或媒体待导入时，读取已有 Blob 或回源到 X 的媒体 CDN，访客请求只读取媒体，不触发上传或调用 X 动态 API。普通、开放尾端及后缀 Range 保留 `206` 和 `Content-Range`。诊断 Drive 命中时，用有效签名和 Range 检查 `X-Nest-Video-Store: drive`。部署时 `scripts/verify-drive-connection.mjs` 用 Production 的三项 `GOOGLE_DRIVE_*` 变量刷新访问令牌并验证可分配文件 ID。授权失效时，重新授权同一客户端、更新刷新令牌，再部署。
 

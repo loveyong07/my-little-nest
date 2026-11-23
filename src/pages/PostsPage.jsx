@@ -203,7 +203,11 @@ function PostsContent({ language, t, profile, onFeedReady, historyReading = null
       ? t.previewXCredentialMissing
       : previewIssue === "x_upstream_unavailable"
         ? t.previewXUnavailable
-        : null;
+        : previewIssue === "snapshot_store_unconfigured"
+          ? t.previewSnapshotStoreMissing
+          : previewIssue === "snapshot_unavailable"
+            ? t.previewSnapshotUnavailable
+            : null;
   const statusText = feedLoading
     ? feedSource === "snapshot"
       ? t.feedLoading

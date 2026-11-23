@@ -163,9 +163,9 @@ export function useXFeed(historyReading = null, sharedPost = null) {
         }
         alignRetryCooldown();
         setFeedLoading(false);
-      } catch {
+      } catch (error) {
         if (mounted) {
-          setPreviewIssue(null);
+          setPreviewIssue(typeof error?.previewIssue === "string" ? error.previewIssue : null);
           setFeedSource((current) => (current === "live" ? "stale" : current));
           setPinState(pinnedPostRef.current ? "stale" : "unavailable");
           setArticleReading((current) => refreshedArticleReading(current, null));

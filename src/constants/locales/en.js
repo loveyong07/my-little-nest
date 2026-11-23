@@ -29,6 +29,9 @@ export default {
   sharedPostUnavailable: "This shared post is currently unavailable on the site.",
   previewXCredentialMissing: "This preview has no X API token. Showing the site's saved snapshot.",
   previewXUnavailable: "X sync failed in this preview. Showing the site's saved snapshot.",
+  previewSnapshotStoreMissing: "This preview has no snapshot store configured. Showing the site's saved snapshot.",
+  previewSnapshotUnavailable:
+    "This preview could not load the published X snapshot. Showing the site's saved snapshot.",
   selfQuote: "Quoted their own post",
   quotedPostLink: "View the quoted post on X",
   translationTranslate: "Translate",
