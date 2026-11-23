@@ -23,6 +23,10 @@ export default [
     rules: reactHooks.configs.recommended.rules,
   },
   {
+    files: ["public/**/*.js"],
+    languageOptions: { globals: globals.browser },
+  },
+  {
     files: ["api/**", "server/**", "build/**", "scripts/**", "tests/**", "*.mjs"],
     languageOptions: { globals: globals.node },
   },

@@ -109,12 +109,11 @@ a {
   color: inherit;
 }
 .site-legal-links {
-  position: fixed;
-  z-index: 10;
-  right: max(12px, env(safe-area-inset-right));
-  bottom: max(8px, env(safe-area-inset-bottom));
+  position: relative;
   display: flex;
   align-items: center;
+  width: fit-content;
+  margin: 12px max(12px, env(safe-area-inset-right)) 0 auto;
   padding-inline: 4px;
   border: 1px solid #c4d9eb;
   border-radius: 18px;
@@ -130,6 +129,16 @@ a {
   min-height: 32px;
   padding-inline: 8px;
   text-underline-offset: 0.2em;
+}
+@media (min-width: 901px) and (pointer: fine) {
+  /* The one-screen homepage reserves its bottom edge for these links. */
+  .site:not(.site-route) > .site-legal-links {
+    position: absolute;
+    z-index: 2;
+    right: max(12px, env(safe-area-inset-right));
+    bottom: max(8px, env(safe-area-inset-bottom));
+    margin: 0;
+  }
 }
 @media (max-width: 900px), (pointer: coarse), (pointer: none) {
   .site-legal-links a {

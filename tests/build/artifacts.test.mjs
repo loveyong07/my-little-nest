@@ -182,6 +182,8 @@ test("public legal pages include all translations without running the app", asyn
     ]) {
       assert.ok(html.includes(`id="${id}" lang="${language}"`));
     }
-    assert.doesNotMatch(html, /<script\b/);
+    const navigationScript = '<script type="module" src="/legal/legal-navigation.js"></script>';
+    assert.ok(html.includes(navigationScript));
+    assert.doesNotMatch(html.replace(navigationScript, ""), /<script\b/);
   }
 });

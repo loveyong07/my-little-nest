@@ -20,38 +20,6 @@
     pointer-events: none;
   }
 
-  /* All three routes align with the same header and content gutters. */
-  :root {
-    --site-header-height: 94px;
-  }
-  .site-header {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    width: min(100% - 2 * var(--layout-gutter), var(--layout-width));
-    height: var(--site-header-height);
-    margin-inline: auto;
-    padding: 12px 0;
-    gap: 20px;
-  }
-  .site .brand,
-  .site .brand-caption {
-    color: #fff;
-    text-shadow: 0 2px 10px #1f48708c;
-  }
-  .brand {
-    justify-self: start;
-  }
-  .brand-script {
-    font-size: 40px;
-    letter-spacing: -0.06em;
-  }
-  .site .brand-script svg {
-    color: #eef6ff;
-  }
-  .brand-caption {
-    margin-top: 3px;
-    letter-spacing: 0.14em;
-  }
   .site-nav {
     position: relative;
     display: grid;
@@ -122,32 +90,6 @@
   }
   .site-nav a:hover .nav-page-icon {
     transform: rotate(-10deg) scale(1.08);
-  }
-  .language-picker {
-    justify-self: end;
-    padding: 5px;
-    border: 1px solid #ffffffd9;
-    border-radius: 999px;
-    background: linear-gradient(135deg, #fffdfeed, #f2f8ffeb);
-    box-shadow:
-      0 10px 26px #214c751c,
-      inset 0 1px 1px #fff;
-  }
-  .language-picker button {
-    min-height: 38px;
-    padding-inline: 13px;
-    border-radius: 999px;
-    font-size: 12px;
-    transition:
-      transform 200ms var(--ease-spring),
-      background 200ms ease;
-  }
-  .language-picker button.active {
-    background: var(--desk-lilac);
-    box-shadow:
-      0 3px 10px #7956901c,
-      inset 0 1px 1px #fff;
-    color: var(--desk-plum);
   }
 }
 

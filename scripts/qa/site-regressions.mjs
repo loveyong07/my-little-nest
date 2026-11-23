@@ -747,31 +747,110 @@ async function desktopNavStability(video) {
 async function legalPages(video) {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   try {
-    await setup(context, feedData(), video, Promise.resolve(), false);
+    await setup(context, feedData(), video);
     const page = await context.newPage();
-    for (const route of ["/", "/posts", "/contact"]) {
+    for (const [route, contentSelector] of [
+      ["/", ".hero"],
+      ["/posts", ".posts-flow"],
+      ["/contact", ".contact-desk"],
+    ]) {
       await page.goto(origin + route);
       const footer = page.locator(".site-legal-links");
       await footer.waitFor({ state: "visible" });
       assert.equal(await footer.getByRole("link", { name: "隐私政策" }).getAttribute("href"), "/privacy");
       assert.equal(await footer.getByRole("link", { name: "服务条款" }).getAttribute("href"), "/terms");
-      const rect = await footer.boundingBox();
-      assert.ok(rect.x + rect.width > 355 && rect.y + rect.height > 810, "legal links sit at the bottom right");
+      await page.locator(contentSelector).waitFor({ state: "attached" });
+      if (route === "/posts") await page.locator(".post-reading .post-card").first().waitFor();
+      const footerBounds = await footer.boundingBox();
+      const contentBounds = await page.locator(route === "/" ? ".hero" : "main.route-panel").boundingBox();
+      assert.ok(footerBounds.y >= contentBounds.y + contentBounds.height, `legal links clear ${route} content`);
+      assert.ok(footerBounds.x + footerBounds.width > 355, "legal links align to the right");
     }
     await page.getByRole("button", { name: "日本語", exact: true }).click();
     const privacy = page.locator(".site-legal-links").getByRole("link", { name: "プライバシーポリシー" });
     await privacy.click();
     await page.getByRole("heading", { name: "プライバシーポリシー", level: 1 }).waitFor();
     assert.equal(new URL(page.url()).hash, "#ja");
-    await page.getByRole("link", { name: "English", exact: true }).click();
+    assert.equal(await page.getByRole("link", { name: "ホームに戻る" }).getAttribute("href"), "/");
+    await page.getByRole("link", { name: "EN", exact: true }).click();
     await page.getByRole("heading", { name: "Privacy Policy", level: 1 }).waitFor();
     await page.getByRole("link", { name: "Terms of Service", exact: true }).click();
     await page.getByRole("heading", { name: "Terms of Service", level: 1 }).waitFor();
-    await page.getByRole("link", { name: "简体中文", exact: true }).click();
+    assert.equal(await page.getByRole("link", { name: "Back to home" }).getAttribute("href"), "/");
+    await page.getByRole("link", { name: "中文", exact: true }).click();
     await page.getByRole("heading", { name: "服务条款", level: 1 }).waitFor();
-    console.log("PASS public legal pages, bottom-right links, and language switching across both documents");
+    await page.getByRole("link", { name: "返回首页" }).click();
+    await page.waitForURL(origin + "/");
+
+    for (const viewport of [
+      { width: 390, height: 844, portrait: true },
+      { width: 1440, height: 900, portrait: false },
+    ]) {
+      const { portrait, ...size } = viewport;
+      await page.setViewportSize(size);
+      for (const [route, artwork] of [
+        ["/privacy", "privacy-kite"],
+        ["/terms", "terms-autumn"],
+      ]) {
+        await page.goto(origin + route);
+        const scene = page.locator(".legal-scene");
+        const source = await scene.locator("img").evaluate(async (image) => {
+          await image.decode();
+          return new URL(image.currentSrc).pathname;
+        });
+        assert.equal(source, `/assets/${artwork}${portrait ? "-portrait" : ""}.webp`);
+        await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+        assert.deepEqual(await scene.boundingBox(), { x: 0, y: 0, ...size });
+        const copy = page.locator(".legal-copy:visible");
+        assert.match(await copy.evaluate((element) => getComputedStyle(element).backdropFilter), /blur\(/);
+        const reading = await copy.boundingBox();
+        const back = await page.getByRole("link", { name: "返回首页" }).boundingBox();
+        assert.ok(Math.abs(reading.x + reading.width / 2 - size.width / 2) <= 1, "legal card is centered");
+        assert.ok(back.y >= reading.y + reading.height, "return link sits below the legal card");
+        assert.ok(Math.abs(back.x + back.width - reading.x - reading.width) <= 1, "return link aligns to the right");
+        assert.ok(back.height >= 60, "return link has a larger tap target");
+        assert.equal((await page.locator(".brand-script").innerText()).trim(), "Nest");
+        assert.deepEqual(await page.locator(".language-picker a").allTextContents(), ["中文", "日本語", "EN"]);
+        const nav = page.locator(".legal-nav");
+        const navBounds = await nav.boundingBox();
+        assert.ok(
+          Math.abs(navBounds.x + navBounds.width / 2 - size.width / 2) <= 1,
+          "legal pages switch in the center",
+        );
+        assert.equal(await nav.locator("a[aria-current]:visible").getAttribute("href"), route);
+        assert.equal(
+          await copy.locator(".legal-updated").evaluate((element) => getComputedStyle(element).textAlign),
+          "right",
+        );
+      }
+    }
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(origin + "/privacy#ja");
+    await page.locator(".legal-nav[data-swipe-ready]").waitFor();
+    const active = await page.locator(".legal-nav a[aria-current]:visible").boundingBox();
+    const x = Math.round(active.x + active.width / 2);
+    const y = Math.round(active.y + active.height / 2);
+    const touch = await context.newCDPSession(page);
+    await touch.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y }] });
+    for (const distance of [12, 30, 54, 78]) {
+      await touch.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: x + distance, y }] });
+    }
+    await touch.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    await page.waitForURL(origin + "/terms#ja");
+    assert.equal(await page.locator(".legal-nav a[aria-current]:visible").innerText(), "利用規約");
+    console.log("PASS centered legal navigation, localized clicks and swipes, full-screen art, and the return link");
   } finally {
     await context.close();
+  }
+  const staticContext = await browser.newContext({ javaScriptEnabled: false });
+  try {
+    const page = await staticContext.newPage();
+    await page.goto(origin + "/privacy#en");
+    await page.locator(".legal-nav").getByRole("link", { name: "Terms of Service" }).click();
+    await page.waitForURL(origin + "/terms#en");
+    assert.equal(await page.locator(".legal-copy:visible time").innerText(), "November 23, 2026");
+  } finally {
+    await staticContext.close();
   }
 }
 

@@ -2,7 +2,7 @@
   position: relative;
   min-height: 100vh;
   overflow: clip;
-  padding-bottom: 90px;
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
   background: linear-gradient(145deg, var(--surface-tint) 38%, #edf6ff 70%, var(--surface-blue));
 }
 
@@ -157,9 +157,6 @@
 }
 
 @media (max-width: 700px) {
-  .site {
-    padding-bottom: 100px;
-  }
   .site-route-posts {
     --route-scene-position: 66% 55%;
   }
