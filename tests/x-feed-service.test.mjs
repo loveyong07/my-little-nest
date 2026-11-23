@@ -246,7 +246,7 @@ test("backs off repeated profile failures and keeps the last successful profile 
   assert.equal(calls, 3, "the profile must recover once the upstream works again");
 });
 
-test("returns only original posts and caches successful X responses", async () => {
+test("caches successful X responses containing originals and verified self-quotes", async () => {
   const urls = [];
   let time = 1000;
   const feed = createXFeedService({
@@ -307,11 +307,20 @@ test("returns only original posts and caches successful X responses", async () =
         avatar: "https://pbs.twimg.com/avatar.jpg",
         permalink: "https://x.com/loveyong07/status/1",
       },
+      {
+        id: "4",
+        text: "Quote",
+        created_at: "2026-09-25T00:00:00Z",
+        author: "初咏",
+        avatar: "https://pbs.twimg.com/avatar.jpg",
+        permalink: "https://x.com/loveyong07/status/4",
+        quotedPost: { id: "9", text: "Shared original", permalink: "https://x.com/loveyong07/status/9" },
+      },
     ],
   });
   assert.equal(new URL(urls[1]).searchParams.get("exclude"), "replies");
   assert.equal(new URL(urls[1]).searchParams.get("max_results"), "100");
-  assert.equal((await feed()).posts.length, 1);
+  assert.equal((await feed()).posts.length, 2);
   assert.equal(urls.length, 3);
   time += 15 * 60 * 1000;
   assert.deepEqual((await feed()).posts, first.posts);
@@ -833,7 +842,7 @@ test("does not call a feed live when requested post metadata is missing", async 
   assert.deepEqual(await feed(), { status: "unavailable", posts: [] });
 });
 
-test("loads the account's pinned reply with its photo and excludes it from daily posts", async () => {
+test("loads a pinned reply to the account's own post with its photo and excludes it from daily posts", async () => {
   const urls = [];
   const feed = createXFeedService({
     token: "private-test-token",
@@ -857,7 +866,7 @@ test("loads the account's pinned reply with its photo and excludes it from daily
         return new Response(
           JSON.stringify({
             data: post("8", "Pinned reply https://t.co/photo", {
-              in_reply_to_user_id: "456",
+              in_reply_to_user_id: "2061726102180311040",
               referenced_tweets: [{ type: "replied_to", id: "4" }],
               attachments: { media_keys: ["photo"] },
               entities: {
@@ -901,7 +910,7 @@ test("loads the account's pinned reply with its photo and excludes it from daily
   assert.equal(urls[0].searchParams.has("expansions"), false);
   assert.equal(
     urls.find((item) => item.pathname === "/2/tweets/8").searchParams.get("expansions"),
-    "attachments.media_keys",
+    "attachments.media_keys,referenced_tweets.id",
   );
 });
 

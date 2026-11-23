@@ -17,6 +17,7 @@ import { formatPostDate } from "../utils/date.js";
 import { postExcerpt, postMonthKey, postMonths } from "../utils/posts.js";
 import { preferredScrollBehavior } from "../utils/motion.js";
 import { canPrefetch } from "../utils/network.js";
+import { sharedPostFromSearch } from "../utils/post-sharing.js";
 import { hasAgeConfirmation, rememberAgeConfirmation } from "../utils/age-confirmation.js";
 import { xProfileUrl } from "../constants/site.js";
 import "../styles/posts-route.css";
@@ -51,6 +52,8 @@ export default function PostsPage(props) {
 }
 
 function PostsContent({ language, t, profile, onFeedReady, historyReading = null, rememberReading = undefined }) {
+  const [sharedPost] = useState(() => (historyReading ? null : sharedPostFromSearch(window.location.search)));
+  const [sharedPostOpened, setSharedPostOpened] = useState(false);
   const [largeText, setLargeText] = useState(() => Boolean(historyReading?.largeText));
   const [focusReading, setFocusReading] = useState(() => Boolean(historyReading?.focusReading));
   const desktop = useDesktopLayout();
@@ -94,11 +97,28 @@ function PostsContent({ language, t, profile, onFeedReady, historyReading = null
     selectedPostId,
     selectedRepostId,
     selectedArticleId,
-  } = useXFeed(historyReading);
+  } = useXFeed(historyReading, sharedPost);
   const readingRef = useRef(null);
   const indexRef = useRef(null);
   const currentPost = posts[Math.min(postIndex, Math.max(0, posts.length - 1))];
+  const sharedCardExists =
+    sharedPost &&
+    (!feedLoading || feedSource !== "snapshot") &&
+    (sharedPost.type === "post"
+      ? sharedPost.id === pinnedPost?.id || sharedPost.id === currentPost?.id
+      : sharedPost.id === reposts[repostIndex]?.repostId);
   const months = useMemo(() => postMonths(posts, language), [posts, language]);
+  useEffect(() => {
+    if (!sharedPost || !sharedCardExists || sharedPostOpened) return undefined;
+    const frame = window.requestAnimationFrame(() => {
+      const card = document.getElementById(`${sharedPost.type}-${sharedPost.id}`);
+      if (!card) return;
+      card.focus({ preventScroll: true });
+      card.scrollIntoView({ block: "start", behavior: "instant" });
+      setSharedPostOpened(true);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [sharedPost, sharedCardExists, sharedPostOpened]);
   useLayoutEffect(() => {
     rememberReading?.({
       postId: selectedPostId,
@@ -222,6 +242,11 @@ function PostsContent({ language, t, profile, onFeedReady, historyReading = null
         }
       />
       <div className="posts-flow">
+        {sharedPost && !sharedPostOpened && !sharedCardExists && (
+          <p className="feed-status" role="status">
+            {feedLoading ? t.sharedPostLoading : t.sharedPostUnavailable}
+          </p>
+        )}
         {statusText && (
           <div className={`feed-status${feedLoading ? " is-loading" : ""}`} role="status">
             <FiRefreshCw aria-hidden="true" />

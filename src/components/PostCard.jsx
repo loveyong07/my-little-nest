@@ -1,6 +1,6 @@
-import { useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { FaArrowRight, FaXTwitter } from "react-icons/fa6";
-import { FiCheck, FiLink, FiRepeat } from "react-icons/fi";
+import { FiCheck, FiLink, FiMessageCircle, FiRepeat, FiShare2 } from "react-icons/fi";
 import { FALLBACK_AVATAR, ASSETS } from "../constants/site.js";
 import { handleAvatarError } from "../utils/profile.js";
 import { formatPostDate } from "../utils/date.js";
@@ -12,10 +12,13 @@ import { PostVideo } from "./PostVideo.jsx";
 import { MediaLightbox } from "./MediaLightbox.jsx";
 import { CopyFallback } from "./ContactTile.jsx";
 import { displayXText } from "../utils/x-text.js";
+import { postShareDetails } from "../utils/post-sharing.js";
 import { textLinkParts } from "../../shared/article-links.mjs";
+import { JSON_REQUEST_TIMEOUT_MS } from "../../shared/request-budgets.mjs";
 import { translatableParts, translatedPartText } from "../utils/translation.js";
 import { useContentTranslation } from "../hooks/useContentTranslation.js";
 import { ContentTranslationControl } from "./ContentTranslationControl.jsx";
+import { PostComments } from "./PostComments.jsx";
 
 function postParagraphs(post, segments) {
   const links = Array.isArray(post.links) ? post.links : [];
@@ -46,6 +49,63 @@ function postParagraphs(post, segments) {
   return paragraphs;
 }
 
+function PostReplies({ url, t, language, profile }) {
+  const [attempt, setAttempt] = useState(0);
+  const [result, setResult] = useState(
+    /** @type {import("../../shared/contracts.mjs").RepliesResponse | null} */ (null),
+  );
+
+  useEffect(() => {
+    const controller = new AbortController();
+    async function load() {
+      try {
+        const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(JSON_REQUEST_TIMEOUT_MS)]);
+        const response = await fetch(url, { signal });
+        if (!response.ok) throw new Error("Replies unavailable");
+        const data = await response.json();
+        if (!controller.signal.aborted) {
+          setResult(data?.status === "ok" && Array.isArray(data.replies) ? data : { status: "unavailable" });
+        }
+      } catch {
+        if (!controller.signal.aborted) setResult({ status: "unavailable" });
+      }
+    }
+    void load();
+    return () => controller.abort();
+  }, [url, attempt]);
+
+  if (!result) return <p role="status">{t.repliesLoading}</p>;
+  if (result.status === "unavailable") {
+    return (
+      <div className="feed-status-actions">
+        <p role="status">{t.repliesUnavailable}</p>
+        <button
+          type="button"
+          onClick={() => {
+            setResult(null);
+            setAttempt((value) => value + 1);
+          }}
+        >
+          {t.retry}
+        </button>
+      </div>
+    );
+  }
+  if (!result.replies.length) return <p role="status">{result.limited ? t.repliesLimited : t.repliesEmpty}</p>;
+  return (
+    <>
+      <p role="status">{result.limited ? t.repliesLimited : t.repliesRecent}</p>
+      <ul className="post-reply-list">
+        {result.replies.map((reply) => (
+          <li key={reply.id}>
+            <PostCard post={reply} feedSource="live" language={language} t={t} profile={profile} asReply />
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
+
 export function PostCard({
   post,
   feedSource,
@@ -55,9 +115,16 @@ export function PostCard({
   profile,
   priorityMedia = false,
   nextPost = null,
+  asReply = false,
 }) {
   const desktop = useDesktopLayout();
   const { copiedId, copyFailedId, manualCopyRef, copyId } = useClipboard();
+  const [showReplies, setShowReplies] = useState(false);
+  const repliesId = useId();
+  const [showComments, setShowComments] = useState(false);
+  const commentsId = useId();
+  const share = asReply ? null : postShareDetails(post);
+  const shareCopied = share && copiedId === share.url;
   const text = displayXText(post.text);
   const segments = [];
   const paragraphs = postParagraphs(post, segments);
@@ -85,9 +152,22 @@ export function PostCard({
     returnFocusRef.current = event.currentTarget;
     setExpandedMedia(kind);
   }
+
+  async function sharePost() {
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share({ url: share.url });
+        return;
+      } catch (error) {
+        if (error?.name === "AbortError") return;
+      }
+    }
+    await copyId(share.url);
+  }
+
   return (
     <>
-      <article className="post-card">
+      <article className="post-card" id={share?.cardId} tabIndex={share ? -1 : undefined}>
         {post.repostId && (
           <p className="post-repost-context">
             <FiRepeat aria-hidden="true" />
@@ -144,6 +224,27 @@ export function PostCard({
         {videos.map((video, index) => (
           <PostVideo key={`${video.url}-${index}`} video={video} t={t} />
         ))}
+        {post.quotedPost && (
+          <blockquote className="post-quote">
+            <strong>{t.selfQuote}</strong>
+            {post.quotedPost.text && (
+              <p dir="auto">
+                {textLinkParts(displayXText(post.quotedPost.text)).map((part, index) =>
+                  part.url ? (
+                    <a key={index} href={part.url} target="_blank" rel="noopener noreferrer">
+                      {part.text}
+                    </a>
+                  ) : (
+                    part.text
+                  ),
+                )}
+              </p>
+            )}
+            <a href={post.quotedPost.permalink} target="_blank" rel="noopener noreferrer">
+              {t.quotedPostLink}
+            </a>
+          </blockquote>
+        )}
         {isSnapshot && (
           <figure className="post-illustration">
             <img src={`${ASSETS}/post-seaside.webp`} alt={t.imageAlt} loading="lazy" decoding="async" />
@@ -152,7 +253,36 @@ export function PostCard({
         )}
         <div className="post-bottomline">
           {sourceLabel && <span>{sourceLabel}</span>}
-          {desktop && post.permalink && (
+          {!asReply && post.repliesUrl && (
+            <button
+              type="button"
+              className="post-action"
+              aria-expanded={showReplies}
+              aria-controls={repliesId}
+              onClick={() => setShowReplies((value) => !value)}
+            >
+              <FiMessageCircle aria-hidden="true" />
+              {showReplies ? t.hideReplies : t.viewReplies}
+            </button>
+          )}
+          {!asReply && post.commentsUrl && (
+            <button
+              type="button"
+              className="post-action"
+              aria-expanded={showComments}
+              aria-controls={commentsId}
+              onClick={() => setShowComments((value) => !value)}
+            >
+              {showComments ? t.hideComments : t.viewComments}
+            </button>
+          )}
+          {share && (
+            <button type="button" className="post-action" onClick={sharePost}>
+              {shareCopied ? <FiCheck aria-hidden="true" /> : <FiShare2 aria-hidden="true" />}
+              <span aria-live="polite">{shareCopied ? t.linkCopied : t.sharePost}</span>
+            </button>
+          )}
+          {!asReply && desktop && post.permalink && (
             <button
               type="button"
               className={`post-copy-link${copiedId === post.permalink ? " is-copied" : ""}`}
@@ -168,13 +298,25 @@ export function PostCard({
             <FaArrowRight aria-hidden="true" />
           </a>
         </div>
-        {copyFailedId && copyFailedId === post.permalink && (
+        {copyFailedId && (
           <CopyFallback
             value={copyFailedId}
             message={t.copyLinkFailed}
-            label={t.copyPostLink}
+            label={copyFailedId === share?.url ? t.sharePost : t.copyPostLink}
             inputRef={manualCopyRef}
           />
+        )}
+        {!asReply && post.repliesUrl && (
+          <section id={repliesId} className="post-discussion" aria-label={t.viewReplies} hidden={!showReplies}>
+            {showReplies && (
+              <PostReplies key={post.repliesUrl} url={post.repliesUrl} t={t} language={language} profile={profile} />
+            )}
+          </section>
+        )}
+        {!asReply && post.commentsUrl && (
+          <section id={commentsId} className="post-discussion" aria-label={t.viewComments} hidden={!showComments}>
+            {showComments && <PostComments key={post.commentsUrl} url={post.commentsUrl} t={t} language={language} />}
+          </section>
         )}
         <div className="glass-panel-backdrop glass-reading-backdrop" aria-hidden="true" />
       </article>

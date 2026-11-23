@@ -102,7 +102,7 @@ function feedData() {
   };
 }
 
-async function setup(context, feed, video, gate = Promise.resolve()) {
+async function setup(context, feed, video, gate = Promise.resolve(), confirmAge = true) {
   await context.route("**/api/x-posts", async (route) => {
     await gate;
     await route.fulfill({ contentType: "application/json", body: JSON.stringify(feed) });
@@ -121,7 +121,108 @@ async function setup(context, feed, video, gate = Promise.resolve()) {
       body: video.subarray(start, end + 1),
     });
   });
-  await context.addInitScript(() => sessionStorage.setItem("nest-posts-age-confirmed", "18+"));
+  if (confirmAge) await context.addInitScript(() => sessionStorage.setItem("nest-posts-age-confirmed", "18+"));
+}
+
+async function postDiscussion(video) {
+  const feed = feedData();
+  const post = feed.posts[1];
+  post.media = [];
+  post.repliesUrl = `/api/x-replies?post=${post.id}`;
+  post.commentsUrl = `/api/post-comments?post=${post.id}`;
+  post.quotedPost = { id: feed.posts[0].id, text: "Quoted original", permalink: feed.posts[0].permalink };
+  const reply = {
+    id: "2190000000000000005",
+    text: "Reply from X",
+    author: "Reader",
+    username: "reader",
+    created_at: post.created_at,
+  };
+  const comments = [];
+  const mobile = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+    locale: "zh-CN",
+    reducedMotion: "reduce",
+  });
+  const desktop = await browser.newContext({
+    viewport: { width: 1280, height: 720 },
+    locale: "zh-CN",
+    reducedMotion: "reduce",
+  });
+  try {
+    for (const context of [mobile, desktop]) {
+      await setup(context, feed, video, Promise.resolve(), false);
+      await context.route("**/api/x-replies?**", (route) =>
+        route.fulfill({ json: { status: "ok", replies: [reply] } }),
+      );
+      await context.route("**/api/post-comments?**", (route) => {
+        if (route.request().method() === "POST") {
+          const { id, text } = route.request().postDataJSON();
+          comments.unshift({ id, text, createdAt: post.created_at });
+        }
+        return route.fulfill({ json: { status: "ok", comments } });
+      });
+    }
+    await mobile.addInitScript(() => {
+      Object.defineProperty(navigator, "share", {
+        value: async (data) => {
+          document.body.dataset.sharedUrl = data.url;
+        },
+      });
+    });
+    await desktop.addInitScript(() => {
+      Object.defineProperty(navigator, "share", { value: undefined });
+      Object.defineProperty(navigator, "clipboard", {
+        value: {
+          writeText: async (url) => {
+            document.body.dataset.copiedUrl = url;
+          },
+        },
+      });
+    });
+    const page = await mobile.newPage();
+    await page.goto(`${origin}/posts?post=${post.id}`);
+    await page.getByRole("button", { name: copy.zh.ageGateConfirm }).waitFor();
+    assert.equal(await page.locator(".post-card").count(), 0);
+    await page.getByRole("button", { name: copy.zh.ageGateConfirm }).click();
+    const card = page.locator(`#post-${post.id}`);
+    await card.getByText("Quoted original", { exact: true }).waitFor();
+    await page.waitForFunction((id) => document.activeElement.id === `post-${id}`, post.id);
+    await card.getByRole("button", { name: copy.zh.sharePost, exact: true }).click();
+    const shared = await page.locator("body").getAttribute("data-shared-url");
+    assert.equal(shared, `${origin}/posts?post=${post.id}`);
+    await card.getByRole("button", { name: copy.zh.viewReplies }).click();
+    await card.getByText("Reply from X").waitFor();
+    await card.getByRole("button", { name: copy.zh.hideReplies }).click();
+    await card.getByRole("button", { name: copy.zh.viewComments }).click();
+    await card.getByText(copy.zh.commentsEmpty).waitFor();
+    await card.getByRole("textbox", { name: copy.zh.commentText }).fill("这篇写得很有意思！");
+    await card.getByRole("button", { name: copy.zh.commentSubmit }).click();
+    await card.getByText(copy.zh.commentPublished).waitFor();
+    await card.getByText("这篇写得很有意思！").waitFor();
+    await card.getByRole("textbox", { name: copy.zh.commentText }).scrollIntoViewIfNeeded();
+    await page.screenshot({ path: path.join(output, "post-discussion-mobile.png") });
+
+    const recipient = await desktop.newPage();
+    await recipient.goto(shared);
+    await recipient.getByRole("button", { name: copy.zh.ageGateConfirm }).click();
+    const recipientCard = recipient.locator(`#post-${post.id}`);
+    await recipientCard.getByRole("button", { name: copy.zh.sharePost, exact: true }).click();
+    await recipientCard.getByRole("button", { name: copy.zh.linkCopied, exact: true }).waitFor();
+    assert.equal(await recipient.locator("body").getAttribute("data-copied-url"), shared);
+    await recipientCard.getByRole("button", { name: copy.zh.viewComments }).click();
+    await recipientCard.getByText("这篇写得很有意思！").waitFor();
+    await recipient.goto(`${origin}/posts?repost=${feed.reposts[0].repostId}`);
+    const repost = recipient.locator(`#repost-${feed.reposts[0].repostId}`);
+    await repost.waitFor();
+    await recipient.waitForFunction((id) => document.activeElement.id === `repost-${id}`, feed.reposts[0].repostId);
+    console.log("✓ post sharing, self-quote, X replies and comments across two browser sessions");
+  } finally {
+    await mobile.close();
+    await desktop.close();
+  }
 }
 
 async function interactions(video) {
@@ -577,6 +678,7 @@ try {
   }
   browser = await chromium.launch({ channel: process.env.QA_BROWSER || "chrome" });
   const video = await recordVideo();
+  await postDiscussion(video);
   await interactions(video);
   await multipleAttachments(video);
   await routeAndAccessibility(video);
