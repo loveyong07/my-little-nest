@@ -3,6 +3,13 @@ import { VIDEO_TYPE } from "./video-cache.mjs";
 const files = "https://www.googleapis.com/drive/v3/files";
 const uploads = "https://www.googleapis.com/upload/drive/v3/files";
 const fileFields = "id,mimeType,size,trashed,appProperties";
+const oauthErrors = new Set([
+  "invalid_client",
+  "invalid_grant",
+  "invalid_request",
+  "unauthorized_client",
+  "access_denied",
+]);
 export const validDriveId = (value) => typeof value === "string" && /^[A-Za-z0-9_-]{6,128}$/.test(value);
 
 async function checked(response, operation) {
@@ -33,9 +40,14 @@ export function createDriveClient({ env = process.env, fetchImpl = fetch, now = 
         redirect: "error",
         signal: AbortSignal.timeout(6000),
       });
-      const result = await (await checked(response, "authorization")).json();
-      if (!result.access_token || !Number.isFinite(result.expires_in))
+      const result = await response.json().catch(() => null);
+      if (!response.ok) {
+        const reason = oauthErrors.has(result?.error) ? `, ${result.error}` : "";
+        throw new Error(`Drive authorization failed (HTTP ${response.status}${reason})`);
+      }
+      if (typeof result?.access_token !== "string" || !result.access_token || !Number.isFinite(result.expires_in)) {
         throw new Error("Drive authorization is invalid");
+      }
       token = { value: result.access_token, expires: now() + Math.max(0, result.expires_in - 60) * 1000 };
       return token.value;
     })().finally(() => {
