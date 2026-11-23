@@ -1,5 +1,5 @@
 /* Age confirmation replaces the feed until the visitor explicitly accepts. */
-.site-route-posts a:any-link,
+.site-route-posts :not(.site-nav) > a:any-link,
 .posts-section a:any-link,
 .posts-age-gate a:any-link {
   text-decoration-line: underline;
@@ -886,36 +886,11 @@
   font: inherit;
   font-weight: 700;
 }
-.post-action:hover,
-.post-action[aria-expanded="true"] {
+.post-action:hover {
   background: var(--pastel-lavender);
 }
 .post-action svg {
   flex: none;
-}
-.post-action:disabled {
-  opacity: 0.65;
-  cursor: default;
-}
-.post-discussion {
-  margin-top: var(--space-4);
-  padding-top: var(--space-3);
-  border-top: 1px dashed var(--color-border);
-  color: var(--color-muted);
-  font-size: var(--font-sm);
-}
-.post-discussion p[role="status"] {
-  margin: 0;
-}
-.post-reply-list {
-  display: grid;
-  gap: var(--space-2);
-  margin: var(--space-3) 0 0;
-  padding: 0;
-  list-style: none;
-}
-.post-reply-list .post-card {
-  margin: 0;
 }
 .post-quote {
   margin: var(--space-4) 0 0;
@@ -937,52 +912,6 @@ section.post-quote > .post-card {
 }
 .post-quote .post-topline {
   padding-bottom: var(--space-2);
-}
-.post-comment-form label {
-  display: grid;
-  gap: var(--space-1);
-  font-weight: 700;
-}
-.post-comment-form textarea {
-  width: 100%;
-  min-height: 84px;
-  padding: var(--space-2) var(--space-3);
-  resize: vertical;
-  border: 1px solid var(--paper-border);
-  border-radius: var(--radius-sm);
-  background: var(--surface-tint);
-  color: var(--color-text);
-  font: inherit;
-  font-weight: 500;
-}
-.post-comment-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-  margin: var(--space-2) 0;
-}
-.post-comment-list {
-  display: grid;
-  gap: var(--space-2);
-  margin: var(--space-3) 0;
-  padding: 0;
-  list-style: none;
-}
-.post-comment-list li {
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-sm);
-  background: var(--surface-blue);
-}
-.post-comment-list p {
-  margin: var(--space-1) 0 0;
-  color: var(--color-text);
-  overflow-wrap: anywhere;
-  white-space: pre-wrap;
-}
-.post-comment-list time {
-  font-size: var(--font-xs);
 }
 
 /* Previous / next daily post. */

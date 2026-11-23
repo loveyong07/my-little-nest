@@ -137,10 +137,15 @@ try {
       assert.equal(await shared.locator(".post-author span").textContent(), "@writer_91");
       const plainLinks = await page.evaluate(() =>
         [...document.querySelectorAll(".site-route-posts a[href]")]
-          .filter((a) => a.getClientRects().length && !getComputedStyle(a).textDecorationLine.includes("underline"))
+          .filter(
+            (a) =>
+              !a.closest(".site-nav") &&
+              a.getClientRects().length &&
+              !getComputedStyle(a).textDecorationLine.includes("underline"),
+          )
           .map((a) => ({ text: a.textContent, href: a.getAttribute("href") })),
       );
-      assert.deepEqual(plainLinks, [], "every link on Posts must be underlined");
+      assert.deepEqual(plainLinks, [], "every content link on Posts must be underlined");
       const sourceReference = shared.getByRole("link", { name: "Source reference", exact: true });
       const sourcePopup = page.waitForEvent("popup");
       await sourceReference.click();

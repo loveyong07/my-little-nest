@@ -97,14 +97,7 @@ export function Header({ page, t, language, changeLanguage, onNavigate }) {
             >
               <PiFlowerLight className="nav-active-flower" aria-hidden="true" />
               <Icon className="nav-page-icon" aria-hidden="true" />
-              {page === "posts" ? (
-                <span className="nav-label-stack">
-                  {t.nav[index]}
-                  <small aria-hidden="true">{["THE NEST", "JOURNAL", "SAY HELLO"][index]}</small>
-                </span>
-              ) : (
-                t.nav[index]
-              )}
+              {t.nav[index]}
             </a>
           );
         })}

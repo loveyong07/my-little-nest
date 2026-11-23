@@ -128,8 +128,6 @@ async function postDiscussion(video) {
   const feed = feedData();
   const post = feed.posts[1];
   post.media = [];
-  post.repliesUrl = `/api/x-replies?post=${post.id}`;
-  post.commentsUrl = `/api/post-comments?post=${post.id}`;
   post.quotedPost = {
     ...feed.posts[0],
     text: "Quoted original",
@@ -138,14 +136,6 @@ async function postDiscussion(video) {
       ...feed.posts[0].media,
     ],
   };
-  const reply = {
-    id: "2190000000000000005",
-    text: "Reply from X",
-    author: "Reader",
-    username: "reader",
-    created_at: post.created_at,
-  };
-  const comments = [];
   const mobile = await browser.newContext({
     viewport: { width: 390, height: 844 },
     isMobile: true,
@@ -161,16 +151,6 @@ async function postDiscussion(video) {
   try {
     for (const context of [mobile, desktop]) {
       await setup(context, feed, video, Promise.resolve(), false);
-      await context.route("**/api/x-replies?**", (route) =>
-        route.fulfill({ json: { status: "ok", replies: [reply] } }),
-      );
-      await context.route("**/api/post-comments?**", (route) => {
-        if (route.request().method() === "POST") {
-          const { id, text } = route.request().postDataJSON();
-          comments.unshift({ id, text, createdAt: post.created_at });
-        }
-        return route.fulfill({ json: { status: "ok", comments } });
-      });
     }
     await mobile.addInitScript(() => {
       Object.defineProperty(navigator, "share", {
@@ -213,17 +193,6 @@ async function postDiscussion(video) {
     await card.getByRole("button", { name: copy.zh.sharePost, exact: true }).click();
     const shared = await page.locator("body").getAttribute("data-shared-url");
     assert.equal(shared, `${origin}/posts?post=${post.id}`);
-    await card.getByRole("button", { name: copy.zh.viewReplies }).click();
-    await card.getByText("Reply from X").waitFor();
-    await card.getByRole("button", { name: copy.zh.hideReplies }).click();
-    await card.getByRole("button", { name: copy.zh.viewComments }).click();
-    await card.getByText(copy.zh.commentsEmpty).waitFor();
-    await card.getByRole("textbox", { name: copy.zh.commentText }).fill("这篇写得很有意思！");
-    await card.getByRole("button", { name: copy.zh.commentSubmit }).click();
-    await card.getByText(copy.zh.commentPublished).waitFor();
-    await card.getByText("这篇写得很有意思！").waitFor();
-    await card.getByRole("textbox", { name: copy.zh.commentText }).scrollIntoViewIfNeeded();
-    await page.screenshot({ path: path.join(output, "post-discussion-mobile.png") });
 
     const recipient = await desktop.newPage();
     await recipient.goto(shared);
@@ -232,13 +201,11 @@ async function postDiscussion(video) {
     await recipientCard.getByRole("button", { name: copy.zh.sharePost, exact: true }).click();
     await recipientCard.getByRole("button", { name: copy.zh.linkCopied, exact: true }).waitFor();
     assert.equal(await recipient.locator("body").getAttribute("data-copied-url"), shared);
-    await recipientCard.getByRole("button", { name: copy.zh.viewComments }).click();
-    await recipientCard.getByText("这篇写得很有意思！").waitFor();
     await recipient.goto(`${origin}/posts?repost=${feed.reposts[0].repostId}`);
     const repost = recipient.locator(`#repost-${feed.reposts[0].repostId}`);
     await repost.waitFor();
     await recipient.waitForFunction((id) => document.activeElement.id === `repost-${id}`, feed.reposts[0].repostId);
-    console.log("✓ embedded quote photo/video, post sharing, X replies and comments across two browser sessions");
+    console.log("✓ embedded quote photo/video and post sharing across two browser sessions");
   } finally {
     await mobile.close();
     await desktop.close();

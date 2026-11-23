@@ -3,13 +3,11 @@
 .contact-desk,
 .reading-directory-links,
 .chapter-heading > div,
-.nav-label-stack,
 .hero-sender,
 .hero-sender-note {
   display: contents;
 }
 .nav-selection,
-.nav-label-stack small,
 .route-breadcrumb,
 .route-edition,
 .chapter-number,

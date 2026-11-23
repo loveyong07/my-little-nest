@@ -11,7 +11,6 @@ const MAX_LIFETIME_SECONDS = 8 * DAY_SECONDS;
 export const MEDIA_RETRY_LIMIT = 3;
 const legacy = { image: new Set(LEGACY_IMAGE_URLS), video: new Set(LEGACY_VIDEO_URLS) };
 const encoder = new TextEncoder();
-const POST_ID = /^\d{1,20}$/;
 const primarySlot = { secret: undefined, key: undefined };
 const previousSlot = { secret: undefined, key: undefined };
 
@@ -74,41 +73,6 @@ async function signingKey(secret, slot = primarySlot) {
 
 function payload(kind, source, expires, format = null) {
   return encoder.encode(`little-nest/media/v1\n${kind}\n${expires}\n${source.href}${format ? `\n${format}` : ""}`);
-}
-
-function postAccessPayload(id, expires) {
-  return encoder.encode(`little-nest/post-access/v1\n${id}\n${expires}`);
-}
-
-async function signedPostQuery(id, { secret = signingSecret(), now = Date.now() } = {}) {
-  const key = POST_ID.test(id) ? await signingKey(secret) : null;
-  if (!key) return null;
-  const expires = (Math.floor(now / (DAY_SECONDS * 1000)) + 8) * DAY_SECONDS;
-  const bytes = new Uint8Array(await crypto.subtle.sign("HMAC", key, postAccessPayload(id, expires)));
-  const signature = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
-  return `?post=${id}&expires=${expires}&signature=${signature}`;
-}
-
-export async function authorizedPostId(request, { secret, previousSecret, now = Date.now() }) {
-  if (!allowedMediaContext(request)) return null;
-  const { search, searchParams } = new URL(request.url);
-  const id = searchParams.get("post") ?? "";
-  const expires = searchParams.get("expires") ?? "";
-  const signature = searchParams.get("signature") ?? "";
-  if (!POST_ID.test(id) || !/^\d{10}$/.test(expires) || !/^[a-f0-9]{64}$/.test(signature)) return null;
-  if (search !== `?post=${id}&expires=${expires}&signature=${signature}`) return null;
-  const remaining = Number(expires) - Math.floor(now / 1000);
-  if (remaining <= 0 || remaining > MAX_LIFETIME_SECONDS) return null;
-  const bytes = Uint8Array.from(signature.match(/.{2}/g), (hex) => Number.parseInt(hex, 16));
-  const data = postAccessPayload(id, expires);
-  for (const [candidate, slot] of [
-    [secret, primarySlot],
-    [previousSecret, previousSlot],
-  ]) {
-    const key = await signingKey(candidate, slot);
-    if (key && (await crypto.subtle.verify("HMAC", key, bytes, data))) return id;
-  }
-  return null;
 }
 
 /**
@@ -217,15 +181,12 @@ export async function authorizeProfile(result, options) {
 /**
  * @param {import("../shared/contracts.mjs").FeedResponse} result
  * @param {import("../shared/contracts.mjs").MediaSigningOptions} [options]
- * @param {{ replies?: boolean, comments?: boolean }} [discussion]
  * @returns {Promise<import("../shared/contracts.mjs").FeedResponse>}
  */
-export async function authorizeFeed(result, options, discussion = {}) {
-  async function postWithMedia(post, includeDiscussion = false) {
+export async function authorizeFeed(result, options) {
+  async function postWithMedia(post, includeQuoted = false) {
     if (!post) return post;
     const proxy = await avatarProxy(post.avatar, options);
-    const query =
-      includeDiscussion && (discussion.replies || discussion.comments) ? await signedPostQuery(post.id, options) : null;
     const media = Array.isArray(post.media)
       ? await Promise.all(
           post.media.map(async (item) => {
@@ -243,7 +204,7 @@ export async function authorizeFeed(result, options, discussion = {}) {
     const blocks = post.blocks?.map((block) =>
       block.type === "photo" ? { ...block, url: originalPhotoSource(block.url) } : block,
     );
-    const quotedPost = includeDiscussion && post.quotedPost ? await postWithMedia(post.quotedPost) : undefined;
+    const quotedPost = includeQuoted && post.quotedPost ? await postWithMedia(post.quotedPost) : undefined;
     return {
       ...post,
       ...(Object.hasOwn(post, "coverUrl")
@@ -253,8 +214,6 @@ export async function authorizeFeed(result, options, discussion = {}) {
       ...(proxy ? { avatarProxy: proxy } : {}),
       ...(media ? { media } : {}),
       ...(quotedPost ? { quotedPost } : {}),
-      ...(query && discussion.replies ? { repliesUrl: `/api/x-replies${query}` } : {}),
-      ...(query && discussion.comments ? { commentsUrl: `/api/post-comments${query}` } : {}),
     };
   }
   return {

@@ -29,8 +29,6 @@ export default defineConfig(({ mode }) => ({
         "X_BEARER_TOKEN",
         "X_MEDIA_SIGNING_SECRET",
         "X_MEDIA_SIGNING_SECRET_PREVIOUS",
-        "BLOB_READ_WRITE_TOKEN",
-        "BLOB_STORE_ID",
         "TOUCHGAL_API_TOKEN",
       ]),
     ),
