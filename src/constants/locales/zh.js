@@ -48,7 +48,6 @@ export default {
   copyLinkFailed: "复制未成功。请选择下方链接手动复制。",
   keyboardNavHint: "按 ← / → 切换日常，按 / 搜索文字",
   articlePhotosBadge: (count) => `${count} 张配图`,
-  focusReading: "专注阅读",
   libraryOpen: "翻找一篇文字",
   libraryHeading: "打开文字抽屉",
   libraryIntro: "从已经加载的日常和文章里，找到想读的那一篇。",

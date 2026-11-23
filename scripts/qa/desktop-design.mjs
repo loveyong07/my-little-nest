@@ -386,11 +386,12 @@ try {
       }
       await page.screenshot({ path: path.join(output, "story-drawer.png") });
       await page.keyboard.press("Escape");
-      const focus = page.locator(".reading-focus-toggle");
-      await focus.click();
-      assert.equal(await focus.getAttribute("aria-pressed"), "true");
-      await focus.click();
-      assert.equal(await focus.getAttribute("aria-pressed"), "false");
+      assert.equal(await page.locator(".reading-focus-toggle").count(), 0);
+      const largeText = page.locator(".reading-text-toggle");
+      await largeText.click();
+      assert.equal(await largeText.getAttribute("aria-pressed"), "true");
+      await largeText.click();
+      assert.equal(await largeText.getAttribute("aria-pressed"), "false");
       await page.setViewportSize({ width: 390, height: 844 });
       assert.equal(await trigger.isVisible(), true);
       await trigger.click();

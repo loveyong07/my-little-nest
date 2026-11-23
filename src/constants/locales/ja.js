@@ -52,7 +52,6 @@ export default {
   copyLinkFailed: "コピーできませんでした。下のリンクを選んで手動でコピーしてください。",
   keyboardNavHint: "← / → で投稿移動 · / で検索",
   articlePhotosBadge: (count) => `画像 ${count} 枚`,
-  focusReading: "読書に集中",
   libraryOpen: "言葉を探す",
   libraryHeading: "言葉の引き出し",
   libraryIntro: "読み込まれた日々の投稿と記事から、読みたい一篇を。",

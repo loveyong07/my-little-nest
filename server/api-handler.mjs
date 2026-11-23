@@ -33,6 +33,7 @@ function json(body, { status = 200, headers = {} } = {}) {
  *   fetchImpl?: typeof globalThis.fetch,
  *   articleFetchImpl?: typeof globalThis.fetch | null,
  *   articleCache?: import("../shared/contracts.mjs").ArticleCacheAdapter | null,
+ *   videoCache?: import("./x-video.mjs").VideoCache | null,
  *   defer?: (task: Promise<unknown>) => void,
  *   onEvent?: import("./telemetry.mjs").TelemetryEmitter | null,
  *   serviceFactory?: typeof createXFeedService,
@@ -61,6 +62,7 @@ export function createApiHandler(
     fetchImpl = (input, init) => globalThis.fetch(input, init),
     articleFetchImpl = fetchImpl,
     articleCache = null,
+    videoCache = null,
     defer = undefined,
     onEvent = null,
     serviceFactory = createXFeedService,
@@ -134,7 +136,7 @@ export function createApiHandler(
         ...(onEvent && !mediaOptions?.onEvent ? { onEvent } : {}),
       });
     }
-    if (pathname === "/api/x-video") return proxyXVideo(request, fetchImpl, authOptions);
+    if (pathname === "/api/x-video") return proxyXVideo(request, fetchImpl, authOptions, { videoCache, defer });
     if (pathname === "/api/x-posts") return feedRoute(request, "posts");
     if (pathname === "/api/x-profile") return feedRoute(request, "profile");
     if (pathname === "/api/starrygal") return starrygalHandler()(request);

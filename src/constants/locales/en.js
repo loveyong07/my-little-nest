@@ -52,7 +52,6 @@ export default {
   copyLinkFailed: "Copying failed. Select the link below to copy it manually.",
   keyboardNavHint: "Press ← / → to browse posts · / to search",
   articlePhotosBadge: (count) => `${count} ${count === 1 ? "photo" : "photos"}`,
-  focusReading: "Focus on reading",
   libraryOpen: "Find a story",
   libraryHeading: "The story drawer",
   libraryIntro: "Find a familiar line among the posts and articles already loaded here.",

@@ -15,8 +15,6 @@ export function PostsNavigator({
   repostCount,
   largeText,
   onToggleText,
-  focusReading,
-  onToggleFocus,
   library,
 }) {
   const [activeSection, setActiveSection] = useState(targets[0]);
@@ -123,13 +121,6 @@ export function PostsNavigator({
           <span>{t.largeReadingText}</span>
           <i aria-hidden="true" />
         </button>
-        {desktop && (
-          <button type="button" className="reading-focus-toggle" aria-pressed={focusReading} onClick={onToggleFocus}>
-            <FiBookOpen aria-hidden="true" />
-            <span>{t.focusReading}</span>
-            <i aria-hidden="true" />
-          </button>
-        )}
         <p>
           <PiFlowerLight aria-hidden="true" />
           {t.readingSlowNote}

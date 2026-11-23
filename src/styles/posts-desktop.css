@@ -647,16 +647,6 @@
     font-size: 19px;
     line-height: 2;
   }
-  .is-reading-focused .post-card,
-  .is-reading-focused .x-article-card {
-    background: #fbfdfff7;
-    text-shadow: none;
-    box-shadow: 0 12px 32px #24476b1a;
-  }
-  .is-reading-focused .post-text,
-  .is-reading-focused .article-text {
-    color: #2a4057;
-  }
   .feed-status {
     margin-bottom: 22px;
     border-radius: 20px;

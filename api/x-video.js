@@ -1,7 +1,9 @@
 // Vercel function: every API route shares server/api-handler.mjs.
+import { waitUntil } from "@vercel/functions";
 import { createApiHandler } from "../server/api-handler.mjs";
+import { createBlobVideoCache } from "../server/video-cache.mjs";
 
-const handleApi = createApiHandler(process.env);
+const handleApi = createApiHandler(process.env, { defer: waitUntil, videoCache: createBlobVideoCache() });
 
 export const config = {
   supportsResponseStreaming: true,

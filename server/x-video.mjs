@@ -8,6 +8,19 @@ const STALL_TIMEOUT_MS = 15000;
 // Bound total streaming time so a paused connection cannot hold a function open indefinitely.
 const TOTAL_TIMEOUT_MS = 55000;
 
+/**
+ * @typedef {{
+ *   read: (source: string, headers: Headers, signal: AbortSignal) => Promise<Response | null | undefined>,
+ *   warm: (source: string, size: number, fetchImpl: typeof globalThis.fetch) => Promise<unknown> | null,
+ * }} VideoCache
+ */
+
+function videoSize(response) {
+  if (response.status === 200) return Number(response.headers.get("content-length"));
+  const range = response.headers.get("content-range") ?? "";
+  return Number(/^bytes \d+-\d+\/(\d+)$/.exec(range)?.[1]);
+}
+
 function errorResponse(status, message, extraHeaders = {}) {
   return new Response(message, {
     status,
@@ -62,11 +75,17 @@ function responseBody(upstreamBody, controller, cleanup, idle) {
   });
 }
 
+/**
+ * @param {Request} request
+ * @param {typeof globalThis.fetch} [fetchImpl]
+ * @param {import("../shared/contracts.mjs").MediaSigningOptions} [authOptions]
+ * @param {{stallTimeoutMs?: number, totalTimeoutMs?: number, videoCache?: VideoCache | null, defer?: (task: Promise<unknown>) => void}} [options]
+ */
 export async function proxyXVideo(
   request,
   fetchImpl = globalThis.fetch,
   authOptions,
-  { stallTimeoutMs = STALL_TIMEOUT_MS, totalTimeoutMs = TOTAL_TIMEOUT_MS } = {},
+  { stallTimeoutMs = STALL_TIMEOUT_MS, totalTimeoutMs = TOTAL_TIMEOUT_MS, videoCache = null, defer = undefined } = {},
 ) {
   if (request.method !== "GET") {
     return errorResponse(405, "Method not allowed", { Allow: "GET" });
@@ -116,11 +135,14 @@ export async function proxyXVideo(
     const ifRange = request.headers.get("if-range");
     if (validIfRange(ifRange)) headers.set("If-Range", ifRange);
 
-    const upstream = await fetchImpl(source.href, {
-      headers,
-      redirect: "error",
-      signal: controller.signal,
-    });
+    const cached = await videoCache?.read(source.href, headers, controller.signal).catch(() => undefined);
+    const upstream =
+      cached ??
+      (await fetchImpl(source.href, {
+        headers,
+        redirect: "error",
+        signal: controller.signal,
+      }));
     clearTimeout(connectTimeout);
 
     if (!upstream.ok) {
@@ -142,12 +164,20 @@ export async function proxyXVideo(
       cleanup();
       return errorResponse(415, "Unsupported video type");
     }
+    // Only a confirmed miss schedules another download. A slow or failed
+    // storage lookup already has the upstream stream as its fallback.
+    if (videoCache && defer && cached === null) {
+      const task = videoCache.warm(source.href, videoSize(upstream), fetchImpl);
+      if (task) defer(task);
+    }
+
     const responseHeaders = new Headers({
       "Content-Type": VIDEO_TYPE,
       "Cache-Control": boundedMediaCache(request, CACHE_CONTROL, authOptions?.now),
       "Accept-Ranges": "bytes",
       "X-Content-Type-Options": "nosniff",
       ...mediaContextHeaders(request),
+      ...(videoCache ? { "X-Nest-Video-Cache": cached ? "hit" : "miss" } : {}),
     });
     for (const name of ["content-length", "content-range", "etag", "last-modified"]) {
       const value = upstream.headers.get(name);

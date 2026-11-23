@@ -55,7 +55,6 @@ function PostsContent({ language, t, profile, onFeedReady, historyReading = null
   const [sharedPost] = useState(() => (historyReading ? null : sharedPostFromSearch(window.location.search)));
   const [sharedPostOpened, setSharedPostOpened] = useState(false);
   const [largeText, setLargeText] = useState(() => Boolean(historyReading?.largeText));
-  const [focusReading, setFocusReading] = useState(() => Boolean(historyReading?.focusReading));
   const desktop = useDesktopLayout();
   const sectionRef = useRef(null);
   useSectionEntrance(sectionRef);
@@ -126,9 +125,8 @@ function PostsContent({ language, t, profile, onFeedReady, historyReading = null
       repostId: selectedRepostId,
       articleId: selectedArticleId,
       largeText,
-      focusReading,
     });
-  }, [rememberReading, selectedPostId, selectedRepostId, selectedArticleId, largeText, focusReading]);
+  }, [rememberReading, selectedPostId, selectedRepostId, selectedArticleId, largeText]);
   useEffect(() => {
     if (!feedLoading) onFeedReady(true);
   }, [feedLoading, onFeedReady]);
@@ -221,11 +219,7 @@ function PostsContent({ language, t, profile, onFeedReady, historyReading = null
   const profileUrl = xProfileUrl(profile.username);
 
   return (
-    <div
-      className={`posts-section${largeText ? " is-reading-large" : ""}${focusReading ? " is-reading-focused" : ""}`}
-      id="posts"
-      ref={sectionRef}
-    >
+    <div className={`posts-section${largeText ? " is-reading-large" : ""}`} id="posts" ref={sectionRef}>
       <PostsNavigator
         t={t}
         pinnedCount={pinnedPost ? 1 : 0}
@@ -234,8 +228,6 @@ function PostsContent({ language, t, profile, onFeedReady, historyReading = null
         repostCount={reposts.length}
         largeText={largeText}
         onToggleText={() => setLargeText((value) => !value)}
-        focusReading={focusReading}
-        onToggleFocus={() => setFocusReading((value) => !value)}
         library={
           <ReadingLibrary
             t={t}

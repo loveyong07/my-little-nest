@@ -40,6 +40,8 @@ Vercel 的 `/api/x-posts` 函数同样连接私有 Blob（`server/article-cache.
 
 `/api/x-media`、`/api/x-video` 为同源媒体接口。服务端校验规范形式的签名源地址、类型、有效期和签名（支持通过 `X_MEDIA_SIGNING_SECRET_PREVIOUS` 实现双密钥平滑轮换），精确旧媒体名单提供缓存兼容。`api/x-video.js` 流式转发单段 Range（包括浏览器用于大视频的 `bytes=0-`），拒绝 `bytes=-0`，并设有 55 秒的单次请求总时限。`416` 仅在已知视频完整长度时包含 `Content-Range`。
 
+Vercel 的视频函数复用现有私有 Blob，以原始 MP4 地址摘要保存视频和 X 动态 GIF 的 MP4。签名校验后优先从 Blob 读取，普通、开放尾端及后缀 Range 保留 `206` 和 `Content-Range`。Blob 未命中时直接从 X 流式播放，收到已知总大小的有效 MP4 响应后用 `waitUntil` 后台下载整份文件，验证长度完整后以固定键写入。下载、存储异常及超限继续走原回源路径。每实例同一时刻只执行一次后台写入。单个文件上限 100 MB，视频写入时检查 500 MB 视频软上限和 750 MB 全库软上限，库存最多复用五分钟。达到软上限后暂停新视频写入，保留已有对象。实例间有并发偏差，所列上限也不包含其他 Blob 库或账户的月度传输配额。诊断播放复用时，可对同一签名视频请求不同的有效 Range 并读取 `X-Nest-Video-Cache: hit`。
+
 图片代理的连接超时为 10 秒，每次等待上游数据的空闲超时为 10 秒，总请求时限为 60 秒。持续传输可超过 10 秒，客户端背压不计为空闲读取超时。图片大小上限为 12 MiB，编码结果、回退原图和 Blob 命中均以字节流发送。响应结束、失败或取消后释放计时器和断开监听，客户端取消时中止上游请求。
 
 媒体来源策略集中在 `server/media-request-policy.mjs`：现代浏览器只接受 `Sec-Fetch-Site: same-origin` 或直接导航的 `none`，不把兄弟子域的 `same-site` 视作同源。成功响应带 `Vary: Sec-Fetch-Site`，避免同源缓存被跨站请求复用，并保留 `Cross-Origin-Resource-Policy: same-origin`。无 Fetch Metadata 时检查存在的 Origin / Referer 是否与请求 URL 严格同源；没有来源头仍可直接访问，但该类成功响应对浏览器和 Vercel CDN 均为 `no-store`，避免回退规则被缓存跳过，也避免按完整 Referer 分裂缓存。普通浏览器的原缓存期限不变。非浏览器客户端可伪造这些头，因此这不是身份认证、限流或费用上限。
