@@ -11,7 +11,6 @@ dist/
 backup-*/
 /qa-compare.html
 /public/qa-source.png
-/archive/assets-raw/qa-source.png
 
 .vercel/
 
@@ -20,6 +19,5 @@ backup-*/
 .wrangler/
 /qa/
 
-# Local-only raw sources.
-/archive/assets-raw/business-sky-studio*.png
-/archive/fonts/
+# Local-only raw sources and historical archives (kept out of the public repository).
+/archive/
