@@ -27,11 +27,12 @@ test("private sync resumes publication by cursor, reuses account data and keeps 
     async get(pathname, options) {
       assert.equal(pathname, "x-feed/snapshot-v1/current.json");
       assert.equal(options.access, "private");
+      if (!options.useCache) assert.equal(options.headers["Accept-Encoding"], "identity");
       if (!data) return null;
       return {
         statusCode: 200,
         stream: new Response(data).body,
-        blob: { etag, size: data.byteLength },
+        blob: { etag, size: 0 },
       };
     },
     async put(pathname, bytes, options) {

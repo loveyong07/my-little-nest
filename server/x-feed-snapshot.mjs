@@ -57,16 +57,34 @@ export function createBlobXSnapshotStore({ env = process.env, sdk = { get, put }
         ...credentials,
         access: "private",
         useCache: !fresh,
+        // Conditional writes need the stored object's ETag, not the weak
+        // validator of a compressed HTTP representation.
+        ...(fresh ? { headers: { "Accept-Encoding": "identity" } } : {}),
         abortSignal: AbortSignal.timeout(4000),
       });
       if (!result) return null;
-      if (result.statusCode !== 200 || !result.stream || result.blob.size <= 0 || result.blob.size > MAX_BYTES) {
+      if (result.statusCode !== 200 || !result.stream || result.blob.size > MAX_BYTES) {
         await result.stream?.cancel();
         throw new Error("Invalid X snapshot object");
       }
-      const snapshot = await new Response(result.stream).json();
-      if (!validSnapshot(snapshot) || !result.blob.etag) throw new Error("Invalid X snapshot data");
-      return { snapshot, etag: result.blob.etag };
+      // Private JSON can be delivered compressed without a Content-Length.
+      // Bound the actual decoded stream even when Blob reports an unknown size.
+      let bytes = 0;
+      const stream = result.stream.pipeThrough(
+        new TransformStream({
+          transform(chunk, controller) {
+            bytes += chunk.byteLength;
+            if (bytes > MAX_BYTES) throw new Error("X snapshot exceeds the size limit");
+            controller.enqueue(chunk);
+          },
+        }),
+      );
+      const snapshot = await new Response(stream).json();
+      const etag = result.blob.etag;
+      if (!validSnapshot(snapshot) || !etag || (fresh && etag.startsWith("W/"))) {
+        throw new Error("Invalid X snapshot data");
+      }
+      return { snapshot, etag };
     },
     /** @param {Snapshot} snapshot */
     async write(snapshot, etag = undefined) {
