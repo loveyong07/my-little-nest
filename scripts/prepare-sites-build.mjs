@@ -31,7 +31,12 @@ function copyModules(from, to, skip = () => false) {
 }
 
 // Dev-only Vite middleware and Vercel Blob storage adapters stay out of the Sites worker bundle.
-const VERCEL_ONLY_MODULES = new Set(["article-cache.mjs", "photo-cache.mjs", "photo-cache-warm.mjs"]);
+const VERCEL_ONLY_MODULES = new Set([
+  "article-cache.mjs",
+  "blob-post-comments.mjs",
+  "photo-cache.mjs",
+  "photo-cache-warm.mjs",
+]);
 copyModules(
   path.join(root, "server"),
   path.join(dist, "server"),

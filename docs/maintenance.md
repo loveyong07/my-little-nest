@@ -16,7 +16,13 @@ Vercel 的 `/api/x-posts` 函数同样连接私有 Blob（`server/article-cache.
 
 `server/telemetry.mjs` 在 Vercel 运行环境（或设置 `NEST_TELEMETRY=1` 时）输出单行 JSON 观测日志，记录 Feed/Profile 刷新计数、上游耗时、Article 文档缓存命中/重验结果以及图片 Blob 命中与跳过原因。注意 `X-Nest-Photo-Cache: hit | miss` 响应头仅代表函数执行当次的 `function_blob` 查询结果；响应被 Vercel CDN 缓存后该头会被边缘复用，因此不能直接等同于所有访客请求的实时 Blob 命中率，统计时需区分 CDN 与 Blob 两层。
 
-动态页在日常帖子和文章之间显示「我的转帖」。同一次时间线请求保留转帖，展开 `referenced_tweets.id` 与原作者，只有 `retweeted` 引用进入 `reposts`，回复和引用帖仍不混入原创或转帖。时间线展开数据可能缺少原帖附件，因此对原帖 ID 去重后，通过批量详情接口读取完整的 `attachments.media_keys` 与媒体数据；故障时保留既有已核实的配图。原作者、完整正文、图片、视频和原文链接沿用同源签名媒体链路；转发时间用于排序和独立日期索引。`repostsStatus` 区分成功、空、过期和不可用，缺失原帖或原作者时不猜测内容；部分失败按 60 秒退避重扫时间线，定期完整核对会移除取消的转发。前端选择、上一条／下一条和后台保留独立于原创帖、文章，目录与搜索同步支持转帖。浏览器 Feed 缓存使用 v9，旧缓存及缺少转帖状态的内容会重新同步；成功原创时间线不会延长过期转帖缓存。构建后可运行 `node scripts/qa/reposts.mjs` 检查三语、响应式布局、按钮链接、独立阅读、玻璃材质、图片预览和搜索。
+动态页在日常帖子和文章之间显示「我的转帖」。同一次时间线请求保留转帖，展开 `referenced_tweets.id` 与原作者，只有 `retweeted` 引用进入 `reposts`。日常动态另收录经 X 账号 ID 验证的自引帖，并展示被引用帖的文字与原帖链接。引用或回复他人帖子的内容从日常与置顶区域过滤。时间线展开数据可能缺少原帖附件，因此对转帖的原帖 ID 去重后，通过批量详情接口读取完整的 `attachments.media_keys` 与媒体数据；故障时保留既有已核实的配图。原作者、完整正文、图片、视频和原文链接沿用同源签名媒体链路；转发时间用于排序和独立日期索引。`repostsStatus` 区分成功、空、过期和不可用，缺失原帖或原作者时不猜测内容；部分失败按 60 秒退避重扫时间线，定期完整核对会移除取消的转发。前端选择、上一条／下一条和后台保留独立于原创帖、文章，目录与搜索同步支持转帖。浏览器 Feed 缓存使用 v9，旧缓存及缺少转帖状态的内容会重新同步；成功原创时间线不会延长过期转帖缓存。构建后可运行 `node scripts/qa/reposts.mjs` 检查三语、响应式布局、按钮链接、独立阅读、玻璃材质、图片预览和搜索。
+
+帖子卡片的「分享」使用当前站点域名和 `/posts?post=<X 帖子 ID>` 或 `/posts?repost=<转发 ID>`。访问链接并完成年龄确认后，动态页自动定位到对应卡片。支持系统分享的浏览器打开分享面板，其余浏览器提供复制链接。
+
+「查看 X 回复」按需调用 `/api/x-replies`，使用现有 `X_BEARER_TOKEN` 查询过去 7 天内的公开直接回复，单次最多读取两页，每页最多 100 条。页面会区分搜索结果为空、部分结果和同步失败。缓存期为 5 分钟，每个实例合并同帖并发请求。动态接口只为已收录的帖子生成讨论接口签名，签名覆盖帖子 ID 与有效期。
+
+「站内评价」通过 `/api/post-comments` 保存匿名纯文字，发布后其他访客下次打开即可看到。每条最多 1000 字符，每帖最多 200 条。Vercel 使用私有 Blob 凭据 `BLOB_READ_WRITE_TOKEN` 或 `BLOB_STORE_ID`。生产记录保存在 `post-comments/v1/<X 帖子 ID>.json`，预览和本地使用 `post-comments/preview/v1/`。写入以 ETag 检查并发版本，重试沿用同一个留言 ID；访客的网络地址只用于实例内的短时发布限流。Sites 构建可继续运行动态和 X 回复，站内评价需要 Vercel 的存储适配器。
 
 动态页的置顶帖、原创帖、转帖和文章正文统一识别 HTTP(S)、www 和 Markdown 链接，使用可通过键盘访问的真实链接并加下划线。动态接口展开 X 短链时保留精确起止范围，正文按解码后的位置渲染。旧缓存和没有实体信息的裸链接按文本边界识别。文章仍保留作者提供的命名链接与各段落的具体目标。
 
@@ -34,7 +40,7 @@ Vercel 的 `/api/x-posts` 函数同样连接私有 Blob（`server/article-cache.
 
 文章部分失败同样退避 60 秒，之后合并并发并完整重扫时间线以恢复旧文章。若 X 拒绝可选文章字段，则回退普通帖子字段，保留可用帖子及旧文章的过期状态；整次重试失败不延长原成功缓存的寿命。完整采集成功后按新结果更新帖子和文章。无服务端凭据或整体异常且无缓存时，保留兼容响应 `{status: "unavailable", posts: []}`，前端将缺少的文章状态视为不可用。
 
-共享 handler（`server/api-handler.mjs`）统一承载全部 5 条 API 路由（4 个 X 接口与 `/api/starrygal`）。Vercel 侧由 `api/` 下的五个函数分别托管，并由 `vercel.json` 显式配置各函数 `maxDuration` 与流式响应；Sites 侧由 `worker/index.js` 共用 `shared/hosting-policy.mjs` 注入与 Vercel 一致的安全响应头（CSP、HSTS、Permissions-Policy、COOP、X-Frame-Options、nosniff）、`/route-shells/*.html` 路由壳（保证 `/posts` 的 `noindex, follow`）、`/business` 308 跳转与静态资源缓存策略，`scripts/prepare-sites-build.mjs` 自动剔除仅 Vercel 使用的 Blob 存储模块。动态与资料接口统一输出 `X-Robots-Tag: noindex, nofollow`，`public/robots.txt` 禁止抓取 `/api/`。X API 明确返回的永久对象级错误（原帖已删或作者设私）会跳过该条转帖而不污染 `repostsStatus`；收到 `429` 时遵循 `retry-after` / `x-rate-limit-reset` 退避（60 秒至 15 分钟）。
+共享 handler（`server/api-handler.mjs`）统一处理 API 路由。Vercel 侧由 `api/` 下的函数分别托管，并由 `vercel.json` 显式配置各函数 `maxDuration` 与流式响应；Sites 侧由 `worker/index.js` 共用 `shared/hosting-policy.mjs` 注入与 Vercel 一致的安全响应头（CSP、HSTS、Permissions-Policy、COOP、X-Frame-Options、nosniff）、`/route-shells/*.html` 路由壳（保证 `/posts` 的 `noindex, follow`）、`/business` 308 跳转与静态资源缓存策略，`scripts/prepare-sites-build.mjs` 自动剔除仅 Vercel 使用的 Blob 存储模块。动态与资料接口统一输出 `X-Robots-Tag: noindex, nofollow`，`public/robots.txt` 禁止抓取 `/api/`。X API 明确返回的永久对象级错误（原帖已删或作者设私）会跳过该条转帖而不污染 `repostsStatus`；收到 `429` 时遵循 `retry-after` / `x-rate-limit-reset` 退避（60 秒至 15 分钟）。
 
 `/api/x-media`、`/api/x-video` 为同源媒体接口。服务端校验规范形式的签名源地址、类型、有效期和签名（支持通过 `X_MEDIA_SIGNING_SECRET_PREVIOUS` 实现双密钥平滑轮换），精确旧媒体名单提供缓存兼容。`api/x-video.js` 流式转发单段 Range（包括浏览器用于大视频的 `bytes=0-`），拒绝 `bytes=-0`，并设有 55 秒的单次请求总时限。`416` 仅在已知视频完整长度时包含 `Content-Range`。
 

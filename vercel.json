@@ -16,6 +16,14 @@
       "regions": ["hkg1"],
       "maxDuration": 30
     },
+    "api/x-replies.js": {
+      "regions": ["hkg1"],
+      "maxDuration": 30
+    },
+    "api/post-comments.js": {
+      "regions": ["hkg1"],
+      "maxDuration": 20
+    },
     "api/x-profile.js": {
       "regions": ["hkg1"],
       "maxDuration": 30

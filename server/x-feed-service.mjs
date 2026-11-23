@@ -278,6 +278,23 @@ function normalizedRepost(event, author, postsById, usersById, mediaByKey) {
   return { ...post, username: user.username, repostId: event.id, repostedAt: event.created_at };
 }
 
+function normalizedSelfQuote(post, author, mediaByKey, postsById) {
+  const references = post?.referenced_tweets ?? post?.referenced_posts ?? [];
+  if (post?.in_reply_to_user_id || references.length !== 1 || references[0].type !== "quoted") return null;
+  const original = postsById.get(references[0].id);
+  if (original?.author_id !== author.id || !isId(original.id)) return null;
+  const quote = normalizedPost(post, author, mediaByKey, { allowReferences: true });
+  if (!quote) return null;
+  return {
+    ...quote,
+    quotedPost: {
+      id: original.id,
+      text: normalizedPost(original, author, mediaByKey, { allowReferences: true })?.text ?? "",
+      permalink: `https://x.com/${author.username}/status/${original.id}`,
+    },
+  };
+}
+
 // Article metadata comes from the requested article field, never from note_tweet:
 // long ordinary posts and links that mention an Article remain ordinary posts.
 function isArticlePost(post) {
@@ -344,6 +361,73 @@ function mergeArticles(current, previous = []) {
     const byDate = (Date.parse(right.created_at) || 0) - (Date.parse(left.created_at) || 0);
     return byDate || right.id.length - left.id.length || right.id.localeCompare(left.id);
   });
+}
+
+export function createXRepliesService({ token, fetchImpl, now = Date.now }) {
+  const cache = new Map();
+  const inFlight = new Map();
+  const unavailable = { status: "unavailable" };
+  let rateLimitedUntil = 0;
+
+  async function search(id) {
+    const replies = new Map();
+    let nextToken;
+    const signal = AbortSignal.timeout(17_000);
+    for (let page = 0; page < 2; page += 1) {
+      const url = new URL(`${X_API}/tweets/search/recent`);
+      url.searchParams.set("query", `in_reply_to_tweet_id:${id}`);
+      url.searchParams.set("max_results", String(PAGE_SIZE));
+      url.searchParams.set("sort_order", "recency");
+      url.searchParams.set("tweet.fields", "created_at,author_id,referenced_tweets,note_tweet,attachments,entities");
+      url.searchParams.set("expansions", "author_id,attachments.media_keys");
+      url.searchParams.set("user.fields", "name,username,profile_image_url,protected");
+      url.searchParams.set("media.fields", "media_key,type,url,alt_text,width,height,preview_image_url,variants");
+      if (nextToken) url.searchParams.set("next_token", nextToken);
+      const json = await raceWithSignal(getXJson(url, token, fetchImpl, { signal, now }), signal);
+      const posts = json.data ?? (json.meta?.result_count === 0 ? [] : null);
+      if (!Array.isArray(posts)) throw new Error("Invalid X replies response");
+      const users = new Map((json.includes?.users ?? []).map((user) => [user.id, user]));
+      const media = new Map((json.includes?.media ?? []).map((item) => [item.media_key, item]));
+      for (const post of posts) {
+        const references = post.referenced_tweets ?? post.referenced_posts;
+        if (post.id === id || !references?.some((ref) => ref.type === "replied_to" && ref.id === id)) continue;
+        const author = users.get(post.author_id);
+        if (!author || author.protected || !/^[A-Za-z0-9_]{1,15}$/.test(author.username ?? "")) continue;
+        const reply = normalizedPost(post, author, media, { allowReferences: true });
+        if (reply && !replies.has(reply.id)) {
+          replies.set(reply.id, { ...reply, author: author.name || author.username, username: author.username });
+        }
+      }
+      if (nextToken && nextToken === json.meta?.next_token) throw new Error("X replies pagination did not advance");
+      nextToken = json.meta?.next_token;
+      if (!nextToken) break;
+    }
+    return { status: "ok", replies: [...replies.values()], limited: Boolean(nextToken) };
+  }
+
+  return function getReplies(id) {
+    const entry = cache.get(id);
+    if (entry && now() < entry.expiresAt) return Promise.resolve(entry.result);
+    if (!token || now() < rateLimitedUntil) return Promise.resolve(unavailable);
+    const pending = inFlight.get(id);
+    if (pending) return pending;
+    let ttl = 5 * 60 * 1000;
+    const request = search(id)
+      .catch((error) => {
+        ttl = retryDelayMs(error);
+        if (error?.status === 429) rateLimitedUntil = Math.max(rateLimitedUntil, now() + ttl);
+        return unavailable;
+      })
+      .then((result) => {
+        cache.delete(id);
+        cache.set(id, { result, expiresAt: now() + ttl });
+        if (cache.size > 128) cache.delete(cache.keys().next().value);
+        return result;
+      })
+      .finally(() => inFlight.delete(id));
+    inFlight.set(id, request);
+    return request;
+  };
 }
 
 export function createXFeedService({
@@ -452,10 +536,13 @@ export function createXFeedService({
           "tweet.fields",
           `created_at,referenced_tweets,author_id,in_reply_to_user_id,note_tweet,attachments,entities${articleFields}`,
         );
-        url.searchParams.set("expansions", "attachments.media_keys");
+        url.searchParams.set("expansions", "attachments.media_keys,referenced_tweets.id");
       } else {
-        url.searchParams.set("post.fields", `created_at,note_post,attachments,entities${articleFields}`);
-        url.searchParams.set("expansions", "attachments.media_keys,author_id");
+        url.searchParams.set(
+          "post.fields",
+          `created_at,referenced_posts,in_reply_to_user_id,note_post,attachments,entities${articleFields}`,
+        );
+        url.searchParams.set("expansions", "attachments.media_keys,author_id,referenced_posts.id");
       }
       url.searchParams.set("media.fields", "media_key,type,url,alt_text,width,height,preview_image_url,variants");
       return getXJson(url, token, fetchImpl, { signal, now });
@@ -484,6 +571,19 @@ export function createXFeedService({
           .filter((media) => typeof media?.media_key === "string")
           .map((media) => [media.media_key, media]),
       );
+      const references = json.data?.referenced_tweets ?? json.data?.referenced_posts ?? [];
+      const isQuote = references.some((ref) => ref.type === "quoted");
+      const postsById = new Map((json.includes?.tweets ?? json.includes?.posts ?? []).map((post) => [post.id, post]));
+      if (json.data?.id === pinnedId && json.data?.author_id === author.id) {
+        const parent = references.find((ref) => ref.type === "replied_to");
+        const parentAuthorId = json.data.in_reply_to_user_id ?? postsById.get(parent?.id)?.author_id;
+        if ((parent || parentAuthorId) && parentAuthorId !== author.id) return { post: null, status: "none" };
+        if (isQuote) {
+          const quote = normalizedSelfQuote(json.data, author, mediaByKey, postsById);
+          if (quote && typeof json.data.created_at === "string") return { post: quote, status: "ok" };
+          return { post: null, status: "none" };
+        }
+      }
       const post = normalizedPost(json.data, author, mediaByKey, { allowReferences: true });
       if (!post || post.id !== pinnedId || typeof json.data.created_at !== "string") {
         return { post: null, status: "unavailable" };
@@ -581,6 +681,7 @@ export function createXFeedService({
           .map((media) => [media.media_key, media]),
       );
       const postsById = new Map((json.includes?.tweets ?? json.includes?.posts ?? []).map((post) => [post.id, post]));
+      const quoteTargets = new Map([...pagePosts.map((post) => [post.id, post]), ...postsById]);
       const usersById = new Map((json.includes?.users ?? []).map((user) => [user.id, user]));
       for (const [id, post] of postsById) repostPostsById.set(id, post);
       for (const [id, user] of usersById) repostUsersById.set(id, user);
@@ -613,7 +714,10 @@ export function createXFeedService({
             articlesAvailable = false;
           continue;
         }
-        const original = post.id === pinnedId ? null : normalizedPost(post, author, mediaByKey);
+        const original =
+          post.id === pinnedId
+            ? null
+            : (normalizedPost(post, author, mediaByKey) ?? normalizedSelfQuote(post, author, mediaByKey, quoteTargets));
         if (original && !seen.has(original.id)) {
           seen.add(original.id);
           found.push(original);

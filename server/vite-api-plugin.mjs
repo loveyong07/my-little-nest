@@ -1,6 +1,7 @@
 // Serves the API routes from the Vite dev and preview servers by adapting Node's
 // request/response objects to the shared fetch-style handler.
 import { createApiHandler } from "./api-handler.mjs";
+import { createBlobPostComments } from "./blob-post-comments.mjs";
 
 function toFetchRequest(request, signal) {
   const headers = new Headers();
@@ -8,11 +9,13 @@ function toFetchRequest(request, signal) {
     if (name.startsWith(":") || value === undefined) continue;
     for (const item of Array.isArray(value) ? value : [value]) headers.append(name, item);
   }
-  return new Request(new URL(request.url ?? "/", `http://${request.headers.host ?? "localhost"}`), {
+  const init = {
     method: request.method,
     headers,
     signal,
-  });
+    ...(request.method === "POST" ? { body: request, duplex: "half" } : {}),
+  };
+  return new Request(new URL(request.url ?? "/", `http://${request.headers.host ?? "localhost"}`), init);
 }
 
 async function sendFetchResponse(fetchResponse, response) {
@@ -83,7 +86,7 @@ export function createNodeApiMiddleware(handleApi) {
 }
 
 export function apiPlugin(env) {
-  const middleware = createNodeApiMiddleware(createApiHandler(env));
+  const middleware = createNodeApiMiddleware(createApiHandler(env, { commentStore: createBlobPostComments({ env }) }));
   // Install before Vite's own middlewares; returning nothing keeps it out of the post hooks.
   const install = (server) => {
     server.middlewares.use(middleware);

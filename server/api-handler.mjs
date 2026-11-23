@@ -1,11 +1,20 @@
 // The site's API routes as one fetch-style handler. Vercel functions (api/), the
 // Sites worker (worker/index.js) and the Vite dev/preview server (vite-api-plugin.mjs)
 // only adapt their runtime to it.
-import { authorizeFeed, authorizeProfile, previousSigningSecret, signingSecret } from "./x-media-auth.mjs";
-import { createXFeedService } from "./x-feed-service.mjs";
+import {
+  authorizedPostId,
+  authorizeFeed,
+  authorizeProfile,
+  boundedMediaCache,
+  previousSigningSecret,
+  signingSecret,
+} from "./x-media-auth.mjs";
+import { createXFeedService, createXRepliesService } from "./x-feed-service.mjs";
 import { proxyXMedia } from "./x-media.mjs";
 import { proxyXVideo } from "./x-video.mjs";
 import { createStarryGalFetchHandler } from "./starrygal.mjs";
+import { mediaContextHeaders } from "./media-request-policy.mjs";
+import { COMMENT_ID, COMMENT_MAX_LENGTH } from "../shared/post-comments.mjs";
 
 // Browsers do not HTTP-cache these answers. Complete successes use the retained five-minute
 // CDN policy; partial, stale and unknown results use the one-minute retry policy. These
@@ -28,6 +37,37 @@ function json(body, { status = 200, headers = {} } = {}) {
   });
 }
 
+async function readComment(request) {
+  if (!/^application\/json(?:\s*;|$)/i.test(request.headers.get("content-type") ?? "")) return null;
+  const reader = request.body?.getReader();
+  if (!reader) return null;
+  const decoder = new TextDecoder();
+  let size = 0;
+  let raw = "";
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > 8192) {
+        await reader.cancel();
+        return null;
+      }
+      raw += decoder.decode(value, { stream: true });
+    }
+    const body = JSON.parse(raw + decoder.decode());
+    const text = typeof body?.text === "string" ? body.text.trim() : "";
+    if (typeof body?.id !== "string" || !COMMENT_ID.test(body.id) || !text || text.length > COMMENT_MAX_LENGTH)
+      return null;
+    if (/(?![\t\n\r])[\p{Cc}\p{Cs}]/u.test(text)) return null;
+    return { id: body.id, text, createdAt: new Date().toISOString() };
+  } catch {
+    return null;
+  } finally {
+    reader.releaseLock();
+  }
+}
+
 /**
  * @typedef {{
  *   fetchImpl?: typeof globalThis.fetch,
@@ -36,6 +76,7 @@ function json(body, { status = 200, headers = {} } = {}) {
  *   defer?: (task: Promise<unknown>) => void,
  *   onEvent?: import("./telemetry.mjs").TelemetryEmitter | null,
  *   serviceFactory?: typeof createXFeedService,
+ *   commentStore?: ReturnType<typeof import("./blob-post-comments.mjs").createBlobPostComments>,
  *   mediaOptions?: {
  *     connectTimeoutMs?: number,
  *     stallTimeoutMs?: number,
@@ -64,14 +105,23 @@ export function createApiHandler(
     defer = undefined,
     onEvent = null,
     serviceFactory = createXFeedService,
+    commentStore = null,
     mediaOptions = undefined,
   } = {},
 ) {
   const authOptions = { secret: signingSecret(env), previousSecret: previousSigningSecret(env) };
+  const discussion = {
+    replies: Boolean(env.X_BEARER_TOKEN),
+    comments: Boolean(commentStore || env.BLOB_READ_WRITE_TOKEN || env.BLOB_STORE_ID),
+  };
+  const getReplies = createXRepliesService({ token: env.X_BEARER_TOKEN ?? "", fetchImpl });
   const resolvedDefer = defer ?? mediaOptions?.defer;
   const mediaInFlight = new Map();
   let service = null;
   let starrygal = null;
+  const commentsPerClient = new Map();
+  let writesThisMinute = 0;
+  let resetWritesAt = 0;
   const feedService = () =>
     (service ??= serviceFactory({
       token: env.X_BEARER_TOKEN ?? "",
@@ -102,7 +152,7 @@ export function createApiHandler(
     }
     try {
       if (route === "posts") {
-        const result = await authorizeFeed(await feedService()(), authOptions);
+        const result = await authorizeFeed(await feedService()(), authOptions, discussion);
         const complete =
           result?.status === "ok" &&
           ["ok", "none"].includes(result.pinnedStatus) &&
@@ -120,6 +170,64 @@ export function createApiHandler(
     }
   }
 
+  async function repliesRoute(request) {
+    if (request.method !== "GET") {
+      return json({ status: "method_not_allowed" }, { status: 405, headers: { Allow: "GET" } });
+    }
+    try {
+      const id = await authorizedPostId(request, authOptions);
+      if (!id) return json({ status: "invalid_request" }, { status: 403 });
+      const result = await getReplies(id);
+      const cdn = result.status === "ok" ? "public, s-maxage=300" : JSON_CDN_CACHE_CONTROL_RETRY;
+      const headers = { "Vercel-CDN-Cache-Control": boundedMediaCache(request, cdn), ...mediaContextHeaders(request) };
+      if (result.status !== "ok") return json(result, { headers });
+      const { posts } = await authorizeFeed({ status: "ok", posts: result.replies }, authOptions);
+      return json({ ...result, replies: posts }, { headers });
+    } catch {
+      return json({ status: "unavailable" }, { status: 503 });
+    }
+  }
+
+  async function commentsRoute(request) {
+    if (request.method !== "GET" && request.method !== "POST") {
+      return json({ status: "method_not_allowed" }, { status: 405, headers: { Allow: "GET, POST" } });
+    }
+    try {
+      const id = await authorizedPostId(request, authOptions);
+      if (!id) return json({ status: "invalid_request" }, { status: 403 });
+      if (!commentStore) return json({ status: "unavailable" }, { status: 503 });
+      if (request.method === "GET") return json({ status: "ok", comments: await commentStore.list(id) });
+      if (request.headers.get("origin") !== new URL(request.url).origin) {
+        return json({ status: "invalid_request" }, { status: 403 });
+      }
+      const comment = await readComment(request);
+      if (!comment) return json({ status: "invalid" }, { status: 400 });
+      const now = Date.now();
+      if (now >= resetWritesAt) {
+        commentsPerClient.clear();
+        writesThisMinute = 0;
+        resetWritesAt = now + 60_000;
+      }
+      const client = request.headers.get("x-vercel-forwarded-for") ?? request.headers.get("x-real-ip") ?? "local";
+      const clientWrites = commentsPerClient.get(client) ?? 0;
+      if (clientWrites >= 5 || writesThisMinute >= 60) {
+        return json(
+          { status: "rate_limited" },
+          {
+            status: 429,
+            headers: { "Retry-After": String(Math.ceil((resetWritesAt - now) / 1000)) },
+          },
+        );
+      }
+      commentsPerClient.set(client, clientWrites + 1);
+      writesThisMinute += 1;
+      const result = await commentStore.append(id, comment);
+      return json(result, { status: result.status === "ok" ? 200 : 409 });
+    } catch {
+      return json({ status: "unavailable" }, { status: 503 });
+    }
+  }
+
   return async function handleApi(request) {
     const { pathname } = new URL(request.url);
     if (pathname === "/api/x-media") {
@@ -132,6 +240,8 @@ export function createApiHandler(
     }
     if (pathname === "/api/x-video") return proxyXVideo(request, fetchImpl, authOptions);
     if (pathname === "/api/x-posts") return feedRoute(request, "posts");
+    if (pathname === "/api/x-replies") return repliesRoute(request);
+    if (pathname === "/api/post-comments") return commentsRoute(request);
     if (pathname === "/api/x-profile") return feedRoute(request, "profile");
     if (pathname === "/api/starrygal") return starrygalHandler()(request);
     return null;

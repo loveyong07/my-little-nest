@@ -8,7 +8,9 @@ import { initialArticleReading, refreshedArticleReading } from "../utils/article
 import { initialRepostReading, refreshedRepostReading } from "../utils/repost-reading.js";
 import { takeEarlyFeed } from "./useSiteRoute.js";
 
-export function useXFeed(historyReading = null) {
+export function useXFeed(historyReading = null, sharedPost = null) {
+  const preferredPostId = historyReading?.postId ?? (sharedPost?.type === "post" ? sharedPost.id : null);
+  const preferredRepostId = historyReading?.repostId ?? (sharedPost?.type === "repost" ? sharedPost.id : null);
   const [cachedFeed] = useState(getFeedSnapshot);
   const cachedPin =
     cachedFeed && ["ok", "stale"].includes(cachedFeed.feed.pinnedStatus) && isOwnPost(cachedFeed.feed.pinnedPost)
@@ -20,7 +22,7 @@ export function useXFeed(historyReading = null) {
     const posts = cachedFeed
       ? cachedFeed.feed.posts.filter((post) => isOriginalPost(post) && post.id !== cachedPin?.id)
       : [SNAPSHOT];
-    const index = restoreReadingIndex(posts, historyReading?.postId);
+    const index = restoreReadingIndex(posts, preferredPostId);
     return { posts, index: Math.max(0, index), hasSelectedPost: index >= 0 };
   });
   const { posts, index: postIndex } = reading;
@@ -32,7 +34,7 @@ export function useXFeed(historyReading = null) {
   const { articles, index: articleIndex, state: articleState } = articleReading;
   const [repostReading, setRepostReading] = useState(() => {
     const initial = initialRepostReading(cachedFeed?.feed);
-    const index = restoreReadingIndex(initial.reposts, historyReading?.repostId, "repostId");
+    const index = restoreReadingIndex(initial.reposts, preferredRepostId, "repostId");
     return { ...initial, index: Math.max(0, index), hasSelectedRepost: index >= 0 };
   });
   const { reposts, index: repostIndex, state: repostState } = repostReading;
@@ -96,7 +98,12 @@ export function useXFeed(historyReading = null) {
         const feed = await request;
         if (!mounted) return;
         setArticleReading((current) => refreshedArticleReading(current, feed));
-        setRepostReading((current) => refreshedRepostReading(current, feed));
+        setRepostReading((current) => {
+          const refreshed = refreshedRepostReading(current, feed);
+          if (current.hasSelectedRepost) return refreshed;
+          const index = restoreReadingIndex(refreshed.reposts, preferredRepostId, "repostId");
+          return index < 0 ? refreshed : { ...refreshed, index, hasSelectedRepost: true };
+        });
         const hasPinStatus = ["ok", "stale", "none", "unavailable"].includes(feed.pinnedStatus);
         const nextPinned =
           isOwnPost(feed.pinnedPost) && (!hasPinStatus || ["ok", "stale"].includes(feed.pinnedStatus))
@@ -136,13 +143,16 @@ export function useXFeed(historyReading = null) {
           if (feed.status === "ok") {
             setFeedUpdatedAt(getFeedSnapshot()?.savedAt ?? null);
           }
-          setReading((current) => ({
-            ...current,
-            posts: originals,
-            // A default snapshot/cache selection follows the latest feed item.
-            // Preserve identity only after the reader deliberately picks a post.
-            index: current.hasSelectedPost ? retainedPostIndex(current.posts, current.index, originals) : 0,
-          }));
+          setReading((current) => {
+            const index = current.hasSelectedPost
+              ? retainedPostIndex(current.posts, current.index, originals)
+              : restoreReadingIndex(originals, preferredPostId);
+            return {
+              posts: originals,
+              index: Math.max(0, index),
+              hasSelectedPost: current.hasSelectedPost || index >= 0,
+            };
+          });
           setFeedSource(feed.status === "stale" ? "stale" : "live");
         } else {
           setFeedSource((current) => (current === "live" ? "stale" : current));
@@ -165,7 +175,7 @@ export function useXFeed(historyReading = null) {
       mounted = false;
       stop();
     };
-  }, [feedRefreshToken]);
+  }, [feedRefreshToken, preferredPostId, preferredRepostId]);
 
   function retryFeed() {
     if (retryDisabled) return;

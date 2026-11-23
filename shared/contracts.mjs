@@ -30,6 +30,9 @@
  *   avatar?: string | null,
  *   avatarProxy?: AvatarProxy,
  *   permalink?: string,
+ *   repliesUrl?: string,
+ *   commentsUrl?: string,
+ *   quotedPost?: { id: string, text: string, permalink: string },
  *   media?: MediaItem[],
  * }} PostItem
  * @typedef {{
@@ -57,6 +60,8 @@
  *   reposts?: PostItem[],
  *   repostsStatus?: SectionStatus,
  * }} FeedResponse
+ * @typedef {{ status: "ok", replies: PostItem[], limited: boolean } | { status: "unavailable" }} RepliesResponse
+ * @typedef {{ id: string, text: string, createdAt: string }} PostComment
  * @typedef {{
  *   name: string,
  *   username: string,

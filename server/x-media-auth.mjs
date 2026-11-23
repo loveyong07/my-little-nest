@@ -11,6 +11,7 @@ const MAX_LIFETIME_SECONDS = 8 * DAY_SECONDS;
 export const MEDIA_RETRY_LIMIT = 3;
 const legacy = { image: new Set(LEGACY_IMAGE_URLS), video: new Set(LEGACY_VIDEO_URLS) };
 const encoder = new TextEncoder();
+const POST_ID = /^\d{1,20}$/;
 const primarySlot = { secret: undefined, key: undefined };
 const previousSlot = { secret: undefined, key: undefined };
 
@@ -73,6 +74,41 @@ async function signingKey(secret, slot = primarySlot) {
 
 function payload(kind, source, expires, format = null) {
   return encoder.encode(`little-nest/media/v1\n${kind}\n${expires}\n${source.href}${format ? `\n${format}` : ""}`);
+}
+
+function postAccessPayload(id, expires) {
+  return encoder.encode(`little-nest/post-access/v1\n${id}\n${expires}`);
+}
+
+async function signedPostQuery(id, { secret = signingSecret(), now = Date.now() } = {}) {
+  const key = POST_ID.test(id) ? await signingKey(secret) : null;
+  if (!key) return null;
+  const expires = (Math.floor(now / (DAY_SECONDS * 1000)) + 8) * DAY_SECONDS;
+  const bytes = new Uint8Array(await crypto.subtle.sign("HMAC", key, postAccessPayload(id, expires)));
+  const signature = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+  return `?post=${id}&expires=${expires}&signature=${signature}`;
+}
+
+export async function authorizedPostId(request, { secret, previousSecret, now = Date.now() }) {
+  if (!allowedMediaContext(request)) return null;
+  const { search, searchParams } = new URL(request.url);
+  const id = searchParams.get("post") ?? "";
+  const expires = searchParams.get("expires") ?? "";
+  const signature = searchParams.get("signature") ?? "";
+  if (!POST_ID.test(id) || !/^\d{10}$/.test(expires) || !/^[a-f0-9]{64}$/.test(signature)) return null;
+  if (search !== `?post=${id}&expires=${expires}&signature=${signature}`) return null;
+  const remaining = Number(expires) - Math.floor(now / 1000);
+  if (remaining <= 0 || remaining > MAX_LIFETIME_SECONDS) return null;
+  const bytes = Uint8Array.from(signature.match(/.{2}/g), (hex) => Number.parseInt(hex, 16));
+  const data = postAccessPayload(id, expires);
+  for (const [candidate, slot] of [
+    [secret, primarySlot],
+    [previousSecret, previousSlot],
+  ]) {
+    const key = await signingKey(candidate, slot);
+    if (key && (await crypto.subtle.verify("HMAC", key, bytes, data))) return id;
+  }
+  return null;
 }
 
 /**
@@ -181,12 +217,15 @@ export async function authorizeProfile(result, options) {
 /**
  * @param {import("../shared/contracts.mjs").FeedResponse} result
  * @param {import("../shared/contracts.mjs").MediaSigningOptions} [options]
+ * @param {{ replies?: boolean, comments?: boolean }} [discussion]
  * @returns {Promise<import("../shared/contracts.mjs").FeedResponse>}
  */
-export async function authorizeFeed(result, options) {
-  async function postWithMedia(post) {
+export async function authorizeFeed(result, options, discussion = {}) {
+  async function postWithMedia(post, includeDiscussion = false) {
     if (!post) return post;
     const proxy = await avatarProxy(post.avatar, options);
+    const query =
+      includeDiscussion && (discussion.replies || discussion.comments) ? await signedPostQuery(post.id, options) : null;
     const media = Array.isArray(post.media)
       ? await Promise.all(
           post.media.map(async (item) => {
@@ -212,17 +251,19 @@ export async function authorizeFeed(result, options) {
       ...(blocks ? { blocks } : {}),
       ...(proxy ? { avatarProxy: proxy } : {}),
       ...(media ? { media } : {}),
+      ...(query && discussion.replies ? { repliesUrl: `/api/x-replies${query}` } : {}),
+      ...(query && discussion.comments ? { commentsUrl: `/api/post-comments${query}` } : {}),
     };
   }
   return {
     ...result,
-    posts: await Promise.all((result?.posts ?? []).map((post) => postWithMedia(post))),
+    posts: await Promise.all((result?.posts ?? []).map((post) => postWithMedia(post, true))),
     ...(Array.isArray(result?.reposts)
-      ? { reposts: await Promise.all(result.reposts.map((post) => postWithMedia(post))) }
+      ? { reposts: await Promise.all(result.reposts.map((post) => postWithMedia(post, true))) }
       : {}),
     ...(Array.isArray(result?.articles)
       ? { articles: await Promise.all(result.articles.map((post) => postWithMedia(post))) }
       : {}),
-    ...(result?.pinnedPost ? { pinnedPost: await postWithMedia(result.pinnedPost) } : {}),
+    ...(result?.pinnedPost ? { pinnedPost: await postWithMedia(result.pinnedPost, true) } : {}),
   };
 }

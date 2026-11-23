@@ -137,7 +137,12 @@ test("every relative import in the Sites worker bundle resolves to a shipped fil
 });
 
 test("Sites module outputs match current sources without obsolete or Vercel-only modules", () => {
-  const vercelOnly = new Set(["article-cache.mjs", "photo-cache.mjs", "photo-cache-warm.mjs"]);
+  const vercelOnly = new Set([
+    "article-cache.mjs",
+    "blob-post-comments.mjs",
+    "photo-cache.mjs",
+    "photo-cache-warm.mjs",
+  ]);
   for (const directory of ["server", "shared"]) {
     const source = fileURLToPath(new URL(`../../${directory}/`, import.meta.url));
     const expected = readdirSync(source).filter(
