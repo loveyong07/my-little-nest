@@ -548,6 +548,7 @@ async function routeAndAccessibility(video) {
     assert.equal(await summary.evaluate((element) => element === document.activeElement), true);
     await page.keyboard.press("Enter");
     await directory.locator(".quick-nav-articles").waitFor({ state: "visible" });
+    await directory.locator(".reading-text-toggle").waitFor({ state: "visible" });
     await summary.press("Enter");
     await directory.locator(".quick-nav-articles").waitFor({ state: "hidden" });
     await page.keyboard.press("Tab");

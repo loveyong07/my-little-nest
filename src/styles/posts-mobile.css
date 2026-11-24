@@ -82,10 +82,10 @@
     flex-shrink: 0;
   }
   .reading-tools {
+    display: block;
     margin-top: 8px;
   }
   .reading-text-toggle {
-    height: 100%;
     background: #ecf4ff;
     color: #3b6080;
   }
