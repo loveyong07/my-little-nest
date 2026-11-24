@@ -67,3 +67,13 @@ The function (`server/starrygal.mjs`, wrapped by `api/starrygal.js`) only calls 
 Success responses use CDN and bounded warm-instance caching, with in-flight deduplication, a 12-second upstream timeout, a 2 MiB response limit, and a best-effort limit of 30 requests per minute per client on each warm instance. When the 2,000-address table fills, new clients share 128 additional counters with the same one-minute quota per counter. TouchGal enforces the shared token quotas globally. Upstream errors and rate limits are not cached.
 
 Run `node --test tests/touchgal-relay.test.mjs` to verify the relay contract and secret redaction.
+
+## 联系页匿名留言
+
+分享入口为 `https://loveyong07.top/contact#anonymous-message`。访客可向同源 `POST /api/anonymous-message` 提交纯文本正文。邮件主题、发件人和收件人由服务端决定。浏览器重试同一条正文时复用请求编号，Resend 据此避免重复发信。
+
+启用前在 Vercel 项目 Firewall 为 `POST /api/anonymous-message` 添加按 IP 计数的固定窗口限流，建议每 60 秒 3 次，超限返回 429。
+
+在 Resend 验证发信子域名，例如 `mail.loveyong07.top`。由域名管理员在现有 DNS 管理处添加 Resend 提供的记录。将仅有发信权限的 `RESEND_API_KEY` 和 `ANONYMOUS_MESSAGE_FROM` 添加到 Vercel 的服务端环境变量，发件人示例为 `初咏的小窝 <notes@mail.loveyong07.top>`。保存后重新部署，打开分享入口发送一条测试留言，并核对 Gmail 实收。未配置凭据时，接口返回 503，页面会保留正文并提示服务暂不可用。
+
+[Vercel 防火墙限流](https://vercel.com/docs/vercel-firewall/vercel-waf/rate-limiting) · [Resend 域名验证](https://resend.com/docs/dashboard/domains/introduction)

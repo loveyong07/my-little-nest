@@ -48,6 +48,7 @@ test("public artifacts exclude source maps, server code, credentials and environ
     process.env.BLOB_READ_WRITE_TOKEN,
     process.env.VERCEL_OIDC_TOKEN,
     process.env.TOUCHGAL_API_TOKEN,
+    process.env.RESEND_API_KEY,
     process.env.GOOGLE_DRIVE_CLIENT_ID,
     process.env.GOOGLE_DRIVE_CLIENT_SECRET,
     process.env.GOOGLE_DRIVE_REFRESH_TOKEN,
@@ -65,7 +66,7 @@ test("public artifacts exclude source maps, server code, credentials and environ
         const code = readFileSync(file, "utf8");
         assert.ok(!/sourceMappingURL\s*=/.test(code), `Source map reference in ${relative}`);
         assert.ok(
-          !/X_BEARER_TOKEN|X_MEDIA_SIGNING_SECRET|BLOB_READ_WRITE_TOKEN|VERCEL_OIDC_TOKEN|TOUCHGAL_API_TOKEN|GOOGLE_DRIVE_(?:CLIENT_ID|CLIENT_SECRET|REFRESH_TOKEN)|BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY/.test(
+          !/X_BEARER_TOKEN|X_MEDIA_SIGNING_SECRET|BLOB_READ_WRITE_TOKEN|VERCEL_OIDC_TOKEN|TOUCHGAL_API_TOKEN|RESEND_API_KEY|GOOGLE_DRIVE_(?:CLIENT_ID|CLIENT_SECRET|REFRESH_TOKEN)|BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY/.test(
             code,
           ),
           `Server-only material in ${relative}`,
@@ -123,12 +124,16 @@ test("public legal pages include all translations without running the app", asyn
     const html = await readFile(path.join(client, ROUTE_SHELLS[`/${name}`]), "utf8");
     assert.ok(html.includes(`rel="canonical" href="https://loveyong07.top/${name}"`));
     assert.ok(home.includes(`href="/${name}"`));
-    for (const [id, language] of [
-      ["zh", "zh-CN"],
-      ["ja", "ja"],
-      ["en", "en"],
+    for (const [id, language, date] of [
+      ["zh", "zh-CN", "2026 年 11 月 23 日"],
+      ["ja", "ja", "2026年11月23日"],
+      ["en", "en", "November 23, 2026"],
     ]) {
-      assert.ok(html.includes(`id="${id}" lang="${language}"`));
+      const title = `id="${id}" lang="${language}"`;
+      const start = html.indexOf(title);
+      assert.notEqual(start, -1, title);
+      const article = html.slice(start, html.indexOf("</article>", start));
+      assert.ok(article.includes(`<time datetime="2026-11-23">${date}</time>`), `${name}: ${language} update date`);
     }
     const navigationScript = '<script type="module" src="/legal/legal-navigation.js"></script>';
     assert.ok(html.includes(navigationScript));

@@ -13,7 +13,7 @@
     0 12px 26px #355b8124,
     var(--glass-edge-light);
 }
-.email-row {
+.contact-letter-card {
   border-color: #ffffff80;
   box-shadow:
     inset 3px 0 #a4c3dc99,
@@ -25,7 +25,7 @@
     -webkit-backdrop-filter: blur(var(--glass-tile-blur)) saturate(1.03);
     backdrop-filter: blur(var(--glass-tile-blur)) saturate(1.03);
   }
-  .email-row {
+  .contact-letter-card {
     -webkit-backdrop-filter: blur(var(--glass-email-blur)) saturate(1.03);
     backdrop-filter: blur(var(--glass-email-blur)) saturate(1.03);
   }
@@ -35,14 +35,14 @@
   .contact-tile {
     background: var(--glass-tile-fill);
   }
-  .email-row {
+  .contact-letter-card {
     background: linear-gradient(125deg, #eaf3fa5c, #f9fcfe73);
   }
 }
 
 @media (forced-colors: active) {
   .contact-tile,
-  .email-row,
+  .contact-letter-card,
   .letter-guide li {
     background: Canvas;
     border-color: CanvasText;

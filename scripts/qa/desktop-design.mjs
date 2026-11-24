@@ -250,11 +250,11 @@ try {
       assert.equal(await page.locator(".contact-tile").count(), 3);
       assert.equal(await page.locator(".contact-tile[href]").count(), 3);
       await filters.nth(2).click();
-      assert.equal(await page.locator("button.contact-tile").count(), 4);
-      await page.locator(".contact-tile.wechat").click();
-      assert.equal(await page.evaluate(() => window.__copiedText), "loveyong07");
+      assert.equal(await page.locator("button.contact-tile").count(), 3);
+      await page.locator(".contact-tile.discord").click();
+      assert.equal(await page.evaluate(() => window.__copiedText), "loveyong_07");
       assert.equal(
-        await page.locator(".contact-tile.wechat").evaluate((el) => el.classList.contains("is-copied")),
+        await page.locator(".contact-tile.discord").evaluate((el) => el.classList.contains("is-copied")),
         true,
       );
       await page.locator(".email-option button").click();
@@ -277,9 +277,9 @@ try {
       );
       await page.setViewportSize({ width: 390, height: 844 });
       assert.equal(await page.locator(".contact-filters").isVisible(), true);
-      assert.equal(await page.locator(".contact-tile").count(), 4);
+      assert.equal(await page.locator(".contact-tile").count(), 3);
       await filters.nth(0).click();
-      assert.equal(await page.locator(".contact-tile").count(), 7);
+      assert.equal(await page.locator(".contact-tile").count(), 6);
       assert.equal(await page.locator(".mail-compose-link").isVisible(), true);
       await page.getByRole("button", { name: "打开菜单", exact: true }).click();
       const contact = page.locator(".site-nav a[data-page=contact]");
@@ -426,7 +426,7 @@ try {
         new URL(await page.locator(".mail-compose-link").getAttribute("href")).searchParams.get("body"),
         draft,
       );
-      assert.equal(await page.locator(".contact-tile").count(), 7);
+      assert.equal(await page.locator(".contact-tile").count(), 6);
       assert.equal(await page.locator('.email-option a[href^="mailto:"]').count(), 1);
       assert.equal(await page.locator(".email-address span").textContent(), "loveyong2007@gmail.com");
       await page.setViewportSize({ width: 1440, height: 900 });
@@ -485,7 +485,7 @@ try {
           await load(page, "/contact");
           await verifyLayout(page, `${width}-${language}/contact`, "/contact", false);
           await page.locator(".contact-filters button").nth(2).click();
-          assert.equal(await page.locator("button.contact-tile").count(), 4);
+          assert.equal(await page.locator("button.contact-tile").count(), 3);
           await page.locator(".contact-filters button").nth(0).click();
           await page.locator(".letter-guide-action").nth(2).click();
           assert.equal(await page.locator("#letter-draft-body").evaluate((el) => el === document.activeElement), true);

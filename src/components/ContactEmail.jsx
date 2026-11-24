@@ -44,7 +44,12 @@ export function ContactEmail({ t, topic, setTopic, body, setBody, detailsRef, co
     </div>
   );
   return (
-    <section className="email-row" id="email-options" aria-labelledby="email-options-heading" tabIndex={-1}>
+    <section
+      className="contact-letter-card email-row"
+      id="email-options"
+      aria-labelledby="email-options-heading"
+      tabIndex={-1}
+    >
       <h2 id="email-options-heading">
         <FaEnvelope aria-hidden="true" />
         {t.emailHeading}

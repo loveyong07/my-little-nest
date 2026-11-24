@@ -1251,13 +1251,13 @@ test("contact copy action reports success and exposes a manual fallback on failu
       profile: { username: "loveyong07" },
     }),
   );
-  let wechat = view.container.querySelector(".contact-tile.wechat");
+  let discord = view.container.querySelector(".contact-tile.discord");
   await React.act(async () => {
-    wechat.click();
+    discord.click();
     await Promise.resolve();
   });
-  assert.deepEqual(copied, ["loveyong07"]);
-  assert.match(wechat.textContent, /已复制/);
+  assert.deepEqual(copied, ["loveyong_07"]);
+  assert.match(discord.textContent, /已复制/);
   await view.unmount();
 
   resetDom();
@@ -1276,12 +1276,12 @@ test("contact copy action reports success and exposes a manual fallback on failu
       profile: { username: "loveyong07" },
     }),
   );
-  wechat = view.container.querySelector(".contact-tile.wechat");
+  discord = view.container.querySelector(".contact-tile.discord");
   await React.act(async () => {
-    wechat.click();
+    discord.click();
     await Promise.resolve();
   });
-  assert.equal(view.container.querySelector(".contact-copy-fallback input")?.value, "loveyong07");
+  assert.equal(view.container.querySelector(".contact-copy-fallback input")?.value, "loveyong_07");
   assert.ok(view.container.querySelector('.contact-copy-fallback[role="status"]'));
   await view.unmount();
 });
@@ -1295,7 +1295,7 @@ test("late clipboard results cannot overwrite the latest account's success or fa
       value: { writeText: (value) => new Promise((resolve, reject) => pending.push({ value, resolve, reject })) },
     });
     const view = await mount(React.createElement(ContactPage, { t: copy.zh, profile: { username: "loveyong07" } }));
-    await React.act(async () => view.container.querySelector(".contact-tile.wechat").click());
+    await React.act(async () => view.container.querySelector(".contact-tile.discord").click());
     await React.act(async () => view.container.querySelector(".contact-tile.qq").click());
     await React.act(async () => {
       if (latestFails) pending[1].reject(new Error("clipboard unavailable"));

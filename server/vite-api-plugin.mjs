@@ -12,6 +12,7 @@ function toFetchRequest(request, signal) {
     method: request.method,
     headers,
     signal,
+    ...(!["GET", "HEAD"].includes(request.method) ? { body: request, duplex: "half" } : {}),
   });
 }
 

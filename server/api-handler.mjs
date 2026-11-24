@@ -5,6 +5,8 @@ import { createXFeedService } from "./x-feed-service.mjs";
 import { proxyXMedia } from "./x-media.mjs";
 import { proxyXVideo } from "./x-video.mjs";
 import { createStarryGalFetchHandler } from "./starrygal.mjs";
+import { ANONYMOUS_MESSAGE_ENDPOINT } from "../shared/anonymous-message.mjs";
+import { sendAnonymousMessage } from "./anonymous-message.mjs";
 
 // Browsers do not HTTP-cache these answers. Complete successes use the retained five-minute
 // CDN policy; partial, stale and unknown results use the one-minute retry policy. These
@@ -164,6 +166,7 @@ export function createApiHandler(
     if (pathname === "/api/x-posts") return feedRoute(request, "posts");
     if (pathname === "/api/x-profile") return feedRoute(request, "profile");
     if (pathname === "/api/starrygal") return starrygalHandler()(request);
+    if (pathname === ANONYMOUS_MESSAGE_ENDPOINT) return sendAnonymousMessage(request, env, fetchImpl);
     return null;
   };
 }

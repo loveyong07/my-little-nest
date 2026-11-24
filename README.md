@@ -16,13 +16,17 @@
 | :---: | :---: | :---: |
 | <img src="docs/screenshots/home-mobile.webp" alt="首页移动端" width="240" /> | <img src="docs/screenshots/posts-mobile.webp" alt="动态页移动端" width="240" /> | <img src="docs/screenshots/contact-mobile.webp" alt="联系页移动端" width="240" /> |
 
+动态页截图使用示例数据。
+
 ## 做了什么
 
 - **首页 (`/`)**：手帐信笺和「小窝手记」卡片，桌面端一屏适配，同步展示最新的 X 头像与资料，右下角带网站源码与法律页面入口。
 - **动态 (`/posts`)**：按置顶帖、原创动态、我的转帖、X 文章四个区域分开阅读；支持 `/` 搜索、站内分享直达、全量图片轮播灯箱、视频/GIF 播放，以及调用浏览器原生接口的卡片内翻译。
-- **联系 (`/contact`)**：邮箱写信草稿箱与常用社交账号汇总，支持一键复制。
-- **说明页 (`/privacy` · `/terms`)**：独立静态三语页面，无 JS 环境也能直接打开，有 JS 时支持平滑切换。
+- **联系 (`/contact`)** 提供邮箱写信草稿、六种社交联系方式和免登录的[匿名留言入口](https://loveyong07.top/contact#anonymous-message)。「分享小窝」可以一键复制主页或匿名留言链接。
+- **说明页 (`/privacy` · `/terms`)** 是独立静态三语页面，正文采用透出背景插画的玻璃面板，无 JS 环境也能直接阅读。
 - **同源同步与媒体代理**：通过 Vercel 定时任务把 X 动态快照、原图 WebP（Vercel Blob）与视频归档（Google Drive）缓存到服务端，再经签名同源接口分发，方便直连访问。
+
+桌面端可从动态页和联系页标题上方的「首页 / 动态 / 联系」导航切换，手机端使用右上角菜单。
 
 ## 技术栈
 
@@ -41,6 +45,8 @@ npm run dev
 ```
 
 不配置 `.env.local` 也可以直接运行并预览页面（动态页会回退到内置快照）。需要对接真实 X / Blob / Drive 同步或 StarryGal 中继时，可按 [.env.example](.env.example) 填入对应服务端环境变量（切勿加 `VITE_` 前缀）。
+
+匿名留言通过 Resend 投递到站主的 Gmail。发信前需验证发信域名，并在服务端配置 `RESEND_API_KEY` 和 `ANONYMOUS_MESSAGE_FROM`。未配置时，表单会提示暂不可用。 [匿名留言接入说明](docs/maintenance.md#联系页匿名留言)
 
 ## 常用命令
 

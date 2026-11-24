@@ -5,8 +5,6 @@ export const SITE_SOURCE_REPOSITORY = "https://github.com/loveyong07/my-little-n
 export const STARRY_GAL_REPOSITORY = "https://github.com/loveyong07/loveyong-starrygal";
 
 export { X_USERNAME };
-// The WeChat ID happens to match the X username; it is a separate account setting.
-export const WECHAT_ID = "loveyong07";
 export const QQ_NUMBER = "3437702786";
 export const WHATSAPP_USERNAME = "@loveyong07";
 export const FALLBACK_AVATAR = `${ASSETS}/x-avatar.jpg`;
@@ -30,7 +28,6 @@ export const contactChannels = [
   { id: "telegram", title: "Telegram", descriptionKey: "telegramSub", href: "https://t.me/loveyong07" },
   { id: "discord", title: "Discord", descriptionKey: "discordSub", account: "loveyong_07" },
   { id: "whatsapp", title: "WhatsApp", descriptionKey: "whatsappSub", account: WHATSAPP_USERNAME },
-  { id: "wechat", titleKey: "wechatTitle", descriptionKey: "wechatSub", account: WECHAT_ID },
   { id: "qq", title: "QQ", descriptionKey: "qqSub", account: QQ_NUMBER },
 ];
 

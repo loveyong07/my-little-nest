@@ -2,22 +2,20 @@
 .route-hero {
   position: relative;
   isolation: isolate;
-  height: 285px;
+  display: flex;
+  align-items: flex-end;
+  min-height: 285px;
+  padding: calc(var(--site-header-height) + 8px) max(4vw, calc((100vw - 1060px) / 2)) 49px;
   overflow: hidden;
 }
 .route-page-title {
-  position: absolute;
-  bottom: 49px;
-  left: max(4.7vw, calc((100vw - 1320px) / 2));
+  position: relative;
   z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 8px;
   animation: route-title-enter 380ms var(--ease-spring) both;
-}
-.route-hero-posts .route-page-title {
-  left: max(4vw, calc((100vw - 1060px) / 2));
 }
 .route-page-kicker {
   display: inline-flex;
@@ -52,6 +50,13 @@
   text-shadow:
     0 2px 14px #19426dc9,
     0 0 28px #26548466;
+}
+.route-page-intro {
+  margin: 2px 0 0;
+  color: #fff;
+  font-size: 13px;
+  line-height: 1.5;
+  text-shadow: 0 2px 8px #19426de6;
 }
 
 .route-panel {
@@ -108,13 +113,12 @@
 @media (max-width: 900px) {
   .route-hero {
     z-index: 5;
-    height: 234px;
+    min-height: 234px;
+    padding-inline: 21px;
+    padding-bottom: 38px;
     overflow: visible;
   }
-  .route-page-title,
-  .route-hero-posts .route-page-title {
-    bottom: 40px;
-    left: 21px;
+  .route-page-title {
     gap: 6px;
   }
   .route-panel {

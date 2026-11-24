@@ -44,6 +44,7 @@ const baseViewports = Object.keys(viewports);
 viewports.landscape = { viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true };
 viewports["short-phone"] = { viewport: { width: 390, height: 320 }, isMobile: true, hasTouch: true };
 const pages = { home: "/", posts: "/posts", contact: "/contact" };
+const legalPages = { privacy: "/privacy", terms: "/terms" };
 
 function scenarios() {
   const list = [];
@@ -52,6 +53,7 @@ function scenarios() {
   for (const vp of ["desktop", "phone"])
     for (const lang of ["ja", "en"]) for (const page of Object.keys(pages)) add({ vp, page, lang });
   for (const page of Object.keys(pages)) add({ vp: "phone", page, reducedMotion: true });
+  for (const vp of ["desktop", "phone"]) for (const page of Object.keys(legalPages)) add({ vp, page, shot: true });
   for (const vp of ["tablet", "phone"])
     for (const page of Object.keys(pages)) add({ vp, page, action: "menu", shot: true });
   for (const vp of ["desktop", "phone"]) {
@@ -290,7 +292,14 @@ async function prepareContext(browser, scenario) {
 async function load(page, scenario) {
   await page.clock.setFixedTime(FIXED_TIME);
   await page.addInitScript(pageHelpers);
-  await page.goto(ORIGIN + pages[scenario.page], { waitUntil: "load" });
+  const legalPath = legalPages[scenario.page];
+  await page.goto(ORIGIN + (legalPath ?? pages[scenario.page]), { waitUntil: "load" });
+  if (legalPath) {
+    await page.locator(".legal-copy:visible").waitFor();
+    await page.locator(".legal-scene img").evaluate((image) => image.decode());
+    await settle(page);
+    return;
+  }
   if (scenario.ageGate) await page.waitForSelector(".posts-age-gate", { timeout: 15000 });
   else if (scenario.page === "posts") {
     await page.waitForSelector(
@@ -407,7 +416,7 @@ async function act(page, scenario) {
     await page.waitForSelector(".media-lightbox video, .media-lightbox-unavailable");
   }
   if (scenario.action === "copy" || scenario.action === "copy-fail") {
-    await page.click(".contact-tile.wechat");
+    await page.click(".contact-tile.discord");
     await page.waitForSelector(scenario.action === "copy" ? ".contact-tile.is-copied" : ".contact-copy-fallback");
   }
   await page.waitForTimeout(80);

@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { FaDiscord, FaLine, FaQq, FaTelegram, FaWhatsapp, FaWeixin, FaXTwitter } from "react-icons/fa6";
+import { FaDiscord, FaLine, FaQq, FaTelegram, FaWhatsapp, FaXTwitter } from "react-icons/fa6";
 import { FiMessageCircle, FiFeather, FiMail, FiArrowUpRight } from "react-icons/fi";
 import { ContactTile, CopyFallback } from "../components/ContactTile.jsx";
 import { ContactPostcard } from "../components/ScrapbookAccents.jsx";
@@ -7,7 +7,9 @@ import { mailboxes, contactChannels, xProfileUrl } from "../constants/site.js";
 import { useDesktopLayout } from "../hooks/useDesktopLayout.js";
 import { useClipboard } from "../hooks/useClipboard.js";
 import { useSectionEntrance } from "../hooks/useSectionEntrance.js";
+import { AnonymousMessage } from "../components/AnonymousMessage.jsx";
 import { ContactEmail } from "../components/ContactEmail.jsx";
+import { ContactShare } from "../components/ContactShare.jsx";
 import { preferredScrollBehavior } from "../utils/motion.js";
 import "../styles/contact-route.css";
 
@@ -17,7 +19,6 @@ const contactIcons = {
   telegram: FaTelegram,
   discord: FaDiscord,
   whatsapp: FaWhatsapp,
-  wechat: FaWeixin,
   qq: FaQq,
 };
 const letterIcons = [FiMessageCircle, FiFeather, FiMail];
@@ -54,46 +55,39 @@ export default function ContactPage({ t, profile }) {
     });
   }
 
-  const socials = contactChannels.map(({ id, title, titleKey, descriptionKey, href, account }) => {
-    const name = titleKey ? t[titleKey] : title;
-    return {
-      icon: contactIcons[id],
-      className: id,
-      title: name,
-      sub: t[descriptionKey],
-      href: id === "x" ? xProfileUrl(profile.username) : href,
-      onClick: account ? () => copyId(account) : undefined,
-      copyLabel: account ? copyLabel(name, account) : undefined,
-      copied: account && copiedId === account ? t.copied : undefined,
-      action: account ? t.actionCopy : t.actionOpen,
-      failedId: account && copyFailedId === account ? account : undefined,
-    };
-  });
+  const socials = contactChannels.map(({ id, title, descriptionKey, href, account }) => ({
+    icon: contactIcons[id],
+    className: id,
+    title,
+    sub: t[descriptionKey],
+    href: id === "x" ? xProfileUrl(profile.username) : href,
+    onClick: account ? () => copyId(account) : undefined,
+    copyLabel: account ? copyLabel(title, account) : undefined,
+    copied: account && copiedId === account ? t.copied : undefined,
+    action: account ? t.actionCopy : t.actionOpen,
+    failedId: account && copyFailedId === account ? account : undefined,
+  }));
   const visibleSocials = socials.filter(
     (social) => channelFilter === "all" || (channelFilter === "open" ? social.href : !social.href),
   );
 
-  const email = (
-    <ContactEmail
-      key="email"
-      t={t}
-      topic={letterTopic}
-      setTopic={setLetterTopic}
-      body={letterBody}
-      setBody={setLetterBody}
-      detailsRef={draftDetailsRef}
-      copiedId={copiedId}
-      copyId={copyId}
-    />
+  const letters = (
+    <div className="contact-letters" key="letters">
+      <ContactEmail
+        t={t}
+        topic={letterTopic}
+        setTopic={setLetterTopic}
+        body={letterBody}
+        setBody={setLetterBody}
+        detailsRef={draftDetailsRef}
+        copiedId={copiedId}
+        copyId={copyId}
+      />
+      <AnonymousMessage t={t} />
+    </div>
   );
   const channels = (
-    <section
-      key="channels"
-      className="contact-channels"
-      id="contact-methods"
-      aria-labelledby="contact-channel-heading"
-      tabIndex={-1}
-    >
+    <section className="contact-channels" id="contact-methods" aria-labelledby="contact-channel-heading" tabIndex={-1}>
       <div className="contact-channel-heading">
         <h2 id="contact-channel-heading">{t.contactChannelHeading}</h2>
       </div>
@@ -131,6 +125,12 @@ export default function ContactPage({ t, profile }) {
       </span>
     </section>
   );
+  const methods = (
+    <div className="contact-methods-column" key="methods">
+      {channels}
+      <ContactShare t={t} />
+    </div>
+  );
 
   return (
     <div className="contacts-section" id="contact" ref={sectionRef}>
@@ -144,7 +144,7 @@ export default function ContactPage({ t, profile }) {
           {t.contactSocialAction}
         </a>
       </div>
-      <div className="contact-desk">{desktop ? [email, channels] : [channels, email]}</div>
+      <div className="contact-desk">{desktop ? [letters, methods] : [methods, letters]}</div>
       {mailboxes.some(({ address }) => address === copyFailedId) && (
         <CopyFallback value={copyFailedId} message={t.copyFailed} label={t.manualCopyId} inputRef={manualCopyRef} />
       )}

@@ -6,6 +6,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { chromium } from "playwright-core";
 import { copy } from "../../src/constants/locales.js";
+import { ANONYMOUS_MESSAGE_ENDPOINT, ANONYMOUS_MESSAGE_ID } from "../../shared/anonymous-message.mjs";
 
 const origin = "http://127.0.0.1:4338";
 const output = process.env.QA_REGRESSION_OUTPUT || "qa/site-regressions";
@@ -936,6 +937,10 @@ async function legalPages(video) {
           return new URL(image.currentSrc).pathname;
         });
         assert.equal(source, `/assets/${artwork}${portrait ? "-portrait" : ""}.webp`);
+        await page.screenshot({
+          path: path.join(output, `${route.slice(1)}-glass-${portrait ? "mobile" : "desktop"}.png`),
+          animations: "disabled",
+        });
         await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
         assert.deepEqual(await scene.boundingBox(), { x: 0, y: 0, ...size });
         const copy = page.locator(".legal-copy:visible");
@@ -1050,6 +1055,181 @@ async function legalPages(video) {
   }
 }
 
+async function contactDesk(video) {
+  for (const mobile of [false, true]) {
+    const context = await browser.newContext({
+      viewport: mobile ? { width: 390, height: 844 } : { width: 1440, height: 1160 },
+      isMobile: mobile,
+      hasTouch: mobile,
+      locale: "zh-CN",
+      reducedMotion: "reduce",
+    });
+    try {
+      await setup(context, feedData(), video);
+      await context.addInitScript(() => {
+        Object.defineProperty(navigator, "clipboard", {
+          configurable: true,
+          value: {
+            writeText: async (value) => {
+              window.__copiedContactLink = value;
+            },
+          },
+        });
+      });
+      const attempts = [];
+      await context.route("**" + ANONYMOUS_MESSAGE_ENDPOINT, (route) => {
+        attempts.push(route.request().postDataJSON());
+        if (attempts.length === 1) return route.fulfill({ status: 429, body: "Too many requests" });
+        return route.fulfill({ status: 202, json: { status: "accepted" } });
+      });
+      const page = await context.newPage();
+      await page.goto(origin + "/contact#" + ANONYMOUS_MESSAGE_ID);
+      const card = page.getByRole("region", { name: "匿名留言" });
+      await page.waitForFunction((id) => {
+        const card = document.getElementById(id);
+        if (!card || document.activeElement !== card) return false;
+        const { top, bottom } = card.getBoundingClientRect();
+        return top >= 0 && bottom <= window.innerHeight;
+      }, ANONYMOUS_MESSAGE_ID);
+      const body = card.getByRole("textbox", { name: "留言正文" });
+      const send = card.getByRole("button", { name: "发送留言" });
+      const share = page.getByRole("region", { name: "分享小窝" });
+      assert.equal(await send.isDisabled(), true);
+      assert.equal(await body.getAttribute("maxlength"), "800");
+      assert.equal(await body.getAttribute("placeholder"), "小杂鱼想要说什么？");
+      if (!mobile) {
+        const spacing = await card.evaluate((element) => {
+          const channels = document.getElementById("contact-methods");
+          const share = document.querySelector(".contact-share").getBoundingClientRect();
+          const channelsBottom = channels.getBoundingClientRect().bottom;
+          return {
+            bottomGap: Math.abs(element.getBoundingClientRect().bottom - share.bottom),
+            betweenCards: share.top - channelsBottom,
+            belowTiles:
+              channelsBottom - channels.querySelector(".contact-tile:last-child").getBoundingClientRect().bottom,
+          };
+        });
+        assert.ok(spacing.bottomGap <= 1, "the anonymous message and share cards align along their bottom edges");
+        assert.ok(spacing.betweenCards >= 8 && spacing.betweenCards <= 24, "the share and social cards are separate");
+        assert.ok(spacing.belowTiles <= 24, "the social card ends just below the last row of channels");
+      }
+      assert.equal(attempts.length, 0, "opening a deep link should not submit a message");
+      await card.evaluate((element) => element.blur());
+      if (!mobile) await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+      await page.screenshot({
+        path: path.join(output, mobile ? "anonymous-message-mobile.png" : "anonymous-message-desktop.png"),
+      });
+
+      await body.fill(" 你好，初咏！ ");
+      await send.click();
+      await card.getByText("发送太频繁了，请稍后再试。").waitFor();
+      assert.equal(await body.inputValue(), " 你好，初咏！ ");
+      await send.click();
+      await card.getByText("留言已发送。谢谢你写给我！").waitFor();
+      assert.equal(await body.inputValue(), "");
+      assert.equal(await send.isDisabled(), true);
+      assert.deepEqual(attempts, [
+        { message: "你好，初咏！", id: attempts[0].id },
+        { message: "你好，初咏！", id: attempts[0].id },
+      ]);
+      for (const [label, url] of [
+        ["复制主页链接", "https://loveyong07.top/"],
+        ["复制匿名留言链接", "https://loveyong07.top/contact#anonymous-message"],
+      ]) {
+        const button = share.getByRole("button", { name: label });
+        await button.click();
+        await button.getByText("链接已复制").waitFor();
+        assert.equal(await page.evaluate(() => window.__copiedContactLink), url);
+      }
+      await page.evaluate(() => {
+        Object.defineProperty(navigator, "clipboard", {
+          configurable: true,
+          value: {
+            writeText: async () => {
+              throw new Error("clipboard unavailable");
+            },
+          },
+        });
+      });
+      await share.getByRole("button", { name: "复制匿名留言链接" }).click();
+      const manualCopy = share.getByRole("textbox", { name: "复制匿名留言链接" });
+      assert.equal(await manualCopy.inputValue(), "https://loveyong07.top/contact#anonymous-message");
+      assert.equal(await manualCopy.evaluate((field) => document.activeElement === field), true);
+    } finally {
+      await context.close();
+    }
+  }
+  console.log("PASS desktop and mobile Contact layout, anonymous message retry, share links and clipboard fallback");
+}
+
+async function routeHeadings(video) {
+  for (const mobile of [false, true]) {
+    const context = await browser.newContext({
+      viewport: mobile ? { width: 360, height: 740 } : { width: 1280, height: 900 },
+      isMobile: mobile,
+      hasTouch: mobile,
+      locale: "zh-CN",
+      reducedMotion: "reduce",
+    });
+    try {
+      await setup(context, feedData(), video);
+      const page = await context.newPage();
+      await page.goto(origin + "/contact");
+      const breadcrumb = page.locator(".route-breadcrumb");
+      for (const [route, active, caption] of [
+        ["contact", "联系", "写封信，或留几句想说的话。"],
+        ["posts", "动态", "把日常写成片段，把想说的留在这里。"],
+      ]) {
+        await page.waitForURL(origin + "/" + route);
+        await page.getByText(caption, { exact: true }).waitFor();
+        assert.equal(await breadcrumb.isVisible(), !mobile);
+        if (!mobile) {
+          assert.deepEqual(await breadcrumb.locator(":scope > *").allTextContents(), [
+            "首页",
+            "/",
+            "动态",
+            "/",
+            "联系",
+          ]);
+          assert.equal(await breadcrumb.locator('[aria-current="page"]').textContent(), active);
+          assert.equal(await breadcrumb.getByRole("link", { name: "首页" }).getAttribute("href"), "/");
+        }
+        const fits = await page.evaluate(
+          (leading) => {
+            const rect = (selector) => document.querySelector(selector).getBoundingClientRect();
+            return (
+              rect(leading).top >= rect(".site-header").bottom &&
+              rect(".route-page-intro").bottom < rect(".route-panel").top
+            );
+          },
+          mobile ? ".route-page-kicker" : ".route-breadcrumb",
+        );
+        assert.ok(fits, "the route heading clears the site header and the content panel");
+        if (route === "posts") {
+          await page.locator(".reading-library-trigger").waitFor({ state: "attached" });
+          assert.equal(
+            await page.locator(".site-header .brand").evaluate((brand) => getComputedStyle(brand).textDecorationLine),
+            "none",
+          );
+        }
+        await page.screenshot({
+          path: path.join(output, `${route}-heading-${mobile ? "mobile" : "desktop"}.png`),
+          clip: { x: 0, y: 0, width: mobile ? 360 : 680, height: mobile ? 310 : 400 },
+        });
+        if (mobile) await page.getByRole("button", { name: "打开菜单" }).click();
+        const navigation = mobile ? page.getByRole("navigation", { name: "主导航" }) : breadcrumb;
+        const otherPage = navigation.getByRole("link", { name: route === "contact" ? "动态" : "联系" });
+        assert.equal(await otherPage.getAttribute("href"), route === "contact" ? "/posts" : "/contact");
+        await otherPage.click();
+      }
+      await page.waitForURL(origin + "/contact");
+    } finally {
+      await context.close();
+    }
+  }
+  console.log("PASS route headings, desktop breadcrumbs, mobile menu navigation and the unadorned Nest link");
+}
+
 try {
   for (let attempt = 0; attempt < 50; attempt++) {
     if (
@@ -1062,6 +1242,8 @@ try {
   }
   browser = await chromium.launch({ channel: process.env.QA_BROWSER || "chrome" });
   const video = await recordVideo();
+  await routeHeadings(video);
+  await contactDesk(video);
   await legalPages(video);
   await desktopNavStability(video);
   await mobileRouteScenes(video);

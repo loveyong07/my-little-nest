@@ -33,6 +33,10 @@
     "api/starrygal.js": {
       "regions": ["hkg1"],
       "maxDuration": 20
+    },
+    "api/anonymous-message.js": {
+      "regions": ["hkg1"],
+      "maxDuration": 15
     }
   },
   "schedules": {

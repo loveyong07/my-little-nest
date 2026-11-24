@@ -30,6 +30,8 @@ export default defineConfig(({ mode }) => ({
         "X_MEDIA_SIGNING_SECRET",
         "X_MEDIA_SIGNING_SECRET_PREVIOUS",
         "TOUCHGAL_API_TOKEN",
+        "RESEND_API_KEY",
+        "ANONYMOUS_MESSAGE_FROM",
       ]),
     ),
   ],

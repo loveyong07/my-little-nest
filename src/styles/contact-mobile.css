@@ -100,7 +100,7 @@
     font-weight: 700;
     text-decoration: none;
   }
-  .email-row {
+  .contact-letter-card {
     display: block;
     margin-top: 20px;
     padding: 20px 16px;
@@ -108,7 +108,7 @@
     background: linear-gradient(145deg, #fffafcf0, #edf5ffeb);
     text-shadow: none;
   }
-  .email-row h2 {
+  .contact-letter-card h2 {
     font-size: 20px;
     font-weight: 500;
   }
@@ -329,7 +329,7 @@
 
 @media (max-width: 900px) and (forced-colors: active), (pointer: coarse) and (forced-colors: active) {
   .contact-tile,
-  .email-row,
+  .contact-letter-card,
   .letter-guide li {
     border-color: CanvasText;
     background: Canvas;

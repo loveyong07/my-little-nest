@@ -637,8 +637,12 @@ body[data-legal-lang="en"] #en.legal-copy {
 
 @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
   .legal-copy {
-    -webkit-backdrop-filter: blur(8px) saturate(1.06);
-    backdrop-filter: blur(8px) saturate(1.06);
+    --legal-reading-surface:
+      radial-gradient(ellipse at 100% 100%, #f9edf72e, #f9edf700 62%),
+      linear-gradient(144deg, #f8fcff9e, #e9f4ff91 53%, #fdf7ffa6);
+    -webkit-backdrop-filter: blur(2px) saturate(1.06);
+    backdrop-filter: blur(2px) saturate(1.06);
+    text-shadow: 0 1px 2px #ffffffbf, 0 0 6px #ffffff66;
   }
   .legal-return {
     --legal-control-fill: linear-gradient(145deg, #fcfeffcf, #edf6ffba);
