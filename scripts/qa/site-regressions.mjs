@@ -411,6 +411,91 @@ async function interactions(video) {
   }
 }
 
+async function dailyPostViews(video) {
+  const feed = feedData();
+  feed.posts = Array.from({ length: 30 }, (_, index) => {
+    const id = String(2190000010 + index);
+    return {
+      ...feed.posts[1],
+      id,
+      text: `Daily timeline sample ${index + 1}`,
+      created_at: index < 24 ? "2026-11-12T10:00:00.000Z" : "2026-10-12T10:00:00.000Z",
+      permalink: `https://x.com/loveyong07/status/${id}`,
+      media: index === 0 ? feed.posts[1].media : [],
+    };
+  });
+  for (const width of [1440, 390]) {
+    const phone = width === 390;
+    const context = await browser.newContext({
+      viewport: { width, height: phone ? 844 : 900 },
+      isMobile: phone,
+      hasTouch: phone,
+      reducedMotion: "reduce",
+    });
+    try {
+      await setup(context, feed, video);
+      const page = await context.newPage();
+      await page.goto(origin + "/posts");
+      const daily = page.locator("#latest-posts");
+      const cards = daily.locator(".post-reading .post-card");
+      const controls = daily.locator(".post-view-switch button");
+      async function activate(control) {
+        await control.evaluate((element) => element.scrollIntoView({ block: "center", behavior: "instant" }));
+        if (phone) await control.tap();
+        else await control.click();
+      }
+      await daily.locator(".post-index-button").nth(29).waitFor();
+      assert.equal(await cards.count(), 1);
+      assert.equal(await controls.first().getAttribute("aria-pressed"), "true");
+      await controls.last().click();
+      assert.equal(await cards.count(), 8);
+      assert.equal(await daily.locator(".post-index, .post-controls").count(), 0);
+      assert.ok((await controls.last().boundingBox()).height >= 44);
+      await activate(daily.locator(".post-stream-more"));
+      await page.waitForFunction(() => document.activeElement?.id === "post-2190000018");
+      assert.equal(await cards.count(), 16);
+
+      await daily.locator(".post-month-picker select").selectOption("2026-10");
+      await page.waitForFunction(() => document.activeElement?.id === "post-2190000034");
+      assert.equal(await cards.count(), 25);
+      await activate(page.locator(".reading-library-trigger"));
+      await page.locator(".library-search input").fill("Daily timeline sample 28");
+      await page.locator(".library-result").click();
+      await page.waitForFunction(() => document.activeElement?.id === "post-2190000037");
+      assert.equal(await cards.count(), 28);
+      await page.keyboard.press("ArrowRight");
+
+      const before = await page.evaluate(() => window.scrollY);
+      await page.locator('.site-nav a[data-page="contact"]').evaluate((link) => link.click());
+      await page.waitForURL(origin + "/contact");
+      await page.goBack();
+      await page.waitForFunction(
+        (top) =>
+          Math.abs(window.scrollY - top) <= 2 && document.querySelectorAll(".post-stream .post-card").length === 28,
+        before,
+      );
+      assert.equal(await controls.last().getAttribute("aria-pressed"), "true");
+      await activate(controls.first());
+      assert.equal(await cards.first().getAttribute("id"), "post-2190000037");
+      await controls.last().click();
+      await page.waitForFunction(() => document.activeElement?.id === "post-2190000037");
+      await activate(daily.locator(".post-stream-more"));
+      await page.waitForFunction(() => document.activeElement?.id === "post-2190000038");
+      assert.equal(await cards.count(), 30);
+      assert.equal(await daily.locator(".post-stream-more").count(), 0);
+      await daily.locator(".posts-daily-heading").evaluate((heading) => heading.scrollIntoView());
+      await page.screenshot({ path: path.join(output, `daily-stream-${width}.png`) });
+
+      await page.goto(origin + "/posts?post=2190000037");
+      await page.waitForFunction(() => document.activeElement?.id === "post-2190000037");
+      assert.equal(await controls.first().getAttribute("aria-pressed"), "true");
+      console.log(`PASS ${width}px daily views, batch sizing, month/search jumps, history, and direct post links`);
+    } finally {
+      await context.close();
+    }
+  }
+}
+
 async function multipleAttachments(video) {
   for (const width of [1440, 390]) {
     const feed = feedData();
@@ -831,7 +916,7 @@ async function legalPages(video) {
       await page.setViewportSize(size);
       for (const [route, artwork] of [
         ["/privacy", "privacy-kite"],
-        ["/terms", "terms-autumn"],
+        ["/terms", "terms-autumn-v2"],
       ]) {
         await page.goto(origin + route);
         const scene = page.locator(".legal-scene");
@@ -971,6 +1056,7 @@ try {
   await mobileRouteScenes(video);
   await postDiscussion(video);
   await interactions(video);
+  await dailyPostViews(video);
   await multipleAttachments(video);
   await routeAndAccessibility(video);
   await lazyFailures();

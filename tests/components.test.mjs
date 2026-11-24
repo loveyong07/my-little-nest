@@ -1591,6 +1591,93 @@ test("Posts opens on the latest feed post and preserves only an explicitly selec
   }
 });
 
+test("daily posts switch between one card and batches and restore a deep stream selection", async (context) => {
+  resetDom();
+  window.sessionStorage.setItem("nest-posts-age-confirmed", "18+");
+  context.mock.method(Date, "now", () => new Date().getTime() + 24 * 60 * 60_000);
+  const posts = Array.from({ length: 30 }, (_, index) => ({
+    ...SNAPSHOT,
+    id: String(21000 + index),
+    text: `Timeline entry ${index + 1}`,
+    created_at: index < 24 ? "2026-11-12T10:00:00.000Z" : "2026-10-12T10:00:00.000Z",
+    permalink: `https://x.com/loveyong07/status/${21000 + index}`,
+    media: [],
+  }));
+  context.mock.method(globalThis, "fetch", async () => ({
+    ok: true,
+    json: async () => ({
+      status: "ok",
+      pinnedStatus: "none",
+      repostsStatus: "none",
+      articlesStatus: "none",
+      posts,
+    }),
+  }));
+  const scrolled = [];
+  const previousScroll = HTMLElement.prototype.scrollIntoView;
+  HTMLElement.prototype.scrollIntoView = function () {
+    scrolled.push(this.id);
+  };
+  let savedReading;
+  const launch = (historyReading) =>
+    mount(
+      React.createElement(PostsPage, {
+        language: "en",
+        t: copy.en,
+        profile: { username: "loveyong07" },
+        onFeedReady() {},
+        historyReading,
+        rememberReading: (reading) => {
+          savedReading = reading;
+        },
+      }),
+    );
+  let view;
+  const query = (selector) => view.container.querySelector(selector);
+  const cards = () => view.container.querySelectorAll(".post-reading .post-card");
+  const click = async (selector) => {
+    await React.act(async () => query(selector).click());
+    await React.act(async () => new Promise((resolveFrame) => window.requestAnimationFrame(resolveFrame)));
+  };
+  try {
+    view = await launch(null);
+    assert.equal(cards().length, 1);
+    assert.equal(query(".post-view-switch button").getAttribute("aria-pressed"), "true");
+    await click(".post-view-switch button:last-child");
+    assert.equal(cards().length, 8);
+    assert.equal(query(".post-index, .post-controls"), null);
+    assert.equal(query(".post-stream-more").textContent, copy.en.postsStreamMore(22));
+    await click(".post-stream-more");
+    assert.equal(cards().length, 16);
+    assert.equal(document.activeElement.id, "post-21008");
+
+    await click(".post-view-switch button:first-child");
+    await click(".post-index-button:nth-child(25)");
+    await click(".post-view-switch button:last-child");
+    assert.equal(cards().length, 25);
+    assert.equal(document.activeElement.id, "post-21024");
+    assert.equal(scrolled.at(-1), "post-21024");
+    assert.equal(savedReading.viewMode, "stream");
+    assert.equal(savedReading.postId, "21024");
+    assert.equal(savedReading.streamLimit, 25);
+
+    await click(".post-stream-more");
+    assert.equal(cards().length, posts.length);
+    assert.equal(query(".post-stream-more"), null);
+    assert.equal(document.activeElement.id, "post-21025");
+    const readingBeforeNavigation = savedReading;
+    await view.unmount();
+    view = await launch(readingBeforeNavigation);
+    assert.equal(query(".post-view-switch button:last-child").getAttribute("aria-pressed"), "true");
+    assert.equal(cards().length, posts.length);
+    assert.equal(savedReading.postId, "21024");
+  } finally {
+    await view?.unmount();
+    if (previousScroll) HTMLElement.prototype.scrollIntoView = previousScroll;
+    else delete HTMLElement.prototype.scrollIntoView;
+  }
+});
+
 test("originals, reposts and Articles navigate independently and retain their identities through reordered refreshes", async (context) => {
   resetDom();
   let now = Date.now() + 3 * 24 * 60 * 60_000;

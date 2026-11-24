@@ -8,17 +8,32 @@ import { readVideoPlayback, restoreVideoPlayback } from "../utils/video-playback
 import { MediaLightbox } from "./MediaLightbox.jsx";
 
 // Every attachment owns its player, retry and preview state, including animated GIFs.
-export function PostVideo({ video, t }) {
+export function PostVideo({ video, t, deferOffscreen = false }) {
   const source = xVideoSrc(video.url, video.proxyUrl);
   const request = useMediaRequest(source);
   const dimensions = mediaDimensions(video);
   const reducedMotion = useReducedMotion();
   const playerRef = useRef(null);
+  const frameRef = useRef(null);
   const retryRef = useRef(null);
   const returnFocusRef = useRef(null);
   const previewOpenRef = useRef(false);
   const [expanded, setExpanded] = useState(false);
   const [playback, setPlayback] = useState(null);
+  const [inView, setInView] = useState(false);
+  const [hasEnteredView, setHasEnteredView] = useState(false);
+  const shouldObserve = deferOffscreen && typeof IntersectionObserver !== "undefined";
+  const autoplay = Boolean(video.animated) && !reducedMotion && (!shouldObserve || inView);
+
+  useEffect(() => {
+    if (!shouldObserve || !frameRef.current) return undefined;
+    const observer = new IntersectionObserver(([entry]) => {
+      setInView(entry.isIntersecting);
+      if (entry.isIntersecting) setHasEnteredView(true);
+    });
+    observer.observe(frameRef.current);
+    return () => observer.disconnect();
+  }, [shouldObserve]);
 
   useEffect(() => {
     if (request.retryCount > 0) (request.unavailable ? retryRef : playerRef).current?.focus();
@@ -26,13 +41,17 @@ export function PostVideo({ video, t }) {
   useEffect(() => {
     const player = playerRef.current;
     if (!video.animated || !player) return;
-    if (reducedMotion || previewOpenRef.current) player.pause();
+    if (!autoplay || previewOpenRef.current) player.pause();
     else player.play()?.catch(() => {});
-  }, [video.animated, reducedMotion, request.src, request.unavailable]);
+  }, [video.animated, autoplay, request.src, request.unavailable]);
 
   return (
     <>
-      <div className="post-video post-video-frame" style={{ aspectRatio: mediaFrameRatio(video, 16 / 9) }}>
+      <div
+        ref={frameRef}
+        className="post-video post-video-frame"
+        style={{ aspectRatio: mediaFrameRatio(video, 16 / 9) }}
+      >
         {request.unavailable || !source ? (
           <div className="post-media-unavailable" role="status">
             <span>{t.videoUnavailable}</span>
@@ -52,9 +71,13 @@ export function PostVideo({ video, t }) {
               preload="none"
               loop={Boolean(video.animated)}
               muted={Boolean(video.animated)}
-              autoPlay={Boolean(video.animated) && !reducedMotion}
+              autoPlay={autoplay}
               tabIndex={0}
-              poster={xMediaSrc(video.poster, false, video.posterProxyUrl) || undefined}
+              poster={
+                !shouldObserve || hasEnteredView
+                  ? xMediaSrc(video.poster, false, video.posterProxyUrl) || undefined
+                  : undefined
+              }
               width={dimensions?.width}
               height={dimensions?.height}
               aria-label={video.alt || t.postVideoAlt}

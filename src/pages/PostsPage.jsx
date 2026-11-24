@@ -22,6 +22,13 @@ import { hasAgeConfirmation, rememberAgeConfirmation } from "../utils/age-confir
 import { xProfileUrl } from "../constants/site.js";
 import "../styles/posts-route.css";
 
+const STREAM_BATCH_SIZE = 8;
+
+function focusReadingTarget(target, behavior = preferredScrollBehavior()) {
+  target?.focus({ preventScroll: true });
+  target?.scrollIntoView({ block: "start", behavior });
+}
+
 function PostControls({ postIndex, total, onChange, t }) {
   return (
     <div className="post-controls" role="group" aria-label={t.postNavigation}>
@@ -55,6 +62,13 @@ function PostsContent({ language, t, profile, onFeedReady, historyReading = null
   const [sharedPost] = useState(() => (historyReading ? null : sharedPostFromSearch(window.location.search)));
   const [sharedPostOpened, setSharedPostOpened] = useState(false);
   const [largeText, setLargeText] = useState(() => Boolean(historyReading?.largeText));
+  const [viewMode, setViewMode] = useState(() => (historyReading?.viewMode === "stream" ? "stream" : "card"));
+  const [streamLimit, setStreamLimit] = useState(() =>
+    Number.isSafeInteger(historyReading?.streamLimit)
+      ? Math.max(STREAM_BATCH_SIZE, historyReading.streamLimit)
+      : STREAM_BATCH_SIZE,
+  );
+  const [pendingStreamPost, setPendingStreamPost] = useState(null);
   const desktop = useDesktopLayout();
   const sectionRef = useRef(null);
   useSectionEntrance(sectionRef);
@@ -101,11 +115,16 @@ function PostsContent({ language, t, profile, onFeedReady, historyReading = null
   const readingRef = useRef(null);
   const indexRef = useRef(null);
   const currentPost = posts[Math.min(postIndex, Math.max(0, posts.length - 1))];
+  const visibleStreamCount = Math.min(posts.length, Math.max(streamLimit, postIndex + 1));
+  const streamPosts = useMemo(() => posts.slice(0, visibleStreamCount), [posts, visibleStreamCount]);
   const sharedCardExists =
     sharedPost &&
     (!feedLoading || feedSource !== "snapshot") &&
     (sharedPost.type === "post"
-      ? sharedPost.id === pinnedPost?.id || sharedPost.id === currentPost?.id
+      ? sharedPost.id === pinnedPost?.id ||
+        (viewMode === "stream"
+          ? streamPosts.some((post) => post.id === sharedPost.id)
+          : sharedPost.id === currentPost?.id)
       : sharedPost.id === reposts[repostIndex]?.repostId);
   const months = useMemo(() => postMonths(posts, language), [posts, language]);
   useEffect(() => {
@@ -113,20 +132,29 @@ function PostsContent({ language, t, profile, onFeedReady, historyReading = null
     const frame = window.requestAnimationFrame(() => {
       const card = document.getElementById(`${sharedPost.type}-${sharedPost.id}`);
       if (!card) return;
-      card.focus({ preventScroll: true });
-      card.scrollIntoView({ block: "start", behavior: "instant" });
+      focusReadingTarget(card, "instant");
       setSharedPostOpened(true);
     });
     return () => window.cancelAnimationFrame(frame);
   }, [sharedPost, sharedCardExists, sharedPostOpened]);
+  useLayoutEffect(() => {
+    if (viewMode !== "stream" || !pendingStreamPost) return undefined;
+    const frame = window.requestAnimationFrame(() => {
+      focusReadingTarget(document.getElementById(`post-${pendingStreamPost}`));
+      setPendingStreamPost(null);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [viewMode, pendingStreamPost]);
   useLayoutEffect(() => {
     rememberReading?.({
       postId: selectedPostId,
       repostId: selectedRepostId,
       articleId: selectedArticleId,
       largeText,
+      viewMode,
+      streamLimit,
     });
-  }, [rememberReading, selectedPostId, selectedRepostId, selectedArticleId, largeText]);
+  }, [rememberReading, selectedPostId, selectedRepostId, selectedArticleId, largeText, viewMode, streamLimit]);
   useEffect(() => {
     if (!feedLoading) onFeedReady(true);
   }, [feedLoading, onFeedReady]);
@@ -139,10 +167,10 @@ function PostsContent({ language, t, profile, onFeedReady, historyReading = null
     if (left < strip.scrollLeft || right > strip.scrollLeft + strip.clientWidth) {
       strip.scrollTo({ left: Math.max(0, left - (strip.clientWidth - selected.offsetWidth) / 2), behavior: "instant" });
     }
-  }, [postIndex, posts, language]);
+  }, [postIndex, posts, language, viewMode]);
 
   useEffect(() => {
-    if (!desktop || posts.length < 2) return undefined;
+    if (!desktop || viewMode !== "card" || posts.length < 2) return undefined;
     function handleKeyNavigation(event) {
       if (
         event.defaultPrevented ||
@@ -171,7 +199,7 @@ function PostsContent({ language, t, profile, onFeedReady, historyReading = null
     }
     window.addEventListener("keydown", handleKeyNavigation);
     return () => window.removeEventListener("keydown", handleKeyNavigation);
-  }, [desktop, posts.length, setPostIndex]);
+  }, [desktop, viewMode, posts.length, setPostIndex]);
 
   function changeReadingPost(index) {
     setPostIndex(index);
@@ -179,8 +207,28 @@ function PostsContent({ language, t, profile, onFeedReady, historyReading = null
     readingRef.current?.scrollIntoView({ block: "start", behavior: preferredScrollBehavior() });
   }
 
+  function queueStreamPost(index) {
+    const id = posts[index]?.id;
+    if (!id) return;
+    setStreamLimit((limit) => Math.max(limit, index + 1));
+    setPendingStreamPost(id);
+  }
+
+  function changeViewMode(mode) {
+    if (mode === viewMode) return;
+    setViewMode(mode);
+    if (mode === "stream" && postIndex > 0) queueStreamPost(postIndex);
+    if (mode === "card") setPendingStreamPost(null);
+  }
+
   function chooseFromLibrary(type, index) {
-    if (type === "posts") setPostIndex(index);
+    if (type === "posts") {
+      setPostIndex(index);
+      if (viewMode === "stream") {
+        queueStreamPost(index);
+        return;
+      }
+    }
     if (type === "articles") setArticleIndex(index);
     if (type === "reposts") setRepostIndex(index);
     window.requestAnimationFrame(() => {
@@ -325,6 +373,16 @@ function PostsContent({ language, t, profile, onFeedReady, historyReading = null
             <SectionHeading icon={HiOutlineSparkles} number="02" kicker="EVERYDAY MOMENTS" id="daily-posts-heading">
               {t.postsHeading}
             </SectionHeading>
+            {posts.length > 0 && (
+              <div className="post-view-switch" role="group" aria-label={t.postsViewModeLabel}>
+                <button type="button" aria-pressed={viewMode === "card"} onClick={() => changeViewMode("card")}>
+                  {t.postsViewCard}
+                </button>
+                <button type="button" aria-pressed={viewMode === "stream"} onClick={() => changeViewMode("stream")}>
+                  {t.postsViewStream}
+                </button>
+              </div>
+            )}
             {months.length > 1 && (
               <label className="post-month-picker">
                 <FiCalendar aria-hidden="true" />
@@ -333,7 +391,9 @@ function PostsContent({ language, t, profile, onFeedReady, historyReading = null
                   value={postMonthKey(currentPost)}
                   onChange={(event) => {
                     const month = months.find((item) => item.key === event.target.value);
-                    if (month) setPostIndex(month.index);
+                    if (!month) return;
+                    setPostIndex(month.index);
+                    if (viewMode === "stream") queueStreamPost(month.index);
                   }}
                 >
                   {months.map((month) => (
@@ -345,7 +405,7 @@ function PostsContent({ language, t, profile, onFeedReady, historyReading = null
               </label>
             )}
           </div>
-          {posts.length > 1 && (
+          {viewMode === "card" && posts.length > 1 && (
             <div className="post-index" ref={indexRef} role="group" aria-label={t.postsIndexLabel}>
               {posts.map((post, index) => (
                 <button
@@ -363,7 +423,35 @@ function PostsContent({ language, t, profile, onFeedReady, historyReading = null
             </div>
           )}
           <div className="post-reading" ref={readingRef}>
-            {currentPost ? (
+            {viewMode === "stream" && streamPosts.length > 0 ? (
+              <div className="post-stream">
+                {streamPosts.map((post, index) => (
+                  <PostCard
+                    key={post.id}
+                    post={post}
+                    feedSource={feedSource}
+                    label={feedLoading && feedSource === "stale" ? t.feedRefreshing : undefined}
+                    language={language}
+                    t={t}
+                    profile={profile}
+                    priorityMedia={!pinnedPost && index === 0}
+                    deferVideo
+                  />
+                ))}
+                {visibleStreamCount < posts.length && (
+                  <button
+                    className="post-stream-more"
+                    type="button"
+                    onClick={() => {
+                      setStreamLimit(visibleStreamCount + STREAM_BATCH_SIZE);
+                      setPendingStreamPost(posts[visibleStreamCount].id);
+                    }}
+                  >
+                    {t.postsStreamMore(posts.length - visibleStreamCount)}
+                  </button>
+                )}
+              </div>
+            ) : currentPost ? (
               <PostCard
                 key={currentPost.id}
                 post={currentPost}
@@ -386,7 +474,7 @@ function PostsContent({ language, t, profile, onFeedReady, historyReading = null
                 )}
               </div>
             )}
-            {posts.length > 1 && (
+            {viewMode === "card" && posts.length > 1 && (
               <PostControls postIndex={postIndex} total={posts.length} onChange={changeReadingPost} t={t} />
             )}
           </div>

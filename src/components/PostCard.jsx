@@ -55,6 +55,7 @@ export function PostCard({
   label = undefined,
   profile,
   priorityMedia = false,
+  deferVideo = false,
   nextPost = null,
   variant = "post",
 }) {
@@ -163,7 +164,7 @@ export function PostCard({
           />
         )}
         {videos.map((video, index) => (
-          <PostVideo key={`${video.url}-${index}`} video={video} t={t} />
+          <PostVideo key={`${video.url}-${index}`} video={video} t={t} deferOffscreen={deferVideo} />
         ))}
         {standalone && post.quotedPost && (
           <section className="post-quote" aria-label={t.selfQuote}>
@@ -175,6 +176,7 @@ export function PostCard({
               language={language}
               t={t}
               profile={profile}
+              deferVideo={deferVideo}
               variant="quote"
             />
           </section>

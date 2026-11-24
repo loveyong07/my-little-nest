@@ -315,6 +315,50 @@
   justify-content: space-between;
   gap: var(--space-3);
 }
+.post-view-switch {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: 100%;
+  padding: 3px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-tint);
+}
+.post-view-switch button,
+.post-stream-more {
+  min-height: 44px;
+  padding: 7px 13px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--color-ink);
+  font: inherit;
+  font-size: var(--font-sm);
+  font-weight: 700;
+}
+.post-view-switch button[aria-pressed="true"] {
+  border-color: var(--pastel-pink-line);
+  background: var(--pastel-pink);
+  color: var(--pastel-pink-ink);
+}
+.post-stream {
+  display: grid;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+.post-stream > .post-card {
+  scroll-margin-top: var(--space-5);
+}
+.post-stream-more {
+  justify-self: center;
+  border-color: var(--color-border);
+  background: var(--surface-card);
+}
+:is(.post-view-switch button, .post-stream-more):focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
 .post-month-picker {
   display: flex;
   flex-wrap: wrap;

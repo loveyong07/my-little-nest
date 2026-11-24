@@ -102,6 +102,9 @@
   .posts-age-actions button,
   .posts-age-actions a,
   .posts-quick-nav,
+  .post-view-switch,
+  .post-view-switch button,
+  .post-stream-more,
   .quick-nav-pill,
   .post-index-button,
   .post-date,
@@ -112,5 +115,10 @@
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
     text-shadow: none;
+  }
+  .post-view-switch button[aria-pressed="true"] {
+    border-color: Highlight;
+    background: Highlight;
+    color: HighlightText;
   }
 }
