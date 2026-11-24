@@ -27,7 +27,7 @@ export default [
     languageOptions: { globals: globals.browser },
   },
   {
-    files: ["api/**", "server/**", "build/**", "scripts/**", "tests/**", "*.mjs"],
+    files: ["api/**", "server/**", "services/**", "build/**", "scripts/**", "tests/**", "*.mjs"],
     languageOptions: { globals: globals.node },
   },
   {

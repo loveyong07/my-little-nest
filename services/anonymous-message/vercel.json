@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/anonymous-message.js": {
+      "regions": ["hkg1"],
+      "maxDuration": 15
+    }
+  }
+}

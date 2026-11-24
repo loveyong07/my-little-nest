@@ -41,11 +41,10 @@ function reply(status, code, headers = {}) {
   );
 }
 
-export async function sendAnonymousMessage(request, env, fetchImpl) {
+export async function sendAnonymousMessage(request, env, fetchImpl, allowedOrigins = [new URL(request.url).origin]) {
   if (request.method !== "POST") return reply("method_not_allowed", 405, { Allow: "POST" });
-  const url = new URL(request.url);
   const fetchSite = request.headers.get("sec-fetch-site");
-  if (request.headers.get("origin") !== url.origin || (fetchSite && fetchSite !== "same-origin")) {
+  if (!allowedOrigins.includes(request.headers.get("origin")) || (fetchSite && fetchSite !== "same-origin")) {
     return reply("forbidden", 403);
   }
   const contentType = request.headers.get("content-type")?.split(";")[0].trim().toLowerCase();

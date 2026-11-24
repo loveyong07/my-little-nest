@@ -4,6 +4,7 @@ import test from "node:test";
 import { ANONYMOUS_MESSAGE_ENDPOINT } from "../shared/anonymous-message.mjs";
 import { createApiHandler } from "../server/api-handler.mjs";
 import { createNodeApiMiddleware } from "../server/vite-api-plugin.mjs";
+import mailService from "../services/anonymous-message/api/anonymous-message.js";
 
 const env = {
   RESEND_API_KEY: "resend-fixture-key",
@@ -67,6 +68,20 @@ test("invalid submissions and cross-origin requests do not reach Resend", async 
   for (const [incoming, status] of cases) {
     assert.equal((await handleApi(incoming)).status, status);
   }
+});
+
+test("the mail service validates the original site origin and serves only the rate-limited path", async () => {
+  const service = "https://messages.example.com";
+  const incoming = (site, path = ANONYMOUS_MESSAGE_ENDPOINT) =>
+    new Request(service + path, {
+      method: "POST",
+      headers: { Origin: site, "Sec-Fetch-Site": "same-origin", "Content-Type": "text/plain" },
+    });
+
+  assert.equal((await mailService.fetch(incoming(origin))).status, 415);
+  assert.equal((await mailService.fetch(incoming("https://my-little-nest.vercel.app"))).status, 415);
+  assert.equal((await mailService.fetch(incoming(service))).status, 403);
+  assert.equal((await mailService.fetch(incoming(origin, `${ANONYMOUS_MESSAGE_ENDPOINT}.js`))).status, 404);
 });
 
 test("unconfigured and failed delivery return clear errors without leaking provider details", async () => {
