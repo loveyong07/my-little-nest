@@ -125,6 +125,11 @@
   ],
   "rewrites": [
     {
+      "source": "/api/anonymous-message-limit-check",
+      "has": [{ "type": "host", "value": "my-little-nest.vercel.app" }],
+      "destination": "https://my-little-nest-messages.vercel.app/api/anonymous-message"
+    },
+    {
       "source": "/posts",
       "destination": "/route-shells/posts.html"
     },

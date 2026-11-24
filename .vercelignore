@@ -7,6 +7,9 @@
 !src/**
 !server
 !server/**
+!services
+!services/anonymous-message
+!services/anonymous-message/**
 !shared
 !shared/**
 !vendor
