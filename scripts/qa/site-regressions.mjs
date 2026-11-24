@@ -451,6 +451,8 @@ async function dailyPostViews(video) {
       assert.equal(await cards.count(), 8);
       assert.equal(await daily.locator(".post-index, .post-controls").count(), 0);
       assert.ok((await controls.last().boundingBox()).height >= 44);
+      const moreBounds = await daily.locator(".post-stream-more").boundingBox();
+      assert.ok(moreBounds.x >= 0 && moreBounds.x + moreBounds.width <= width);
       await activate(daily.locator(".post-stream-more"));
       await page.waitForFunction(() => document.activeElement?.id === "post-2190000018");
       assert.equal(await cards.count(), 16);

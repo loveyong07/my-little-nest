@@ -344,10 +344,12 @@
 }
 .post-stream {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-4);
   margin-top: var(--space-4);
 }
 .post-stream > .post-card {
+  min-width: 0;
   scroll-margin-top: var(--space-5);
 }
 .post-stream-more {
