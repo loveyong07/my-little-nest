@@ -33,10 +33,6 @@
     "api/starrygal.js": {
       "regions": ["hkg1"],
       "maxDuration": 20
-    },
-    "api/anonymous-message.js": {
-      "regions": ["hkg1"],
-      "maxDuration": 15
     }
   },
   "schedules": {
@@ -124,6 +120,10 @@
     }
   ],
   "rewrites": [
+    {
+      "source": "/api/anonymous-message",
+      "destination": "https://my-little-nest-messages.vercel.app/api/anonymous-message"
+    },
     {
       "source": "/posts",
       "destination": "/route-shells/posts.html"

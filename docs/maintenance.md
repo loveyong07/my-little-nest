@@ -72,8 +72,10 @@ Run `node --test tests/touchgal-relay.test.mjs` to verify the relay contract and
 
 分享入口为 `https://loveyong07.top/contact#anonymous-message`。访客可向同源 `POST /api/anonymous-message` 提交纯文本正文。邮件主题、发件人和收件人由服务端决定。浏览器重试同一条正文时复用请求编号，Resend 据此避免重复发信。
 
-启用前在 Vercel 项目 Firewall 为 `POST /api/anonymous-message` 添加按 IP 计数的固定窗口限流，建议每 60 秒 3 次，超限返回 429。
+正式站通过 `vercel.json` 将 `/api/anonymous-message` 转发到同团队的 `my-little-nest-messages` 项目。该项目连接同一仓库的 `master` 分支，根目录设为 `services/anonymous-message`，构建时包含根目录外的共享代码。修改共享邮件代码时，确保留言项目随提交重建。本地开发由 Vite 的同源接口处理。
 
-在 Resend 验证发信子域名，例如 `mail.loveyong07.top`。由域名管理员在现有 DNS 管理处添加 Resend 提供的记录。将仅有发信权限的 `RESEND_API_KEY` 和 `ANONYMOUS_MESSAGE_FROM` 添加到 Vercel 的服务端环境变量，发件人示例为 `初咏的小窝 <notes@mail.loveyong07.top>`。保存后重新部署，打开分享入口发送一条测试留言，并核对 Gmail 实收。未配置凭据时，接口返回 503，页面会保留正文并提示服务暂不可用。
+在留言项目的 Firewall 为 `POST /api/anonymous-message` 配置按访客 IP 计数的固定窗口限流。每 60 秒允许 3 次，超限返回 429。媒体限流由主站项目管理。
+
+Resend 发信子域名为 `mail.loveyong07.top`。在留言项目的 Production 环境将仅有该域名发信权限的 `RESEND_API_KEY` 存为 Secret，将 `ANONYMOUS_MESSAGE_FROM` 设为 `初咏的小窝 <notes@mail.loveyong07.top>`。保存后重新部署留言项目，打开分享入口发送一条测试留言，并核对 Gmail 实收。未配置凭据时，接口返回 503，页面会保留正文并提示服务暂不可用。
 
 [Vercel 防火墙限流](https://vercel.com/docs/vercel-firewall/vercel-waf/rate-limiting) · [Resend 域名验证](https://resend.com/docs/dashboard/domains/introduction)

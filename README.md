@@ -46,7 +46,7 @@ npm run dev
 
 不配置 `.env.local` 也可以直接运行并预览页面（动态页会回退到内置快照）。需要对接真实 X / Blob / Drive 同步或 StarryGal 中继时，可按 [.env.example](.env.example) 填入对应服务端环境变量（切勿加 `VITE_` 前缀）。
 
-匿名留言通过 Resend 投递到站主的 Gmail。发信前需验证发信域名，并在服务端配置 `RESEND_API_KEY` 和 `ANONYMOUS_MESSAGE_FROM`。未配置时，表单会提示暂不可用。 [匿名留言接入说明](docs/maintenance.md#联系页匿名留言)
+匿名留言通过独立 Vercel 留言项目和 Resend 投递到站主的 Gmail。发信前需验证发信域名，并在留言项目的生产环境配置 `RESEND_API_KEY` 和 `ANONYMOUS_MESSAGE_FROM`。未配置时，表单会提示暂不可用。 [匿名留言接入说明](docs/maintenance.md#联系页匿名留言)
 
 ## 常用命令
 
