@@ -349,7 +349,9 @@
   margin-top: var(--space-4);
 }
 .post-stream > .post-card {
+  width: 100%;
   min-width: 0;
+  margin-top: 0;
   scroll-margin-top: var(--space-5);
 }
 .post-stream-more {

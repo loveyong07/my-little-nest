@@ -453,6 +453,15 @@ async function dailyPostViews(video) {
       assert.ok((await controls.last().boundingBox()).height >= 44);
       const moreBounds = await daily.locator(".post-stream-more").boundingBox();
       assert.ok(moreBounds.x >= 0 && moreBounds.x + moreBounds.width <= width);
+      const inViewportWidth = await cards.evaluateAll((items) =>
+        items.every((item) => {
+          const bounds = item.getBoundingClientRect();
+          return bounds.left >= 0 && bounds.right <= window.innerWidth;
+        }),
+      );
+      assert.ok(inViewportWidth, "timeline cards must stay inside the viewport");
+      const photoTrack = cards.first().locator(".post-photo-track");
+      assert.ok(await photoTrack.evaluate((track) => track.scrollWidth > track.clientWidth));
       await activate(daily.locator(".post-stream-more"));
       await page.waitForFunction(() => document.activeElement?.id === "post-2190000018");
       assert.equal(await cards.count(), 16);
