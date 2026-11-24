@@ -4,7 +4,7 @@ import { PiFlowerLight } from "react-icons/pi";
 import { mailboxes } from "../constants/site.js";
 import { LetterComposer } from "./LetterComposer.jsx";
 
-export function ContactEmail({ t, desktop, topic, setTopic, body, setBody, detailsRef, copiedId, copyId }) {
+export function ContactEmail({ t, topic, setTopic, body, setBody, detailsRef, copiedId, copyId }) {
   const composer = (
     <LetterComposer
       key="composer"
@@ -49,7 +49,8 @@ export function ContactEmail({ t, desktop, topic, setTopic, body, setBody, detai
         <FaEnvelope aria-hidden="true" />
         {t.emailHeading}
       </h2>
-      {desktop ? [actions, composer] : [composer, actions]}
+      {actions}
+      {composer}
       <span className="email-stamp" aria-hidden="true">
         <PiFlowerLight />
       </span>

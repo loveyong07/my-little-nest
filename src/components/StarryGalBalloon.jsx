@@ -24,16 +24,21 @@ export function StarryGalBalloon({ t, contentRef }) {
       const topSpace = bounds.top - header.bottom - 24;
       const topWidth = Math.min(88, Math.floor((topSpace - 64) / 1.1));
       const topLane = !desktop.matches && topWidth >= 60;
-      const width = topLane ? topWidth : desktop.matches ? 144 : 88;
+      const width = topLane ? topWidth : desktop.matches ? 112 : 88;
       const left = topLane ? 16 : Math.ceil(split ? letterBounds.right : bounds.right) + 24;
-      const right = split ? journalBounds.left : innerWidth;
-      const travel = right - left - width - 24;
+      const right = topLane
+        ? Math.max(left + width, innerWidth * 0.4)
+        : split
+          ? journalBounds.left - 24
+          : desktop.matches
+            ? innerWidth * 0.7
+            : innerWidth - 24;
+      const travel = right - left - width;
       sky.dataset.lane = topLane ? "top" : "side";
       sky.style.setProperty("--balloon-width", `${width}px`);
       sky.style.setProperty("--flight-top", `${topLane ? header.bottom - hero.top + 12 : header.bottom + 12}px`);
       sky.style.setProperty("--flight-left", `${left}px`);
-      if (topLane) sky.style.removeProperty("--flight-x");
-      else sky.style.setProperty("--flight-x", `${Math.max(0, Math.min(120, travel))}px`);
+      sky.style.setProperty("--flight-x", `${Math.max(0, Math.min(120, travel))}px`);
       sky.dataset.ready = String(topLane || travel >= 0);
     };
     const schedule = () => {

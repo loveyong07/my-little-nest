@@ -7,7 +7,7 @@
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 4px 10px;
-    margin-top: 20px;
+    margin-top: 16px;
   }
   .contact-channel-heading h2 {
     margin: 0;
@@ -44,32 +44,30 @@
     color: #834769;
   }
   .contact-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
     margin-top: 12px;
   }
   .contact-tile {
-    min-height: 136px;
-    padding: 14px 10px;
-    border-radius: 20px;
-    background: linear-gradient(145deg, #ffffffe0, #edf5ffd9);
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "icon name action" "icon description action";
+    column-gap: 10px;
+    min-height: 60px;
+    padding: 8px 10px;
+    border-radius: 16px;
+    background: var(--surface-card);
+    text-align: start;
     text-shadow: none;
-  }
-  .contact-tile.line,
-  .contact-tile.whatsapp {
-    background: linear-gradient(145deg, #ffffffe0, #e8f8f0d9);
-  }
-  .contact-tile.qq,
-  .contact-tile.wechat {
-    background: linear-gradient(145deg, #ffffffe0, #f5ecfcd9);
   }
   .contact-tile::before {
     display: none;
   }
   .contact-icon {
+    grid-area: icon;
     width: 40px;
     height: 40px;
-    margin-bottom: 7px;
+    margin: 0;
   }
   .contact-icon svg {
     width: 34px;
@@ -77,18 +75,30 @@
     padding: 7px;
   }
   .contact-tile strong {
+    grid-area: name;
+    align-self: end;
     font-size: 14px;
   }
   .contact-tile small {
-    font-size: 11px;
+    grid-area: description;
+    align-self: start;
+    margin: 0;
+    font-size: 12px;
   }
   .contact-action {
-    margin-top: 10px;
+    grid-area: action;
+    margin: 0;
     padding: 4px 9px;
     border-radius: 999px;
     background: var(--tile-pill-bg);
     color: var(--tile-pill-ink);
-    font-size: 10px;
+    font-size: 11px;
+  }
+  .contact-page-links a {
+    flex: 1 1 auto;
+    justify-content: center;
+    font-weight: 700;
+    text-decoration: none;
   }
   .email-row {
     display: block;
@@ -313,7 +323,7 @@
 
 @media (min-width: 701px) and (max-width: 900px) {
   .contact-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

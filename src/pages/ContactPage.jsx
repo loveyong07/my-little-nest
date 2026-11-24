@@ -76,7 +76,6 @@ export default function ContactPage({ t, profile }) {
   const email = (
     <ContactEmail
       key="email"
-      desktop={desktop}
       t={t}
       topic={letterTopic}
       setTopic={setLetterTopic}
@@ -135,18 +134,16 @@ export default function ContactPage({ t, profile }) {
 
   return (
     <div className="contacts-section" id="contact" ref={sectionRef}>
-      {desktop && (
-        <div className="contact-page-links">
-          <a href="#email-options">
-            <FiMail aria-hidden="true" />
-            {t.emailHeading}
-          </a>
-          <a href="#contact-methods">
-            <FiMessageCircle aria-hidden="true" />
-            {t.contactChannelHeading}
-          </a>
-        </div>
-      )}
+      <div className="contact-page-links">
+        <a href="#email-options">
+          <FiMail aria-hidden="true" />
+          {t.mailCardAction}
+        </a>
+        <a href="#contact-methods">
+          <FiMessageCircle aria-hidden="true" />
+          {t.contactSocialAction}
+        </a>
+      </div>
       <div className="contact-desk">{desktop ? [email, channels] : [channels, email]}</div>
       {mailboxes.some(({ address }) => address === copyFailedId) && (
         <CopyFallback value={copyFailedId} message={t.copyFailed} label={t.manualCopyId} inputRef={manualCopyRef} />

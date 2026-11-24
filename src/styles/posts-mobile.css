@@ -4,12 +4,12 @@
   .posts-quick-nav {
     position: static;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 10px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
     width: 100%;
     max-width: none;
-    margin: 0 0 22px;
-    padding: 14px;
+    margin: 0 0 16px;
+    padding: 8px;
     border-radius: 22px;
     background: linear-gradient(145deg, #fff9fce8, #edf5fff0);
     text-shadow: none;
@@ -33,29 +33,27 @@
     font: inherit;
     font-size: 13px;
   }
-  .reading-directory-heading {
-    grid-column: 1 / -1;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 4px 10px;
+  .reading-directory-disclosure {
+    grid-area: 1 / 1 / auto / -1;
+    min-width: 0;
   }
-  .reading-directory-heading h2 {
-    order: -1;
-    margin: 0;
-    color: #3a5e7c;
-    font-size: 15px;
-    font-weight: 500;
+  .reading-directory-disclosure summary {
+    width: calc((100% - 8px) / 2);
+    cursor: pointer;
+    list-style: none;
   }
-  .reading-directory-heading > span,
-  .reading-directory-heading p,
+  .reading-directory-disclosure summary::-webkit-details-marker {
+    display: none;
+  }
+  .reading-directory-disclosure[open] summary svg:last-child {
+    transform: rotate(180deg);
+  }
   .reading-tools > span,
-  .reading-tools > p,
   .reading-tools i,
   .library-shortcut-kbd {
     display: none;
   }
+  .reading-directory-disclosure summary,
   .reading-library-trigger,
   .reading-text-toggle {
     display: flex;
@@ -72,17 +70,19 @@
     font-size: 12px;
     line-height: 1.45;
   }
-  .reading-library-trigger svg {
+  .reading-library-trigger {
+    grid-area: 1 / 2;
+    align-self: start;
+    z-index: 1;
+    border-color: var(--pastel-pink-line);
+    background: var(--action-primary-fill);
+    color: var(--pastel-pink-ink);
+  }
+  :is(.reading-library-trigger, .reading-directory-disclosure summary) svg {
     flex-shrink: 0;
   }
-  .reading-library-trigger svg:last-child {
-    margin-left: auto;
-  }
   .reading-tools {
-    grid-column: 2;
-    grid-row: 2;
-    display: block;
-    max-width: 126px;
+    margin-top: 8px;
   }
   .reading-text-toggle {
     height: 100%;
@@ -95,8 +95,8 @@
     color: #5c3a73;
   }
   .reading-directory-links {
-    grid-column: 1 / -1;
     display: grid;
+    margin-top: 8px;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
   }

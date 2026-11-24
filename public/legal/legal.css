@@ -33,6 +33,9 @@
   --layout-gutter: clamp(30px, 3.35vw, 48px);
   --layout-width: 1380px;
   --surface-tint: #f7fafd;
+  --pastel-yellow: #fff0ce;
+  --pastel-yellow-ink: #79602e;
+  --pastel-yellow-line: #ebd7a5;
   --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
   --legal-site-font: Quicksand, "Nest Kuaile", "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
   color-scheme: light;
@@ -71,6 +74,17 @@ a:focus-visible {
   font-family: var(--legal-site-font);
   font-synthesis: none;
   line-height: 1.6;
+}
+.legal-header .menu-toggle {
+  cursor: pointer;
+}
+.legal-header .menu-toggle:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+.legal-header .menu-toggle[aria-expanded="false"] svg:last-child,
+.legal-header .menu-toggle[aria-expanded="true"] svg:first-child {
+  display: none;
 }
 .legal-nav {
   --legal-nav-position: 0;
@@ -560,6 +574,54 @@ body[data-legal-lang="en"] #en.legal-copy {
   .legal-nav svg {
     width: 15px;
     height: 15px;
+  }
+}
+
+@media (max-width: 900px) {
+  .legal-header:has(.menu-toggle:not([hidden])) {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-areas: "brand language menu";
+    height: var(--site-header-height);
+  }
+  .legal-header:has(.menu-toggle:not([hidden])) + .legal-hero {
+    /* The former switch row becomes open space for the portrait. */
+    padding-bottom: 4.875rem;
+  }
+  .legal-header .menu-toggle {
+    grid-area: menu;
+  }
+  .legal-header:has(.menu-toggle:not([hidden])) .legal-nav {
+    position: absolute;
+    inset: calc(100% - 6px) max(14px, 2vw) auto auto;
+    grid-area: auto;
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 150px;
+    max-width: calc(100% - 28px);
+    max-height: calc(100dvh - var(--site-header-height));
+    padding: 8px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-radius: 22px;
+    background: var(--surface-tint);
+    touch-action: auto;
+  }
+  .legal-header:has(.menu-toggle[aria-expanded="true"]) .legal-nav {
+    display: flex;
+  }
+  .legal-header:has(.menu-toggle:not([hidden])) .legal-nav-selection {
+    display: none;
+  }
+  .legal-header:has(.menu-toggle:not([hidden])) .legal-nav a {
+    justify-content: flex-start;
+    padding-inline: 14px;
+    font-size: 0.875rem;
+    text-align: start;
+  }
+  .legal-header:has(.menu-toggle:not([hidden])) .legal-nav [aria-current="page"] {
+    background: var(--legal-nav-fill);
+    box-shadow: inset 0 -2px currentColor;
   }
 }
 

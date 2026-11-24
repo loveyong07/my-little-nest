@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { FiFeather, FiType, FiBookOpen, FiRepeat } from "react-icons/fi";
+import { FiFeather, FiType, FiBookOpen, FiRepeat, FiChevronDown } from "react-icons/fi";
 import { HiOutlineSparkles } from "react-icons/hi2";
-import { PiPushPinFill, PiFlowerLight } from "react-icons/pi";
+import { PiPushPinFill } from "react-icons/pi";
 import { useDesktopLayout } from "../hooks/useDesktopLayout.js";
 import { preferredScrollBehavior } from "../utils/motion.js";
 
@@ -73,29 +73,8 @@ export function PostsNavigator({
     { label: t.quickNavArticles, icon: FiFeather, tone: "articles", count: articleCount },
   ];
 
-  return (
-    <nav className="posts-quick-nav" id="posts-reading-directory" ref={navRef} aria-label={t.postsQuickNavLabel}>
-      <div className="reading-directory-heading">
-        <FiBookOpen className="directory-cover-icon" aria-hidden="true" />
-        <span>THE LITTLE JOURNAL</span>
-        <h2 tabIndex={-1}>{t.readingDirectory}</h2>
-        <p>{t.readingDirectoryText}</p>
-      </div>
-      {library}
-      {directoryAway && (
-        <button
-          type="button"
-          className="reading-directory-return"
-          aria-controls="posts-reading-directory"
-          onClick={() => {
-            navRef.current?.querySelector("h2")?.focus({ preventScroll: true });
-            navRef.current?.scrollIntoView({ block: "start", behavior: preferredScrollBehavior() });
-          }}
-        >
-          <FiBookOpen aria-hidden="true" />
-          {t.returnToDirectory}
-        </button>
-      )}
+  const contents = (
+    <>
       <div className="reading-directory-links">
         {sections.map(({ label, icon: Icon, tone, count }, index) => (
           <button
@@ -105,9 +84,6 @@ export function PostsNavigator({
             aria-current={activeSection === targets[index] ? "location" : undefined}
             onClick={() => jumpToSection(targets[index])}
           >
-            <span className="directory-number" aria-hidden="true">
-              0{index + 1}
-            </span>
             <Icon aria-hidden="true" />
             <span>{label}</span>
             {count > 0 && <em className="quick-nav-badge">{count}</em>}
@@ -121,12 +97,48 @@ export function PostsNavigator({
           <span>{t.largeReadingText}</span>
           <i aria-hidden="true" />
         </button>
-        <p>
-          <PiFlowerLight aria-hidden="true" />
-          {t.readingSlowNote}
-        </p>
         {desktop && <span className="reading-shortcut-note">{t.keyboardNavHint}</span>}
       </div>
+    </>
+  );
+
+  return (
+    <nav className="posts-quick-nav" id="posts-reading-directory" ref={navRef} aria-label={t.postsQuickNavLabel}>
+      {desktop ? (
+        <>
+          <div className="reading-directory-heading">
+            <h2 tabIndex={-1}>{t.readingDirectory}</h2>
+          </div>
+          {library}
+          {contents}
+        </>
+      ) : (
+        <>
+          <details className="reading-directory-disclosure">
+            <summary>
+              <FiBookOpen aria-hidden="true" />
+              {t.readingDirectoryControl}
+              <FiChevronDown aria-hidden="true" />
+            </summary>
+            {contents}
+          </details>
+          {library}
+        </>
+      )}
+      {!desktop && directoryAway && (
+        <button
+          type="button"
+          className="reading-directory-return"
+          aria-controls="posts-reading-directory"
+          onClick={() => {
+            navRef.current?.querySelector("summary")?.focus({ preventScroll: true });
+            navRef.current?.scrollIntoView({ block: "start", behavior: preferredScrollBehavior() });
+          }}
+        >
+          <FiBookOpen aria-hidden="true" />
+          {t.returnToDirectory}
+        </button>
+      )}
     </nav>
   );
 }

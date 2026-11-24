@@ -154,22 +154,6 @@
     border-radius: 999px;
     font-size: 15px;
   }
-  .hero-actions .primary-cta {
-    border-color: #dfbad0;
-    background: linear-gradient(125deg, #f8d5e7, #f4e4f3);
-    color: #6b3b5b;
-    box-shadow:
-      0 8px 20px #b9739c24,
-      inset 0 1px 1px #fff;
-  }
-  .hero-actions .secondary-cta {
-    border-color: #b7d8cb;
-    background: linear-gradient(125deg, #e2f7ee 0%, #e7f3ff 100%);
-    color: #346257;
-    box-shadow:
-      0 8px 20px #4d8a761a,
-      inset 0 1px 1px #fff;
-  }
 
   /* Home Journal: tucked neatly beneath the letter in the left column. */
   .home-journal {

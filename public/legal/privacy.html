@@ -37,7 +37,7 @@
           <span class="legal-localized" lang="en">My little nest</span>
         </span>
       </a>
-      <nav class="legal-nav" aria-label="法律文件 · 規約 · Legal documents">
+      <nav class="legal-nav" id="legal-navigation" aria-label="法律文件 · 規約 · Legal documents">
         <span class="legal-nav-selection" aria-hidden="true"></span>
         <a class="legal-localized" lang="zh-CN" href="/privacy" data-legal-page="privacy" aria-current="page"
           ><svg
@@ -153,6 +153,14 @@
         <a href="#ja" lang="ja">日本語</a>
         <a href="#en" lang="en">EN</a>
       </nav>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="legal-navigation" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <path d="M3 6h18M3 12h18M3 18h18"></path>
+        </svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <path d="m6 6 12 12M18 6 6 18"></path>
+        </svg>
+      </button>
     </header>
     <div class="legal-hero">
       <div class="legal-hero-copy legal-localized" lang="zh-CN">

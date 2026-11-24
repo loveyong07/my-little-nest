@@ -121,8 +121,8 @@
   .glass-panel-backdrop::before {
     position: fixed;
     inset: -16px;
-    background-image: var(--route-scene-image);
-    background-position: var(--route-scene-position);
+    background-image: var(--scene-image);
+    background-position: var(--scene-focus);
     background-size: cover;
     background-repeat: no-repeat;
     filter: blur(var(--glass-scene-blur)) saturate(1.04);

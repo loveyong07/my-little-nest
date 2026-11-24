@@ -343,9 +343,9 @@
   transition: transform 0.22s var(--ease-spring);
 }
 .primary-cta {
-  border: 1px solid #e2aec4;
-  background: var(--gradient-sakura);
-  color: #6e3754;
+  border: 1px solid var(--pastel-pink-line);
+  background: var(--action-primary-fill);
+  color: var(--pastel-pink-ink);
   box-shadow:
     0 6px 18px #c0789826,
     inset 0 1px 1px #ffffffd9;
@@ -357,12 +357,9 @@
   transform: translateX(3px);
 }
 .secondary-cta {
-  border: 1px solid #abd2c0;
-  background: var(--gradient-mint);
-  color: var(--pastel-mint-ink);
-  box-shadow:
-    0 5px 15px #4e8a7417,
-    inset 0 1px 1px #ffffffd9;
+  border: 1px solid var(--color-border);
+  background: var(--action-secondary-fill);
+  color: var(--color-ink);
 }
 .secondary-cta:hover svg {
   transform: translateY(-1px) rotate(-6deg);

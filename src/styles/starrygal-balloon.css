@@ -1,7 +1,7 @@
 /* A viewport-wide flight layer; only the little balloon receives pointer input. */
 .starrygal-sky {
-  --balloon-width: 144px;
-  --balloon-height: 230px;
+  --balloon-width: 112px;
+  --balloon-height: 184px;
   --flight-edge: 22px;
   --flight-left: 56vw;
   --flight-start-x: 0.56;
@@ -76,8 +76,8 @@
   display: grid;
   justify-items: center;
   gap: 1px;
-  min-height: 54px;
-  padding: 7px 12px 6px;
+  min-height: 44px;
+  padding: 5px 8px;
   border: 1px solid #fff;
   border-radius: 12px;
   background: linear-gradient(135deg, #fffdfb, #edf7ff 65%, #fbe9f1);
@@ -98,7 +98,7 @@
 
 .starrygal-card strong {
   font-family: "Quicksand", sans-serif;
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 700;
   line-height: 1.2;
   letter-spacing: 0.015em;

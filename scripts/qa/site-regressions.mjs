@@ -543,6 +543,14 @@ async function routeAndAccessibility(video) {
     await page.locator(".reading-library-trigger").waitFor();
     await page.locator(".feed-status").waitFor({ state: "hidden" });
     await page.locator("#page-heading").press("Tab");
+    const directory = page.locator(".reading-directory-disclosure");
+    const summary = directory.locator("summary");
+    assert.equal(await summary.evaluate((element) => element === document.activeElement), true);
+    await page.keyboard.press("Enter");
+    await directory.locator(".quick-nav-articles").waitFor({ state: "visible" });
+    await summary.press("Enter");
+    await directory.locator(".quick-nav-articles").waitFor({ state: "hidden" });
+    await page.keyboard.press("Tab");
     assert.equal(
       await page.locator(".reading-library-trigger").evaluate((element) => element === document.activeElement),
       true,
@@ -804,8 +812,10 @@ async function legalPages(video) {
     assert.equal(await page.getByRole("link", { name: "ホームに戻る" }).getAttribute("href"), "/");
     await page.getByRole("link", { name: "EN", exact: true }).click();
     await page.getByRole("heading", { name: "Privacy Policy", level: 1 }).waitFor();
+    await page.getByRole("button", { name: "Open menu", exact: true }).click();
     await page.getByRole("link", { name: "Terms of Service", exact: true }).click();
     await page.getByRole("heading", { name: "Terms of Service", level: 1 }).waitFor();
+    await page.locator(".legal-nav").waitFor({ state: "hidden" });
     assert.equal(await page.getByRole("link", { name: "Back to home" }).getAttribute("href"), "/");
     await page.getByRole("link", { name: "中文", exact: true }).click();
     await page.getByRole("heading", { name: "服务条款", level: 1 }).waitFor();
@@ -842,34 +852,49 @@ async function legalPages(video) {
         assert.equal((await page.locator(".brand-script").innerText()).trim(), "Nest");
         assert.deepEqual(await page.locator(".language-picker a").allTextContents(), ["中文", "日本語", "EN"]);
         const nav = page.locator(".legal-nav");
-        const navBounds = await nav.boundingBox();
-        assert.ok(
-          Math.abs(navBounds.x + navBounds.width / 2 - size.width / 2) <= 1,
-          "legal pages switch in the center",
-        );
-        assert.equal(await nav.locator("a[aria-current]:visible").getAttribute("href"), route);
+        if (portrait) {
+          assert.equal(await nav.isVisible(), false);
+          await page.evaluate(() => window.scrollTo(0, 0));
+          const menu = page.getByRole("button", { name: "打开菜单" });
+          const buttonBounds = await menu.boundingBox();
+          assert.ok(buttonBounds.width >= 44 && buttonBounds.height >= 44);
+          const languageBounds = await page.locator(".legal-language").boundingBox();
+          assert.ok(
+            buttonBounds.x >= languageBounds.x + languageBounds.width,
+            "menu sits right of the language picker",
+          );
+          await menu.press("Enter");
+          const activeLink = nav.locator("a[aria-current]:visible");
+          assert.equal(await activeLink.getAttribute("href"), route);
+          assert.ok((await activeLink.boundingBox()).height >= 44);
+          await page.keyboard.press("Escape");
+          assert.equal(await nav.isVisible(), false);
+          assert.equal(await menu.evaluate((button) => document.activeElement === button), true);
+        } else {
+          const navBounds = await nav.boundingBox();
+          assert.ok(
+            Math.abs(navBounds.x + navBounds.width / 2 - size.width / 2) <= 1,
+            "legal pages switch in the center on desktop",
+          );
+          assert.equal(await nav.locator("a[aria-current]:visible").getAttribute("href"), route);
+        }
         assert.equal(
           await copy.locator(".legal-updated").evaluate((element) => getComputedStyle(element).textAlign),
           "right",
         );
       }
     }
-    await page.setViewportSize({ width: 390, height: 844 });
+    await page.setViewportSize({ width: 360, height: 320 });
     await page.goto(origin + "/privacy#ja");
-    await page.locator(".legal-nav[data-swipe-ready]").waitFor();
-    const active = await page.locator(".legal-nav a[aria-current]:visible").boundingBox();
-    const x = Math.round(active.x + active.width / 2);
-    const y = Math.round(active.y + active.height / 2);
-    const touch = await context.newCDPSession(page);
-    await touch.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y }] });
-    for (const distance of [12, 30, 54, 78]) {
-      await touch.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: x + distance, y }] });
-    }
-    await touch.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    const menu = page.getByRole("button", { name: "メニューを開く" });
+    await menu.tap();
+    await page.getByRole("link", { name: "利用規約", exact: true }).tap();
     await page.waitForURL(origin + "/terms#ja");
-    assert.equal(await page.locator(".legal-nav a[aria-current]:visible").innerText(), "利用規約");
-    assert.equal(await page.locator("h1:visible").innerText(), "利用規約");
-    console.log("PASS centered legal navigation, localized clicks and swipes, full-screen art, and the return link");
+    await page.getByRole("heading", { name: "利用規約", level: 1 }).waitFor();
+    assert.equal(await menu.getAttribute("aria-expanded"), "false");
+    await page.goBack();
+    await page.getByRole("heading", { name: "プライバシーポリシー", level: 1 }).waitFor();
+    console.log("PASS mobile legal menu, localized links, keyboard focus, full-screen art, and the return link");
   } finally {
     await context.close();
   }
@@ -916,7 +941,7 @@ async function legalPages(video) {
   } finally {
     await desktopContext.close();
   }
-  const staticContext = await browser.newContext({ javaScriptEnabled: false });
+  const staticContext = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 390, height: 844 } });
   try {
     const page = await staticContext.newPage();
     await page.goto(origin + "/privacy#en");

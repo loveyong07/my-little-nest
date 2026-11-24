@@ -90,7 +90,7 @@
 
 @media (min-width: 901px) and (pointer: fine) {
   .site-route-posts {
-    --glass-reading-fill: linear-gradient(135deg, #fbfdffb8, #f4f9ffcc);
+    --glass-reading-fill: var(--reading-surface);
     --posts-confirm-fill: linear-gradient(135deg, #e3effcb3, #f4f9ff94);
   }
 }

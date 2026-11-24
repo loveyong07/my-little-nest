@@ -305,3 +305,29 @@
     letter-spacing: 0.14em;
   }
 }
+
+.menu-toggle {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .menu-toggle:not([hidden]) {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    margin-top: 1px;
+    border: 1px solid var(--pastel-yellow-line);
+    border-radius: 15px;
+    background: var(--pastel-yellow);
+    color: var(--pastel-yellow-ink);
+    transition: transform 0.14s ease;
+  }
+  .menu-toggle:active {
+    transform: scale(0.94);
+  }
+  .menu-toggle svg {
+    width: 22px;
+    height: 22px;
+  }
+}

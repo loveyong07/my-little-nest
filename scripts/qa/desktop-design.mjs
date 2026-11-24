@@ -462,6 +462,7 @@ try {
           const fontSize = () =>
             page.locator(".post-reading .post-text").evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
           const originalSize = await fontSize();
+          await page.locator(".reading-directory-disclosure summary").click();
           await page.locator(".reading-text-toggle").click();
           assert.ok((await fontSize()) > originalSize);
           await page.locator(".quick-nav-articles").click();

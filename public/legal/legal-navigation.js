@@ -2,12 +2,14 @@ import { bindSwipeSwitch } from "/assets/swipe-switch.js";
 
 const PAGES = ["privacy", "terms"];
 const LANGUAGES = [
-  { code: "zh", attr: "zh-CN", hash: "#zh" },
-  { code: "ja", attr: "ja", hash: "#ja" },
-  { code: "en", attr: "en", hash: "#en" },
+  { code: "zh", attr: "zh-CN", hash: "#zh", openMenu: "打开菜单", closeMenu: "关闭菜单" },
+  { code: "ja", attr: "ja", hash: "#ja", openMenu: "メニューを開く", closeMenu: "メニューを閉じる" },
+  { code: "en", attr: "en", hash: "#en", openMenu: "Open menu", closeMenu: "Close menu" },
 ];
 const navigation = document.querySelector(".legal-nav");
 const languagePicker = document.querySelector(".legal-language");
+const menuToggle = document.querySelector(".legal-header .menu-toggle");
+const compactNav = window.matchMedia("(max-width: 900px)");
 const hero = document.querySelector(".legal-hero");
 const main = document.querySelector(".legal-document");
 
@@ -159,7 +161,8 @@ function syncNavAriaCurrent(page) {
 
 function connectNav({ suppressTransition = false } = {}) {
   navSwipe?.destroy();
-  if (suppressTransition) delete navigation.dataset.swipeAnimated;
+  if (suppressTransition || compactNav.matches) delete navigation.dataset.swipeAnimated;
+  if (compactNav.matches) return;
   const { attr } = languageMeta(currentLanguage);
   const itemSelector = `a[lang="${attr}"]`;
   const activeIndex = PAGES.indexOf(currentPage);
@@ -177,10 +180,26 @@ function connectNav({ suppressTransition = false } = {}) {
   armAnimations(navigation);
 }
 
+function menuIsOpen() {
+  return menuToggle.getAttribute("aria-expanded") === "true";
+}
+
+function syncMenuLabel() {
+  const { openMenu, closeMenu } = languageMeta(currentLanguage);
+  menuToggle.setAttribute("aria-label", menuIsOpen() ? closeMenu : openMenu);
+}
+
+function setMenuOpen(open, { restoreFocus = false } = {}) {
+  menuToggle.setAttribute("aria-expanded", String(open));
+  syncMenuLabel();
+  if (restoreFocus) menuToggle.focus();
+}
+
 function syncLanguageDom(code) {
   const { attr } = languageMeta(code);
   document.documentElement.lang = attr;
   document.body.dataset.legalLang = code;
+  syncMenuLabel();
   if (!languagePicker) return;
   for (const link of languagePicker.querySelectorAll("a")) {
     if (link.getAttribute("href") === `#${code}`) link.setAttribute("aria-current", "true");
@@ -287,6 +306,7 @@ function applyPage(snapshot, { animate = true, scrollTop = 0 } = {}) {
 function navigatePage(targetPage, { push = true, scrollTop = 0 } = {}) {
   if (!PAGES.includes(targetPage)) return;
   if (targetPage === currentPage && push) return;
+  if (menuIsOpen()) setMenuOpen(false, { restoreFocus: navigation.contains(document.activeElement) });
   const id = ++navigationId;
   const destination = pageUrl(targetPage, currentLanguage);
 
@@ -323,6 +343,32 @@ navigation.addEventListener("click", (event) => {
   event.preventDefault();
   const targetPage = link.dataset.legalPage;
   if (targetPage && targetPage !== currentPage) navigatePage(targetPage);
+  else if (menuIsOpen()) setMenuOpen(false, { restoreFocus: true });
+});
+
+menuToggle.addEventListener("click", (event) => {
+  const open = !menuIsOpen();
+  setMenuOpen(open);
+  if (open && event.detail === 0) {
+    navigation.querySelector(`a[lang="${languageMeta(currentLanguage).attr}"]`)?.focus();
+  }
+});
+
+document.addEventListener("keydown", (event) => {
+  if (!menuIsOpen() || event.key !== "Escape") return;
+  event.preventDefault();
+  setMenuOpen(false, { restoreFocus: true });
+});
+
+for (const eventName of ["pointerdown", "focusin"]) {
+  document.addEventListener(eventName, (event) => {
+    if (menuIsOpen() && !navigation.contains(event.target) && !menuToggle.contains(event.target)) setMenuOpen(false);
+  });
+}
+
+compactNav.addEventListener("change", () => {
+  setMenuOpen(false);
+  connectNav({ suppressTransition: true });
 });
 
 for (const eventName of ["pointerover", "focusin", "touchstart"]) {
@@ -379,6 +425,7 @@ if (initialSnapshot) pageCache.set(currentPage, initialSnapshot);
 
 syncLanguageDom(currentLanguage);
 syncNavAriaCurrent(currentPage);
+menuToggle.hidden = false;
 connectLanguage();
 connectNav();
 

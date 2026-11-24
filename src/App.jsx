@@ -9,6 +9,7 @@ import { useXProfile } from "./hooks/useXProfile.js";
 import { useSiteRoute, warmSiblingScenes } from "./hooks/useSiteRoute.js";
 import { useSceneActivity } from "./hooks/useSceneActivity.js";
 import { useFantasyPreferences } from "./hooks/useFantasyPreferences.js";
+import { sceneStyle } from "./routes/scene-assets.js";
 
 const loadPostsPage = () => import("./pages/PostsPage.jsx");
 const loadContactPage = () => import("./pages/ContactPage.jsx");
@@ -71,6 +72,7 @@ export function App() {
       <div
         key={sceneTransition.key}
         className={"site-scene-outgoing site-scene-outgoing-" + sceneTransition.outgoing}
+        style={sceneStyle(sceneTransition.outgoing)}
         aria-hidden="true"
       />
     ) : null;
@@ -83,6 +85,7 @@ export function App() {
   ) : null;
   return (
     <div
+      style={sceneStyle(page)}
       className={
         "site language-" +
         language +

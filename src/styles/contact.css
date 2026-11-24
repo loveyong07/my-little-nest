@@ -18,7 +18,7 @@
 }
 .contact-page-links a[href="#email-options"] {
   border-color: var(--pastel-pink-line);
-  background: var(--pastel-pink);
+  background: var(--action-primary-fill);
   color: var(--pastel-pink-ink);
 }
 #email-options,
