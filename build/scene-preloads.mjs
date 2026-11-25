@@ -45,7 +45,7 @@ export function withScenePreloads(html, page) {
 // Quicksand's file name is hashed at build time, so it is looked up in the bundle.
 export function withFontPreloads(html, bundle = {}) {
   const quicksand = Object.keys(bundle).find((name) => /^assets\/quicksand-latin-700-normal-[\w-]+\.woff2$/.test(name));
-  const hrefs = [quicksand && `/${quicksand}`, "/assets/fonts/nest-ui-2026-09-30.woff"].filter(Boolean);
+  const hrefs = [quicksand && `/${quicksand}`, "/assets/fonts/nest-ui-2026-09-30.woff2"].filter(Boolean);
   const links = hrefs
     .map(
       (href) =>

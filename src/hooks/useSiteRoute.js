@@ -128,8 +128,49 @@ export function takeEarlyFeed() {
   return request;
 }
 
+function restoreHashTarget(hash) {
+  if (!hash || hash === "#") return undefined;
+  let id;
+  try {
+    id = decodeURIComponent(hash.slice(1));
+  } catch {
+    id = hash.slice(1);
+  }
+  if (!id) return undefined;
+  const locate = () => {
+    const target = document.getElementById(id);
+    if (!target) return false;
+    target.scrollIntoView({ block: "start", behavior: "instant" });
+    target.focus({ preventScroll: true });
+    return true;
+  };
+  if (locate() || typeof ResizeObserver === "undefined") return undefined;
+
+  const input = new AbortController();
+  const observer = new ResizeObserver(() => {
+    if (locate()) stop();
+  });
+  const timeout = window.setTimeout(stop, JSON_REQUEST_TIMEOUT_MS);
+  function stop() {
+    input.abort();
+    observer.disconnect();
+    window.clearTimeout(timeout);
+  }
+  observer.observe(document.getElementById("root") ?? document.body);
+  for (const event of ["wheel", "pointerdown", "touchstart", "keydown"]) {
+    window.addEventListener(event, stop, { passive: true, signal: input.signal });
+  }
+  return stop;
+}
+
 export function useSiteRoute(onPrefetchPage = undefined) {
-  const [route, setRoute] = useState(() => ({ page: currentPage(), scrollTop: null, reading: null }));
+  const [route, setRoute] = useState(() => ({
+    page: currentPage(),
+    search: window.location.search,
+    hash: "",
+    scrollTop: null,
+    reading: null,
+  }));
   const { page } = route;
   const previousPage = useRef(page);
   const activeEntry = useRef(null);
@@ -148,17 +189,19 @@ export function useSiteRoute(onPrefetchPage = undefined) {
   useEffect(() => syncSiteMetadata(page), [page]);
 
   useLayoutEffect(() => {
+    if (route.hash) return restoreHashTarget(route.hash);
     return route.scrollTop === null ? undefined : restoreScroll(route.scrollTop);
   }, [route]);
 
   useEffect(() => {
     if (previousPage.current === page) return;
     previousPage.current = page;
+    if (route.hash) return undefined;
     const frame = window.requestAnimationFrame(() =>
       document.getElementById("page-heading")?.focus({ preventScroll: true }),
     );
     return () => window.cancelAnimationFrame(frame);
-  }, [page]);
+  }, [page, route.hash]);
 
   useLayoutEffect(() => {
     const previousRestoration = window.history.scrollRestoration;
@@ -169,11 +212,14 @@ export function useSiteRoute(onPrefetchPage = undefined) {
       activeEntry.current = currentEntryKey();
       const saved = positions.current.get(activeEntry.current);
       const nextPage = currentPage();
+      const nextHash = window.location.hash;
       reading.current = saved?.reading ?? null;
       activateScene(nextPage);
       setRoute({
         page: nextPage,
-        scrollTop: window.location.hash ? null : (saved?.top ?? 0),
+        search: window.location.search,
+        hash: nextHash,
+        scrollTop: nextHash ? null : (saved?.top ?? 0),
         reading: reading.current,
       });
     }
@@ -194,20 +240,38 @@ export function useSiteRoute(onPrefetchPage = undefined) {
     onPrefetchPage?.(destination.page);
   }
 
-  function navigatePage(nextPage) {
-    const destination = { page: nextPage, path: pagePaths[nextPage] };
-    if (!destination.path) return;
+  function commitNavigation(destination) {
+    if (!destination?.path) return;
     activateScene(destination.page);
-    const current = window.location.pathname;
-    if (normalizedPath(current) !== destination.path) {
+    const nextSearch = destination.search ?? "";
+    const nextHash = destination.hash ?? "";
+    const nextUrl = `${destination.path}${nextSearch}${nextHash}`;
+    const currentPath = window.location.pathname;
+    const changed =
+      normalizedPath(currentPath) !== destination.path ||
+      window.location.search !== nextSearch ||
+      window.location.hash !== nextHash;
+    if (changed) {
       savePosition();
       activeEntry.current = newEntryKey();
-      window.history.pushState({ page: destination.page, nestEntry: activeEntry.current }, "", destination.path);
+      window.history.pushState({ page: destination.page, nestEntry: activeEntry.current }, "", nextUrl);
       reading.current = null;
-      setRoute({ page: destination.page, scrollTop: 0, reading: null });
-    } else if (current !== destination.path) {
-      window.history.replaceState({ ...window.history.state, page: destination.page }, "", destination.path);
+      setRoute({
+        page: destination.page,
+        search: nextSearch,
+        hash: nextHash,
+        scrollTop: nextHash ? null : 0,
+        reading: null,
+      });
+    } else if (currentPath !== destination.path) {
+      window.history.replaceState({ ...window.history.state, page: destination.page }, "", nextUrl);
     }
+  }
+
+  function navigatePage(nextPage) {
+    const path = pagePaths[nextPage];
+    if (!path) return;
+    commitNavigation({ page: nextPage, path });
   }
 
   function handleRouteClick(event) {
@@ -228,8 +292,16 @@ export function useSiteRoute(onPrefetchPage = undefined) {
     if (!destination) return;
 
     event.preventDefault();
-    navigatePage(destination.page);
+    commitNavigation(destination);
   }
 
-  return { page, handleRouteClick, prepareRoute, navigatePage, historyReading: route.reading, rememberReading };
+  return {
+    page,
+    routeSearch: route.search,
+    handleRouteClick,
+    prepareRoute,
+    navigatePage,
+    historyReading: route.reading,
+    rememberReading,
+  };
 }

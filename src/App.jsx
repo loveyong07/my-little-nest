@@ -30,7 +30,7 @@ function prefetchRouteChunk(targetPage) {
 
 export function App() {
   const { language, t, f, changeLanguage } = useI18n();
-  const { page, handleRouteClick, prepareRoute, navigatePage, historyReading, rememberReading } =
+  const { page, routeSearch, handleRouteClick, prepareRoute, navigatePage, historyReading, rememberReading } =
     useSiteRoute(prefetchRouteChunk);
   const [postsReady, setPostsReady] = useState(false);
   const profile = useXProfile(page, page !== "posts" || postsReady);
@@ -117,6 +117,7 @@ export function App() {
               t={t}
               profile={profile}
               onFeedReady={setPostsReady}
+              routeSearch={routeSearch}
               historyReading={historyReading}
               rememberReading={rememberReading}
             />

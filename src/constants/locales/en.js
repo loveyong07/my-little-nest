@@ -31,6 +31,8 @@ export default {
   sharePost: "Share",
   sharedPostLoading: "Opening the shared post…",
   sharedPostUnavailable: "This shared post is currently unavailable on the site.",
+  sharedArticleLoading: "Opening the shared article…",
+  sharedArticleUnavailable: "This shared article is currently unavailable on the site.",
   previewXCredentialMissing: "This preview has no X API token. Showing the site's saved snapshot.",
   previewXUnavailable: "X sync failed in this preview. Showing the site's saved snapshot.",
   previewSnapshotStoreMissing: "This preview has no snapshot store configured. Showing the site's saved snapshot.",

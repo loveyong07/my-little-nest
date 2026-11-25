@@ -11,7 +11,7 @@ test("first-paint fonts are preloaded with the hashed Quicksand bundle name", ()
   const html = withFontPreloads("<html><head></head><body></body></html>", bundle);
   assert.match(html, /href="\/assets\/quicksand-latin-700-normal-DNRMnynu\.woff2" crossorigin/);
   assert.doesNotMatch(html, /quicksand-latin-500/);
-  assert.match(html, /href="\/assets\/fonts\/nest-ui-2026-09-30\.woff"/);
+  assert.match(html, /href="\/assets\/fonts\/nest-ui-2026-09-30\.woff2" crossorigin/);
   assert.equal((withFontPreloads(html, bundle).match(/data-font-preload/g) ?? []).length, 2);
 });
 

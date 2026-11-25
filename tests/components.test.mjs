@@ -1984,6 +1984,125 @@ test("Posts quick navigation pills reflect live section counts and smooth-scroll
   }
 });
 
+test("Articles offer in-site sharing on mobile and desktop and deep-link via ?article=", async (context) => {
+  resetDom();
+  mockResponsiveLayout(context, false);
+  window.sessionStorage.setItem("nest-posts-age-confirmed", "18+");
+  const now = Date.now() + 9 * 24 * 60 * 60_000;
+  context.mock.method(Date, "now", () => now);
+  const articles = [
+    { id: "3001", title: "Newest article", text: "First body", permalink: "https://x.com/loveyong07/status/3001" },
+    { id: "3002", title: "Shared article", text: "Target body", permalink: "https://x.com/loveyong07/status/3002" },
+  ];
+  context.mock.method(globalThis, "fetch", async () => ({
+    ok: true,
+    json: async () => ({
+      status: "ok",
+      pinnedStatus: "none",
+      repostsStatus: "none",
+      posts: [SNAPSHOT],
+      articles,
+      articlesStatus: "ok",
+    }),
+  }));
+  let copiedUrl = null;
+  const clipboardDescriptor = Object.getOwnPropertyDescriptor(navigator, "clipboard");
+  Object.defineProperty(navigator, "clipboard", {
+    configurable: true,
+    value: {
+      writeText: async (value) => {
+        copiedUrl = value;
+      },
+    },
+  });
+  const view = await mount(
+    React.createElement(PostsPage, {
+      language: "zh",
+      t: copy.zh,
+      profile: { username: "loveyong07" },
+      routeSearch: "?article=3002",
+      onFeedReady() {},
+    }),
+  );
+  try {
+    await React.act(async () => new Promise((resolvePromise) => setTimeout(resolvePromise, 0)));
+    await React.act(async () => new Promise((resolveFrame) => window.requestAnimationFrame(resolveFrame)));
+    const card = view.container.querySelector("#article-3002");
+    assert.ok(card, "shared article card is selected and carries its deep-link id");
+    assert.equal(card.querySelector("#x-article-title")?.textContent, "Shared article");
+    assert.equal(document.activeElement, card);
+    const shareButton = card.querySelector(".post-bottomline .post-action");
+    assert.ok(shareButton, "mobile Article card exposes the in-site share button");
+    await React.act(async () => shareButton.click());
+    assert.equal(copiedUrl, "http://localhost/posts?article=3002");
+    assert.equal(shareButton.textContent, copy.zh.linkCopied);
+  } finally {
+    await view.unmount();
+    if (clipboardDescriptor) Object.defineProperty(navigator, "clipboard", clipboardDescriptor);
+    else delete navigator.clipboard;
+  }
+});
+
+test("Posts persists largeText and viewMode preferences across visits while opening ?post= links in single-card mode", async (context) => {
+  resetDom();
+  window.sessionStorage.setItem("nest-posts-age-confirmed", "18+");
+  const now = Date.now() + 10 * 24 * 60 * 60_000;
+  context.mock.method(Date, "now", () => now);
+  const posts = [
+    { ...SNAPSHOT, id: "4001", text: "First post", permalink: "https://x.com/loveyong07/status/4001" },
+    { ...SNAPSHOT, id: "4002", text: "Second post", permalink: "https://x.com/loveyong07/status/4002" },
+  ];
+  context.mock.method(globalThis, "fetch", async () => ({
+    ok: true,
+    json: async () => ({
+      status: "ok",
+      pinnedStatus: "none",
+      repostsStatus: "none",
+      articlesStatus: "none",
+      posts,
+    }),
+  }));
+  const renderPosts = (routeSearch = "") =>
+    mount(
+      React.createElement(PostsPage, {
+        language: "zh",
+        t: copy.zh,
+        profile: { username: "loveyong07" },
+        routeSearch,
+        onFeedReady() {},
+      }),
+    );
+  let view = await renderPosts();
+  try {
+    await React.act(async () => new Promise((resolvePromise) => setTimeout(resolvePromise, 0)));
+    await React.act(async () => view.container.querySelector(".reading-text-toggle").click());
+    await React.act(async () => view.container.querySelector(".post-view-switch button:last-child").click());
+    assert.ok(view.container.querySelector(".posts-section.is-reading-large"));
+    assert.equal(
+      view.container.querySelector(".post-view-switch button:last-child").getAttribute("aria-pressed"),
+      "true",
+    );
+    await view.unmount();
+
+    view = await renderPosts();
+    assert.ok(view.container.querySelector(".posts-section.is-reading-large"));
+    assert.equal(
+      view.container.querySelector(".post-view-switch button:last-child").getAttribute("aria-pressed"),
+      "true",
+    );
+    await view.unmount();
+
+    view = await renderPosts("?post=4002");
+    assert.ok(view.container.querySelector(".posts-section.is-reading-large"));
+    assert.equal(
+      view.container.querySelector(".post-view-switch button:first-child").getAttribute("aria-pressed"),
+      "true",
+    );
+  } finally {
+    await view.unmount();
+  }
+});
+
 async function selectPreviewPhoto(value) {
   await React.act(async () => window.dispatchEvent(new KeyboardEvent("keydown", { key: "Home" })));
   for (let index = 0; index < value; index++) {

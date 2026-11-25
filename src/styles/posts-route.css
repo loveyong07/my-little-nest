@@ -1,7 +1,7 @@
-@import "./posts.css";
-@import "./media-lightbox.css";
-@import "./glass-posts.css";
-@import "./articles.css";
-@import "./posts-desktop.css";
-@import "./posts-mobile.css";
-@import "./translation.css";
+@import "./posts.css" layer(routes);
+@import "./media-lightbox.css" layer(routes);
+@import "./glass-posts.css" layer(routes);
+@import "./articles.css" layer(routes);
+@import "./posts-desktop.css" layer(routes);
+@import "./posts-mobile.css" layer(routes);
+@import "./translation.css" layer(routes);

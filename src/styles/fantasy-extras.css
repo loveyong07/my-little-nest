@@ -1,126 +1,128 @@
 /* Loaded with FantasyExtras after the first paint: falling petals, cursor sparkles
    and the route scroll companion. */
-.nest-atmosphere {
-  position: fixed;
-  inset: 0;
-  z-index: 1;
-  overflow: hidden;
-  pointer-events: none;
-  contain: strict;
-}
-.sakura-canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-.cursor-trail {
-  position: absolute;
-  inset: 0;
-}
-.cursor-trail > span {
-  position: absolute;
-  top: -8px;
-  left: -8px;
-  width: 16px;
-  height: 16px;
-  color: #d895ad;
-  opacity: 0;
-}
-.cursor-trail > span:nth-child(2n) {
-  color: #c196cb;
-}
-.cursor-trail > span svg {
-  width: 100%;
-  height: 100%;
-}
-
-/* Top scroll progress ribbon and floating Back-to-Top companion on route pages. */
-.scroll-progress-track {
-  position: fixed;
-  top: 0;
-  right: 0;
-  left: 0;
-  z-index: 60;
-  height: 3px;
-  overflow: hidden;
-  background: #ffffff26;
-  pointer-events: none;
-}
-.scroll-progress-bar {
-  display: block;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, #f3a8c6, #b89ce8 52%, #7bb5e8);
-  box-shadow: 0 0 10px #e89ab880;
-  transform-origin: 0 50%;
-}
-.scroll-top-btn {
-  position: fixed;
-  right: 26px;
-  bottom: 20px;
-  z-index: 40;
-  display: grid;
-  place-items: center;
-  width: 48px;
-  height: 48px;
-  padding: 0;
-  border: 1px solid #fff;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #fffffff2, #eef6feeb);
-  box-shadow:
-    0 8px 24px #3c628226,
-    inset 0 1px 1px #fff;
-  color: #466b8a;
-  transition:
-    transform 0.22s var(--ease-spring),
-    box-shadow 0.22s ease,
-    color 0.18s ease;
-  animation: nest-card-in 0.24s var(--ease-spring) both;
-}
-.scroll-top-btn:hover {
-  box-shadow:
-    0 12px 28px #3c628233,
-    inset 0 1px 1px #fff;
-  color: #743e59;
-  transform: translateY(-3px) scale(1.04);
-}
-.scroll-top-btn:active {
-  transform: scale(0.95);
-}
-.scroll-top-ring {
-  position: absolute;
-  inset: 2px;
-  width: calc(100% - 4px);
-  height: calc(100% - 4px);
-  fill: none;
-  transform: rotate(-90deg);
-  pointer-events: none;
-}
-.scroll-top-ring-bg {
-  stroke: #dce8f2;
-  stroke-width: 2.2;
-}
-.scroll-top-ring-fill {
-  stroke: #d989ae;
-  stroke-linecap: round;
-  stroke-width: 2.4;
-  transition: stroke-dashoffset 0.12s linear;
-}
-.scroll-top-btn > svg:last-child {
-  position: relative;
-  width: 18px;
-  height: 18px;
-}
-
-@media (max-width: 700px) {
-  .scroll-progress-track,
-  .scroll-top-btn {
-    display: none;
+@layer extras {
+  .nest-atmosphere {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-atmosphere);
+    overflow: hidden;
+    pointer-events: none;
+    contain: strict;
   }
-}
+  .sakura-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  .cursor-trail {
+    position: absolute;
+    inset: 0;
+  }
+  .cursor-trail > span {
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    width: 16px;
+    height: 16px;
+    color: #d895ad;
+    opacity: 0;
+  }
+  .cursor-trail > span:nth-child(2n) {
+    color: #c196cb;
+  }
+  .cursor-trail > span svg {
+    width: 100%;
+    height: 100%;
+  }
 
-@media (prefers-reduced-motion: reduce) {
+  /* Top scroll progress ribbon and floating Back-to-Top companion on route pages. */
+  .scroll-progress-track {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: var(--z-progress);
+    height: 3px;
+    overflow: hidden;
+    background: #ffffff26;
+    pointer-events: none;
+  }
+  .scroll-progress-bar {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, #f3a8c6, #b89ce8 52%, #7bb5e8);
+    box-shadow: 0 0 10px #e89ab880;
+    transform-origin: 0 50%;
+  }
   .scroll-top-btn {
-    animation: none;
+    position: fixed;
+    right: 26px;
+    bottom: 20px;
+    z-index: var(--z-floating-action);
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border: 1px solid #fff;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #fffffff2, #eef6feeb);
+    box-shadow:
+      0 8px 24px #3c628226,
+      inset 0 1px 1px #fff;
+    color: #466b8a;
+    transition:
+      transform 0.22s var(--ease-spring),
+      box-shadow 0.22s ease,
+      color 0.18s ease;
+    animation: nest-card-in 0.24s var(--ease-spring) both;
+  }
+  .scroll-top-btn:hover {
+    box-shadow:
+      0 12px 28px #3c628233,
+      inset 0 1px 1px #fff;
+    color: #743e59;
+    transform: translateY(-3px) scale(1.04);
+  }
+  .scroll-top-btn:active {
+    transform: scale(0.95);
+  }
+  .scroll-top-ring {
+    position: absolute;
+    inset: 2px;
+    width: calc(100% - 4px);
+    height: calc(100% - 4px);
+    fill: none;
+    transform: rotate(-90deg);
+    pointer-events: none;
+  }
+  .scroll-top-ring-bg {
+    stroke: #dce8f2;
+    stroke-width: 2.2;
+  }
+  .scroll-top-ring-fill {
+    stroke: #d989ae;
+    stroke-linecap: round;
+    stroke-width: 2.4;
+    transition: stroke-dashoffset 0.12s linear;
+  }
+  .scroll-top-btn > svg:last-child {
+    position: relative;
+    width: 18px;
+    height: 18px;
+  }
+
+  @media (max-width: 700px) {
+    .scroll-progress-track,
+    .scroll-top-btn {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scroll-top-btn {
+      animation: none;
+    }
   }
 }

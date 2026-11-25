@@ -13,13 +13,29 @@ const loaders = {
   en: () => Promise.all([import("../constants/locales/en.js"), import("../constants/fantasy/en.js")]),
 };
 
+export function detectBrowserLanguage(navigatorLike = typeof navigator === "undefined" ? null : navigator) {
+  const candidates =
+    Array.isArray(navigatorLike?.languages) && navigatorLike.languages.length
+      ? navigatorLike.languages
+      : navigatorLike?.language
+        ? [navigatorLike.language]
+        : [];
+  for (const entry of candidates) {
+    if (typeof entry !== "string") continue;
+    const primary = entry.trim().toLowerCase().split(/[-_]/)[0];
+    if (VALID_LANGUAGES.has(primary)) return primary;
+  }
+  return DEFAULT_LANGUAGE;
+}
+
 export function readStoredLanguage() {
   try {
     const saved = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
-    return VALID_LANGUAGES.has(saved) ? saved : DEFAULT_LANGUAGE;
+    if (VALID_LANGUAGES.has(saved)) return saved;
   } catch {
-    return DEFAULT_LANGUAGE;
+    /* Storage is optional. */
   }
+  return detectBrowserLanguage(typeof window === "undefined" ? null : window.navigator);
 }
 
 export function isLanguageLoaded(code) {

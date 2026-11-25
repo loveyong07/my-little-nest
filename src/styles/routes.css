@@ -112,7 +112,7 @@
 
 @media (max-width: 900px) {
   .route-hero {
-    z-index: 5;
+    z-index: var(--z-route-hero-mobile);
     min-height: 234px;
     padding-inline: 21px;
     padding-bottom: 38px;

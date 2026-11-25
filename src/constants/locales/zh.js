@@ -31,6 +31,8 @@ export default {
   sharePost: "分享",
   sharedPostLoading: "正在打开分享的帖子…",
   sharedPostUnavailable: "这篇分享的帖子目前无法在动态页打开。",
+  sharedArticleLoading: "正在打开分享的文章…",
+  sharedArticleUnavailable: "这篇分享的文章目前无法在动态页打开。",
   previewXCredentialMissing: "这个预览环境还没配置 X 接口令牌，当前显示站内快照。",
   previewXUnavailable: "预览环境已配置 X 接口，但本次同步失败。当前显示站内快照。",
   previewSnapshotStoreMissing: "这个预览环境还没连接快照存储，当前显示站内快照。",

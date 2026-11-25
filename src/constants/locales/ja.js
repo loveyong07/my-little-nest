@@ -31,6 +31,8 @@ export default {
   sharePost: "共有",
   sharedPostLoading: "共有された投稿を開いています…",
   sharedPostUnavailable: "共有された投稿は現在このページで開けません。",
+  sharedArticleLoading: "共有された記事を開いています…",
+  sharedArticleUnavailable: "共有された記事は現在このページで開けません。",
   previewXCredentialMissing: "プレビュー環境に X API トークンが設定されていないため、保存済みの投稿を表示しています。",
   previewXUnavailable: "プレビュー環境で X の同期に失敗したため、保存済みの投稿を表示しています。",
   previewSnapshotStoreMissing:

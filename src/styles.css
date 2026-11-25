@@ -1,21 +1,47 @@
-@import "@fontsource/quicksand/latin-500.css";
-@import "@fontsource/quicksand/latin-700.css";
+@layer fonts, base, scene, chrome, routes, extras, motion;
 
-@import "./styles/globals.css";
-@import "./styles/scenes.css";
-@import "./styles/hero-scene.css";
-@import "./styles/header.css";
-@import "./styles/hero.css";
-@import "./styles/starrygal-balloon.css";
-@import "./styles/panels.css";
-@import "./styles/routes.css";
-@import "./styles/glass.css";
-@import "./styles/glass-florals.css";
-@import "./styles/desktop-stationery.css";
-@import "./styles/composition.css";
-@import "./styles/header-desktop.css";
-@import "../public/assets/site-header-controls.css";
-@import "./styles/home-desktop.css";
-@import "./styles/route-desktop.css";
-@import "./styles/mobile-letter.css";
-@import "./styles/swipe-switch.css";
+@import "@fontsource/quicksand/latin-500.css" layer(fonts);
+@import "@fontsource/quicksand/latin-700.css" layer(fonts);
+
+@import "./styles/globals.css" layer(base);
+@import "./styles/scenes.css" layer(scene);
+@import "./styles/hero-scene.css" layer(scene);
+@import "./styles/header.css" layer(chrome);
+@import "./styles/hero.css" layer(chrome);
+@import "./styles/starrygal-balloon.css" layer(chrome);
+@import "./styles/panels.css" layer(chrome);
+@import "./styles/routes.css" layer(chrome);
+@import "./styles/glass.css" layer(chrome);
+@import "./styles/glass-florals.css" layer(chrome);
+@import "./styles/desktop-stationery.css" layer(chrome);
+@import "./styles/composition.css" layer(chrome);
+@import "./styles/header-desktop.css" layer(chrome);
+@import "../public/assets/site-header-controls.css" layer(chrome);
+@import "./styles/home-desktop.css" layer(chrome);
+@import "./styles/route-desktop.css" layer(chrome);
+@import "./styles/mobile-letter.css" layer(chrome);
+@import "./styles/swipe-switch.css" layer(chrome);
+
+/* Placed in the trailing layer so component !important overrides in earlier layers
+   still win under inverted !important layer precedence, while overriding all normal animations. */
+@layer motion {
+  .motion-off,
+  .motion-off::before,
+  .motion-off::after,
+  .motion-off *,
+  .motion-off *::before,
+  .motion-off *::after {
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      scroll-behavior: auto !important;
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+    }
+  }
+}

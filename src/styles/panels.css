@@ -1,7 +1,7 @@
 /* The Posts and Contact panel carries both .content-panel (surface) and .route-panel (layout). */
 .content-panel {
   position: relative;
-  z-index: 4;
+  z-index: var(--z-panel);
   border: 1px solid #fff;
   border-radius: var(--card-radius);
   background: var(--surface-panel);

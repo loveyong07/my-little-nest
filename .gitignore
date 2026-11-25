@@ -9,6 +9,7 @@ dist/
 .qa-*.mjs
 .motion-*
 backup-*/
+/audit-*/
 /qa-compare.html
 /public/qa-source.png
 

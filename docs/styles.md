@@ -1,6 +1,6 @@
 # 样式维护
 
-`src/styles.css` 是首页与公共样式入口；动态页与联系页的专属样式分别通过 `posts-route.css` 和 `contact-route.css` 随懒加载路由按需拆包，同时保持原有层叠顺序。调整前应先检查后续同名选择器、媒体条件与 `@supports`。
+`src/styles.css` 是首页与公共样式入口，统一声明 `@layer fonts, base, scene, chrome, routes, extras, motion;` 级联顺序，并在 `globals.css` 的 `:root` 中定义共享 `--z-*` 叠放层级变量；动态页与联系页的专属样式分别通过 `posts-route.css` 和 `contact-route.css` 注入 `routes` 层随懒加载路由按需拆包，同时保持原有层叠顺序。调整前应先检查后续同名选择器、媒体条件与 `@supports`。
 
 | 层次 | 文件 | 职责 |
 | --- | --- | --- |

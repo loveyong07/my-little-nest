@@ -18,7 +18,7 @@
     position: fixed;
     right: max(16px, env(safe-area-inset-right));
     bottom: calc(max(8px, env(safe-area-inset-bottom)) + 54px);
-    z-index: 40;
+    z-index: var(--z-floating-action);
     display: inline-flex;
     align-items: center;
     justify-content: center;

@@ -16,11 +16,11 @@ if letter_only:
     locales = "".join(p.read_text(encoding="utf-8") for p in sorted((root / "src/constants/locales").glob("*.js")))
     text = "".join(re.findall(r"homeGreeting: \[(.*?)\]", locales))
 options = subset.Options()
-options.flavor = "woff"
+options.flavor = "woff2"
 font = subset.load_font(str(root / "archive/fonts/ZCOOLKuaiLe-Regular.ttf"), options)
 subsetter = subset.Subsetter(options=options)
 subsetter.populate(text=text)
 subsetter.subset(font)
-filename = "nest-letter-2026-10-19.woff" if letter_only else "nest-ui-2026-09-30.woff"
+filename = "nest-letter-2026-10-19.woff2" if letter_only else "nest-ui-2026-09-30.woff2"
 subset.save_font(font, str(root / "public/assets/fonts" / filename), options)
 print(f"Font subset saved: {filename}")

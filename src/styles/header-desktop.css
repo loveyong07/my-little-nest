@@ -1,6 +1,6 @@
 .skip-to-content {
   position: fixed;
-  z-index: 100;
+  z-index: var(--z-skip-link);
   top: 12px;
   left: 20px;
   padding: 10px 20px;

@@ -10,7 +10,7 @@
   --flight-x: max(0px, calc(100vw - var(--balloon-width) - var(--flight-left) - var(--flight-edge)));
   --flight-y: max(0px, calc(100svh - var(--balloon-height) - var(--flight-top) - var(--flight-bottom)));
   position: fixed;
-  z-index: 3;
+  z-index: var(--z-accents);
   inset: 0;
   pointer-events: none;
 }

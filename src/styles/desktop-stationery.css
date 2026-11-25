@@ -2,7 +2,7 @@
 .desktop-stationery {
   display: none;
   position: fixed;
-  z-index: 1;
+  z-index: var(--z-atmosphere);
   inset: 0;
   overflow: hidden;
   pointer-events: none;

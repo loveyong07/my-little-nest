@@ -2,7 +2,7 @@
 .glass-florals {
   --bouquet-size: 92px;
   position: absolute;
-  z-index: 3;
+  z-index: var(--z-accents);
   inset: 0;
   pointer-events: none;
   user-select: none;

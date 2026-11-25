@@ -11,6 +11,7 @@ import { takeEarlyFeed } from "./useSiteRoute.js";
 export function useXFeed(historyReading = null, sharedPost = null) {
   const preferredPostId = historyReading?.postId ?? (sharedPost?.type === "post" ? sharedPost.id : null);
   const preferredRepostId = historyReading?.repostId ?? (sharedPost?.type === "repost" ? sharedPost.id : null);
+  const preferredArticleId = historyReading?.articleId ?? (sharedPost?.type === "article" ? sharedPost.id : null);
   const [cachedFeed] = useState(getFeedSnapshot);
   const cachedPin =
     cachedFeed && ["ok", "stale"].includes(cachedFeed.feed.pinnedStatus) && isOwnPost(cachedFeed.feed.pinnedPost)
@@ -28,7 +29,7 @@ export function useXFeed(historyReading = null, sharedPost = null) {
   const { posts, index: postIndex } = reading;
   const [articleReading, setArticleReading] = useState(() => {
     const initial = initialArticleReading(cachedFeed?.feed);
-    const index = restoreReadingIndex(initial.articles, historyReading?.articleId);
+    const index = restoreReadingIndex(initial.articles, preferredArticleId);
     return { ...initial, index: Math.max(0, index), hasSelectedArticle: index >= 0 };
   });
   const { articles, index: articleIndex, state: articleState } = articleReading;
@@ -99,7 +100,12 @@ export function useXFeed(historyReading = null, sharedPost = null) {
         const feed = await request;
         if (!mounted) return;
         setPreviewIssue(feed.previewIssue ?? null);
-        setArticleReading((current) => refreshedArticleReading(current, feed));
+        setArticleReading((current) => {
+          const refreshed = refreshedArticleReading(current, feed);
+          if (current.hasSelectedArticle) return refreshed;
+          const index = restoreReadingIndex(refreshed.articles, preferredArticleId);
+          return index < 0 ? refreshed : { ...refreshed, index, hasSelectedArticle: true };
+        });
         setRepostReading((current) => {
           const refreshed = refreshedRepostReading(current, feed);
           if (current.hasSelectedRepost) return refreshed;
@@ -180,7 +186,7 @@ export function useXFeed(historyReading = null, sharedPost = null) {
       mounted = false;
       stop();
     };
-  }, [feedRefreshToken, preferredPostId, preferredRepostId]);
+  }, [feedRefreshToken, preferredPostId, preferredRepostId, preferredArticleId]);
 
   function retryFeed() {
     if (retryDisabled) return;

@@ -880,7 +880,12 @@ async function desktopNavStability(video) {
 }
 
 async function legalPages(video) {
-  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+    locale: "zh-CN",
+  });
   try {
     await setup(context, feedData(), video);
     const page = await context.newPage();

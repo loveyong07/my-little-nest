@@ -1,6 +1,6 @@
 @font-face {
   font-family: "Nest Kuaile";
-  src: url("/assets/fonts/nest-ui-2026-09-30.woff") format("woff");
+  src: url("/assets/fonts/nest-ui-2026-09-30.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -66,6 +66,18 @@
   --font-sm: 0.875rem;
   --font-body: 1rem;
   --font-title: clamp(1.25rem, 2vw, 1.5rem);
+  /* Shared stacking scale across scenes, panels, floating controls and modals. */
+  --z-scene-gradient: -2;
+  --z-scene: -1;
+  --z-atmosphere: 1;
+  --z-home-content: 2;
+  --z-accents: 3;
+  --z-panel: 4;
+  --z-route-hero-mobile: 5;
+  --z-floating-action: 40;
+  --z-progress: 60;
+  --z-skip-link: 100;
+  --z-modal: 1000;
   --nest-font: "Quicksand", "Nest Kuaile", "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
   color: var(--color-text);
   background: var(--surface-tint);
@@ -194,7 +206,7 @@ a {
   .site:not(.site-route) > .home-corner-links,
   .site:not(.site-route) > .site-legal-links {
     position: absolute;
-    z-index: 2;
+    z-index: var(--z-home-content);
     right: max(12px, env(safe-area-inset-right));
     bottom: max(8px, env(safe-area-inset-bottom));
     margin: 0;
@@ -242,27 +254,5 @@ input:focus-visible,
   to {
     opacity: 1;
     translate: 0 0;
-  }
-}
-
-/* The applied system motion preference (src/utils/motion.js) also covers the element
-   carrying the class: <html> owns scrolling and <main> owns the route background drift. */
-.motion-off,
-.motion-off::before,
-.motion-off::after,
-.motion-off *,
-.motion-off *::before,
-.motion-off *::after {
-  animation: none !important;
-  scroll-behavior: auto !important;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
   }
 }

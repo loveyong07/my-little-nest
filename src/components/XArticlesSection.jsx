@@ -1,8 +1,18 @@
 import { useEffect, useMemo, useRef } from "react";
 import { FaArrowRight, FaXTwitter } from "react-icons/fa6";
-import { FiCalendar, FiCheck, FiChevronLeft, FiChevronRight, FiFeather, FiImage, FiLink } from "react-icons/fi";
+import {
+  FiCalendar,
+  FiCheck,
+  FiChevronLeft,
+  FiChevronRight,
+  FiFeather,
+  FiImage,
+  FiLink,
+  FiShare2,
+} from "react-icons/fi";
 import { formatPostDate } from "../utils/date.js";
 import { postMonthKey, postMonths } from "../utils/posts.js";
+import { articleShareDetails } from "../utils/post-sharing.js";
 import { displayXText } from "../utils/x-text.js";
 import { preferredScrollBehavior } from "../utils/motion.js";
 import { useClipboard } from "../hooks/useClipboard.js";
@@ -34,6 +44,8 @@ export function XArticlesSection({
   const timelineRef = useRef(null);
   const currentIndex = Math.min(articleIndex, Math.max(0, articles.length - 1));
   const article = articles[currentIndex];
+  const share = article ? articleShareDetails(article) : null;
+  const shareCopied = Boolean(share && copiedId === share.url);
   const months = useMemo(() => postMonths(articles, language), [articles, language]);
   const text = article?.text ?? "";
   const sourcePhotos = (article?.media ?? []).filter((media) => (media.type ?? "photo") === "photo");
@@ -94,6 +106,19 @@ export function XArticlesSection({
   function turnArticle(index) {
     changeArticle(index);
     readingRef.current?.scrollIntoView({ block: "start", behavior: preferredScrollBehavior() });
+  }
+
+  async function shareArticle() {
+    if (!share) return;
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share({ url: share.url });
+        return;
+      } catch (error) {
+        if (error?.name === "AbortError") return;
+      }
+    }
+    await copyId(share.url);
   }
 
   return (
@@ -161,7 +186,13 @@ export function XArticlesSection({
       )}
       {article && (
         <div className="article-reading" ref={readingRef}>
-          <article className="post-card x-article-card" aria-labelledby="x-article-title" key={article.id}>
+          <article
+            className="post-card x-article-card"
+            id={share?.cardId}
+            tabIndex={share ? -1 : undefined}
+            aria-labelledby="x-article-title"
+            key={article.id}
+          >
             <div className="article-byline">
               <span>{article.author || profile.name}</span>
               <span>@{profile.username}</span>
@@ -215,6 +246,12 @@ export function XArticlesSection({
               </p>
             )}
             <div className="post-bottomline">
+              {share && (
+                <button type="button" className="post-action" onClick={shareArticle}>
+                  {shareCopied ? <FiCheck aria-hidden="true" /> : <FiShare2 aria-hidden="true" />}
+                  <span aria-live="polite">{shareCopied ? t.linkCopied : t.sharePost}</span>
+                </button>
+              )}
               {desktop && article.permalink && (
                 <button
                   type="button"
@@ -231,11 +268,11 @@ export function XArticlesSection({
                 <FaArrowRight aria-hidden="true" />
               </a>
             </div>
-            {copyFailedId && copyFailedId === article.permalink && (
+            {copyFailedId && (copyFailedId === share?.url || copyFailedId === article.permalink) && (
               <CopyFallback
                 value={copyFailedId}
                 message={t.copyLinkFailed}
-                label={t.copyArticleLink}
+                label={copyFailedId === share?.url ? t.sharePost : t.copyArticleLink}
                 inputRef={manualCopyRef}
               />
             )}

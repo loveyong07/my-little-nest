@@ -19,14 +19,18 @@ test("the build-artifact checks have a produced build to inspect", () => {
   assert.ok(existsSync(path.join(client, "index.html")), "The build did not leave dist/client/index.html");
 });
 
-test("built fonts remain same-origin files compatible with production font-src self", () => {
+test("built fonts remain same-origin WOFF2 files compatible with production font-src self", () => {
   let fontCount = 0;
+  for (const name of readdirSync(path.join(client, "assets"), { recursive: true })) {
+    assert.equal(String(name).endsWith(".woff"), false, `Legacy WOFF font should not be shipped: ${name}`);
+  }
   for (const name of readdirSync(path.join(client, "assets")).filter((name) => name.endsWith(".css"))) {
     const css = readFileSync(path.join(client, "assets", name), "utf8");
     for (const face of css.matchAll(/@font-face\s*\{[^}]+\}/g)) {
       for (const match of face[0].matchAll(/url\(([^)]+)\)/g)) {
         const url = match[1].replace(/["']/g, "").trim();
         assert.ok(url.startsWith("/assets/"), `Font is not a self-hosted file: ${url.slice(0, 80)}`);
+        assert.ok(url.endsWith(".woff2"), `Font is not WOFF2: ${url}`);
         assert.ok(existsSync(path.join(client, url)), `Missing font: ${url}`);
         fontCount++;
       }
@@ -139,4 +143,27 @@ test("public legal pages include all translations without running the app", asyn
     assert.ok(html.includes(navigationScript));
     assert.doesNotMatch(html.replace(navigationScript, ""), /<script\b/);
   }
+});
+
+test("standalone anonymous-message Vercel project resolves its shared module graph cleanly", async () => {
+  const serviceRoot = new URL("../../services/anonymous-message/", import.meta.url);
+  const servicePkg = JSON.parse(await readFile(new URL("package.json", serviceRoot), "utf8"));
+  const serviceVercel = JSON.parse(await readFile(new URL("vercel.json", serviceRoot), "utf8"));
+  assert.equal(servicePkg.type, "module");
+  assert.ok(serviceVercel.functions?.["api/anonymous-message.js"]);
+  const entry = await import(new URL("api/anonymous-message.js", serviceRoot).href);
+  assert.equal(typeof entry.default?.fetch, "function");
+  const notFound = await entry.default.fetch(new Request("https://my-little-nest-messages.vercel.app/healthz"));
+  assert.equal(notFound.status, 404);
+  const wrongMethod = await entry.default.fetch(
+    new Request("https://my-little-nest-messages.vercel.app/api/anonymous-message"),
+  );
+  assert.equal(wrongMethod.status, 405);
+  const forbidden = await entry.default.fetch(
+    new Request("https://my-little-nest-messages.vercel.app/api/anonymous-message", {
+      method: "POST",
+      headers: { Origin: "https://evil.example" },
+    }),
+  );
+  assert.equal(forbidden.status, 403);
 });

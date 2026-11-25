@@ -14,6 +14,7 @@ import { useDesktopLayout } from "../hooks/useDesktopLayout.js";
 import { useSectionEntrance } from "../hooks/useSectionEntrance.js";
 import { useXFeed } from "../hooks/useXFeed.js";
 import { formatPostDate } from "../utils/date.js";
+import { readReadingPreferences, saveReadingPreferences } from "../utils/feed-reading.js";
 import { postExcerpt, postMonthKey, postMonths } from "../utils/posts.js";
 import { preferredScrollBehavior } from "../utils/motion.js";
 import { canPrefetch } from "../utils/network.js";
@@ -58,11 +59,35 @@ export default function PostsPage(props) {
   return confirmed ? <PostsContent {...props} /> : <PostsAgeGate t={props.t} onConfirm={confirmAge} />;
 }
 
-function PostsContent({ language, t, profile, onFeedReady, historyReading = null, rememberReading = undefined }) {
-  const [sharedPost] = useState(() => (historyReading ? null : sharedPostFromSearch(window.location.search)));
-  const [sharedPostOpened, setSharedPostOpened] = useState(false);
-  const [largeText, setLargeText] = useState(() => Boolean(historyReading?.largeText));
-  const [viewMode, setViewMode] = useState(() => (historyReading?.viewMode === "stream" ? "stream" : "card"));
+function PostsContent({
+  language,
+  t,
+  profile,
+  onFeedReady,
+  routeSearch = undefined,
+  historyReading = null,
+  rememberReading = undefined,
+}) {
+  const activeSearch = routeSearch ?? window.location.search;
+  const sharedPost = useMemo(
+    () => (historyReading ? null : sharedPostFromSearch(activeSearch)),
+    [historyReading, activeSearch],
+  );
+  const [openedSharedKey, setOpenedSharedKey] = useState(null);
+  const sharedKey = sharedPost ? `${sharedPost.type}:${sharedPost.id}` : null;
+  const sharedPostOpened = Boolean(sharedKey && openedSharedKey === sharedKey);
+  const [largeText, setLargeText] = useState(() =>
+    historyReading ? Boolean(historyReading.largeText) : readReadingPreferences().largeText,
+  );
+  const [viewMode, setViewMode] = useState(() =>
+    historyReading
+      ? historyReading.viewMode === "stream"
+        ? "stream"
+        : "card"
+      : sharedPost?.type === "post"
+        ? "card"
+        : readReadingPreferences().viewMode,
+  );
   const [streamLimit, setStreamLimit] = useState(() =>
     Number.isSafeInteger(historyReading?.streamLimit)
       ? Math.max(STREAM_BATCH_SIZE, historyReading.streamLimit)
@@ -125,7 +150,9 @@ function PostsContent({ language, t, profile, onFeedReady, historyReading = null
         (viewMode === "stream"
           ? streamPosts.some((post) => post.id === sharedPost.id)
           : sharedPost.id === currentPost?.id)
-      : sharedPost.id === reposts[repostIndex]?.repostId);
+      : sharedPost.type === "article"
+        ? sharedPost.id === articles[articleIndex]?.id
+        : sharedPost.id === reposts[repostIndex]?.repostId);
   const months = useMemo(() => postMonths(posts, language), [posts, language]);
   useEffect(() => {
     if (!sharedPost || !sharedCardExists || sharedPostOpened) return undefined;
@@ -133,10 +160,10 @@ function PostsContent({ language, t, profile, onFeedReady, historyReading = null
       const card = document.getElementById(`${sharedPost.type}-${sharedPost.id}`);
       if (!card) return;
       focusReadingTarget(card, "instant");
-      setSharedPostOpened(true);
+      setOpenedSharedKey(sharedKey);
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [sharedPost, sharedCardExists, sharedPostOpened]);
+  }, [sharedPost, sharedKey, sharedCardExists, sharedPostOpened]);
   useLayoutEffect(() => {
     if (viewMode !== "stream" || !pendingStreamPost) return undefined;
     const frame = window.requestAnimationFrame(() => {
@@ -217,8 +244,17 @@ function PostsContent({ language, t, profile, onFeedReady, historyReading = null
   function changeViewMode(mode) {
     if (mode === viewMode) return;
     setViewMode(mode);
+    saveReadingPreferences({ largeText, viewMode: mode });
     if (mode === "stream" && postIndex > 0) queueStreamPost(postIndex);
     if (mode === "card") setPendingStreamPost(null);
+  }
+
+  function toggleLargeText() {
+    setLargeText((current) => {
+      const next = !current;
+      saveReadingPreferences({ largeText: next, viewMode });
+      return next;
+    });
   }
 
   function chooseFromLibrary(type, index) {
@@ -279,7 +315,7 @@ function PostsContent({ language, t, profile, onFeedReady, historyReading = null
         articleCount={articles.length}
         repostCount={reposts.length}
         largeText={largeText}
-        onToggleText={() => setLargeText((value) => !value)}
+        onToggleText={toggleLargeText}
         library={
           <ReadingLibrary
             t={t}
@@ -295,7 +331,13 @@ function PostsContent({ language, t, profile, onFeedReady, historyReading = null
       <div className="posts-flow">
         {sharedPost && !sharedPostOpened && !sharedCardExists && (
           <p className="feed-status" role="status">
-            {feedLoading ? t.sharedPostLoading : t.sharedPostUnavailable}
+            {feedLoading
+              ? sharedPost.type === "article"
+                ? t.sharedArticleLoading
+                : t.sharedPostLoading
+              : sharedPost.type === "article"
+                ? t.sharedArticleUnavailable
+                : t.sharedPostUnavailable}
           </p>
         )}
         {statusText && (
