@@ -21,9 +21,9 @@ const TIP_COPY = {
     tipYukiClose: "关闭图片预览",
   },
   ja: {
-    tipButtonLabel: "応援ウィンドウを開く",
-    tipModalTitle: "Yongを応援してくれたら、Yukiにお菓子を買ってあげます",
-    tipClose: "応援ウィンドウを閉じる",
+    tipButtonLabel: "差し入れウィンドウを開く",
+    tipModalTitle: "Yongに差し入れしてくれたら、Yukiにキャンディを買ってあげるよ",
+    tipClose: "差し入れウィンドウを閉じる",
     tipCopyAddress: "ウォレットアドレスをコピー",
     tipAddressCopied: "コピーしました",
     tipQrAlt: (label) => `${label} のQRコード`,
@@ -33,7 +33,7 @@ const TIP_COPY = {
   },
   en: {
     tipButtonLabel: "Open tip window",
-    tipModalTitle: "If you tip Yong, Yong will buy candy for Yuki",
+    tipModalTitle: "Treat Yong, and Yong will buy Yuki some candy!",
     tipClose: "Close tip window",
     tipCopyAddress: "Copy wallet address",
     tipAddressCopied: "Copied",

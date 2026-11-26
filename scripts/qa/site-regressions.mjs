@@ -7,6 +7,7 @@ import path from "node:path";
 import { chromium } from "playwright-core";
 import { copy } from "../../src/constants/locales.js";
 import { ANONYMOUS_MESSAGE_ENDPOINT, ANONYMOUS_MESSAGE_ID } from "../../shared/anonymous-message.mjs";
+import { languageFromCountry } from "../../shared/geo-language.mjs";
 
 const origin = "http://127.0.0.1:4338";
 const output = process.env.QA_REGRESSION_OUTPUT || "qa/site-regressions";
@@ -103,7 +104,14 @@ function feedData() {
   };
 }
 
-async function setup(context, feed, video, gate = Promise.resolve(), confirmAge = true) {
+async function setup(context, feed, video, gate = Promise.resolve(), confirmAge = true, visitorCountry = null) {
+  await context.route("**/api/visitor-language", (route) => {
+    const language = visitorCountry ? languageFromCountry(visitorCountry) : null;
+    const body = language
+      ? { status: "ok", country: visitorCountry.toUpperCase(), language }
+      : { status: "unavailable", country: null, language: null };
+    return route.fulfill({ contentType: "application/json", body: JSON.stringify(body) });
+  });
   await context.route("**/api/x-posts", async (route) => {
     await gate;
     await route.fulfill({ contentType: "application/json", body: JSON.stringify(feed) });
@@ -1257,6 +1265,74 @@ async function routeHeadings(video) {
   console.log("PASS route headings, desktop breadcrumbs, mobile menu navigation and the unadorned Nest link");
 }
 
+async function geoLanguageRouting(video) {
+  const cases = [
+    {
+      country: "CN",
+      homeCta: "看看我的动态",
+      tipLabel: "投喂",
+      legalTitle: "隐私政策",
+      contactPlaceholder: "小杂鱼想要说什么？",
+    },
+    {
+      country: "JP",
+      homeCta: "投稿を見る",
+      tipLabel: "差し入れ",
+      legalTitle: "プライバシーポリシー",
+      contactPlaceholder: "ざぁこ♡ 何か言いたいことあるの？",
+    },
+    {
+      country: "SG",
+      homeCta: "See my posts",
+      tipLabel: "Tip",
+      legalTitle: "Privacy Policy",
+      contactPlaceholder: "Zako~ zako~ What do you want to say? ♡",
+    },
+    {
+      country: "FR",
+      homeCta: "See my posts",
+      tipLabel: "Tip",
+      legalTitle: "Privacy Policy",
+      contactPlaceholder: "Zako~ zako~ What do you want to say? ♡",
+    },
+  ];
+  for (const item of cases) {
+    const context = await browser.newContext({
+      viewport: { width: 1280, height: 800 },
+      locale: "en-US",
+      reducedMotion: "reduce",
+    });
+    try {
+      await setup(context, feedData(), video, Promise.resolve(), true, item.country);
+      const page = await context.newPage();
+      await page.goto(origin + "/");
+      await page.getByRole("link", { name: item.homeCta }).waitFor({ state: "visible" });
+      assert.equal((await page.locator(".site-tip-trigger").innerText()).trim(), item.tipLabel);
+
+      await page.goto(origin + "/contact");
+      await page.locator("#anonymous-message textarea").waitFor({ state: "visible" });
+      assert.equal(
+        await page.locator("#anonymous-message textarea").getAttribute("placeholder"),
+        item.contactPlaceholder,
+      );
+
+      await page.goto(origin + "/privacy");
+      await page.getByRole("heading", { name: item.legalTitle, level: 1 }).waitFor({ state: "visible" });
+
+      if (item.country === "FR") {
+        await page.goto(origin + "/");
+        await page.getByRole("button", { name: "中文", exact: true }).click();
+        await page.getByRole("link", { name: "看看我的动态" }).waitFor({ state: "visible" });
+        await page.reload();
+        await page.getByRole("link", { name: "看看我的动态" }).waitFor({ state: "visible" });
+      }
+    } finally {
+      await context.close();
+    }
+  }
+  console.log("PASS IP geolocation language routing (CN/JP/SG/other) and manual override persistence");
+}
+
 async function tipModalCheck(video) {
   for (const mobile of [false, true]) {
     const width = mobile ? 390 : 1280;
@@ -1378,6 +1454,7 @@ try {
   await routeHeadings(video);
   await contactDesk(video);
   await legalPages(video);
+  await geoLanguageRouting(video);
   await tipModalCheck(video);
   await desktopNavStability(video);
   await mobileRouteScenes(video);

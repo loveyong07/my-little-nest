@@ -2,11 +2,15 @@ import { bindSwipeSwitch } from "/assets/swipe-switch.js";
 import { initTipModal } from "/assets/tip-modal.js";
 
 const PAGES = ["privacy", "terms"];
+const LANGUAGE_STORAGE_KEY = "hello-nice-site-language";
+const GEO_LANGUAGE_STORAGE_KEY = "hello-nice-site-geo-language";
+const VISITOR_LANGUAGE_ENDPOINT = "/api/visitor-language";
 const LANGUAGES = [
   { code: "zh", attr: "zh-CN", hash: "#zh", openMenu: "打开菜单", closeMenu: "关闭菜单" },
   { code: "ja", attr: "ja", hash: "#ja", openMenu: "メニューを開く", closeMenu: "メニューを閉じる" },
   { code: "en", attr: "en", hash: "#en", openMenu: "Open menu", closeMenu: "Close menu" },
 ];
+const VALID_LANGUAGE_CODES = new Set(LANGUAGES.map(({ code }) => code));
 const navigation = document.querySelector(".legal-nav");
 const languagePicker = document.querySelector(".legal-language");
 const menuToggle = document.querySelector(".legal-header .menu-toggle");
@@ -26,7 +30,11 @@ let outgoingCleanupTimer;
 let navSwipe;
 let languageSwipe;
 let currentPage = pageFromPath(location.pathname);
-let currentLanguage = languageFromHash(location.hash);
+const explicitHashLanguage = explicitLanguageFromHash(location.hash);
+const storedManualLanguage = readLanguageStorage(window.localStorage, LANGUAGE_STORAGE_KEY);
+const storedGeoLanguage = readLanguageStorage(window.sessionStorage, GEO_LANGUAGE_STORAGE_KEY);
+let hasManualLanguage = Boolean(explicitHashLanguage || storedManualLanguage);
+let currentLanguage = explicitHashLanguage || storedManualLanguage || storedGeoLanguage || "zh";
 let activeEntry = ensureEntryKey();
 const tipModal = initTipModal({
   trigger: document.querySelector(".site-tip-trigger"),
@@ -37,10 +45,41 @@ function pageFromPath(pathname) {
   return /^\/terms(?:\/|$)|\/terms\.html$/.test(pathname) ? "terms" : "privacy";
 }
 
-function languageFromHash(hash) {
+function explicitLanguageFromHash(hash) {
+  if (hash === "#zh") return "zh";
   if (hash === "#ja") return "ja";
   if (hash === "#en") return "en";
-  return "zh";
+  return null;
+}
+
+function languageFromHash(hash) {
+  return explicitLanguageFromHash(hash) ?? "zh";
+}
+
+function readLanguageStorage(storage, key) {
+  try {
+    const value = storage?.getItem(key);
+    return VALID_LANGUAGE_CODES.has(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeLanguageStorage(storage, key, value) {
+  try {
+    storage?.setItem(key, value);
+  } catch {
+    /* Storage is optional. */
+  }
+}
+
+function resolveLegalLanguage(hash = location.hash) {
+  return (
+    explicitLanguageFromHash(hash) ??
+    readLanguageStorage(window.localStorage, LANGUAGE_STORAGE_KEY) ??
+    readLanguageStorage(window.sessionStorage, GEO_LANGUAGE_STORAGE_KEY) ??
+    "zh"
+  );
 }
 
 function languageMeta(code) {
@@ -236,7 +275,11 @@ function connectLanguage() {
   armAnimations(languagePicker);
 }
 
-function setLanguage(code, { updateUrl = true } = {}) {
+function setLanguage(code, { updateUrl = true, persistManual = true } = {}) {
+  if (persistManual) {
+    hasManualLanguage = true;
+    writeLanguageStorage(window.localStorage, LANGUAGE_STORAGE_KEY, code);
+  }
   if (code === currentLanguage) return;
   currentLanguage = code;
   syncLanguageDom(code);
@@ -393,7 +436,7 @@ window.addEventListener("popstate", () => {
   saveScrollPosition();
   activeEntry = ensureEntryKey();
   const savedScroll = scrollPositions.get(activeEntry) ?? 0;
-  const nextLanguage = languageFromHash(location.hash);
+  const nextLanguage = resolveLegalLanguage(location.hash);
   const nextPage = pageFromPath(location.pathname);
 
   if (nextLanguage !== currentLanguage) {
@@ -410,16 +453,16 @@ window.addEventListener("popstate", () => {
 });
 
 window.addEventListener("hashchange", () => {
-  const nextLanguage = languageFromHash(location.hash);
+  const nextLanguage = resolveLegalLanguage(location.hash);
   if (nextLanguage !== currentLanguage) {
-    setLanguage(nextLanguage, { updateUrl: false });
+    setLanguage(nextLanguage, { updateUrl: false, persistManual: false });
   }
 });
 
 window.addEventListener("pageshow", (event) => {
   if (!event.persisted) return;
   currentPage = pageFromPath(location.pathname);
-  currentLanguage = languageFromHash(location.hash);
+  currentLanguage = resolveLegalLanguage(location.hash);
   syncLanguageDom(currentLanguage);
   syncNavAriaCurrent(currentPage);
   connectLanguage();
@@ -434,6 +477,17 @@ syncNavAriaCurrent(currentPage);
 menuToggle.hidden = false;
 connectLanguage();
 connectNav();
+
+if (!hasManualLanguage && !storedGeoLanguage) {
+  fetch(VISITOR_LANGUAGE_ENDPOINT, { cache: "no-store" })
+    .then((response) => (response.ok ? response.json() : null))
+    .then((data) => {
+      if (!data || data.status !== "ok" || !VALID_LANGUAGE_CODES.has(data.language)) return;
+      writeLanguageStorage(window.sessionStorage, GEO_LANGUAGE_STORAGE_KEY, data.language);
+      if (!hasManualLanguage) setLanguage(data.language, { updateUrl: false, persistManual: false });
+    })
+    .catch(() => {});
+}
 
 if (document.readyState === "complete") {
   setTimeout(prefetchSibling, 300);

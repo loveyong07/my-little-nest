@@ -33,6 +33,10 @@
     "api/starrygal.js": {
       "regions": ["hkg1"],
       "maxDuration": 20
+    },
+    "api/visitor-language.js": {
+      "regions": ["hkg1"],
+      "maxDuration": 10
     }
   },
   "schedules": {

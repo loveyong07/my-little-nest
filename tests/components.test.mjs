@@ -2175,6 +2175,51 @@ test("TipModal renders 4 QR channels in order, copies wallet address, enlarges Y
   }
 });
 
+test("useI18n applies /api/visitor-language on first visit and respects manual localStorage override", async (context) => {
+  resetDom();
+  const { useI18n } = await server.ssrLoadModule("/src/hooks/useI18n.js");
+  const { LANGUAGE_STORAGE_KEY } = await server.ssrLoadModule("/src/constants/languages.js");
+  const { GEO_LANGUAGE_STORAGE_KEY } = await server.ssrLoadModule("/shared/geo-language.mjs");
+
+  let geoLanguage = "ja";
+  context.mock.method(globalThis, "fetch", async () => ({
+    ok: true,
+    json: async () => ({ status: "ok", country: geoLanguage === "ja" ? "JP" : "SG", language: geoLanguage }),
+  }));
+
+  function Probe() {
+    const { language, changeLanguage } = useI18n();
+    return React.createElement(
+      "button",
+      { type: "button", "data-language": language, onClick: () => changeLanguage("en") },
+      language,
+    );
+  }
+
+  const view = await mount(React.createElement(Probe));
+  try {
+    await React.act(async () => new Promise((resolvePromise) => setTimeout(resolvePromise, 30)));
+    assert.equal(view.container.querySelector("button").dataset.language, "ja");
+    assert.equal(window.sessionStorage.getItem(GEO_LANGUAGE_STORAGE_KEY), "ja");
+
+    await React.act(async () => view.container.querySelector("button").click());
+    assert.equal(view.container.querySelector("button").dataset.language, "en");
+    assert.equal(window.localStorage.getItem(LANGUAGE_STORAGE_KEY), "en");
+    await view.unmount();
+
+    geoLanguage = "ja";
+    const secondView = await mount(React.createElement(Probe));
+    try {
+      await React.act(async () => new Promise((resolvePromise) => setTimeout(resolvePromise, 30)));
+      assert.equal(secondView.container.querySelector("button").dataset.language, "en");
+    } finally {
+      await secondView.unmount();
+    }
+  } finally {
+    await view.unmount().catch(() => {});
+  }
+});
+
 async function selectPreviewPhoto(value) {
   await React.act(async () => window.dispatchEvent(new KeyboardEvent("keydown", { key: "Home" })));
   for (let index = 0; index < value; index++) {

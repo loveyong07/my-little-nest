@@ -206,3 +206,44 @@ test("unexpected service exceptions use the retry response headers on both route
     assert.equal((await result.json()).status, "unavailable");
   }
 });
+
+test("visitor-language maps edge country headers cleanly without CDN caching", async () => {
+  const handleApi = createApiHandler({});
+  for (const [country, expectedLanguage] of [
+    ["CN", "zh"],
+    ["hk", "zh"],
+    ["MO", "zh"],
+    ["TW", "zh"],
+    ["JP", "ja"],
+    ["US", "en"],
+    ["SG", "en"],
+    ["GB", "en"],
+    ["FR", "en"],
+    ["DE", "en"],
+  ]) {
+    const response = await handleApi(request("/api/visitor-language", { headers: { "x-vercel-ip-country": country } }));
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get("cache-control"), "no-store");
+    assert.equal(response.headers.get("vercel-cdn-cache-control"), null);
+    assert.equal(response.headers.get("vary"), "X-Vercel-IP-Country");
+    assert.deepEqual(await response.json(), {
+      status: "ok",
+      country: country.toUpperCase(),
+      language: expectedLanguage,
+    });
+  }
+
+  for (const headers of [{}, { "x-vercel-ip-country": "XX" }, { "x-vercel-ip-country": "T1" }]) {
+    const unavailable = await handleApi(request("/api/visitor-language", { headers }));
+    assert.equal(unavailable.status, 200);
+    assert.equal(unavailable.headers.get("cache-control"), "no-store");
+    assert.deepEqual(await unavailable.json(), { status: "unavailable", country: null, language: null });
+  }
+
+  const badMethod = await handleApi(request("/api/visitor-language", { method: "POST" }));
+  assert.equal(badMethod.status, 405);
+  assert.equal(badMethod.headers.get("allow"), "GET");
+
+  const badQuery = await handleApi(request("/api/visitor-language?country=JP"));
+  assert.equal(badQuery.status, 400);
+});

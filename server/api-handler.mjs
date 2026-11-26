@@ -6,6 +6,7 @@ import { proxyXMedia } from "./x-media.mjs";
 import { proxyXVideo } from "./x-video.mjs";
 import { createStarryGalFetchHandler } from "./starrygal.mjs";
 import { ANONYMOUS_MESSAGE_ENDPOINT } from "../shared/anonymous-message.mjs";
+import { VISITOR_LANGUAGE_ENDPOINT, languageFromCountry } from "../shared/geo-language.mjs";
 import { sendAnonymousMessage } from "./anonymous-message.mjs";
 
 // Browsers do not HTTP-cache these answers. Complete successes use the retained five-minute
@@ -152,6 +153,25 @@ export function createApiHandler(
     }
   }
 
+  function visitorLanguageRoute(request) {
+    if (request.method !== "GET") {
+      return json(
+        { status: "method_not_allowed", country: null, language: null },
+        { status: 405, headers: { Allow: "GET" } },
+      );
+    }
+    if (new URL(request.url).search) {
+      return json({ status: "invalid_request", country: null, language: null }, { status: 400 });
+    }
+    const raw = request.headers.get("x-vercel-ip-country") ?? request.headers.get("cf-ipcountry") ?? "";
+    const language = languageFromCountry(raw);
+    const headers = { Vary: "X-Vercel-IP-Country" };
+    if (!language) {
+      return json({ status: "unavailable", country: null, language: null }, { headers });
+    }
+    return json({ status: "ok", country: raw.trim().toUpperCase(), language }, { headers });
+  }
+
   return async function handleApi(request) {
     const { pathname } = new URL(request.url);
     if (pathname === "/api/x-media") {
@@ -166,6 +186,7 @@ export function createApiHandler(
     if (pathname === "/api/x-posts") return feedRoute(request, "posts");
     if (pathname === "/api/x-profile") return feedRoute(request, "profile");
     if (pathname === "/api/starrygal") return starrygalHandler()(request);
+    if (pathname === VISITOR_LANGUAGE_ENDPOINT) return visitorLanguageRoute(request);
     if (pathname === ANONYMOUS_MESSAGE_ENDPOINT) return sendAnonymousMessage(request, env, fetchImpl);
     return null;
   };

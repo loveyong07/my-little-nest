@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { GEO_LANGUAGE_STORAGE_KEY, VISITOR_LANGUAGE_ENDPOINT } from "../../shared/geo-language.mjs";
 import zhLocale from "../constants/locales/zh.js";
 import zhFantasy from "../constants/fantasy/zh.js";
 import { DEFAULT_LANGUAGE, LANGUAGES, LANGUAGE_STORAGE_KEY, htmlLang } from "../constants/languages.js";
@@ -28,6 +29,24 @@ export function detectBrowserLanguage(navigatorLike = typeof navigator === "unde
   return DEFAULT_LANGUAGE;
 }
 
+export function hasManualLanguagePreference() {
+  try {
+    return VALID_LANGUAGES.has(window.localStorage.getItem(LANGUAGE_STORAGE_KEY));
+  } catch {
+    return false;
+  }
+}
+
+export function readGeoLanguage() {
+  try {
+    const cached = window.sessionStorage.getItem(GEO_LANGUAGE_STORAGE_KEY);
+    if (VALID_LANGUAGES.has(cached)) return cached;
+  } catch {
+    /* Storage is optional. */
+  }
+  return null;
+}
+
 export function readStoredLanguage() {
   try {
     const saved = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
@@ -35,6 +54,8 @@ export function readStoredLanguage() {
   } catch {
     /* Storage is optional. */
   }
+  const geo = readGeoLanguage();
+  if (geo) return geo;
   return detectBrowserLanguage(typeof window === "undefined" ? null : window.navigator);
 }
 
@@ -67,10 +88,38 @@ export function useI18n() {
     requested: initial,
   }));
   const requestIdRef = useRef(0);
+  const manualRef = useRef(hasManualLanguagePreference());
 
   useEffect(() => {
     document.documentElement.lang = htmlLang(state.language);
   }, [state.language]);
+
+  useEffect(() => {
+    if (manualRef.current || readGeoLanguage() || typeof fetch !== "function") return undefined;
+    let active = true;
+    const controller = new AbortController();
+    fetch(VISITOR_LANGUAGE_ENDPOINT, { cache: "no-store", signal: controller.signal })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        if (!active || !data || data.status !== "ok" || !VALID_LANGUAGES.has(data.language)) return;
+        try {
+          window.sessionStorage.setItem(GEO_LANGUAGE_STORAGE_KEY, data.language);
+        } catch {
+          /* Storage is optional. */
+        }
+        if (manualRef.current) return;
+        setState((current) =>
+          isLanguageLoaded(data.language)
+            ? { language: data.language, requested: data.language }
+            : { ...current, requested: data.language },
+        );
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, []);
 
   useEffect(() => {
     if (state.language === state.requested) return undefined;
@@ -90,6 +139,7 @@ export function useI18n() {
 
   function changeLanguage(nextLanguage) {
     if (!VALID_LANGUAGES.has(nextLanguage)) return;
+    manualRef.current = true;
     try {
       window.localStorage.setItem(LANGUAGE_STORAGE_KEY, nextLanguage);
     } catch {
