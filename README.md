@@ -63,12 +63,24 @@ npm run test:browser  # 浏览器交互与文章配图回归检查（需本机�
 
 ## 投喂
 
-<p align="center">
-  <a href="public/assets/tip-yuki.webp"><img src="public/assets/tip-yuki.webp" alt="Yuki 插画" width="44" align="absmiddle" /></a>
-  &nbsp;<strong>如果能投喂Yong，Yong会给Yuki买糖果</strong>
-</p>
+### WeChat Pay
 
-| WeChat Pay | Alipay | BNB USDT | BNB USDC |
-| :---: | :---: | :---: | :---: |
-| <img src="public/assets/tip-wechat-qr.webp" alt="WeChat Pay 收款二维码" width="180" /> | <img src="public/assets/tip-alipay-qr.webp" alt="Alipay 收款二维码" width="180" /> | <img src="public/assets/tip-bnb-usdt-qr.webp" alt="BNB USDT 收款二维码" width="180" /> | <img src="public/assets/tip-bnb-usdc-qr.webp" alt="BNB USDC 收款二维码" width="180" /> |
-| | | BNB Smart Chain (BEP20)<br>`0xec3b3026faa3091baa812ae2793ee2c3a955959a` | BNB Smart Chain (BEP20)<br>`0xec3b3026faa3091baa812ae2793ee2c3a955959a` |
+<img src="public/assets/tip-wechat-qr.webp" alt="WeChat Pay 收款二维码" width="220" />
+
+### Alipay
+
+<img src="public/assets/tip-alipay-qr.webp" alt="Alipay 收款二维码" width="220" />
+
+### BNB USDT
+
+<img src="public/assets/tip-bnb-usdt-qr.webp" alt="BNB USDT 收款二维码" width="220" />
+
+- 主网：`BNB Smart Chain (BEP20)`
+- 钱包地址：`0xec3b3026faa3091baa812ae2793ee2c3a955959a`
+
+### BNB USDC
+
+<img src="public/assets/tip-bnb-usdc-qr.webp" alt="BNB USDC 收款二维码" width="220" />
+
+- 主网：`BNB Smart Chain (BEP20)`
+- 钱包地址：`0xec3b3026faa3091baa812ae2793ee2c3a955959a`
