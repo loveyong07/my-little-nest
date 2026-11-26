@@ -92,11 +92,7 @@ try {
       await page.goto(origin);
       await page.locator("#page-heading").waitFor();
       await settle(page);
-      assert.equal(
-        await page.locator("#page-heading").getAttribute("aria-label"),
-        copy[language].homeGreeting.join(language === "en" ? " " : ""),
-      );
-      assert.equal(await page.locator("#page-heading > span").count(), 3);
+      assert.equal(await page.locator("#page-heading").textContent(), "初咏");
       assert.equal(await page.locator(".sailing-cta").count(), 0, "retired Sailing CTA must stay removed");
       const homeLayout = await page.evaluate(() => ({
         width: innerWidth,

@@ -17,6 +17,7 @@
 @import "./styles/composition.css" layer(chrome);
 @import "./styles/header-desktop.css" layer(chrome);
 @import "../public/assets/site-header-controls.css" layer(chrome);
+@import "../public/assets/site-tip-modal.css" layer(chrome);
 @import "./styles/home-desktop.css" layer(chrome);
 @import "./styles/route-desktop.css" layer(chrome);
 @import "./styles/mobile-letter.css" layer(chrome);

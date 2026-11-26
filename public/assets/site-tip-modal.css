@@ -1,0 +1,548 @@
+/* Shared by the React pages and the static legal pages. */
+.site-tip-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 32px;
+  padding: 0 11px;
+  border: 1px solid #e7d19b;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #fffdf6, #fff2d1);
+  box-shadow:
+    0 2px 10px #345d8321,
+    inset 0 1px 1px #ffffffe6;
+  color: #705526;
+  font-family: var(--nest-font, var(--legal-site-font, "Quicksand", "Nest Kuaile", "Microsoft YaHei", sans-serif));
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    transform 0.2s var(--ease-spring, cubic-bezier(0.22, 1, 0.36, 1)),
+    background 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.site-tip-trigger[hidden] {
+  display: none;
+}
+
+.site-tip-trigger svg {
+  flex: none;
+  width: 13px;
+  height: 13px;
+  color: #df9d22;
+  transition: transform 0.24s var(--ease-spring, cubic-bezier(0.22, 1, 0.36, 1));
+}
+
+.site-tip-trigger:hover {
+  border-color: #dab86b;
+  background: linear-gradient(135deg, #ffffff, #fff5dc);
+  box-shadow:
+    0 5px 14px #345d832b,
+    inset 0 1px 1px #fff;
+  transform: translateY(-1px);
+}
+
+.site-tip-trigger:hover svg {
+  transform: rotate(18deg) scale(1.12);
+}
+
+.site-tip-trigger:active {
+  transform: translateY(0) scale(0.97);
+}
+
+.site-tip-trigger:focus-visible {
+  outline: 3px solid var(--color-primary, #507596);
+  outline-offset: 4px;
+}
+
+.tip-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal, 1000);
+  display: flex;
+  padding: 20px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  background: #18345238;
+  animation: tip-backdrop-in 0.18s ease-out;
+}
+
+.tip-modal-panel {
+  position: relative;
+  width: min(94vw, 860px);
+  margin: auto;
+  padding: 24px 22px 22px;
+  border: 1px solid #ffffffe0;
+  border-radius: 28px;
+  background: linear-gradient(142deg, #f8fcfff5, #eaf4fff2 55%, #fdf3faf2);
+  box-shadow:
+    0 22px 56px #193a5c38,
+    inset 0 1px 1px #fff;
+  color: #213f58;
+  font-family: var(--nest-font, var(--legal-site-font, "Quicksand", "Nest Kuaile", "Microsoft YaHei", sans-serif));
+  animation: tip-panel-in 0.22s var(--ease-spring, cubic-bezier(0.22, 1, 0.36, 1));
+}
+
+.tip-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 0 0 18px;
+  padding-inline: 44px;
+}
+
+.tip-yuki-button {
+  flex: none;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  overflow: hidden;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #eef6ff;
+  box-shadow:
+    0 4px 12px #365c7e2b,
+    0 0 0 2px #d8e7f5;
+  cursor: zoom-in;
+  transition:
+    transform 0.22s var(--ease-spring, cubic-bezier(0.22, 1, 0.36, 1)),
+    box-shadow 0.18s ease;
+}
+
+.tip-yuki-button img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tip-yuki-button:hover {
+  box-shadow:
+    0 6px 16px #365c7e3b,
+    0 0 0 2px #c2d7ec;
+  transform: scale(1.08);
+}
+
+.tip-yuki-button:active {
+  transform: scale(0.95);
+}
+
+.tip-yuki-button:focus-visible {
+  outline: 2px solid #507596;
+  outline-offset: 3px;
+}
+
+.tip-modal-title {
+  margin: 0;
+  color: #274a68;
+  font-size: clamp(1rem, 2.2vw, 1.2rem);
+  font-weight: 700;
+  line-height: 1.5;
+  text-align: center;
+  text-shadow: 0 1px 2px #ffffffbf;
+}
+
+.tip-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 1px solid #ffffffd9;
+  border-radius: 50%;
+  background: #ffffffd9;
+  box-shadow:
+    0 4px 14px #244a6e24,
+    inset 0 1px 1px #fff;
+  color: #355a7c;
+  cursor: pointer;
+  transition:
+    transform 0.2s var(--ease-spring, cubic-bezier(0.22, 1, 0.36, 1)),
+    background 0.18s ease;
+}
+
+.tip-modal-close:hover {
+  background: #fff;
+  transform: scale(1.06);
+}
+
+.tip-modal-close:active {
+  transform: scale(0.94);
+}
+
+.tip-modal-close:focus-visible {
+  outline: 2px solid #507596;
+  outline-offset: 3px;
+}
+
+.tip-modal-close svg {
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+}
+
+.tip-qr-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  align-items: stretch;
+}
+
+.tip-qr-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px 12px;
+  border: 1px solid #ffffffdc;
+  border-radius: 20px;
+  background: #ffffff9e;
+  box-shadow:
+    0 6px 20px #2b4f7014,
+    inset 0 1px 1px #fff;
+}
+
+.tip-qr-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-family: "Quicksand", sans-serif;
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
+}
+
+.tip-qr-label-wechat {
+  border: 1px solid #b5dfc8;
+  background: #e2f6eb;
+  color: #226646;
+}
+
+.tip-qr-label-alipay {
+  border: 1px solid #b8d8f7;
+  background: #e4f1fe;
+  color: #1f5c99;
+}
+
+.tip-qr-label-usdt {
+  border: 1px solid #a9dfd6;
+  background: #dff6f2;
+  color: #16655a;
+}
+
+.tip-qr-label-usdc {
+  border: 1px solid #b7d2f7;
+  background: #e3eefe;
+  color: #21549c;
+}
+
+.tip-qr-frame {
+  width: 100%;
+  max-width: 172px;
+  aspect-ratio: 1;
+  padding: 4px;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 4px 14px #26486814;
+}
+
+.tip-qr-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+  object-fit: contain;
+}
+
+.tip-wallet-copy {
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  width: 100%;
+  margin-top: auto;
+  padding: 6px 8px;
+  border: 1px solid #d5e4f0;
+  border-radius: 12px;
+  background: #f6fbffd9;
+  color: #315370;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 10.5px;
+  line-height: 1.4;
+  word-break: break-all;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s var(--ease-spring, cubic-bezier(0.22, 1, 0.36, 1));
+}
+
+.tip-wallet-copy:hover {
+  border-color: #aac9e3;
+  background: #ffffff;
+}
+
+.tip-wallet-copy:active {
+  transform: scale(0.98);
+}
+
+.tip-wallet-copy:focus-visible {
+  outline: 2px solid #507596;
+  outline-offset: 2px;
+}
+
+.tip-wallet-copy.is-copied {
+  border-color: #9ad1b4;
+  background: #e4f6ec;
+  color: #235c43;
+}
+
+.tip-wallet-copy-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--nest-font, var(--legal-site-font, "Quicksand", "Nest Kuaile", "Microsoft YaHei", sans-serif));
+  font-size: 10.5px;
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+.tip-wallet-copy-status svg {
+  width: 11px;
+  height: 11px;
+}
+
+.tip-wallet-fallback {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #b4cde3;
+  border-radius: 10px;
+  background: #fff;
+  color: #213f58;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 10.5px;
+  text-align: center;
+}
+
+.tip-yuki-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-modal, 1000) + 10);
+  display: flex;
+  padding: 20px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  background: #101820d9;
+  animation: tip-backdrop-in 0.18s ease-out;
+}
+
+.tip-yuki-lightbox-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  max-width: 100%;
+  margin: auto;
+}
+
+.tip-yuki-lightbox-image {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: min(92vw, 900px);
+  max-height: calc(100dvh - 110px);
+  object-fit: contain;
+  border: 2px solid #ffffffc9;
+  border-radius: 20px;
+  background: #f3f8ff;
+  box-shadow: 0 22px 56px #09182973;
+  animation: tip-panel-in 0.22s var(--ease-spring, cubic-bezier(0.22, 1, 0.36, 1));
+}
+
+.tip-yuki-lightbox-close {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 1px solid #ffffffc9;
+  border-radius: 50%;
+  background: #fffffff2;
+  box-shadow: 0 6px 20px #00000040;
+  color: #235787;
+  cursor: pointer;
+  transition:
+    transform 0.2s var(--ease-spring, cubic-bezier(0.22, 1, 0.36, 1)),
+    background 0.18s ease;
+}
+
+.tip-yuki-lightbox-close:hover {
+  background: #fff;
+  transform: scale(1.06);
+}
+
+.tip-yuki-lightbox-close:active {
+  transform: scale(0.95);
+}
+
+.tip-yuki-lightbox-close:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}
+
+.tip-yuki-lightbox-close svg {
+  width: 24px;
+  height: 24px;
+  pointer-events: none;
+}
+
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .tip-modal-backdrop {
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+  }
+  .tip-modal-panel {
+    background: linear-gradient(142deg, #fcfeffc7, #ebf6ffbd 55%, #fdf3fac4);
+    -webkit-backdrop-filter: blur(14px) saturate(1.12);
+    backdrop-filter: blur(14px) saturate(1.12);
+  }
+  .tip-yuki-lightbox {
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+  }
+}
+
+@media (max-width: 720px) {
+  .tip-modal-backdrop {
+    padding: 12px;
+  }
+  .tip-modal-panel {
+    padding: 20px 14px 16px;
+    border-radius: 22px;
+  }
+  .tip-modal-header {
+    margin-bottom: 14px;
+    padding-inline: 40px;
+  }
+  .tip-modal-title {
+    font-size: 0.95rem;
+  }
+  .tip-qr-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .tip-qr-card {
+    padding: 12px 10px;
+    border-radius: 16px;
+  }
+  .tip-yuki-lightbox {
+    padding: 14px;
+  }
+  .tip-yuki-lightbox-image {
+    max-width: 94vw;
+    max-height: calc(100dvh - 96px);
+    border-radius: 16px;
+  }
+}
+
+@media (max-width: 560px) {
+  .tip-modal-header {
+    flex-direction: column;
+    gap: 8px;
+    padding-inline: 36px;
+  }
+  .tip-yuki-button {
+    width: 52px;
+    height: 52px;
+  }
+}
+
+@media (max-width: 350px) {
+  .tip-qr-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px), (pointer: coarse), (pointer: none) {
+  .site-tip-trigger {
+    min-height: 44px;
+    padding-inline: 13px;
+  }
+  .tip-yuki-button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .tip-modal-close {
+    width: 44px;
+    height: 44px;
+  }
+  .tip-wallet-copy {
+    min-height: 44px;
+    padding: 8px;
+  }
+}
+
+@keyframes tip-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes tip-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tip-modal-backdrop,
+  .tip-modal-panel,
+  .site-tip-trigger,
+  .site-tip-trigger svg,
+  .tip-yuki-button,
+  .tip-modal-close,
+  .tip-wallet-copy,
+  .tip-yuki-lightbox,
+  .tip-yuki-lightbox-image,
+  .tip-yuki-lightbox-close {
+    animation: none;
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .site-tip-trigger,
+  .tip-modal-panel,
+  .tip-qr-card,
+  .tip-yuki-button,
+  .tip-modal-close,
+  .tip-wallet-copy,
+  .tip-yuki-lightbox-close {
+    border: 1px solid CanvasText;
+    background: Canvas;
+    color: CanvasText;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}

@@ -115,7 +115,7 @@ export function HeroSection({
       {extras}
       <main className="hero-layout" aria-labelledby="page-heading">
         <div className={"hero-intro-stack" + (entering ? " is-entering" : "")} ref={introRef}>
-          <HomeLetter language={language} t={t} chapter={f.chapter} profile={profile} />
+          <HomeLetter t={t} chapter={f.chapter} profile={profile} />
           <HomeJournal f={f} t={t} />
         </div>
       </main>

@@ -760,12 +760,16 @@ async function homeLayouts() {
         const header = document.querySelector(".site-header").getBoundingClientRect();
         const collisions = [];
         const reservedAreas = [
-          ...document.querySelectorAll(".hero-copy, .home-journal, .hero .sky-letter-link, .home-source-link"),
+          ...document.querySelectorAll(
+            ".hero-copy, .home-journal, .hero .sky-letter-link, .home-source-link, .site-tip-trigger",
+          ),
         ]
           .filter((element) => element.getClientRects().length)
           .map((element) => element.getBoundingClientRect());
         const sourceLink = document.querySelector(".home-source-link");
         const sourceRect = sourceLink?.getBoundingClientRect() ?? null;
+        const tipButton = document.querySelector(".site-tip-trigger");
+        const tipRect = tipButton?.getBoundingClientRect() ?? null;
         const animation = document.querySelector(".starrygal-flight").getAnimations()[0];
         if (sky.dataset.ready === "true") {
           for (const fraction of [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875]) {
@@ -797,6 +801,16 @@ async function homeLayouts() {
                 height: sourceRect.height,
               }
             : null,
+          tip: tipButton
+            ? {
+                left: tipRect.left,
+                top: tipRect.top,
+                right: tipRect.right,
+                bottom: tipRect.bottom,
+                height: tipRect.height,
+                text: tipButton.textContent.trim(),
+              }
+            : null,
           visualBioFont: Number.parseFloat(getComputedStyle(bio).fontSize) * scale,
           collisions,
           width: document.documentElement.scrollWidth,
@@ -809,12 +823,19 @@ async function homeLayouts() {
       assert.equal(geometry.source?.rel, "noopener noreferrer");
       assert.equal(geometry.source?.text, copy[language].siteSource);
       assert.ok(geometry.source.right <= width, `source link stays within viewport at ${width}x${height}`);
+      assert.equal(geometry.tip?.text, copy[language].tipLabel);
+      assert.ok(geometry.tip.left >= 0 && geometry.tip.right <= width, `tip button fits horizontally at ${width}`);
       if (!touch) {
         assert.ok(geometry.bottom <= height - 20, `home must fit one viewport at ${width}x${height}`);
         assert.ok(geometry.source.bottom <= height, `source link fits desktop viewport at ${width}x${height}`);
+        assert.ok(geometry.tip.bottom <= height, `tip button fits desktop viewport at ${width}x${height}`);
         assert.ok(
           geometry.source.top >= geometry.bottom || geometry.source.left >= geometry.right,
           `source link clears home cards at ${width}x${height}`,
+        );
+        assert.ok(
+          geometry.tip.top >= geometry.bottom || geometry.tip.right <= geometry.left,
+          `tip button clears home cards at ${width}x${height}`,
         );
         assert.ok(
           geometry.visualBioFont >= 13,
@@ -822,6 +843,7 @@ async function homeLayouts() {
         );
       } else {
         assert.ok(geometry.source.height >= 44, `source link tap target >= 44px at ${width}x${height}`);
+        assert.ok(geometry.tip.height >= 44, `tip button tap target >= 44px at ${width}x${height}`);
       }
       await page.screenshot({ path: path.join(output, `home-${width}x${height}-${language}.png`) });
       console.log(
@@ -1235,6 +1257,112 @@ async function routeHeadings(video) {
   console.log("PASS route headings, desktop breadcrumbs, mobile menu navigation and the unadorned Nest link");
 }
 
+async function tipModalCheck(video) {
+  for (const mobile of [false, true]) {
+    const width = mobile ? 390 : 1280;
+    const height = mobile ? 844 : 800;
+    const context = await browser.newContext({
+      viewport: { width, height },
+      isMobile: mobile,
+      hasTouch: mobile,
+      locale: "zh-CN",
+      reducedMotion: "reduce",
+    });
+    try {
+      await setup(context, feedData(), video);
+      const page = await context.newPage();
+      for (const route of ["/", "/posts", "/contact", "/privacy", "/terms"]) {
+        await page.goto(origin + route);
+        const trigger = page.locator(".site-tip-trigger");
+        await trigger.waitFor({ state: "visible" });
+        assert.equal((await trigger.innerText()).trim(), "投喂");
+        const box = await trigger.boundingBox();
+        assert.ok(box.x < width / 2, `tip button sits on the left side on ${route} (${width})`);
+        if (mobile) assert.ok(box.height >= 44, `mobile tip button tap target >= 44px on ${route}`);
+        assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+
+        await trigger.click();
+        const dialog = page.locator('.tip-modal-panel[role="dialog"]');
+        await dialog.waitFor({ state: "visible" });
+        assert.equal(
+          (await dialog.locator("#tip-modal-title").textContent()).trim(),
+          "如果能投喂Yong，Yong会给Yuki买糖果",
+        );
+
+        const yukiBtn = dialog.locator(".tip-yuki-button");
+        await yukiBtn.waitFor({ state: "visible" });
+        const yukiThumbOk = await yukiBtn.locator("img").evaluate((img) => img.complete && img.naturalWidth > 0);
+        assert.equal(yukiThumbOk, true, `Yuki thumbnail loads on ${route}`);
+        if (mobile) assert.ok((await yukiBtn.boundingBox()).height >= 44);
+
+        const cards = dialog.locator(".tip-qr-card");
+        assert.equal(await cards.count(), 4);
+        assert.deepEqual(await cards.locator(".tip-qr-label").allTextContents(), [
+          "WeChat Pay",
+          "Alipay",
+          "BNB USDT",
+          "BNB USDC",
+        ]);
+        const cardBoxes = await cards.evaluateAll((items) => items.map((item) => item.getBoundingClientRect().left));
+        if (!mobile) {
+          assert.ok(cardBoxes[0] < cardBoxes[1] && cardBoxes[1] < cardBoxes[2] && cardBoxes[2] < cardBoxes[3]);
+        }
+        const imagesOk = await dialog
+          .locator(".tip-qr-frame img")
+          .evaluateAll((imgs) => imgs.every((img) => img.complete && img.naturalWidth > 0));
+        assert.equal(imagesOk, true, `all 4 QR codes decode cleanly on ${route}`);
+        assert.ok(
+          (await cards.nth(2).locator(".tip-wallet-copy").textContent()).includes(
+            "0xec3b3026faa3091baa812ae2793ee2c3a955959a",
+          ),
+        );
+        assert.ok(
+          (await cards.nth(3).locator(".tip-wallet-copy").textContent()).includes(
+            "0xec3b3026faa3091baa812ae2793ee2c3a955959a",
+          ),
+        );
+
+        await yukiBtn.click();
+        const yukiLightbox = page.locator(".tip-yuki-lightbox");
+        await yukiLightbox.waitFor({ state: "visible" });
+        const yukiFullImg = yukiLightbox.locator(".tip-yuki-lightbox-image");
+        const yukiFullMetrics = await yukiFullImg.evaluate((img) => {
+          const r = img.getBoundingClientRect();
+          return {
+            loaded: img.complete && img.naturalWidth > 0,
+            width: r.width,
+            height: r.height,
+            left: r.left,
+            right: r.right,
+            top: r.top,
+            bottom: r.bottom,
+          };
+        });
+        assert.equal(yukiFullMetrics.loaded, true);
+        assert.ok(yukiFullMetrics.width > 120 && yukiFullMetrics.height > 120);
+        assert.ok(yukiFullMetrics.left >= 0 && yukiFullMetrics.right <= width);
+        assert.ok(yukiFullMetrics.top >= 0 && yukiFullMetrics.bottom <= height);
+        const yukiCloseBox = await yukiLightbox.locator(".tip-yuki-lightbox-close").boundingBox();
+        assert.ok(yukiCloseBox.y >= yukiFullMetrics.bottom && yukiCloseBox.y + yukiCloseBox.height <= height);
+
+        if (mobile) await yukiLightbox.locator(".tip-yuki-lightbox-close").click();
+        else await page.keyboard.press("Escape");
+        await yukiLightbox.waitFor({ state: "hidden" });
+        assert.equal(await dialog.isVisible(), true);
+        assert.equal(await yukiBtn.evaluate((el) => document.activeElement === el), true);
+
+        if (mobile) await dialog.locator(".tip-modal-close").click();
+        else await page.keyboard.press("Escape");
+        await dialog.waitFor({ state: "hidden" });
+        assert.equal(await trigger.evaluate((el) => document.activeElement === el), true);
+      }
+      console.log(`PASS ${width}px tip button, 4-QR modal, and adaptive Yuki lightbox across all 5 pages`);
+    } finally {
+      await context.close();
+    }
+  }
+}
+
 try {
   for (let attempt = 0; attempt < 50; attempt++) {
     if (
@@ -1250,6 +1378,7 @@ try {
   await routeHeadings(video);
   await contactDesk(video);
   await legalPages(video);
+  await tipModalCheck(video);
   await desktopNavStability(video);
   await mobileRouteScenes(video);
   await postDiscussion(video);

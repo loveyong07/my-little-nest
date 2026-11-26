@@ -122,6 +122,20 @@ button {
 a {
   color: inherit;
 }
+.site-corner-bar {
+  position: relative;
+  z-index: var(--z-home-content);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 12px max(12px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left));
+}
+.site-corner-bar > .home-corner-links,
+.site-corner-bar > .site-legal-links {
+  margin: 0 0 0 auto;
+}
 .home-corner-links {
   position: relative;
   display: flex;
@@ -129,7 +143,6 @@ a {
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
-  margin: 12px max(12px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left));
 }
 .home-corner-links > .site-legal-links {
   margin: 0;
@@ -203,13 +216,16 @@ a {
 }
 @media (min-width: 901px) and (pointer: fine) {
   /* The one-screen homepage reserves its bottom edge for these links. */
-  .site:not(.site-route) > .home-corner-links,
-  .site:not(.site-route) > .site-legal-links {
+  .site:not(.site-route) > .site-corner-bar {
     position: absolute;
     z-index: var(--z-home-content);
-    right: max(12px, env(safe-area-inset-right));
-    bottom: max(8px, env(safe-area-inset-bottom));
+    inset: auto max(12px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom))
+      max(12px, env(safe-area-inset-left));
     margin: 0;
+    pointer-events: none;
+  }
+  .site:not(.site-route) > .site-corner-bar > * {
+    pointer-events: auto;
   }
 }
 @media (max-width: 900px), (pointer: coarse), (pointer: none) {

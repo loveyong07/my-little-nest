@@ -1,4 +1,5 @@
 import { bindSwipeSwitch } from "/assets/swipe-switch.js";
+import { initTipModal } from "/assets/tip-modal.js";
 
 const PAGES = ["privacy", "terms"];
 const LANGUAGES = [
@@ -27,6 +28,10 @@ let languageSwipe;
 let currentPage = pageFromPath(location.pathname);
 let currentLanguage = languageFromHash(location.hash);
 let activeEntry = ensureEntryKey();
+const tipModal = initTipModal({
+  trigger: document.querySelector(".site-tip-trigger"),
+  getLanguage: () => currentLanguage,
+});
 
 function pageFromPath(pathname) {
   return /^\/terms(?:\/|$)|\/terms\.html$/.test(pathname) ? "terms" : "privacy";
@@ -200,6 +205,7 @@ function syncLanguageDom(code) {
   document.documentElement.lang = attr;
   document.body.dataset.legalLang = code;
   syncMenuLabel();
+  tipModal?.syncLanguage(code);
   if (!languagePicker) return;
   for (const link of languagePicker.querySelectorAll("a")) {
     if (link.getAttribute("href") === `#${code}`) link.setAttribute("aria-current", "true");

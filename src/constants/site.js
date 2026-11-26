@@ -3,6 +3,15 @@ import { X_USERNAME } from "../../shared/x-account.mjs";
 export const ASSETS = "/assets";
 export const SITE_SOURCE_REPOSITORY = "https://github.com/loveyong07/my-little-nest";
 export const STARRY_GAL_REPOSITORY = "https://github.com/loveyong07/loveyong-starrygal";
+export const BNB_WALLET_ADDRESS = "0xec3b3026faa3091baa812ae2793ee2c3a955959a";
+export const TIP_YUKI_IMAGE = `${ASSETS}/tip-yuki.webp`;
+
+export const tipChannels = [
+  { id: "wechat", label: "WeChat Pay", qr: `${ASSETS}/tip-wechat-qr.webp`, tone: "wechat" },
+  { id: "alipay", label: "Alipay", qr: `${ASSETS}/tip-alipay-qr.webp`, tone: "alipay" },
+  { id: "usdt", label: "BNB USDT", qr: `${ASSETS}/tip-bnb-usdt-qr.webp`, address: BNB_WALLET_ADDRESS, tone: "usdt" },
+  { id: "usdc", label: "BNB USDC", qr: `${ASSETS}/tip-bnb-usdc-qr.webp`, address: BNB_WALLET_ADDRESS, tone: "usdc" },
+];
 
 export { X_USERNAME };
 export const QQ_NUMBER = "3437702786";

@@ -2103,6 +2103,78 @@ test("Posts persists largeText and viewMode preferences across visits while open
   }
 });
 
+test("TipModal renders 4 QR channels in order, copies wallet address, enlarges Yuki image, and restores focus on Escape", async () => {
+  resetDom();
+  const { TipModal } = await server.ssrLoadModule("/src/components/TipModal.jsx");
+  const { BNB_WALLET_ADDRESS, TIP_YUKI_IMAGE } = await server.ssrLoadModule("/src/constants/site.js");
+  const trigger = document.createElement("button");
+  trigger.type = "button";
+  document.body.append(trigger);
+  trigger.focus();
+
+  const clipboardDescriptor = Object.getOwnPropertyDescriptor(navigator, "clipboard");
+  const copiedValues = [];
+  Object.defineProperty(navigator, "clipboard", {
+    configurable: true,
+    value: {
+      writeText: async (text) => {
+        copiedValues.push(text);
+      },
+    },
+  });
+
+  let closed = false;
+  const view = await mount(
+    React.createElement(TipModal, {
+      t: copy.zh,
+      onClose: () => {
+        closed = true;
+      },
+      returnFocusRef: { current: trigger },
+    }),
+  );
+  try {
+    const dialog = document.querySelector('.tip-modal-panel[role="dialog"]');
+    assert.ok(dialog);
+    assert.equal(dialog.querySelector("#tip-modal-title").textContent, "如果能投喂Yong，Yong会给Yuki买糖果");
+    const yukiBtn = dialog.querySelector(".tip-yuki-button");
+    assert.ok(yukiBtn);
+    assert.equal(yukiBtn.querySelector("img").getAttribute("src"), TIP_YUKI_IMAGE);
+    const cards = [...dialog.querySelectorAll(".tip-qr-card")];
+    assert.deepEqual(
+      cards.map((card) => card.querySelector(".tip-qr-label").textContent),
+      ["WeChat Pay", "Alipay", "BNB USDT", "BNB USDC"],
+    );
+    assert.equal(cards[0].querySelector(".tip-wallet-copy"), null);
+    assert.equal(cards[1].querySelector(".tip-wallet-copy"), null);
+    assert.ok(cards[2].querySelector(".tip-wallet-copy").textContent.includes(BNB_WALLET_ADDRESS));
+    assert.ok(cards[3].querySelector(".tip-wallet-copy").textContent.includes(BNB_WALLET_ADDRESS));
+
+    await React.act(async () => cards[2].querySelector(".tip-wallet-copy").click());
+    assert.deepEqual(copiedValues, [BNB_WALLET_ADDRESS]);
+    assert.ok(cards[2].querySelector(".tip-wallet-copy").classList.contains("is-copied"));
+    assert.equal(cards[3].querySelector(".tip-wallet-copy").classList.contains("is-copied"), false);
+
+    await React.act(async () => yukiBtn.click());
+    const yukiLightbox = document.querySelector(".tip-yuki-lightbox");
+    assert.ok(yukiLightbox);
+    assert.equal(yukiLightbox.querySelector(".tip-yuki-lightbox-image").getAttribute("src"), TIP_YUKI_IMAGE);
+    await React.act(async () => window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })));
+    assert.equal(document.querySelector(".tip-yuki-lightbox"), null);
+    assert.equal(closed, false);
+    assert.equal(document.activeElement, yukiBtn);
+
+    await React.act(async () => window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })));
+    assert.equal(closed, true);
+  } finally {
+    await view.unmount();
+    assert.equal(document.activeElement, trigger);
+    trigger.remove();
+    if (clipboardDescriptor) Object.defineProperty(navigator, "clipboard", clipboardDescriptor);
+    else delete navigator.clipboard;
+  }
+});
+
 async function selectPreviewPhoto(value) {
   await React.act(async () => window.dispatchEvent(new KeyboardEvent("keydown", { key: "Home" })));
   for (let index = 0; index < value; index++) {

@@ -2,9 +2,7 @@
 .posts-flow,
 .contact-desk,
 .reading-directory-links,
-.chapter-heading > div,
-.hero-sender,
-.hero-sender-note {
+.chapter-heading > div {
   display: contents;
 }
 .nav-selection,
