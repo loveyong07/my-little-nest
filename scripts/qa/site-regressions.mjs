@@ -1333,6 +1333,20 @@ async function geoLanguageRouting(video) {
   console.log("PASS IP geolocation language routing (CN/JP/SG/other) and manual override persistence");
 }
 
+async function waitForImages(locator) {
+  await locator.evaluateAll((imgs) =>
+    Promise.all(
+      imgs.map((img) => {
+        if (img.complete) return Promise.resolve();
+        return new Promise((resolve) => {
+          img.addEventListener("load", resolve, { once: true });
+          img.addEventListener("error", resolve, { once: true });
+        });
+      }),
+    ),
+  );
+}
+
 async function tipModalCheck(video) {
   for (const mobile of [false, true]) {
     const width = mobile ? 390 : 1280;
@@ -1367,6 +1381,7 @@ async function tipModalCheck(video) {
 
         const yukiBtn = dialog.locator(".tip-yuki-button");
         await yukiBtn.waitFor({ state: "visible" });
+        await waitForImages(yukiBtn.locator("img"));
         const yukiThumbOk = await yukiBtn.locator("img").evaluate((img) => img.complete && img.naturalWidth > 0);
         assert.equal(yukiThumbOk, true, `Yuki thumbnail loads on ${route}`);
         if (mobile) assert.ok((await yukiBtn.boundingBox()).height >= 44);
@@ -1383,6 +1398,7 @@ async function tipModalCheck(video) {
         if (!mobile) {
           assert.ok(cardBoxes[0] < cardBoxes[1] && cardBoxes[1] < cardBoxes[2] && cardBoxes[2] < cardBoxes[3]);
         }
+        await waitForImages(dialog.locator(".tip-qr-frame img"));
         const imagesOk = await dialog
           .locator(".tip-qr-frame img")
           .evaluateAll((imgs) => imgs.every((img) => img.complete && img.naturalWidth > 0));
@@ -1402,6 +1418,7 @@ async function tipModalCheck(video) {
         const yukiLightbox = page.locator(".tip-yuki-lightbox");
         await yukiLightbox.waitFor({ state: "visible" });
         const yukiFullImg = yukiLightbox.locator(".tip-yuki-lightbox-image");
+        await waitForImages(yukiFullImg);
         const yukiFullMetrics = await yukiFullImg.evaluate((img) => {
           const r = img.getBoundingClientRect();
           return {
