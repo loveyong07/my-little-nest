@@ -65,7 +65,7 @@ npm run test:browser  # 浏览器交互与文章配图回归检查（需本机�
 
 ### WeChat
 
-<img src="public/assets/tip-wechat-qr.webp" alt="WeChat 收款二维码" width="220" />
+<img src="public/assets/tip-wechat-reward-qr.webp" alt="WeChat 赞赏码" width="220" />
 
 ### Alipay
 

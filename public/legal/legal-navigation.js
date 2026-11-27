@@ -1,5 +1,5 @@
 import { bindSwipeSwitch } from "/assets/swipe-switch.js";
-import { initTipModal } from "/assets/tip-modal.js";
+import { initTipModal } from "/assets/tip-modal.js?v=2026-11-27";
 
 const PAGES = ["privacy", "terms"];
 const LANGUAGE_STORAGE_KEY = "hello-nice-site-language";
