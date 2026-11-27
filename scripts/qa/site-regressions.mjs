@@ -1374,7 +1374,7 @@ async function tipModalCheck(video) {
         const cards = dialog.locator(".tip-qr-card");
         assert.equal(await cards.count(), 4);
         assert.deepEqual(await cards.locator(".tip-qr-label").allTextContents(), [
-          "WeChat Pay",
+          "WeChat",
           "Alipay",
           "BNB USDT",
           "BNB USDC",

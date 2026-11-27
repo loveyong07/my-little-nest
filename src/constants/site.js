@@ -7,7 +7,7 @@ export const BNB_WALLET_ADDRESS = "0xec3b3026faa3091baa812ae2793ee2c3a955959a";
 export const TIP_YUKI_IMAGE = `${ASSETS}/tip-yuki.webp`;
 
 export const tipChannels = [
-  { id: "wechat", label: "WeChat Pay", qr: `${ASSETS}/tip-wechat-qr.webp`, tone: "wechat" },
+  { id: "wechat", label: "WeChat", qr: `${ASSETS}/tip-wechat-qr.webp`, tone: "wechat" },
   { id: "alipay", label: "Alipay", qr: `${ASSETS}/tip-alipay-qr.webp`, tone: "alipay" },
   { id: "usdt", label: "BNB USDT", qr: `${ASSETS}/tip-bnb-usdt-qr.webp`, address: BNB_WALLET_ADDRESS, tone: "usdt" },
   { id: "usdc", label: "BNB USDC", qr: `${ASSETS}/tip-bnb-usdc-qr.webp`, address: BNB_WALLET_ADDRESS, tone: "usdc" },

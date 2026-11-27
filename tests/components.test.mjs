@@ -2143,7 +2143,7 @@ test("TipModal renders 4 QR channels in order, copies wallet address, enlarges Y
     const cards = [...dialog.querySelectorAll(".tip-qr-card")];
     assert.deepEqual(
       cards.map((card) => card.querySelector(".tip-qr-label").textContent),
-      ["WeChat Pay", "Alipay", "BNB USDT", "BNB USDC"],
+      ["WeChat", "Alipay", "BNB USDT", "BNB USDC"],
     );
     assert.equal(cards[0].querySelector(".tip-wallet-copy"), null);
     assert.equal(cards[1].querySelector(".tip-wallet-copy"), null);

@@ -2,7 +2,7 @@ const BNB_WALLET_ADDRESS = "0xec3b3026faa3091baa812ae2793ee2c3a955959a";
 const TIP_YUKI_IMAGE = "/assets/tip-yuki.webp";
 
 const TIP_CHANNELS = [
-  { id: "wechat", label: "WeChat Pay", qr: "/assets/tip-wechat-qr.webp", tone: "wechat" },
+  { id: "wechat", label: "WeChat", qr: "/assets/tip-wechat-qr.webp", tone: "wechat" },
   { id: "alipay", label: "Alipay", qr: "/assets/tip-alipay-qr.webp", tone: "alipay" },
   { id: "usdt", label: "BNB USDT", qr: "/assets/tip-bnb-usdt-qr.webp", address: BNB_WALLET_ADDRESS, tone: "usdt" },
   { id: "usdc", label: "BNB USDC", qr: "/assets/tip-bnb-usdc-qr.webp", address: BNB_WALLET_ADDRESS, tone: "usdc" },
